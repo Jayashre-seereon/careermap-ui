@@ -70,8 +70,8 @@ export default function PaymentSuccessScreen() {
           ))}
         </View>
 
-        <Pressable onPress={() => router.replace('/(drawer)/(tabs)/assessment')} style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>Continue to Full Test</Text>
+        <Pressable onPress={() => router.replace('/(drawer)/(tabs)/')} style={styles.primaryButton}>
+          <Text style={styles.primaryButtonText}>Go to Dashboard</Text>
         </Pressable>
       </View>
     </SafeAreaView>

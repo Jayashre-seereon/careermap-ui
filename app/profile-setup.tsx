@@ -15,7 +15,7 @@ const selectionMeta = [
 ] as const;
 
 export default function ProfileSetupScreen() {
-  const { onboarding } = useAppState();
+  const { onboarding, saveOnboarding } = useAppState();
   const [form, setForm] = useState({
     name: onboarding.userType === 'parent' ? onboarding.name : onboarding.name,
     email: '',
@@ -164,7 +164,7 @@ export default function ProfileSetupScreen() {
           </View>
         </View>
 
-        <Pressable disabled={!isValid} onPress={() => router.replace('/promo')} style={[styles.primaryButton, !isValid && styles.primaryButtonDisabled]}>
+        <Pressable disabled={!isValid} onPress={() => { saveOnboarding({ ...onboarding, name: form.name }); router.replace('/promo'); }} style={[styles.primaryButton, !isValid && styles.primaryButtonDisabled]}>
           <Text style={styles.primaryButtonText}>Complete Profile</Text>
         </Pressable>
       </ScrollView>

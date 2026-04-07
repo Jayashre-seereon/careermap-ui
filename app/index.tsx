@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { BeeMascot } from '../src/bee-mascot';
 import { palette } from '../src/careermap-data';
 
 export default function SplashRoute() {
@@ -15,7 +16,7 @@ export default function SplashRoute() {
       <View style={styles.glowTop} />
       <View style={styles.glowBottom} />
       <View style={styles.card}>
-        <Text style={styles.icon}>CM</Text>
+        <BeeMascot size={76} />
       </View>
       <Text style={styles.title}>Career Map</Text>
       <Text style={styles.subtitle}>Discover Your Future</Text>

@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 
 type PlanId = 'psychometric' | 'premium' | 'infocentre' | null;
-type FeatureKey = 'psychometric-test' | 'master-class' | 'book-mentor' | 'scholarship' | 'abroad-consultancy';
+type FeatureKey = 'psychometric-test' | 'master-class' | 'book-mentor' | 'scholarship' | 'abroad-consultancy' | 'career-library';
 type UserType = 'student' | 'parent' | '';
 
 type OnboardingState = {
@@ -28,8 +28,8 @@ type AppStateValue = {
 
 const planFeatures: Record<Exclude<PlanId, null>, FeatureKey[]> = {
   psychometric: ['psychometric-test'],
-  premium: ['psychometric-test', 'book-mentor', 'master-class'],
-  infocentre: ['psychometric-test', 'book-mentor', 'master-class', 'scholarship', 'abroad-consultancy'],
+  premium: ['psychometric-test', 'book-mentor', 'master-class', 'career-library'],
+  infocentre: ['psychometric-test', 'book-mentor', 'master-class', 'scholarship', 'abroad-consultancy', 'career-library'],
 };
 
 const initialOnboardingState: OnboardingState = {

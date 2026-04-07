@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BeeMascot } from '../src/bee-mascot';
 import { palette } from '../src/careermap-data';
 
 export default function LoginScreen() {
@@ -29,7 +30,7 @@ export default function LoginScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <View style={styles.logoCard}>
-            <Text style={styles.logoText}>CM</Text>
+            <BeeMascot size={64} />
           </View>
           <Text style={styles.title}>Welcome to Career Map</Text>
           <Text style={styles.subtitle}>Choose how you&apos;d like to sign in</Text>

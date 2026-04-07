@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppState } from '../src/app-state';
+import { BeeMascot } from '../src/bee-mascot';
 import { palette } from '../src/careermap-data';
 
 const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate'];
@@ -86,9 +87,7 @@ export default function OnboardingScreen() {
 
         {step === 0 ? (
           <View style={styles.centered}>
-            <View style={styles.mascotCard}>
-              <Text style={styles.mascot}>CM</Text>
-            </View>
+           <BeeMascot size={86} />
             <Text style={styles.title}>Choose Your Way</Text>
             <Text style={styles.subtitle}>Tell us who you are so we can personalize your experience</Text>
             <View style={styles.choiceColumn}>
@@ -116,10 +115,8 @@ export default function OnboardingScreen() {
 
         {step === 1 ? (
           <View style={styles.centered}>
-            <View style={styles.smallMascotCard}>
-              <Text style={styles.mascot}>CM</Text>
-            </View>
-            <Text style={styles.title}>{userType === 'parent' ? 'Welcome, Parent!' : 'Hi! I&apos;m your Career Guide'}</Text>
+            <BeeMascot size={68} />
+            <Text style={styles.title}>{userType === 'parent' ? 'Welcome, Parent!' : 'Hi! I\'m your Career Guide 👋'}</Text>
             <Text style={styles.subtitle}>
               {userType === 'parent'
                 ? "We'll help you explore career options for your child's future."

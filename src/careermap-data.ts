@@ -55,6 +55,20 @@ export const moduleCards = [
     tone: palette.orange,
   },
   {
+    title: 'Entrance Exam',
+    subtitle: 'Practice tests and exam preparation guides.',
+    icon: 'clipboard-outline',
+    route: '/(drawer)/entrance-exam',
+    tone: palette.teal,
+  },
+  {
+    title: 'Institutes',
+    subtitle: 'Browse top colleges and universities.',
+    icon: 'business-outline',
+    route: '/(drawer)/institute',
+    tone: palette.pink,
+  },
+  {
     title: 'Book Mentor',
     subtitle: 'Reserve guidance with an expert mentor.',
     icon: 'people-outline',
@@ -69,12 +83,20 @@ export const moduleCards = [
     tone: palette.green,
   },
   {
-    title: 'Subscription',
-    subtitle: 'Unlock premium library and test access.',
-    icon: 'card-outline',
-    route: '/(drawer)/subscription',
-    tone: palette.primary,
+    title: 'Quiz',
+    subtitle: 'Test your knowledge with fun quizzes.',
+    icon: 'help-circle-outline',
+    route: '/(drawer)/quiz',
+    tone: palette.blue,
   },
+  {
+    title: 'Study Abroad',
+    subtitle: 'Explore international education options.',
+    icon: 'globe-outline',
+    route: '/(drawer)/abroad',
+    tone: palette.purple,
+  },
+ 
 ];
 
 export const streamCards = [

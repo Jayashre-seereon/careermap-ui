@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BeeMascot } from '../src/bee-mascot';
 import { palette } from '../src/careermap-data';
 
 const features = [
@@ -26,7 +27,7 @@ export default function PromoScreen() {
           <View style={styles.heroGlowTop} />
           <View style={styles.heroGlowBottom} />
           <View style={styles.heroCard}>
-            <Text style={styles.heroIcon}>CM</Text>
+            <BeeMascot size={86} />
           </View>
           <Text style={styles.heroTitle}>Career Map</Text>
           <Text style={styles.heroTagline}>Discover Your Future</Text>

@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { useAppState } from '../../../src/app-state';
 import { Pill, Screen, SectionHeader } from '../../../src/careermap-ui';
 import {
   featuredInstitutes,
@@ -50,6 +51,7 @@ export default function HomeScreen() {
   const [completedPersonality, setCompletedPersonality] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<(number | null)[]>(Array(personalityQuestions.length).fill(null));
+  const { isUnlocked, onboarding } = useAppState();
 
   const personalityResult = useMemo(() => {
     const counts = [0, 0, 0, 0];
@@ -170,11 +172,11 @@ export default function HomeScreen() {
       <View style={styles.topBar}>
         <View style={styles.profileRow}>
           <View style={styles.avatarBadge}>
-            <Text style={styles.avatarText}>A</Text>
+            <Text style={styles.avatarText}>{(onboarding.name || studentProfile.name).charAt(0).toUpperCase()}</Text>
           </View>
           <View>
             <Text style={styles.greeting}>Good morning</Text>
-            <Text style={styles.name}>{studentProfile.name}</Text>
+            <Text style={styles.name}>{onboarding.name || studentProfile.name}</Text>
           </View>
         </View>
         <Pressable onPress={() => router.push('/(drawer)/notifications')} style={styles.bellWrap}>
@@ -197,15 +199,23 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.heroTitle}>Know Your Personality</Text>
           <Text style={styles.heroDescription}>
-            Answer quick questions to discover your personality type and ideal career direction.
+            {isUnlocked('psychometric-test')
+              ? 'Take the comprehensive psychometric test to get detailed career insights and recommendations.'
+              : 'Answer quick questions to discover your personality type and ideal career direction.'
+            }
           </Text>
-          <Pressable onPress={() => setShowPersonalityTest(true)} style={styles.heroButton}>
-            <Text style={styles.heroButtonText}>Take the Test</Text>
+          <Pressable
+            onPress={() => isUnlocked('psychometric-test') ? router.push('/(drawer)/psychometric-test') : setShowPersonalityTest(true)}
+            style={styles.heroButton}
+          >
+            <Text style={styles.heroButtonText}>
+              {isUnlocked('psychometric-test') ? 'Take Full Psychometric Test' : 'Take the Test'}
+            </Text>
           </Pressable>
         </View>
       </View>
 
-      <SectionHeader title="Explore Modules" subtitle="The same core destinations from the web prototype dashboard." />
+      <SectionHeader title="Explore Modules" />
       <View style={styles.moduleGrid}>
         {moduleCards.map((card) => (
           <Pressable key={card.title} onPress={() => router.push(card.route as never)} style={styles.moduleCell}>
@@ -214,13 +224,12 @@ export default function HomeScreen() {
                 <Ionicons name={card.icon as keyof typeof Ionicons.glyphMap} size={21} color={card.tone} />
               </View>
               <Text style={styles.moduleTitle}>{card.title}</Text>
-              <Text style={styles.moduleSubtitle}>{card.subtitle}</Text>
             </View>
           </Pressable>
         ))}
       </View>
 
-      <SectionHeader title="Explore Your Mentors" subtitle="Mentor cards adapted from the dashboard carousel." action={<Pressable onPress={() => router.push('/(drawer)/book-mentor')}><Text style={styles.seeAll}>See all</Text></Pressable>} />
+      <SectionHeader title="Explore Your Mentors" action={<Pressable onPress={() => router.push('/(drawer)/book-mentor')}><Text style={styles.seeAll}>See all</Text></Pressable>} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
         {featuredMentors.map((mentor) => (
           <Pressable key={mentor.name} onPress={() => router.push('/(drawer)/book-mentor')} style={styles.personCardWide}>
@@ -234,7 +243,7 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
 
-      <SectionHeader title="Explore Scholarships" subtitle="A mobile-friendly list inspired by the same scholarship strip." action={<Pressable onPress={() => router.push('/(drawer)/scholarship')}><Text style={styles.seeAll}>See all</Text></Pressable>} />
+      <SectionHeader title="Explore Scholarships" action={<Pressable onPress={() => router.push('/(drawer)/scholarship')}><Text style={styles.seeAll}>See all</Text></Pressable>} />
       <View style={styles.stack}>
         {featuredScholarships.map((item) => (
           <Pressable key={item.name} onPress={() => router.push('/(drawer)/scholarship')} style={styles.listCard}>
@@ -253,7 +262,7 @@ export default function HomeScreen() {
         ))}
       </View>
 
-      <SectionHeader title="Explore Institutes" subtitle="Featured institute shortcuts from the dashboard." action={<Pressable onPress={() => router.push('/(drawer)/institute')}><Text style={styles.seeAll}>See all</Text></Pressable>} />
+      <SectionHeader title="Explore Institutes" action={<Pressable onPress={() => router.push('/(drawer)/institute')}><Text style={styles.seeAll}>See all</Text></Pressable>} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
         {featuredInstitutes.map((item) => (
           <Pressable key={item.name} onPress={() => router.push('/(drawer)/institute')} style={styles.personCardWide}>
@@ -427,7 +436,9 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 1,
     padding: 14,
-    minHeight: 136,
+    minHeight: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
   },
   moduleIcon: {
@@ -441,6 +452,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: palette.text,
+    textAlign: 'center',
   },
   moduleSubtitle: {
     fontSize: 11,

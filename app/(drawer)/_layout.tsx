@@ -49,6 +49,13 @@ export default function DrawerRoot() {
           }}
         />
         <Drawer.Screen
+          name="entrance-exam"
+          options={{
+            title: 'Entrance Exam',
+            drawerIcon: ({ color, size }) => <Ionicons name="clipboard-outline" color={color} size={size} />,
+          }}
+        />
+        <Drawer.Screen
           name="subscription"
           options={{
             title: 'Subscription',

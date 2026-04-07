@@ -1,0 +1,83 @@
+import { useEffect, useMemo, useRef } from 'react';
+import { Animated, PanResponder, StyleProp, StyleSheet, ViewStyle } from 'react-native';
+
+const beeImage = require('../assets/images/career-bee.png');
+
+type BeeMascotProps = {
+    size?: number;
+    style?: StyleProp<ViewStyle>;
+};
+
+export function BeeMascot({ size = 100, style }: BeeMascotProps) {
+    const position = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+    const floatAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(floatAnim, {
+                    toValue: -10,
+                    duration: 1100,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(floatAnim, {
+                    toValue: 0,
+                    duration: 1100,
+                    useNativeDriver: true,
+                }),
+            ])
+        ).start();
+    }, [floatAnim]);
+
+    const panResponder = useMemo(
+        () =>
+            PanResponder.create({
+                onStartShouldSetPanResponder: () => true,
+                onPanResponderGrant: () => {
+                    position.setOffset({ x: (position.x as any)._value ?? 0, y: (position.y as any)._value ?? 0 });
+                    position.setValue({ x: 0, y: 0 });
+                },
+                onPanResponderMove: Animated.event([null, { dx: position.x, dy: position.y }], {
+                    useNativeDriver: false,
+                }),
+                onPanResponderRelease: () => {
+                    position.flattenOffset();
+                    Animated.spring(position, {
+                        toValue: { x: 0, y: 0 },
+                        useNativeDriver: false,
+                        bounciness: 8,
+                        speed: 14,
+                    }).start();
+                },
+            }),
+        [position]
+    );
+
+    return (
+        <Animated.View
+            style={[
+                styles.root,
+                style,
+                {
+                    width: size,
+                    height: size,
+                    transform: [...position.getTranslateTransform(), { translateY: floatAnim }],
+                },
+            ]}
+            {...panResponder.panHandlers}
+        >
+            <Animated.Image source={beeImage} style={[styles.beeImage, { width: size, height: size }]} resizeMode="contain" />
+        </Animated.View>
+    );
+}
+
+const styles = StyleSheet.create({
+    root: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    beeImage: {
+        width: '100%',
+        height: '100%',
+    },
+});
