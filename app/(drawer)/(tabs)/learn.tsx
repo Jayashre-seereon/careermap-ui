@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useAppState } from '../../../src/app-state';
 import { masterClasses, palette } from '../../../src/careermap-data';
@@ -8,23 +9,53 @@ import { Pill, Screen, SectionHeader } from '../../../src/careermap-ui';
 export default function LearnScreen() {
   const { isUnlocked } = useAppState();
   const masterClassUnlocked = isUnlocked('master-class');
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('All');
+  const [sortBy, setSortBy] = useState<'popular' | 'views' | 'az' | 'za'>('popular');
+
+  let filtered = activeFilter === 'All' ? [...masterClasses] : masterClasses.filter((item) => item.career === activeFilter);
+
+  if (sortBy === 'popular' || sortBy === 'views') filtered.sort((a, b) => b.views - a.views);
+  else if (sortBy === 'az') filtered.sort((a, b) => a.title.localeCompare(b.title));
+  else filtered.sort((a, b) => b.title.localeCompare(a.title));
 
   return (
     <Screen>
       <SectionHeader
         title="Master Class"
-        subtitle="Learning videos and filters adapted from the web prototype's master class screen."
+        subtitle="Learning videos and sorting adapted closely from the prototype master class screen."
+        action={
+          <Pressable onPress={() => setShowFilters((value) => !value)} style={[styles.filterToggle, showFilters && styles.filterToggleActive]}>
+            <Text style={[styles.filterToggleText, showFilters && styles.filterToggleTextActive]}>Filter</Text>
+          </Pressable>
+        }
       />
 
+      {showFilters ? (
+        <View style={styles.sortWrap}>
+          {[
+            { id: 'popular' as const, label: 'Most Popular' },
+            { id: 'views' as const, label: 'Most Viewed' },
+            { id: 'az' as const, label: 'A-Z' },
+            { id: 'za' as const, label: 'Z-A' },
+          ].map((item) => (
+            <Pressable key={item.id} onPress={() => setSortBy(item.id)} style={[styles.sortChip, sortBy === item.id && styles.sortChipActive]}>
+              <Text style={[styles.sortChipText, sortBy === item.id && styles.sortChipTextActive]}>{item.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
       <View style={styles.filterRow}>
-        <Pill label="Most Popular" tone={palette.primary} />
-        <Pill label="Technology" tone={palette.blue} />
-        <Pill label="Medical" tone={palette.green} />
-        <Pill label="Business" tone={palette.orange} />
+        {['All', 'Engineering', 'Medical', 'Business', 'Technology', 'Design'].map((label) => (
+          <Pressable key={label} onPress={() => setActiveFilter(label)} style={[styles.filterChip, activeFilter === label && styles.filterChipActive]}>
+            <Text style={[styles.filterChipText, activeFilter === label && styles.filterChipTextActive]}>{label}</Text>
+          </Pressable>
+        ))}
       </View>
 
       <View style={styles.list}>
-        {masterClasses.map((item) => (
+        {filtered.map((item) => (
           <View key={item.title} style={[styles.card, item.locked && styles.lockedCard]}>
             <View style={styles.topRow}>
               <View style={[styles.thumb, item.locked ? styles.thumbLocked : styles.thumbOpen]}>
@@ -34,7 +65,10 @@ export default function LearnScreen() {
                 <Text style={styles.title}>{item.title}</Text>
                 <Text style={styles.meta}>{item.mentor}</Text>
                 <View style={styles.metaRow}>
-                  <Text style={styles.duration}>{item.duration}</Text>
+                  <View style={styles.metaStack}>
+                    <Text style={styles.duration}>{item.duration}</Text>
+                    <Text style={styles.views}>{(item.views / 1000).toFixed(1)}k views</Text>
+                  </View>
                   <Pill label={item.career} tone={palette.primary} />
                 </View>
               </View>
@@ -42,8 +76,10 @@ export default function LearnScreen() {
             <Pressable
               onPress={() =>
                 item.locked && !masterClassUnlocked
-                  ? router.push({ pathname: '/checkout', params: { planId: 'premium' } })
-                  : undefined
+                  ? router.push('/subscription')
+                  : item.url !== '#'
+                    ? Linking.openURL(item.url)
+                    : undefined
               }
               style={[styles.actionButton, item.locked && !masterClassUnlocked ? styles.lockedButton : styles.openButton]}
             >
@@ -59,10 +95,66 @@ export default function LearnScreen() {
 }
 
 const styles = StyleSheet.create({
+  filterToggle: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: '#f2ebe6',
+  },
+  filterToggleActive: {
+    backgroundColor: palette.primary,
+  },
+  filterToggleText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: palette.text,
+  },
+  filterToggleTextActive: {
+    color: '#fff',
+  },
+  sortWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  sortChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: '#f2ebe6',
+  },
+  sortChipActive: {
+    backgroundColor: palette.primary,
+  },
+  sortChipText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: palette.text,
+  },
+  sortChipTextActive: {
+    color: '#fff',
+  },
   filterRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
+  },
+  filterChip: {
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: '#f2ebe6',
+  },
+  filterChipActive: {
+    backgroundColor: palette.primary,
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: palette.text,
+  },
+  filterChipTextActive: {
+    color: '#fff',
   },
   list: {
     gap: 12,
@@ -121,10 +213,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
+  metaStack: {
+    gap: 2,
+  },
   duration: {
     fontSize: 12,
     color: palette.muted,
     fontWeight: '700',
+  },
+  views: {
+    fontSize: 11,
+    color: palette.muted,
   },
   actionButton: {
     borderRadius: 14,
