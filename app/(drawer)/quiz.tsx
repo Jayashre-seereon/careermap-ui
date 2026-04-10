@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { Text, View, Pressable } from 'react-native';
 
 import { palette } from '../../src/careermap-data';
 import { Screen, SectionHeader } from '../../src/careermap-ui';
@@ -41,15 +41,15 @@ export default function QuizScreen() {
                 setAnswers(Array(sampleQuestions.length).fill(null));
                 setCompleted(false);
               }}
-              style={styles.backButton}
+              className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]"
             >
               <Ionicons name="arrow-back" size={18} color={palette.text} />
             </Pressable>
           }
         />
-        <View style={styles.resultCard}>
-          <Text style={styles.resultScore}>{score}/5</Text>
-          <Text style={styles.resultTitle}>
+        <View className="items-center gap-3 rounded-[26px] border border-line bg-card p-[22px]">
+          <Text className="text-[40px] font-black text-brand">{score}/5</Text>
+          <Text className="text-center text-[17px] font-extrabold text-ink">
             {score >= 4 ? 'Excellent work. You are doing great.' : score >= 2 ? 'Good effort. Keep learning.' : 'Keep practicing. You will improve.'}
           </Text>
           <Pressable
@@ -59,9 +59,9 @@ export default function QuizScreen() {
               setAnswers(Array(sampleQuestions.length).fill(null));
               setCompleted(false);
             }}
-            style={styles.submitButton}
+            className="w-full rounded-[16px] bg-brand py-[14px]"
           >
-            <Text style={styles.submitButtonText}>Try Another Quiz</Text>
+            <Text className="text-center text-[14px] font-extrabold text-white">Try Another Quiz</Text>
           </Pressable>
         </View>
       </Screen>
@@ -74,14 +74,14 @@ export default function QuizScreen() {
     return (
       <Screen>
         <SectionHeader title={quizzes[activeQuiz].title} subtitle={`Question ${currentQuestion + 1} of ${sampleQuestions.length}`} />
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${((currentQuestion + 1) / sampleQuestions.length) * 100}%` }]} />
+        <View className="h-2 overflow-hidden rounded-full bg-line">
+          <View className="h-full rounded-full bg-success" style={{ width: `${((currentQuestion + 1) / sampleQuestions.length) * 100}%` }} />
         </View>
-        <View style={styles.questionCard}>
-          <Text style={styles.questionLabel}>Question {currentQuestion + 1}</Text>
-          <Text style={styles.questionText}>{current.q}</Text>
+        <View className="gap-2 rounded-[22px] border border-line bg-card p-5">
+          <Text className="text-[10px] font-extrabold uppercase tracking-[1px] text-muted">Question {currentQuestion + 1}</Text>
+          <Text className="text-[18px] font-extrabold leading-[26px] text-ink">{current.q}</Text>
         </View>
-        <View style={styles.options}>
+        <View className="gap-3">
           {current.options.map((option, index) => (
             <Pressable
               key={option}
@@ -90,9 +90,9 @@ export default function QuizScreen() {
                 nextAnswers[currentQuestion] = index;
                 setAnswers(nextAnswers);
               }}
-              style={[styles.option, answers[currentQuestion] === index && styles.optionActive]}
+              className={`rounded-[18px] border p-[15px] ${answers[currentQuestion] === index ? 'border-brand bg-brand' : 'border-line bg-card'}`}
             >
-              <Text style={[styles.optionText, answers[currentQuestion] === index && styles.optionTextActive]}>
+              <Text className={`text-[14px] font-bold ${answers[currentQuestion] === index ? 'text-white' : 'text-ink'}`}>
                 {String.fromCharCode(65 + index)}. {option}
               </Text>
             </Pressable>
@@ -107,9 +107,10 @@ export default function QuizScreen() {
               setCurrentQuestion((value) => value + 1);
             }
           }}
-          style={[styles.submitButton, answers[currentQuestion] === null && styles.submitButtonDisabled]}
+          className="rounded-[16px] bg-brand py-[14px]"
+          style={({ pressed }) => ({ opacity: answers[currentQuestion] === null || pressed ? 0.45 : 1 })}
         >
-          <Text style={styles.submitButtonText}>{currentQuestion === sampleQuestions.length - 1 ? 'Finish Quiz' : 'Next'}</Text>
+          <Text className="text-center text-[14px] font-extrabold text-white">{currentQuestion === sampleQuestions.length - 1 ? 'Finish Quiz' : 'Next'}</Text>
         </Pressable>
       </Screen>
     );
@@ -118,7 +119,7 @@ export default function QuizScreen() {
   return (
     <Screen>
       <SectionHeader title="Quizzes" subtitle="Quick category quizzes from the same prototype family." />
-      <View style={styles.list}>
+      <View className="gap-3">
         {quizzes.map((quiz, index) => (
           <Pressable
             key={quiz.title}
@@ -127,156 +128,17 @@ export default function QuizScreen() {
               setCurrentQuestion(0);
               setAnswers(Array(sampleQuestions.length).fill(null));
             }}
-            style={styles.quizCard}
+            className="gap-1.5 rounded-[22px] border border-line bg-card p-[18px]"
           >
-            <View style={styles.quizEmojiWrap}>
-              <Text style={styles.quizEmoji}>{quiz.emoji}</Text>
+            <View className="mb-1 h-[50px] w-[50px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.blue}12` }}>
+              <Text className="text-[12px] font-black" style={{ color: palette.blue }}>{quiz.emoji}</Text>
             </View>
-            <Text style={styles.quizTitle}>{quiz.title}</Text>
-            <Text style={styles.quizDescription}>{quiz.description}</Text>
-            <Text style={styles.quizMeta}>{quiz.questions} questions</Text>
+            <Text className="text-[16px] font-extrabold text-ink">{quiz.title}</Text>
+            <Text className="text-[13px] leading-5 text-muted">{quiz.description}</Text>
+            <Text className="text-[12px] font-extrabold text-brand">{quiz.questions} questions</Text>
           </Pressable>
         ))}
       </View>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: '#f2ebe6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  list: {
-    gap: 12,
-  },
-  quizCard: {
-    backgroundColor: palette.card,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 18,
-    gap: 6,
-  },
-  quizEmojiWrap: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
-    backgroundColor: `${palette.blue}12`,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  quizEmoji: {
-    fontSize: 12,
-    fontWeight: '900',
-    color: palette.blue,
-  },
-  quizTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: palette.text,
-  },
-  quizDescription: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: palette.muted,
-  },
-  quizMeta: {
-    fontSize: 12,
-    color: palette.primary,
-    fontWeight: '800',
-  },
-  questionCard: {
-    backgroundColor: palette.card,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 20,
-    gap: 8,
-  },
-  progressTrack: {
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: '#eadfd6',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 999,
-    backgroundColor: palette.green,
-  },
-  questionLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: palette.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  questionText: {
-    fontSize: 18,
-    lineHeight: 26,
-    fontWeight: '800',
-    color: palette.text,
-  },
-  options: {
-    gap: 12,
-  },
-  option: {
-    backgroundColor: palette.card,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 15,
-  },
-  optionActive: {
-    backgroundColor: palette.primary,
-    borderColor: palette.primary,
-  },
-  optionText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: palette.text,
-  },
-  optionTextActive: {
-    color: '#fff',
-  },
-  submitButton: {
-    borderRadius: 16,
-    backgroundColor: palette.primary,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  submitButtonDisabled: {
-    opacity: 0.45,
-  },
-  submitButtonText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#fff',
-  },
-  resultCard: {
-    backgroundColor: palette.card,
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 22,
-    gap: 12,
-    alignItems: 'center',
-  },
-  resultScore: {
-    fontSize: 40,
-    fontWeight: '900',
-    color: palette.primary,
-  },
-  resultTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: palette.text,
-    textAlign: 'center',
-  },
-});

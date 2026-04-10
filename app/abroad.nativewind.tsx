@@ -3,9 +3,9 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
-import { useAppState } from '../../src/app-state';
-import { palette, studyAbroadCountries } from '../../src/careermap-data';
-import { Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+import { useAppState } from '../src/app-state';
+import { palette, studyAbroadCountries } from '../src/careermap-data';
+import { Pill, Screen, SectionHeader } from '../src/careermap-ui';
 
 export default function AbroadScreen() {
   const { isUnlocked } = useAppState();

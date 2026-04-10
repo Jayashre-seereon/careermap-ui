@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { useAppState } from '../../../src/app-state';
 import { Screen } from '../../../src/careermap-ui';
@@ -345,7 +345,7 @@ const defaultDetail = (name: string) => ({
 });
 
 export default function CareerLibraryScreen() {
-  const { isUnlocked } = useAppState();
+  const { isUnlocked, savedCareers, toggleSavedCareer } = useAppState();
   const [currentLevel, setCurrentLevel] = useState<'streams' | 'categories' | 'programs' | 'specializations' | 'details'>('streams');
   const [selectedStream, setSelectedStream] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -420,23 +420,23 @@ export default function CareerLibraryScreen() {
   };
 
   const renderStreams = () => (
-    <View style={styles.grid}>
+    <View className="flex-row flex-wrap gap-3">
       {streams.map((stream) => (
-        <Pressable key={stream.name} onPress={() => handleStreamSelect(stream.name)} style={styles.card}>
-          <Text style={styles.cardEmoji}>{stream.emoji}</Text>
-          <Text style={styles.cardTitle}>{stream.name}</Text>
-          <Text style={styles.cardDesc}>{stream.desc}</Text>
+        <Pressable key={stream.name} onPress={() => handleStreamSelect(stream.name)} className="w-[48%] items-center rounded-[16px] border border-line bg-card p-4">
+          <Text className="mb-2 text-[32px]">{stream.emoji}</Text>
+          <Text className="mb-1 text-center text-[14px] font-bold text-ink">{stream.name}</Text>
+          <Text className="text-center text-[11px] text-muted">{stream.desc}</Text>
         </Pressable>
       ))}
     </View>
   );
 
   const renderCategories = () => (
-    <View style={styles.grid}>
+    <View className="flex-row flex-wrap gap-3">
       {categories[selectedStream!]?.map((category) => (
-        <Pressable key={category.name} onPress={() => handleCategorySelect(category.name)} style={styles.card}>
-          <Text style={styles.cardEmoji}>{category.emoji}</Text>
-          <Text style={styles.cardTitle}>{category.name}</Text>
+        <Pressable key={category.name} onPress={() => handleCategorySelect(category.name)} className="w-[48%] items-center rounded-[16px] border border-line bg-card p-4">
+          <Text className="mb-2 text-[32px]">{category.emoji}</Text>
+          <Text className="mb-1 text-center text-[14px] font-bold text-ink">{category.name}</Text>
         </Pressable>
       ))}
     </View>
@@ -445,12 +445,12 @@ export default function CareerLibraryScreen() {
   const renderPrograms = () => {
     const programList = programs[selectedCategory!] || [];
     return (
-      <View style={styles.list}>
+      <View className="gap-3">
         {programList.map((program) => (
-          <Pressable key={program.name} onPress={() => handleProgramSelect(program.name)} style={styles.programCard}>
-            <View style={styles.programHeader}>
-              <Text style={styles.programEmoji}>{program.emoji}</Text>
-              <Text style={styles.programTitle}>{program.name}</Text>
+          <Pressable key={program.name} onPress={() => handleProgramSelect(program.name)} className="flex-row items-center rounded-[12px] border border-line bg-card p-3">
+            <View className="flex-1 flex-row items-center">
+              <Text className="mr-3 text-[24px]">{program.emoji}</Text>
+              <Text className="flex-1 text-[14px] font-semibold text-ink">{program.name}</Text>
             </View>
           </Pressable>
         ))}
@@ -462,19 +462,19 @@ export default function CareerLibraryScreen() {
     const specializationList = specializations[selectedProgram!] || [];
     if (specializationList.length === 0) {
       return (
-        <Pressable onPress={() => handleSpecializationSelect(selectedProgram!)} style={styles.fullCard}>
-          <Text style={styles.fullCardTitle}>{selectedProgram}</Text>
-          <Text style={styles.fullCardText}>Tap to explore details</Text>
+        <Pressable onPress={() => handleSpecializationSelect(selectedProgram!)} className="items-center rounded-[16px] border border-line bg-card p-6">
+          <Text className="mb-2 text-[18px] font-bold text-ink">{selectedProgram}</Text>
+          <Text className="text-[13px] text-muted">Tap to explore details</Text>
         </Pressable>
       );
     }
     return (
-      <View style={styles.list}>
+      <View className="gap-3">
         {specializationList.map((specialization) => (
-          <Pressable key={specialization.name} onPress={() => handleSpecializationSelect(specialization.name)} style={styles.programCard}>
-            <View style={styles.programHeader}>
-              <Text style={styles.programEmoji}>{specialization.emoji}</Text>
-              <Text style={styles.programTitle}>{specialization.name}</Text>
+          <Pressable key={specialization.name} onPress={() => handleSpecializationSelect(specialization.name)} className="flex-row items-center rounded-[12px] border border-line bg-card p-3">
+            <View className="flex-1 flex-row items-center">
+              <Text className="mr-3 text-[24px]">{specialization.emoji}</Text>
+              <Text className="flex-1 text-[14px] font-semibold text-ink">{specialization.name}</Text>
             </View>
           </Pressable>
         ))}
@@ -484,74 +484,82 @@ export default function CareerLibraryScreen() {
 
   const renderDetails = () => {
     const detail = careerDetails[selectedSpecialization!] || defaultDetail(selectedSpecialization!);
+    const isSaved = savedCareers.includes(detail.title);
 
     if (contentLocked && locked) {
       return (
-        <View style={styles.lockedContent}>
+        <View className="items-center justify-center gap-4 py-[60px]">
           <Ionicons name="lock-closed" size={48} color={palette.primary} />
-          <Text style={styles.lockedContentTitle}>Preview Time Expired</Text>
-          <Text style={styles.lockedContentText}>Subscribe to unlock full access to all career details.</Text>
-          <Pressable onPress={() => router.push('/(drawer)/subscription')} style={styles.unlockButton}>
-            <Text style={styles.unlockButtonText}>Unlock Full Access</Text>
+          <Text className="text-[18px] font-bold text-ink">Preview Time Expired</Text>
+          <Text className="text-center text-[14px] text-muted">Subscribe to unlock full access to all career details.</Text>
+          <Pressable onPress={() => router.push('/(drawer)/subscription')} className="rounded-[12px] bg-brand px-6 py-3">
+            <Text className="text-[14px] font-bold text-white">Unlock Full Access</Text>
           </Pressable>
         </View>
       );
     }
 
     return (
-      <ScrollView contentContainerStyle={styles.detailsContainer}>
+      <ScrollView contentContainerClassName="p-4">
         {locked && !contentLocked && contentTimer !== null && (
-          <View style={styles.timerBanner}>
+          <View className="mb-4 flex-row items-center gap-2 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.orange}20` }}>
             <Ionicons name="time-outline" size={20} color={palette.orange} />
-            <Text style={styles.timerText}>Free preview: {contentTimer}s remaining</Text>
+            <Text className="text-[13px] font-semibold" style={{ color: palette.orange }}>Free preview: {contentTimer}s remaining</Text>
           </View>
         )}
 
-        <Text style={styles.detailTitle}>{detail.title}</Text>
+        <Text className="mb-4 text-[20px] font-extrabold text-ink">{detail.title}</Text>
+        <Pressable
+          onPress={() => toggleSavedCareer(detail.title)}
+          className={`mb-4 flex-row items-center justify-center gap-2 rounded-[14px] border px-4 py-3 ${isSaved ? 'border-brand bg-brand' : 'border-line bg-card'}`}
+        >
+          <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={isSaved ? '#fff' : palette.primary} />
+          <Text className={`text-[13px] font-extrabold ${isSaved ? 'text-white' : 'text-brand'}`}>{isSaved ? 'Saved to Wishlist' : 'Save to Wishlist'}</Text>
+        </Pressable>
 
-        <View style={styles.detailSection}>
-          <Text style={styles.sectionTitle}>Overview</Text>
-          <Text style={styles.sectionContent}>{detail.overview}</Text>
+        <View className="mb-5">
+          <Text className="mb-2 text-[14px] font-bold text-ink">Overview</Text>
+          <Text className="text-[13px] leading-5 text-muted">{detail.overview}</Text>
         </View>
 
-        <View style={styles.detailSection}>
-          <Text style={styles.sectionTitle}>Career Path</Text>
+        <View className="mb-5">
+          <Text className="mb-2 text-[14px] font-bold text-ink">Career Path</Text>
           {detail.path.map((step, i) => (
-            <View key={i} style={styles.pathStep}>
-              <Text style={styles.stepNumber}>{i + 1}</Text>
-              <Text style={styles.stepText}>{step}</Text>
+            <View key={i} className="mb-2.5 flex-row items-start">
+              <Text className="mr-3 h-7 w-7 rounded-full bg-brand text-center text-[13px] font-bold leading-7 text-white">{i + 1}</Text>
+              <Text className="flex-1 text-[13px] leading-5 text-ink">{step}</Text>
             </View>
           ))}
         </View>
 
-        <View style={styles.detailSection}>
-          <Text style={styles.sectionTitle}>Education</Text>
-          <Text style={styles.sectionContent}>{detail.education}</Text>
+        <View className="mb-5">
+          <Text className="mb-2 text-[14px] font-bold text-ink">Education</Text>
+          <Text className="text-[13px] leading-5 text-muted">{detail.education}</Text>
         </View>
 
-        <View style={styles.detailSection}>
-          <Text style={styles.sectionTitle}>Entrance Exams</Text>
+        <View className="mb-5">
+          <Text className="mb-2 text-[14px] font-bold text-ink">Entrance Exams</Text>
           {detail.exams.map(exam => (
-            <Text key={exam} style={styles.examText}>• {exam}</Text>
+            <Text key={exam} className="mb-1.5 text-[13px] text-muted">• {exam}</Text>
           ))}
         </View>
 
-        <View style={styles.detailSection}>
-          <Text style={styles.sectionTitle}>Job Opportunities</Text>
+        <View className="mb-5">
+          <Text className="mb-2 text-[14px] font-bold text-ink">Job Opportunities</Text>
           {detail.jobs.map(job => (
-            <Text key={job} style={styles.jobText}>• {job}</Text>
+            <Text key={job} className="mb-1.5 text-[13px] text-muted">• {job}</Text>
           ))}
         </View>
 
-        <View style={styles.detailSection}>
-          <Text style={styles.sectionTitle}>Salary Range</Text>
-          <Text style={styles.salaryText}>{detail.salary}</Text>
+        <View className="mb-5">
+          <Text className="mb-2 text-[14px] font-bold text-ink">Salary Range</Text>
+          <Text className="text-[16px] font-bold text-brand">{detail.salary}</Text>
         </View>
 
-        <View style={styles.detailSection}>
-          <Text style={styles.sectionTitle}>Top Institutes</Text>
+        <View className="mb-5">
+          <Text className="mb-2 text-[14px] font-bold text-ink">Top Institutes</Text>
           {detail.institutes.map(institute => (
-            <Text key={institute} style={styles.instituteText}>★ {institute}</Text>
+            <Text key={institute} className="mb-1.5 text-[13px] text-muted">★ {institute}</Text>
           ))}
         </View>
       </ScrollView>
@@ -569,19 +577,19 @@ export default function CareerLibraryScreen() {
 
   return (
     <Screen>
-      <View style={styles.header}>
+      <View className="flex-row items-center px-6 py-4">
         {currentLevel !== 'streams' && (
-          <Pressable onPress={handleBack} style={styles.backButton}>
+          <Pressable onPress={handleBack} className="mr-3 h-10 w-10 items-center justify-center rounded-full">
             <Ionicons name="chevron-back" size={24} color={palette.text} />
           </Pressable>
         )}
-        <Text style={styles.title}>{getTitle()}</Text>
+        <Text className="text-[18px] font-extrabold text-ink">{getTitle()}</Text>
       </View>
 
       {currentLevel === 'details' ? (
         renderDetails()
       ) : (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerClassName="gap-3 p-4">
           {currentLevel === 'streams' && renderStreams()}
           {currentLevel === 'categories' && renderCategories()}
           {currentLevel === 'programs' && renderPrograms()}
@@ -591,210 +599,3 @@ export default function CareerLibraryScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: palette.text,
-  },
-  container: {
-    padding: 16,
-    gap: 12,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  card: {
-    width: '48%',
-    backgroundColor: palette.card,
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: palette.border,
-  },
-  cardEmoji: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: palette.text,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  cardDesc: {
-    fontSize: 11,
-    color: palette.muted,
-    textAlign: 'center',
-  },
-  list: {
-    gap: 12,
-  },
-  programCard: {
-    backgroundColor: palette.card,
-    borderRadius: 12,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: palette.border,
-  },
-  programHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  programEmoji: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  programTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: palette.text,
-    flex: 1,
-  },
-  fullCard: {
-    backgroundColor: palette.card,
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: palette.border,
-  },
-  fullCardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: palette.text,
-    marginBottom: 8,
-  },
-  fullCardText: {
-    fontSize: 13,
-    color: palette.muted,
-  },
-  detailsContainer: {
-    padding: 16,
-  },
-  lockedContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-    gap: 16,
-  },
-  lockedContentTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: palette.text,
-  },
-  lockedContentText: {
-    fontSize: 14,
-    color: palette.muted,
-    textAlign: 'center',
-  },
-  unlockButton: {
-    backgroundColor: palette.primary,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  unlockButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  timerBanner: {
-    backgroundColor: `${palette.orange}20`,
-    borderRadius: 12,
-    padding: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  timerText: {
-    fontSize: 13,
-    color: palette.orange,
-    fontWeight: '600',
-  },
-  detailTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: palette.text,
-    marginBottom: 16,
-  },
-  detailSection: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: palette.text,
-    marginBottom: 8,
-  },
-  sectionContent: {
-    fontSize: 13,
-    color: palette.muted,
-    lineHeight: 20,
-  },
-  pathStep: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-  },
-  stepNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: palette.primary,
-    color: '#fff',
-    fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 28,
-    marginRight: 12,
-  },
-  stepText: {
-    fontSize: 13,
-    color: palette.text,
-    flex: 1,
-    lineHeight: 20,
-  },
-  examText: {
-    fontSize: 13,
-    color: palette.muted,
-    marginBottom: 6,
-  },
-  jobText: {
-    fontSize: 13,
-    color: palette.muted,
-    marginBottom: 6,
-  },
-  salaryText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: palette.primary,
-  },
-  instituteText: {
-    fontSize: 13,
-    color: palette.muted,
-    marginBottom: 6,
-  },
-});

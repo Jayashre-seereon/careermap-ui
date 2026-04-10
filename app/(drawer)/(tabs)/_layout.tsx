@@ -1,18 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
+import { useAppState } from '../../../src/app-state';
 import { palette } from '../../../src/careermap-data';
 
 export default function TabsLayout() {
+  const { preferences } = useAppState();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: palette.primary,
-        tabBarInactiveTintColor: palette.muted,
+        tabBarInactiveTintColor: preferences.darkMode ? '#b7aeb9' : palette.muted,
         tabBarStyle: {
-          backgroundColor: palette.surface,
-          borderTopColor: palette.border,
+          backgroundColor: preferences.darkMode ? '#1b151f' : palette.surface,
+          borderTopColor: preferences.darkMode ? '#2d2430' : palette.border,
           height: 66,
           paddingBottom: 8,
           paddingTop: 8,

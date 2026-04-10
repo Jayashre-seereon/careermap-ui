@@ -2,20 +2,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { Drawer } from 'expo-router/drawer';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 
 export default function DrawerRoot() {
+  const { preferences } = useAppState();
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
         screenOptions={{
-          headerStyle: { backgroundColor: palette.surface },
-          headerTintColor: palette.text,
+          headerStyle: { backgroundColor: preferences.darkMode ? '#1b151f' : palette.surface },
+          headerTintColor: preferences.darkMode ? '#ffffff' : palette.text,
           headerTitleStyle: { fontWeight: '800' },
           drawerActiveTintColor: palette.primary,
-          drawerInactiveTintColor: palette.muted,
-          drawerStyle: { backgroundColor: palette.surface, width: 280 },
-          sceneStyle: { backgroundColor: palette.background },
+          drawerInactiveTintColor: preferences.darkMode ? '#b7aeb9' : palette.muted,
+          drawerStyle: { backgroundColor: preferences.darkMode ? '#140f17' : palette.surface, width: 280 },
+          sceneStyle: { backgroundColor: preferences.darkMode ? '#140f17' : palette.background },
         }}
       >
         <Drawer.Screen

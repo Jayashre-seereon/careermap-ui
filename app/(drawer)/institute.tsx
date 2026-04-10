@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, Text, View } from 'react-native';
 
 import { institutes, palette } from '../../src/careermap-data';
 import { Pill, Screen, SectionHeader } from '../../src/careermap-ui';
@@ -26,41 +26,41 @@ export default function InstituteScreen() {
           title={item.name}
           subtitle="Institute detail view shaped to match the reference prototype."
           action={
-            <Pressable onPress={() => setSelectedIndex(null)} style={styles.backButton}>
+            <Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => setSelectedIndex(null)}>
               <Ionicons name="arrow-back" size={18} color={palette.text} />
             </Pressable>
           }
         />
 
-        <View style={styles.detailHero}>
-          <View style={styles.detailIconWrap}>
+        <View className="items-center gap-2 py-2">
+          <View className="h-[68px] w-[68px] items-center justify-center rounded-[22px]" style={{ backgroundColor: `${palette.primary}12` }}>
             <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={28} color={palette.primary} />
           </View>
-          <Text style={styles.detailTitle}>{item.name}</Text>
-          <Text style={styles.detailLocation}>{item.location}</Text>
-          <View style={styles.detailTags}>
+          <Text className="text-center text-[22px] font-black text-ink">{item.name}</Text>
+          <Text className="text-center text-[13px] text-muted">{item.location}</Text>
+          <View className="flex-row justify-center">
             <Pill label={`${item.rank} ${item.type}`} tone={palette.primary} />
           </View>
         </View>
 
-        <View style={styles.detailCard}>
-          <Text style={styles.detailCardTitle}>About</Text>
-          <Text style={styles.detailCardCopy}>{item.about}</Text>
+        <View className="gap-2.5 rounded-[22px] border border-line bg-card p-4">
+          <Text className="text-[14px] font-extrabold text-brand">About</Text>
+          <Text className="text-[13px] leading-[21px] text-muted">{item.about}</Text>
         </View>
 
-        <View style={styles.detailCard}>
-          <Text style={styles.detailCardTitle}>Courses Offered</Text>
-          <View style={styles.courseRow}>
+        <View className="gap-2.5 rounded-[22px] border border-line bg-card p-4">
+          <Text className="text-[14px] font-extrabold text-brand">Courses Offered</Text>
+          <View className="flex-row flex-wrap gap-2">
             {item.courses.map((course) => (
-              <View key={course} style={styles.courseChip}>
-                <Text style={styles.courseChipText}>{course}</Text>
+              <View key={course} className="rounded-[12px] bg-[#f7f2fb] px-3 py-2">
+                <Text className="text-[12px] font-bold text-purple-700" style={{ color: palette.purple }}>{course}</Text>
               </View>
             ))}
           </View>
         </View>
 
-        <Pressable onPress={() => Linking.openURL(item.website)} style={styles.websiteButton}>
-          <Text style={styles.websiteButtonText}>Visit Official Website</Text>
+        <Pressable className="items-center rounded-[16px] py-[14px]" onPress={() => Linking.openURL(item.website)} style={{ backgroundColor: `${palette.primary}12` }}>
+          <Text className="text-[14px] font-extrabold text-brand">Visit Official Website</Text>
         </Pressable>
       </Screen>
     );
@@ -72,54 +72,54 @@ export default function InstituteScreen() {
         title="Institutes"
         subtitle="Institute directory with filters and detail cards based on the reference prototype."
         action={
-          <View style={styles.actions}>
-            <Pressable onPress={() => setShowFilters((value) => !value)} style={[styles.iconButton, showFilters && styles.iconButtonActive]}>
-              <Text style={[styles.iconButtonText, showFilters && styles.iconButtonTextActive]}>Filter</Text>
+          <View className="flex-row gap-2">
+            <Pressable className={`rounded-[12px] px-2.5 py-2 ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+              <Text className={`text-[11px] font-extrabold ${showFilters ? 'text-white' : 'text-ink'}`}>Filter</Text>
             </Pressable>
-            <Pressable onPress={() => setSortAZ((value) => !value)} style={[styles.iconButton, sortAZ && styles.iconButtonActive]}>
-              <Text style={[styles.iconButtonText, sortAZ && styles.iconButtonTextActive]}>A-Z</Text>
+            <Pressable className={`rounded-[12px] px-2.5 py-2 ${sortAZ ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setSortAZ((value) => !value)}>
+              <Text className={`text-[11px] font-extrabold ${sortAZ ? 'text-white' : 'text-ink'}`}>A-Z</Text>
             </Pressable>
           </View>
         }
       />
 
       {showFilters ? (
-        <View style={styles.filtersPanel}>
-          <Text style={styles.filterLabel}>Institute Type</Text>
-          <View style={styles.filterRow}>
+        <View className="gap-2.5">
+          <Text className="text-[11px] font-extrabold uppercase tracking-[0.7px] text-muted">Institute Type</Text>
+          <View className="flex-row flex-wrap gap-2.5">
             {['All', 'Engineering', 'Medical', 'Business', 'Design', 'Law'].map((label) => (
-              <Pressable key={label} onPress={() => setTypeFilter(label)} style={[styles.filterChip, typeFilter === label && styles.filterChipActive]}>
-                <Text style={[styles.filterChipText, typeFilter === label && styles.filterChipTextActive]}>{label}</Text>
+              <Pressable key={label} className={`rounded-full px-3 py-2 ${typeFilter === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setTypeFilter(label)}>
+                <Text className={`text-[11px] font-extrabold ${typeFilter === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
               </Pressable>
             ))}
           </View>
 
-          <Text style={styles.filterLabel}>Career</Text>
-          <View style={styles.filterRow}>
+          <Text className="text-[11px] font-extrabold uppercase tracking-[0.7px] text-muted">Career</Text>
+          <View className="flex-row flex-wrap gap-2.5">
             {['All', 'Engineering', 'Medical', 'Business', 'Design', 'Law'].map((label) => (
               <Pressable
                 key={`career-${label}`}
                 onPress={() => setCareerFilter(label)}
-                style={[styles.filterChip, careerFilter === label && styles.filterChipActive]}
+                className={`rounded-full px-3 py-2 ${careerFilter === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`}
               >
-                <Text style={[styles.filterChipText, careerFilter === label && styles.filterChipTextActive]}>{label}</Text>
+                <Text className={`text-[11px] font-extrabold ${careerFilter === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
               </Pressable>
             ))}
           </View>
         </View>
       ) : null}
 
-      <View style={styles.list}>
+      <View className="gap-3">
         {filtered.map((item, index) => (
-          <Pressable key={item.name} onPress={() => setSelectedIndex(index)} style={styles.card}>
-            <View style={styles.topRow}>
-              <View style={styles.badgeWrap}>
+          <Pressable key={item.name} className="gap-3 rounded-[22px] border border-line bg-card p-4" onPress={() => setSelectedIndex(index)}>
+            <View className="flex-row gap-3">
+              <View className="h-[50px] w-[50px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
                 <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={20} color={palette.primary} />
               </View>
-              <View style={styles.body}>
-                <Text style={styles.title}>{item.name}</Text>
-                <Text style={styles.location}>{item.location}</Text>
-                <View style={styles.pills}>
+              <View className="flex-1 gap-1">
+                <Text className="text-[15px] font-extrabold text-ink">{item.name}</Text>
+                <Text className="text-[12px] text-muted">{item.location}</Text>
+                <View className="flex-row gap-2">
                   <Pill label={item.type} tone={palette.blue} />
                   <Pill label={item.rank} tone={palette.primary} />
                 </View>
@@ -131,180 +131,3 @@ export default function InstituteScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  actions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  iconButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: '#f2ebe6',
-  },
-  iconButtonActive: {
-    backgroundColor: palette.primary,
-  },
-  iconButtonText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: palette.text,
-  },
-  iconButtonTextActive: {
-    color: '#fff',
-  },
-  filtersPanel: {
-    gap: 10,
-  },
-  filterLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    color: palette.muted,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: '#f2ebe6',
-  },
-  filterChipActive: {
-    backgroundColor: palette.primary,
-  },
-  filterChipText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: palette.text,
-  },
-  filterChipTextActive: {
-    color: '#fff',
-  },
-  list: {
-    gap: 12,
-  },
-  card: {
-    backgroundColor: palette.card,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 16,
-    gap: 12,
-  },
-  topRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  badgeWrap: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
-    backgroundColor: `${palette.primary}12`,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: {
-    flex: 1,
-    gap: 3,
-  },
-  title: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: palette.text,
-  },
-  location: {
-    fontSize: 12,
-    color: palette.muted,
-  },
-  pills: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  courseRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  courseChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: '#f7f2fb',
-  },
-  courseChipText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: palette.purple,
-  },
-  backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: '#f2ebe6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  detailHero: {
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 8,
-  },
-  detailIconWrap: {
-    width: 68,
-    height: 68,
-    borderRadius: 22,
-    backgroundColor: `${palette.primary}12`,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  detailTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: palette.text,
-    textAlign: 'center',
-  },
-  detailLocation: {
-    fontSize: 13,
-    color: palette.muted,
-    textAlign: 'center',
-  },
-  detailTags: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  detailCard: {
-    backgroundColor: palette.card,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 16,
-    gap: 10,
-  },
-  detailCardTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: palette.primary,
-  },
-  detailCardCopy: {
-    fontSize: 13,
-    lineHeight: 21,
-    color: palette.muted,
-  },
-  websiteButton: {
-    borderRadius: 16,
-    paddingVertical: 14,
-    alignItems: 'center',
-    backgroundColor: `${palette.primary}12`,
-  },
-  websiteButtonText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: palette.primary,
-  },
-});

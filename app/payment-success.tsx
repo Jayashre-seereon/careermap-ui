@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppState } from '../src/app-state';
@@ -28,98 +28,54 @@ export default function PaymentSuccessScreen() {
   }, [activatePlan, plan.id]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.iconWrap}>
-          <Text style={styles.iconText}>OK</Text>
+    <SafeAreaView className="flex-1 bg-paper">
+      <View className="flex-1 items-center justify-center gap-4 px-6 py-6">
+        <View className="h-[84px] w-[84px] items-center justify-center rounded-[28px]" style={{ backgroundColor: `${palette.green}14` }}>
+          <Text className="text-[28px] font-black text-success">OK</Text>
         </View>
-        <Text style={styles.title}>Payment Successful</Text>
-        <Text style={styles.subtitle}>{plan.name} is now active and premium features have been unlocked.</Text>
+        <Text className="text-center text-[30px] font-black text-ink">Payment Successful</Text>
+        <Text className="max-w-[280px] text-center text-[14px] leading-[22px] text-muted">
+          {plan.name} is now active and premium features have been unlocked.
+        </Text>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Payment Details</Text>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Plan</Text>
-            <Text style={styles.detailValue}>{plan.name}</Text>
+        <View className="w-full gap-2.5 rounded-[22px] border border-line bg-card p-[18px]">
+          <Text className="text-[15px] font-extrabold text-ink">Payment Details</Text>
+          <View className="flex-row items-center justify-between gap-4">
+            <Text className="text-[12px] text-muted">Plan</Text>
+            <Text className="shrink text-right text-[12px] font-extrabold text-ink">{plan.name}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Amount</Text>
-            <Text style={styles.detailValue}>{plan.price}</Text>
+          <View className="flex-row items-center justify-between gap-4">
+            <Text className="text-[12px] text-muted">Amount</Text>
+            <Text className="shrink text-right text-[12px] font-extrabold text-ink">{plan.price}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Method</Text>
-            <Text style={styles.detailValue}>{paymentMethodLabel}</Text>
+          <View className="flex-row items-center justify-between gap-4">
+            <Text className="text-[12px] text-muted">Method</Text>
+            <Text className="shrink text-right text-[12px] font-extrabold text-ink">{paymentMethodLabel}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Transaction ID</Text>
-            <Text style={styles.detailValue}>{transactionId ?? 'TXN00000000'}</Text>
+          <View className="flex-row items-center justify-between gap-4">
+            <Text className="text-[12px] text-muted">Transaction ID</Text>
+            <Text className="shrink text-right text-[12px] font-extrabold text-ink">{transactionId ?? 'TXN00000000'}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Valid Until</Text>
-            <Text style={[styles.detailValue, styles.detailValueAccent]}>{validUntil}</Text>
+          <View className="flex-row items-center justify-between gap-4">
+            <Text className="text-[12px] text-muted">Valid Until</Text>
+            <Text className="shrink text-right text-[12px] font-extrabold text-success">{validUntil}</Text>
           </View>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Unlocked Now</Text>
+        <View className="w-full gap-2.5 rounded-[22px] border border-line bg-card p-[18px]">
+          <Text className="text-[15px] font-extrabold text-ink">Unlocked Now</Text>
           {plan.features.map((feature) => (
-            <View key={feature} style={styles.featureRow}>
-              <View style={styles.featureDot} />
-              <Text style={styles.featureText}>{feature}</Text>
+            <View key={feature} className="flex-row items-center gap-2.5">
+              <View className="h-2 w-2 rounded-full bg-success" />
+              <Text className="text-[13px] leading-5 text-ink">{feature}</Text>
             </View>
           ))}
         </View>
 
-        <Pressable onPress={() => router.replace('/(drawer)/(tabs)/')} style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>Go to Dashboard</Text>
+        <Pressable className="w-full items-center rounded-[18px] bg-brand py-4" onPress={() => router.replace('/(drawer)/(tabs)/')}>
+          <Text className="text-[15px] font-extrabold text-white">Go to Dashboard</Text>
         </Pressable>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: palette.background },
-  container: { flex: 1, padding: 24, gap: 16, alignItems: 'center', justifyContent: 'center' },
-  iconWrap: {
-    width: 84,
-    height: 84,
-    borderRadius: 28,
-    backgroundColor: `${palette.green}14`,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconText: { fontSize: 28, fontWeight: '900', color: palette.green },
-  title: { fontSize: 30, fontWeight: '900', color: palette.text, textAlign: 'center' },
-  subtitle: { fontSize: 14, lineHeight: 22, color: palette.muted, textAlign: 'center', maxWidth: 280 },
-  card: {
-    width: '100%',
-    backgroundColor: palette.card,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 18,
-    gap: 10,
-  },
-  cardTitle: { fontSize: 15, fontWeight: '800', color: palette.text },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 16 },
-  detailLabel: { fontSize: 12, color: palette.muted },
-  detailValue: { fontSize: 12, fontWeight: '800', color: palette.text, flexShrink: 1, textAlign: 'right' },
-  detailValueAccent: { color: palette.green },
-  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  featureDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: palette.green,
-  },
-  featureText: { fontSize: 13, lineHeight: 20, color: palette.text },
-  primaryButton: {
-    width: '100%',
-    borderRadius: 18,
-    backgroundColor: palette.primary,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryButtonText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-});

@@ -1,70 +1,24 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { notifications, palette } from '../../src/careermap-data';
+import { notifications } from '../../src/careermap-data';
 import { Screen, SectionHeader } from '../../src/careermap-ui';
 
 export default function NotificationsScreen() {
   return (
     <Screen>
       <SectionHeader title="Notifications" subtitle="Recent updates from mentors, scholarships, and learning content." />
-      <View style={styles.list}>
+      <View className="gap-3">
         {notifications.map((item) => (
-          <View key={item.id} style={[styles.card, item.unread && styles.unreadCard]}>
-            <View style={styles.row}>
-              <Text style={styles.title}>{item.title}</Text>
-              {item.unread ? <View style={styles.dot} /> : null}
+          <View key={item.id} className={`gap-2 rounded-[22px] border p-[18px] ${item.unread ? 'border-[#e2b8a8] bg-[#fff8f4]' : 'border-line bg-card'}`}>
+            <View className="flex-row items-center justify-between gap-3">
+              <Text className="flex-1 text-[16px] font-extrabold text-ink">{item.title}</Text>
+              {item.unread ? <View className="h-[10px] w-[10px] rounded-full bg-brand" /> : null}
             </View>
-            <Text style={styles.message}>{item.message}</Text>
-            <Text style={styles.time}>{item.time}</Text>
+            <Text className="text-[14px] leading-[21px] text-muted">{item.message}</Text>
+            <Text className="text-[12px] font-bold text-brand">{item.time}</Text>
           </View>
         ))}
       </View>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  list: {
-    gap: 12,
-  },
-  card: {
-    backgroundColor: palette.card,
-    borderRadius: 22,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: palette.border,
-    gap: 8,
-  },
-  unreadCard: {
-    borderColor: '#e2b8a8',
-    backgroundColor: '#fff8f4',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  title: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '800',
-    color: palette.text,
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    backgroundColor: palette.primary,
-  },
-  message: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: palette.muted,
-  },
-  time: {
-    fontSize: 12,
-    color: palette.primary,
-    fontWeight: '700',
-  },
-});

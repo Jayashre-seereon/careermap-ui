@@ -3,9 +3,9 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { useAppState } from '../../../src/app-state';
-import { Pill, Screen, SectionHeader } from '../../../src/careermap-ui';
-import { featuredInstitutes, featuredMentors, featuredScholarships, moduleCards, palette, studentProfile } from '../../../src/careermap-data';
+import { useAppState } from '../src/app-state';
+import { Pill, Screen, SectionHeader } from '../src/careermap-ui';
+import { featuredInstitutes, featuredMentors, featuredScholarships, moduleCards, palette, studentProfile } from '../src/careermap-data';
 
 const personalityQuestions = [
   { q: 'When faced with a problem, I prefer to:', options: ['Analyze data systematically', 'Brainstorm creative solutions', 'Discuss with others', 'Act quickly on instinct'] },

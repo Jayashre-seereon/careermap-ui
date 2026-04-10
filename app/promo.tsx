@@ -1,10 +1,9 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BeeMascot } from '../src/bee-mascot';
-import { palette } from '../src/careermap-data';
 
 const features = [
   { title: 'Career Library', desc: '500+ career options across streams' },
@@ -19,25 +18,27 @@ export default function PromoScreen() {
 
   if (page === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={[styles.page, styles.heroPage]}>
-          <Pressable onPress={() => router.replace('/(drawer)')} style={styles.closeButton}>
-            <Text style={styles.closeText}>X</Text>
+      <SafeAreaView className="flex-1 bg-paper">
+        <View className="flex-1 items-center justify-center gap-[18px] overflow-hidden bg-brand px-6">
+          <Pressable className="absolute right-[18px] top-[18px] z-10 h-[34px] w-[34px] items-center justify-center rounded-full bg-white/20" onPress={() => router.replace('/(drawer)')}>
+            <Text className="text-[13px] font-black text-white">X</Text>
           </Pressable>
-          <View style={styles.heroGlowTop} />
-          <View style={styles.heroGlowBottom} />
-          <View style={styles.heroCard}>
+          <View className="absolute right-[-70px] top-20 h-[220px] w-[220px] rounded-full bg-white/10" />
+          <View className="absolute bottom-[-80px] left-[-80px] h-[260px] w-[260px] rounded-full bg-white/10" />
+          <View className="h-[104px] w-[104px] items-center justify-center rounded-[30px] bg-white">
             <BeeMascot size={86} />
           </View>
-          <Text style={styles.heroTitle}>Career Map</Text>
-          <Text style={styles.heroTagline}>Discover Your Future</Text>
-          <Text style={styles.heroCopy}>India&apos;s most comprehensive career guidance platform for students and parents.</Text>
-          <View style={styles.dots}>
-            <View style={styles.dotActive} />
-            <View style={styles.dot} />
+          <Text className="text-center text-[36px] font-black text-white">Career Map</Text>
+          <Text className="text-center text-[18px] text-white/80">Discover Your Future</Text>
+          <Text className="max-w-[280px] text-center text-[14px] leading-[22px] text-white/65">
+            India&apos;s most comprehensive career guidance platform for students and parents.
+          </Text>
+          <View className="mt-1 flex-row gap-2 self-center">
+            <View className="h-2 w-7 rounded-full bg-white" />
+            <View className="h-2 w-2 rounded-full bg-black/20" />
           </View>
-          <Pressable onPress={() => setPage(1)} style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>Next</Text>
+          <Pressable className="self-stretch rounded-[18px] bg-white py-4" onPress={() => setPage(1)}>
+            <Text className="text-center text-[15px] font-extrabold text-brand">Next</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -45,54 +46,26 @@ export default function PromoScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.page}>
-        <Text style={styles.pageTitle}>What You Can Explore</Text>
-        <Text style={styles.pageSubtitle}>Everything you need for career guidance</Text>
-        <View style={styles.featureList}>
+    <SafeAreaView className="flex-1 bg-paper">
+      <View className="flex-1 justify-center gap-[18px] px-6">
+        <Text className="text-center text-[30px] font-black text-ink">What You Can Explore</Text>
+        <Text className="mb-1.5 text-center text-[14px] text-muted">Everything you need for career guidance</Text>
+        <View className="gap-3">
           {features.map((feature) => (
-            <View key={feature.title} style={styles.featureCard}>
-              <Text style={styles.featureTitle}>{feature.title}</Text>
-              <Text style={styles.featureDesc}>{feature.desc}</Text>
+            <View key={feature.title} className="gap-1 rounded-[20px] border border-line bg-card p-4">
+              <Text className="text-[15px] font-extrabold text-ink">{feature.title}</Text>
+              <Text className="text-[12px] leading-[18px] text-muted">{feature.desc}</Text>
             </View>
           ))}
         </View>
-        <View style={styles.dots}>
-          <View style={styles.dot} />
-          <View style={styles.dotActive} />
+        <View className="mt-1 flex-row gap-2 self-center">
+          <View className="h-2 w-2 rounded-full bg-black/20" />
+          <View className="h-2 w-7 rounded-full bg-brand" />
         </View>
-        <Pressable onPress={() => router.replace('/(drawer)')} style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>Explore the App</Text>
+        <Pressable className="rounded-[18px] bg-brand py-4" onPress={() => router.replace('/(drawer)')}>
+          <Text className="text-center text-[15px] font-extrabold text-white">Explore the App</Text>
         </Pressable>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: palette.background },
-  page: { flex: 1, padding: 24, justifyContent: 'center', gap: 18 },
-  heroPage: { backgroundColor: palette.primary, overflow: 'hidden', alignItems: 'center' },
-  closeButton: { position: 'absolute', top: 18, right: 18, width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
-  closeText: { color: '#fff', fontSize: 13, fontWeight: '900' },
-  heroGlowTop: { position: 'absolute', top: 80, right: -70, width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(255,255,255,0.06)' },
-  heroGlowBottom: { position: 'absolute', bottom: -80, left: -80, width: 260, height: 260, borderRadius: 130, backgroundColor: 'rgba(255,255,255,0.06)' },
-  heroCard: { width: 104, height: 104, borderRadius: 30, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  heroIcon: { fontSize: 34, fontWeight: '900', color: palette.primaryDeep },
-  heroTitle: { fontSize: 36, fontWeight: '900', color: '#fff', textAlign: 'center' },
-  heroTagline: { fontSize: 18, color: 'rgba(255,255,255,0.76)', textAlign: 'center' },
-  heroCopy: { fontSize: 14, lineHeight: 22, color: 'rgba(255,255,255,0.62)', textAlign: 'center', maxWidth: 280 },
-  pageTitle: { fontSize: 30, fontWeight: '900', color: palette.text, textAlign: 'center' },
-  pageSubtitle: { fontSize: 14, color: palette.muted, textAlign: 'center', marginBottom: 6 },
-  featureList: { gap: 12 },
-  featureCard: { backgroundColor: palette.card, borderRadius: 20, borderWidth: 1, borderColor: palette.border, padding: 16, gap: 4 },
-  featureTitle: { fontSize: 15, fontWeight: '800', color: palette.text },
-  featureDesc: { fontSize: 12, lineHeight: 18, color: palette.muted },
-  dots: { flexDirection: 'row', alignSelf: 'center', gap: 8, marginTop: 4 },
-  dot: { width: 8, height: 8, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.16)' },
-  dotActive: { width: 28, height: 8, borderRadius: 999, backgroundColor: '#fff' },
-  secondaryButton: { alignSelf: 'stretch', borderRadius: 18, backgroundColor: '#fff', paddingVertical: 16, alignItems: 'center' },
-  secondaryButtonText: { fontSize: 15, fontWeight: '800', color: palette.primary },
-  primaryButton: { borderRadius: 18, backgroundColor: palette.primary, paddingVertical: 16, alignItems: 'center' },
-  primaryButtonText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-});

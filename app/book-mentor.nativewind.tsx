@@ -2,12 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 
-import { useAppState } from '../../src/app-state';
-import { mentors, palette } from '../../src/careermap-data';
-import { Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+import { mentors, palette } from '../src/careermap-data';
+import { Pill, Screen, SectionHeader } from '../src/careermap-ui';
 
 export default function BookMentorScreen() {
-  const { addBooking } = useAppState();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState('');
@@ -39,20 +37,10 @@ export default function BookMentorScreen() {
     if (!processing) return;
     const timer = setTimeout(() => {
       setProcessing(false);
-      if (selectedIndex !== null) {
-        const mentor = mentors[selectedIndex];
-        addBooking({
-          id: `booking-${mentor.name}-${selectedDate}-${selectedSlot}`,
-          mentorName: mentor.name,
-          date: selectedDate,
-          time: selectedSlot,
-          status: 'Confirmed',
-        });
-      }
       setBooked(true);
     }, 1600);
     return () => clearTimeout(timer);
-  }, [addBooking, processing, selectedDate, selectedIndex, selectedSlot]);
+  }, [processing]);
 
   if (processing) {
     return (

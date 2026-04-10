@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { useAppState } from '../../../src/app-state';
 import { assessmentFeatures, assessmentPolicies, palette } from '../../../src/careermap-data';
@@ -16,12 +16,12 @@ export default function AssessmentScreen() {
         subtitle="The mobile equivalent of the web prototype's full psychometric test entry screen."
       />
 
-      <View style={styles.heroCard}>
-        <View style={styles.heroIcon}>
-          <Text style={styles.heroIconText}>AI</Text>
+      <View className="items-center gap-2.5 rounded-[28px] border border-line bg-card p-[22px]">
+        <View className="h-20 w-20 items-center justify-center rounded-[24px]" style={{ backgroundColor: `${palette.primary}12` }}>
+          <Text className="text-[24px] font-black text-brand">AI</Text>
         </View>
-        <Text style={styles.heroTitle}>Full Psychometric Test</Text>
-        <Text style={styles.heroCopy}>
+        <Text className="text-center text-[24px] font-black text-ink">Full Psychometric Test</Text>
+        <Text className="text-center text-[14px] leading-[22px] text-muted">
           A comprehensive assessment to discover aptitude, personality traits, and the careers that fit you best.
         </Text>
         <Pressable
@@ -30,155 +30,46 @@ export default function AssessmentScreen() {
               ? router.push('/(drawer)/psychometric-test')
               : router.push({ pathname: '/checkout', params: { planId: 'psychometric' } })
           }
-          style={styles.primaryButton}
+          className="mt-1 rounded-full bg-brand px-[18px] py-3"
         >
-          <Text style={styles.primaryButtonText}>{unlocked ? 'Open Psychometric Test' : 'Subscribe to Unlock Full Test'}</Text>
+          <Text className="text-[14px] font-extrabold text-white">{unlocked ? 'Open Psychometric Test' : 'Subscribe to Unlock Full Test'}</Text>
         </Pressable>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Test Features</Text>
-        <View style={styles.list}>
+      <View className="gap-3 rounded-[24px] border border-line bg-card p-[18px]">
+        <Text className="text-[16px] font-extrabold text-ink">Test Features</Text>
+        <View className="gap-2.5">
           {assessmentFeatures.map((feature) => (
-            <View key={feature} style={styles.row}>
-              <View style={styles.tick} />
-              <Text style={styles.rowText}>{feature}</Text>
+            <View key={feature} className="flex-row items-center gap-2.5">
+              <View className="h-[10px] w-[10px] rounded-full bg-success" />
+              <Text className="flex-1 text-[14px] text-ink">{feature}</Text>
             </View>
           ))}
         </View>
       </View>
 
-      <View style={[styles.card, styles.policyCard]}>
-        <Text style={styles.cardTitle}>Test Policy</Text>
-        <View style={styles.list}>
+      <View className="gap-3 rounded-[24px] border border-line bg-[#fff8f8] p-[18px]">
+        <Text className="text-[16px] font-extrabold text-ink">Test Policy</Text>
+        <View className="gap-2.5">
           {assessmentPolicies.map((policy) => (
-            <Text key={policy} style={styles.policyText}>
+            <Text key={policy} className="text-[13px] leading-5 text-muted">
               - {policy}
             </Text>
           ))}
         </View>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Practice Routes</Text>
-        <View style={styles.linkList}>
-          <Pressable onPress={() => router.push('/(drawer)/quiz')} style={styles.linkButton}>
-            <Text style={styles.linkButtonText}>Open Quiz Practice</Text>
+      <View className="gap-3 rounded-[24px] border border-line bg-card p-[18px]">
+        <Text className="text-[16px] font-extrabold text-ink">Practice Routes</Text>
+        <View className="gap-2.5">
+          <Pressable className="items-center rounded-[14px] bg-brand py-3" onPress={() => router.push('/(drawer)/quiz')}>
+            <Text className="text-[13px] font-extrabold text-white">Open Quiz Practice</Text>
           </Pressable>
-          <Pressable onPress={() => router.push('/(drawer)/abroad')} style={[styles.linkButton, styles.secondaryLinkButton]}>
-            <Text style={[styles.linkButtonText, styles.secondaryLinkButtonText]}>Explore Study Abroad</Text>
+          <Pressable className="items-center rounded-[14px] py-3" onPress={() => router.push('/(drawer)/abroad')} style={{ backgroundColor: `${palette.blue}12` }}>
+            <Text className="text-[13px] font-extrabold" style={{ color: palette.blue }}>Explore Study Abroad</Text>
           </Pressable>
         </View>
       </View>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  heroCard: {
-    backgroundColor: palette.card,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 22,
-    alignItems: 'center',
-    gap: 10,
-  },
-  heroIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    backgroundColor: `${palette.primary}12`,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroIconText: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: palette.primary,
-  },
-  heroTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: palette.text,
-    textAlign: 'center',
-  },
-  heroCopy: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: palette.muted,
-    textAlign: 'center',
-  },
-  primaryButton: {
-    marginTop: 4,
-    borderRadius: 999,
-    backgroundColor: palette.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-  },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  card: {
-    backgroundColor: palette.card,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 18,
-    gap: 12,
-  },
-  policyCard: {
-    backgroundColor: '#fff8f8',
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: palette.text,
-  },
-  list: {
-    gap: 10,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  tick: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-    backgroundColor: palette.green,
-  },
-  rowText: {
-    flex: 1,
-    fontSize: 14,
-    color: palette.text,
-  },
-  policyText: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: palette.muted,
-  },
-  linkList: {
-    gap: 10,
-  },
-  linkButton: {
-    borderRadius: 14,
-    backgroundColor: palette.primary,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  secondaryLinkButton: {
-    backgroundColor: `${palette.blue}12`,
-  },
-  linkButtonText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#fff',
-  },
-  secondaryLinkButtonText: {
-    color: palette.blue,
-  },
-});

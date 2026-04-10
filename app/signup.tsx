@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { palette } from '../src/careermap-data';
@@ -19,13 +19,13 @@ export default function SignupScreen() {
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+    <SafeAreaView className="flex-1 bg-paper">
+      <ScrollView className="flex-1" contentContainerClassName="gap-[14px] px-6 py-6" showsVerticalScrollIndicator={false}>
         <Pressable onPress={() => router.back()}>
-          <Text style={styles.back}>Back</Text>
+          <Text className="text-[14px] font-bold text-muted">Back</Text>
         </Pressable>
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Join Career Map today</Text>
+        <Text className="text-[30px] font-black text-ink">Create Account</Text>
+        <Text className="mb-1.5 text-[14px] text-muted">Join Career Map today</Text>
 
         {[
           ['name', 'Full Name', 'Enter your full name'],
@@ -36,36 +36,23 @@ export default function SignupScreen() {
           ['city', 'City', 'Enter city'],
           ['state', 'State', 'Enter state'],
         ].map(([key, label, placeholder]) => (
-          <View key={key} style={styles.field}>
-            <Text style={styles.label}>{label}</Text>
+          <View key={key} className="gap-1.5">
+            <Text className="text-[12px] font-extrabold text-muted">{label}</Text>
             <TextInput
               value={form[key as keyof typeof form]}
               onChangeText={(value) => update(key as keyof typeof form, value)}
               placeholder={placeholder}
               placeholderTextColor={palette.muted}
-              style={styles.input}
+              className="h-14 rounded-[18px] border border-line bg-card px-4 text-[15px] text-ink"
               secureTextEntry={key.toLowerCase().includes('password')}
             />
           </View>
         ))}
 
-        <Pressable onPress={() => router.push('/otp-verify')} style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>Register</Text>
+        <Pressable className="mt-3 items-center rounded-[18px] bg-brand py-4" onPress={() => router.push('/otp-verify')}>
+          <Text className="text-[15px] font-extrabold text-white">Register</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: palette.background },
-  container: { padding: 24, gap: 14 },
-  back: { fontSize: 14, fontWeight: '700', color: palette.muted },
-  title: { fontSize: 30, fontWeight: '900', color: palette.text },
-  subtitle: { fontSize: 14, color: palette.muted, marginBottom: 6 },
-  field: { gap: 6 },
-  label: { fontSize: 12, fontWeight: '800', color: palette.muted },
-  input: { height: 56, borderRadius: 18, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.card, paddingHorizontal: 16, fontSize: 15, color: palette.text },
-  primaryButton: { marginTop: 12, borderRadius: 18, backgroundColor: palette.primary, paddingVertical: 16, alignItems: 'center' },
-  primaryButtonText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-});

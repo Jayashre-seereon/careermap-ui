@@ -1,41 +1,40 @@
-import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { palette } from '../src/careermap-data';
 
 export default function OtpVerifyScreen() {
+  const { next, identifier } = useLocalSearchParams<{ next?: string; identifier?: string }>();
   const [otp, setOtp] = useState('');
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Verify OTP</Text>
-        <Text style={styles.subtitle}>Enter the 4-digit code sent to your phone.</Text>
+    <SafeAreaView className="flex-1 bg-paper">
+      <View className="flex-1 items-center justify-center gap-[14px] px-6">
+        <Pressable className="absolute left-6 top-6 h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={18} color={palette.text} />
+        </Pressable>
+        <Text className="text-[28px] font-black text-ink">Verify OTP</Text>
+        <Text className="max-w-[260px] text-center text-[14px] text-muted">Enter the 4-digit code sent to {identifier || 'your phone'}.</Text>
         <TextInput
           value={otp}
           onChangeText={(value) => setOtp(value.replace(/\D/g, '').slice(0, 4))}
           keyboardType="number-pad"
           placeholder="0000"
           placeholderTextColor={palette.muted}
-          style={styles.input}
+          className="h-[60px] w-full max-w-[220px] rounded-[18px] border border-line bg-card px-4 text-center text-[22px] font-extrabold tracking-[12px] text-ink"
         />
-        <Pressable disabled={otp.length !== 4} onPress={() => router.replace('/profile-setup')} style={[styles.primaryButton, otp.length !== 4 && styles.primaryButtonDisabled]}>
-          <Text style={styles.primaryButtonText}>Verify and Continue</Text>
+        <Pressable
+          className="mt-2 w-full max-w-[260px] items-center rounded-[18px] bg-brand py-4"
+          disabled={otp.length !== 4}
+          onPress={() => router.replace(next || '/profile-setup')}
+          style={({ pressed }) => ({ opacity: otp.length !== 4 || pressed ? 0.42 : 1 })}
+        >
+          <Text className="text-[15px] font-extrabold text-white">Verify and Continue</Text>
         </Pressable>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: palette.background },
-  container: { flex: 1, padding: 24, alignItems: 'center', justifyContent: 'center', gap: 14 },
-  title: { fontSize: 28, fontWeight: '900', color: palette.text },
-  subtitle: { fontSize: 14, color: palette.muted, textAlign: 'center', maxWidth: 260 },
-  input: { width: '100%', maxWidth: 220, height: 60, borderRadius: 18, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.card, textAlign: 'center', letterSpacing: 12, fontSize: 22, fontWeight: '800', color: palette.text },
-  primaryButton: { width: '100%', maxWidth: 260, borderRadius: 18, backgroundColor: palette.primary, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
-  primaryButtonDisabled: { opacity: 0.42 },
-  primaryButtonText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-});

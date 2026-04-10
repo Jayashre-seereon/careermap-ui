@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useAppState } from './app-state';
 import { palette } from './careermap-data';
 
 type HeaderProps = {
@@ -11,9 +12,10 @@ type HeaderProps = {
 };
 
 export function Screen({ children }: { children: React.ReactNode }) {
+  const { preferences } = useAppState();
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+    <SafeAreaView className={`flex-1 ${preferences.darkMode ? 'bg-[#140f17]' : 'bg-paper'}`} edges={['top']}>
+      <ScrollView className="flex-1" contentContainerClassName="gap-[18px] px-5 py-5" showsVerticalScrollIndicator={false}>
         {children}
       </ScrollView>
     </SafeAreaView>
@@ -21,11 +23,12 @@ export function Screen({ children }: { children: React.ReactNode }) {
 }
 
 export function SectionHeader({ title, subtitle, action }: HeaderProps) {
+  const { preferences } = useAppState();
   return (
-    <View style={styles.sectionHeader}>
-      <View style={styles.sectionHeaderText}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        {subtitle ? <Text style={styles.sectionSubtitle}>{subtitle}</Text> : null}
+    <View className="flex-row items-end justify-between gap-3">
+      <View className="flex-1 gap-1">
+        <Text className={`text-[18px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
+        {subtitle ? <Text className={`text-[13px] leading-[18px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{subtitle}</Text> : null}
       </View>
       {action}
     </View>
@@ -41,19 +44,22 @@ export function HeroCard({
   title: string;
   description: string;
 }) {
+  const { preferences } = useAppState();
   return (
-    <View style={styles.heroCard}>
-      <Text style={styles.heroEyebrow}>{eyebrow}</Text>
-      <Text style={styles.heroTitle}>{title}</Text>
-      <Text style={styles.heroDescription}>{description}</Text>
+    <View className={`gap-2.5 rounded-[28px] border p-[22px] shadow-card ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+      <Text className="text-[12px] font-bold uppercase tracking-[1px] text-brand">{eyebrow}</Text>
+      <Text className={`text-[28px] font-black leading-[34px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
+      <Text className={`text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{description}</Text>
     </View>
   );
 }
 
 export function Pill({ label, tone = palette.primary }: { label: string; tone?: string }) {
   return (
-    <View style={[styles.pill, { backgroundColor: `${tone}15` }]}>
-      <Text style={[styles.pillText, { color: tone }]}>{label}</Text>
+    <View className="self-start rounded-full px-3 py-[7px]" style={{ backgroundColor: `${tone}15` }}>
+      <Text className="text-[12px] font-bold" style={{ color: tone }}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -69,13 +75,14 @@ export function InfoCard({
   subtitle: string;
   onPress?: () => void;
 }) {
+  const { preferences } = useAppState();
   const content = (
-    <View style={styles.infoCard}>
-      <View style={styles.infoIconWrap}>
+    <View className={`min-h-[140px] min-w-[47%] flex-1 gap-2.5 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+      <View className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-[#f8ece7]'}`}>
         <Ionicons name={icon} size={20} color={palette.primary} />
       </View>
-      <Text style={styles.infoTitle}>{title}</Text>
-      <Text style={styles.infoSubtitle}>{subtitle}</Text>
+      <Text className={`text-[16px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
+      <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{subtitle}</Text>
     </View>
   );
 
@@ -84,7 +91,14 @@ export function InfoCard({
   }
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}>
+    <Pressable
+      className="min-w-[47%] flex-1 rounded-[24px]"
+      onPress={onPress}
+      style={({ pressed }) => ({
+        opacity: pressed ? 0.92 : 1,
+        transform: [{ scale: pressed ? 0.985 : 1 }],
+      })}
+    >
       {content}
     </Pressable>
   );
@@ -101,16 +115,24 @@ export function ListRow({
   value?: string;
   onPress?: () => void;
 }) {
+  const { preferences } = useAppState();
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-      <View style={styles.rowLeading}>
-        <View style={styles.rowIconWrap}>
+    <Pressable
+      className={`flex-row items-center justify-between gap-3 rounded-[20px] border px-4 py-[15px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        opacity: pressed ? 0.92 : 1,
+        transform: [{ scale: pressed ? 0.985 : 1 }],
+      })}
+    >
+      <View className="flex-1 flex-row items-center gap-3">
+        <View className={`h-[34px] w-[34px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-[#f8ece7]'}`}>
           <Ionicons name={icon} size={18} color={palette.primary} />
         </View>
-        <Text style={styles.rowTitle}>{title}</Text>
+        <Text className={`flex-1 text-[15px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
       </View>
-      <View style={styles.rowTrailing}>
-        {value ? <Text style={styles.rowValue}>{value}</Text> : null}
+      <View className="flex-row items-center gap-2">
+        {value ? <Text className={`text-[12px] font-semibold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{value}</Text> : null}
         <Ionicons name="chevron-forward" size={18} color={palette.muted} />
       </View>
     </Pressable>
@@ -126,186 +148,12 @@ export function StatCard({
   value: string;
   tone: string;
 }) {
+  const { preferences } = useAppState();
   return (
-    <View style={styles.statCard}>
-      <View style={[styles.statDot, { backgroundColor: tone }]} />
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+    <View className={`flex-1 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+      <View className="h-[10px] w-[10px] rounded-full" style={{ backgroundColor: tone }} />
+      <Text className={`text-[24px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{value}</Text>
+      <Text className={`text-[12px] font-semibold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: palette.background,
-  },
-  scrollContent: {
-    padding: 20,
-    gap: 18,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  sectionHeaderText: {
-    flex: 1,
-    gap: 4,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: palette.text,
-  },
-  sectionSubtitle: {
-    fontSize: 13,
-    color: palette.muted,
-    lineHeight: 18,
-  },
-  heroCard: {
-    backgroundColor: palette.card,
-    borderRadius: 28,
-    padding: 22,
-    borderWidth: 1,
-    borderColor: palette.border,
-    shadowColor: '#5a3b1f',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 10 },
-    shadowRadius: 20,
-    elevation: 4,
-    gap: 10,
-  },
-  heroEyebrow: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: palette.primary,
-  },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: '900',
-    lineHeight: 34,
-    color: palette.text,
-  },
-  heroDescription: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: palette.muted,
-  },
-  pill: {
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  pillText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  infoCard: {
-    backgroundColor: palette.card,
-    borderRadius: 24,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: palette.border,
-    minHeight: 140,
-    gap: 10,
-    flex: 1,
-    minWidth: '47%',
-  },
-  infoIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: '#f8ece7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: palette.text,
-  },
-  infoSubtitle: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: palette.muted,
-  },
-  pressable: {
-    borderRadius: 24,
-    minWidth: '47%',
-    flex: 1,
-  },
-  pressed: {
-    opacity: 0.82,
-  },
-  row: {
-    backgroundColor: palette.card,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: palette.border,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  rowLeading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  rowIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    backgroundColor: '#f8ece7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: palette.text,
-    flex: 1,
-  },
-  rowTrailing: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  rowValue: {
-    fontSize: 12,
-    color: palette.muted,
-    fontWeight: '600',
-  },
-  statCard: {
-    backgroundColor: palette.card,
-    borderRadius: 22,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: palette.border,
-    flex: 1,
-    gap: 10,
-  },
-  statDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 999,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: palette.text,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: palette.muted,
-    fontWeight: '600',
-  },
-});

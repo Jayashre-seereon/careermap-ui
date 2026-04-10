@@ -1,130 +1,226 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BeeMascot } from '../src/bee-mascot';
-import { palette } from '../src/careermap-data';
+import { existingUsers, palette } from '../src/careermap-data';
 
 export default function LoginScreen() {
-  const [loginMode, setLoginMode] = useState<'mobile' | 'coupon'>('mobile');
+  const { userType } = useLocalSearchParams<{ userType?: string }>();
+  const isExistingUser = userType === 'existing';
+  const [loginMode, setLoginMode] = useState<'mobile' | 'coupon' | 'email'>('mobile');
   const [mobile, setMobile] = useState('');
   const [coupon, setCoupon] = useState('');
-  const [couponStatus, setCouponStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [status, setStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({
+    type: 'idle',
+    message: '',
+  });
+
+  const knownMobileUser = useMemo(() => existingUsers.find((item) => item.mobile === mobile), [mobile]);
+  const knownCouponUser = useMemo(() => existingUsers.find((item) => item.coupon === coupon.trim().toUpperCase()), [coupon]);
+  const knownEmailUser = useMemo(
+    () => existingUsers.find((item) => item.email.toLowerCase() === email.trim().toLowerCase()),
+    [email],
+  );
 
   const handleSendOtp = () => {
-    router.push('/otp-verify');
+    if (isExistingUser && !knownMobileUser) {
+      setStatus({ type: 'error', message: 'User not exist with this mobile number.' });
+      return;
+    }
+
+    router.push({
+      pathname: '/otp-verify',
+      params: {
+        next: isExistingUser ? '/(drawer)/(tabs)' : '/profile-setup',
+        identifier: mobile,
+      },
+    });
   };
 
   const handleCouponLogin = () => {
-    if (coupon.trim().length >= 3) {
-      setCouponStatus('success');
-      setTimeout(() => router.replace('/profile-setup'), 500);
+    const normalized = coupon.trim().toUpperCase();
+    if (normalized.length < 3) {
+      setStatus({ type: 'error', message: 'Enter a valid coupon code.' });
       return;
     }
-    setCouponStatus('error');
+
+    if (isExistingUser && !knownCouponUser) {
+      setStatus({ type: 'error', message: 'User not exist with this coupon code.' });
+      return;
+    }
+
+    router.replace(isExistingUser ? '/(drawer)/(tabs)' : '/profile-setup');
+  };
+
+  const handleEmailLogin = () => {
+    if (!knownEmailUser) {
+      setStatus({ type: 'error', message: 'User not exist with this email.' });
+      return;
+    }
+
+    if (knownEmailUser.password !== password) {
+      setStatus({ type: 'error', message: 'Incorrect password.' });
+      return;
+    }
+
+    router.replace('/(drawer)/(tabs)');
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.logoCard}>
+    <SafeAreaView className="flex-1 bg-paper">
+      <View className="flex-1 gap-6 px-6 py-6">
+        <Pressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={18} color={palette.text} />
+        </Pressable>
+
+        <View className="items-center gap-2.5 pt-2">
+          <View className="h-[84px] w-[84px] items-center justify-center rounded-[28px] bg-card">
             <BeeMascot size={64} />
           </View>
-          <Text style={styles.title}>Welcome to Career Map</Text>
-          <Text style={styles.subtitle}>Choose how you&apos;d like to sign in</Text>
+          <Text className="text-center text-[28px] font-black text-ink">{isExistingUser ? 'Welcome Back' : 'Continue Your Journey'}</Text>
+          <Text className="text-center text-[14px] text-muted">
+            {isExistingUser ? 'Login as an existing user' : 'Use OTP or coupon to continue'}
+          </Text>
         </View>
 
-        <View style={styles.toggle}>
-          <Pressable onPress={() => setLoginMode('mobile')} style={[styles.toggleItem, loginMode === 'mobile' && styles.toggleItemActive]}>
-            <Text style={[styles.toggleText, loginMode === 'mobile' && styles.toggleTextActive]}>Mobile OTP</Text>
+        {isExistingUser ? (
+          <View className="gap-1 rounded-[18px] border border-line bg-card p-4">
+            <Text className="text-[13px] font-extrabold text-ink">Example existing users</Text>
+            <Text className="text-[12px] text-muted">Mobile: `9876543210`</Text>
+            <Text className="text-[12px] text-muted">Email: `aarav.sharma@email.com`</Text>
+            <Text className="text-[12px] text-muted">Password: `Aarav@123`</Text>
+            <Text className="text-[12px] text-muted">Coupon: `CAREER2026`</Text>
+          </View>
+        ) : null}
+
+        <View className="flex-row gap-1 rounded-[18px] bg-[#e8e2de] p-1">
+          <Pressable className={`flex-1 items-center rounded-[14px] py-3 ${loginMode === 'mobile' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('mobile')}>
+            <Text className={`text-[12px] font-extrabold ${loginMode === 'mobile' ? 'text-white' : 'text-muted'}`}>Mobile OTP</Text>
           </Pressable>
-          <Pressable onPress={() => setLoginMode('coupon')} style={[styles.toggleItem, loginMode === 'coupon' && styles.toggleItemActive]}>
-            <Text style={[styles.toggleText, loginMode === 'coupon' && styles.toggleTextActive]}>Coupon Code</Text>
+          <Pressable className={`flex-1 items-center rounded-[14px] py-3 ${loginMode === 'coupon' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('coupon')}>
+            <Text className={`text-[12px] font-extrabold ${loginMode === 'coupon' ? 'text-white' : 'text-muted'}`}>Coupon</Text>
           </Pressable>
+          {isExistingUser ? (
+            <Pressable className={`flex-1 items-center rounded-[14px] py-3 ${loginMode === 'email' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('email')}>
+              <Text className={`text-[12px] font-extrabold ${loginMode === 'email' ? 'text-white' : 'text-muted'}`}>Email</Text>
+            </Pressable>
+          ) : null}
         </View>
 
         {loginMode === 'mobile' ? (
-          <View style={styles.form}>
-            <Text style={styles.label}>Mobile Number</Text>
-            <View style={styles.mobileRow}>
-              <Text style={styles.countryCode}>+91</Text>
+          <View className="gap-[14px]">
+            <Text className="text-[12px] font-extrabold text-muted">Mobile Number</Text>
+            <View className="h-14 flex-row items-center gap-2.5 rounded-[18px] border border-line bg-card px-4">
+              <Text className="text-[15px] font-extrabold text-ink">+91</Text>
               <TextInput
                 value={mobile}
-                onChangeText={(value) => setMobile(value.replace(/\D/g, '').slice(0, 10))}
+                onChangeText={(value) => {
+                  setMobile(value.replace(/\D/g, '').slice(0, 10));
+                  setStatus({ type: 'idle', message: '' });
+                }}
                 keyboardType="number-pad"
                 placeholder="Enter mobile number"
                 placeholderTextColor={palette.muted}
-                style={styles.mobileInput}
+                className="flex-1 text-[15px] text-ink"
               />
             </View>
-            <Pressable disabled={mobile.length !== 10} onPress={handleSendOtp} style={[styles.primaryButton, mobile.length !== 10 && styles.primaryButtonDisabled]}>
-              <Text style={styles.primaryButtonText}>Send OTP</Text>
+            <Pressable
+              className="mt-1.5 items-center rounded-[18px] bg-brand py-4"
+              disabled={mobile.length !== 10}
+              onPress={handleSendOtp}
+              style={({ pressed }) => ({ opacity: mobile.length !== 10 || pressed ? 0.42 : 1 })}
+            >
+              <Text className="text-[15px] font-extrabold text-white">Send OTP</Text>
             </Pressable>
           </View>
-        ) : (
-          <View style={styles.form}>
-            <Text style={styles.label}>Institution Coupon Code</Text>
+        ) : null}
+
+        {loginMode === 'coupon' ? (
+          <View className="gap-[14px]">
+            <Text className="text-[12px] font-extrabold text-muted">Institution Coupon Code</Text>
             <TextInput
               value={coupon}
               onChangeText={(value) => {
                 setCoupon(value.toUpperCase());
-                setCouponStatus('idle');
+                setStatus({ type: 'idle', message: '' });
               }}
               autoCapitalize="characters"
               placeholder="Enter coupon code"
               placeholderTextColor={palette.muted}
-              style={styles.input}
+              className="h-14 rounded-[18px] border border-line bg-card px-4 text-[15px] text-ink"
             />
-            <Pressable disabled={coupon.length < 3} onPress={handleCouponLogin} style={[styles.primaryButton, coupon.length < 3 && styles.primaryButtonDisabled]}>
-              <Text style={styles.primaryButtonText}>Login with Coupon</Text>
+            <Pressable
+              className="mt-1.5 items-center rounded-[18px] bg-brand py-4"
+              disabled={coupon.length < 3}
+              onPress={handleCouponLogin}
+              style={({ pressed }) => ({ opacity: coupon.length < 3 || pressed ? 0.42 : 1 })}
+            >
+              <Text className="text-[15px] font-extrabold text-white">{isExistingUser ? 'Login with Coupon' : 'Continue with Coupon'}</Text>
             </Pressable>
-            {couponStatus === 'success' ? <Text style={styles.successText}>Coupon verified. Redirecting...</Text> : null}
-            {couponStatus === 'error' ? <Text style={styles.errorText}>Invalid coupon code. Try a valid institute code.</Text> : null}
           </View>
-        )}
+        ) : null}
 
-        <View style={styles.footer}>
+        {isExistingUser && loginMode === 'email' ? (
+          <View className="gap-[14px]">
+            <Text className="text-[12px] font-extrabold text-muted">Email Address</Text>
+            <TextInput
+              value={email}
+              onChangeText={(value) => {
+                setEmail(value);
+                setStatus({ type: 'idle', message: '' });
+              }}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholder="Enter email"
+              placeholderTextColor={palette.muted}
+              className="h-14 rounded-[18px] border border-line bg-card px-4 text-[15px] text-ink"
+            />
+            <Text className="text-[12px] font-extrabold text-muted">Password</Text>
+            <TextInput
+              value={password}
+              onChangeText={(value) => {
+                setPassword(value);
+                setStatus({ type: 'idle', message: '' });
+              }}
+              secureTextEntry
+              placeholder="Enter password"
+              placeholderTextColor={palette.muted}
+              className="h-14 rounded-[18px] border border-line bg-card px-4 text-[15px] text-ink"
+            />
+            <Pressable
+              className="mt-1.5 items-center rounded-[18px] bg-brand py-4"
+              disabled={!email || !password}
+              onPress={handleEmailLogin}
+              style={({ pressed }) => ({ opacity: !email || !password || pressed ? 0.42 : 1 })}
+            >
+              <Text className="text-[15px] font-extrabold text-white">Login with Email</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {status.type !== 'idle' ? (
+          <Text className={`text-center text-[12px] font-bold ${status.type === 'error' ? 'text-danger' : 'text-success'}`}>{status.message}</Text>
+        ) : null}
+
+        <View className="mt-auto items-center gap-3 pb-2.5">
           <Pressable onPress={() => router.push('/forgot-password')}>
-            <Text style={styles.forgotLink}>Forgot Password?</Text>
+            <Text className="text-[13px] font-bold text-muted">Forgot Password?</Text>
           </Pressable>
-          <Pressable onPress={() => router.push('/signup')}>
-            <Text style={styles.signupLink}>Create Account</Text>
-          </Pressable>
-          <Text style={styles.terms}>By continuing, you agree to Career Map&apos;s Terms of Service and Privacy Policy.</Text>
+          {!isExistingUser ? (
+            <Pressable onPress={() => router.push('/signup')}>
+              <Text className="text-[14px] font-extrabold text-brand">Create Account</Text>
+            </Pressable>
+          ) : null}
+          <Text className="text-center text-[11px] leading-[17px] text-muted">
+            By continuing, you agree to Career Map&apos;s Terms of Service and Privacy Policy.
+          </Text>
         </View>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: palette.background },
-  container: { flex: 1, padding: 24, gap: 24 },
-  header: { alignItems: 'center', gap: 10, paddingTop: 20 },
-  logoCard: { width: 84, height: 84, borderRadius: 28, backgroundColor: palette.card, alignItems: 'center', justifyContent: 'center' },
-  logoText: { fontSize: 30, fontWeight: '900', color: palette.primary },
-  title: { fontSize: 28, fontWeight: '900', color: palette.text, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: palette.muted, textAlign: 'center' },
-  toggle: { flexDirection: 'row', backgroundColor: '#e8e2de', borderRadius: 18, padding: 4, gap: 4 },
-  toggleItem: { flex: 1, borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
-  toggleItemActive: { backgroundColor: palette.primary },
-  toggleText: { fontSize: 12, fontWeight: '800', color: palette.muted },
-  toggleTextActive: { color: '#fff' },
-  form: { gap: 14 },
-  label: { fontSize: 12, fontWeight: '800', color: palette.muted },
-  input: { height: 56, borderRadius: 18, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.card, paddingHorizontal: 16, fontSize: 15, color: palette.text },
-  mobileRow: { flexDirection: 'row', alignItems: 'center', height: 56, borderRadius: 18, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.card, paddingHorizontal: 16, gap: 10 },
-  countryCode: { fontSize: 15, fontWeight: '800', color: palette.text },
-  mobileInput: { flex: 1, fontSize: 15, color: palette.text },
-  primaryButton: { marginTop: 6, borderRadius: 18, backgroundColor: palette.primary, paddingVertical: 16, alignItems: 'center' },
-  primaryButtonDisabled: { opacity: 0.42 },
-  primaryButtonText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-  successText: { fontSize: 12, fontWeight: '700', color: palette.green, textAlign: 'center' },
-  errorText: { fontSize: 12, fontWeight: '700', color: palette.danger, textAlign: 'center' },
-  footer: { marginTop: 'auto', alignItems: 'center', gap: 12, paddingBottom: 10 },
-  forgotLink: { fontSize: 13, fontWeight: '700', color: palette.muted },
-  signupLink: { fontSize: 14, fontWeight: '800', color: palette.primary },
-  terms: { fontSize: 11, lineHeight: 17, color: palette.muted, textAlign: 'center' },
-});

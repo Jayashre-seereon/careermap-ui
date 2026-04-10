@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Animated, PanResponder, StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import { Animated, PanResponder, StyleProp, ViewStyle } from 'react-native';
 
 const beeImage = require('../assets/images/career-bee.png');
 
@@ -55,8 +55,8 @@ export function BeeMascot({ size = 100, style }: BeeMascotProps) {
 
     return (
         <Animated.View
+            className="items-center justify-center"
             style={[
-                styles.root,
                 style,
                 {
                     width: size,
@@ -66,18 +66,7 @@ export function BeeMascot({ size = 100, style }: BeeMascotProps) {
             ]}
             {...panResponder.panHandlers}
         >
-            <Animated.Image source={beeImage} style={[styles.beeImage, { width: size, height: size }]} resizeMode="contain" />
+            <Animated.Image source={beeImage} className="h-full w-full" style={{ width: size, height: size }} resizeMode="contain" />
         </Animated.View>
     );
 }
-
-const styles = StyleSheet.create({
-    root: {
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    beeImage: {
-        width: '100%',
-        height: '100%',
-    },
-});

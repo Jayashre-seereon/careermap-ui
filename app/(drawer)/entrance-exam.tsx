@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { palette } from '../../src/careermap-data';
 import { Screen, SectionHeader } from '../../src/careermap-ui';
@@ -37,225 +36,72 @@ export default function EntranceExamScreen() {
         <Screen>
             <SectionHeader title="Entrance Exams" subtitle="Practice tests and exam preparation guides." />
 
-            <View style={styles.filterHeader}>
-                <Pressable onPress={() => setShowFilters(!showFilters)} style={[styles.filterButton, showFilters && styles.filterButtonActive]}>
-                    <Ionicons name="filter" size={16} color={showFilters ? palette.surface : palette.text} />
-                    <Text style={[styles.filterButtonText, showFilters && styles.filterButtonTextActive]}>Filters</Text>
+            <View className="px-6 py-3">
+                <Pressable className={`self-start rounded-full border px-3 py-1.5 ${showFilters ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setShowFilters(!showFilters)}>
+                    <View className="flex-row items-center">
+                        <Ionicons name="filter" size={16} color={showFilters ? palette.surface : palette.text} />
+                        <Text className={`ml-1.5 text-[12px] font-semibold ${showFilters ? 'text-surface' : 'text-ink'}`}>Filters</Text>
+                    </View>
                 </Pressable>
             </View>
 
             {showFilters && (
-                <View style={styles.filtersContainer}>
-                    <Text style={styles.filterLabel}>Exam Type</Text>
-                    <View style={styles.filterRow}>
+                <View className="px-6 pb-3">
+                    <Text className="mb-2 mt-2 text-[12px] font-bold uppercase text-muted">Exam Type</Text>
+                    <View className="flex-row flex-wrap gap-2">
                         {typeFilters.map(f => (
-                            <Pressable key={f} onPress={() => setTypeFilter(f)} style={[styles.filterChip, typeFilter === f && styles.filterChipActive]}>
-                                <Text style={[styles.filterChipText, typeFilter === f && styles.filterChipTextActive]}>{f}</Text>
+                            <Pressable key={f} className={`rounded-2xl border px-3 py-1.5 ${typeFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setTypeFilter(f)}>
+                                <Text className={`text-[11px] font-semibold ${typeFilter === f ? 'text-surface' : 'text-ink'}`}>{f}</Text>
                             </Pressable>
                         ))}
                     </View>
-                    <Text style={styles.filterLabel}>Category</Text>
-                    <View style={styles.filterRow}>
+                    <Text className="mb-2 mt-2 text-[12px] font-bold uppercase text-muted">Category</Text>
+                    <View className="flex-row flex-wrap gap-2">
                         {categoryFilters.map(f => (
-                            <Pressable key={f} onPress={() => setCatFilter(f)} style={[styles.filterChip, catFilter === f && styles.filterChipActive]}>
-                                <Text style={[styles.filterChipText, catFilter === f && styles.filterChipTextActive]}>{f}</Text>
+                            <Pressable key={f} className={`rounded-2xl border px-3 py-1.5 ${catFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setCatFilter(f)}>
+                                <Text className={`text-[11px] font-semibold ${catFilter === f ? 'text-surface' : 'text-ink'}`}>{f}</Text>
                             </Pressable>
                         ))}
                     </View>
                 </View>
             )}
 
-            <ScrollView contentContainerStyle={styles.examList}>
-                {filtered.map((exam, index) => (
-                    <View key={exam.name} style={styles.examCard}>
-                        <View style={styles.examHeader}>
-                            <View style={styles.examIcon}>
+            <ScrollView contentContainerClassName="px-6 pb-6" showsVerticalScrollIndicator={false}>
+                {filtered.map((exam) => (
+                    <View key={exam.name} className="mb-3 rounded-[12px] bg-card p-4 shadow-card">
+                        <View className="flex-row items-start">
+                            <View className="mr-3 h-10 w-10 items-center justify-center rounded-[10px]" style={{ backgroundColor: `${palette.primary}15` }}>
                                 <Ionicons name="document-text-outline" size={20} color={palette.primary} />
                             </View>
-                            <View style={styles.examInfo}>
-                                <Text style={styles.examName}>{exam.name}</Text>
-                                <Text style={styles.examAuthority}>{exam.authority}</Text>
-                                <View style={styles.examMeta}>
+                            <View className="flex-1">
+                                <Text className="mb-0.5 text-[16px] font-bold text-ink">{exam.name}</Text>
+                                <Text className="mb-1 text-[12px] text-muted">{exam.authority}</Text>
+                                <View className="mb-0.5 flex-row items-center">
                                     <Ionicons name="calendar-outline" size={12} color={palette.muted} />
-                                    <Text style={styles.examDate}>{exam.date}</Text>
+                                    <Text className="ml-1 text-[11px] text-muted">{exam.date}</Text>
                                 </View>
-                                <Text style={styles.examEligibility}>{exam.eligibility}</Text>
-                                <View style={styles.examTags}>
-                                    <View style={[styles.tag, { backgroundColor: `${palette.blue}20` }]}>
-                                        <Text style={[styles.tagText, { color: palette.blue }]}>{exam.type}</Text>
+                                <Text className="mb-1.5 text-[11px] text-muted">{exam.eligibility}</Text>
+                                <View className="flex-row gap-1.5">
+                                    <View className="rounded-[10px] px-2 py-0.5" style={{ backgroundColor: `${palette.blue}20` }}>
+                                        <Text className="text-[9px] font-bold uppercase" style={{ color: palette.blue }}>{exam.type}</Text>
                                     </View>
-                                    <View style={[styles.tag, { backgroundColor: `${palette.green}20` }]}>
-                                        <Text style={[styles.tagText, { color: palette.green }]}>{exam.category}</Text>
+                                    <View className="rounded-[10px] px-2 py-0.5" style={{ backgroundColor: `${palette.green}20` }}>
+                                        <Text className="text-[9px] font-bold uppercase" style={{ color: palette.green }}>{exam.category}</Text>
                                     </View>
                                 </View>
                             </View>
-                            <Pressable style={styles.examAction}>
+                            <Pressable className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: `${palette.primary}15` }}>
                                 <Ionicons name="open-outline" size={16} color={palette.primary} />
                             </Pressable>
                         </View>
                     </View>
                 ))}
                 {filtered.length === 0 && (
-                    <View style={styles.emptyState}>
-                        <Text style={styles.emptyText}>No exams match your filters</Text>
+                    <View className="items-center justify-center py-12">
+                        <Text className="text-[14px] text-muted">No exams match your filters</Text>
                     </View>
                 )}
             </ScrollView>
         </Screen>
     );
 }
-
-const styles = StyleSheet.create({
-    filterHeader: {
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-    },
-    filterButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        alignSelf: 'flex-start',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
-        backgroundColor: palette.surface,
-        borderWidth: 1,
-        borderColor: palette.border,
-    },
-    filterButtonActive: {
-        backgroundColor: palette.primary,
-    },
-    filterButtonText: {
-        marginLeft: 6,
-        fontSize: 12,
-        fontWeight: '600',
-        color: palette.text,
-    },
-    filterButtonTextActive: {
-        color: palette.surface,
-    },
-    filtersContainer: {
-        paddingHorizontal: 24,
-        paddingBottom: 12,
-    },
-    filterLabel: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: palette.muted,
-        textTransform: 'uppercase',
-        marginBottom: 8,
-        marginTop: 8,
-    },
-    filterRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    filterChip: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 16,
-        backgroundColor: palette.surface,
-        borderWidth: 1,
-        borderColor: palette.border,
-    },
-    filterChipActive: {
-        backgroundColor: palette.primary,
-        borderColor: palette.primary,
-    },
-    filterChipText: {
-        fontSize: 11,
-        fontWeight: '600',
-        color: palette.text,
-    },
-    filterChipTextActive: {
-        color: palette.surface,
-    },
-    examList: {
-        paddingHorizontal: 24,
-        paddingBottom: 24,
-    },
-    examCard: {
-        backgroundColor: palette.card,
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    examHeader: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-    },
-    examIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 10,
-        backgroundColor: `${palette.primary}15`,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 12,
-    },
-    examInfo: {
-        flex: 1,
-    },
-    examName: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: palette.text,
-        marginBottom: 2,
-    },
-    examAuthority: {
-        fontSize: 12,
-        color: palette.muted,
-        marginBottom: 4,
-    },
-    examMeta: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 2,
-    },
-    examDate: {
-        fontSize: 11,
-        color: palette.muted,
-        marginLeft: 4,
-    },
-    examEligibility: {
-        fontSize: 11,
-        color: palette.muted,
-        marginBottom: 6,
-    },
-    examTags: {
-        flexDirection: 'row',
-        gap: 6,
-    },
-    tag: {
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 10,
-    },
-    tagText: {
-        fontSize: 9,
-        fontWeight: '700',
-        textTransform: 'uppercase',
-    },
-    examAction: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: `${palette.primary}15`,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    emptyState: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 48,
-    },
-    emptyText: {
-        fontSize: 14,
-        color: palette.muted,
-    },
-});

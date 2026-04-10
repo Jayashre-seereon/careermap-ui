@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppState } from '../src/app-state';
@@ -15,20 +15,21 @@ const selectionMeta = [
 ] as const;
 
 export default function ProfileSetupScreen() {
-  const { onboarding, saveOnboarding } = useAppState();
+  const { onboarding, saveOnboarding, saveUserProfile, userProfile } = useAppState();
   const [form, setForm] = useState({
     name: onboarding.userType === 'parent' ? onboarding.name : onboarding.name,
-    email: '',
-    mobile: '',
-    address: '',
-    gender: '',
-    dob: '',
-    city: '',
-    stateName: '',
+    email: userProfile.email,
+    mobile: userProfile.mobile,
+    password: userProfile.password,
+    address: userProfile.address,
+    gender: userProfile.gender,
+    dob: userProfile.dob,
+    city: userProfile.city,
+    stateName: userProfile.stateName,
   });
 
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
-  const isValid = form.name && form.email && form.mobile;
+  const isValid = form.name && form.email && form.mobile && form.password;
 
   const onboardingChips = useMemo(
     () => [
@@ -55,48 +56,51 @@ export default function ProfileSetupScreen() {
     onboarding.selectedPriorities.length > 0;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={styles.iconCard}>
+    <SafeAreaView className="flex-1 bg-paper">
+      <ScrollView className="flex-1" contentContainerClassName="gap-[14px] px-6 py-6" showsVerticalScrollIndicator={false}>
+        <Pressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={18} color={palette.text} />
+        </Pressable>
+        <View className="mb-2 items-center gap-2">
+          <View className="h-[68px] w-[68px] items-center justify-center rounded-[22px] bg-brand">
             <Ionicons name="person-circle-outline" size={34} color="#fff" />
           </View>
-          <Text style={styles.title}>Complete Your Profile</Text>
-          <Text style={styles.subtitle}>Help us serve you better</Text>
+          <Text className="text-center text-[28px] font-black text-ink">Complete Your Profile</Text>
+          <Text className="text-center text-[14px] text-muted">Help us serve you better</Text>
         </View>
 
         {hasOnboardingSelections ? (
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryHeader}>
-              <View style={styles.summaryIconWrap}>
+          <View className="gap-[14px] rounded-[22px] border border-line bg-card p-[18px]">
+            <View className="flex-row items-center gap-3">
+              <View className="h-[38px] w-[38px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${palette.primary}10` }}>
                 <Ionicons name="checkmark-done-circle-outline" size={18} color={palette.primary} />
               </View>
-              <View style={styles.summaryHeaderText}>
-                <Text style={styles.summaryTitle}>Your Onboarding Selections</Text>
-                <Text style={styles.summarySubtitle}>We carried these choices over from onboarding.</Text>
+              <View className="flex-1 gap-0.5">
+                <Text className="text-[15px] font-black text-ink">Your Onboarding Selections</Text>
+                <Text className="text-[12px] leading-[18px] text-muted">We carried these choices over from onboarding.</Text>
               </View>
             </View>
 
             {onboarding.userType ? (
-              <View style={styles.identityRow}>
-                <View style={styles.identityPill}>
+              <View className="flex-row flex-wrap gap-2.5">
+                <View className="flex-row items-center gap-1.5 rounded-full bg-paper px-3 py-2">
                   <Ionicons name={onboarding.userType === 'parent' ? 'people-outline' : 'person-outline'} size={14} color={palette.primary} />
-                  <Text style={styles.identityPillText}>{onboarding.userType === 'parent' ? 'Parent Journey' : 'Student Journey'}</Text>
+                  <Text className="text-[12px] font-extrabold text-brand">{onboarding.userType === 'parent' ? 'Parent Journey' : 'Student Journey'}</Text>
                 </View>
                 {onboarding.childName ? (
-                  <View style={styles.identityPill}>
+                  <View className="flex-row items-center gap-1.5 rounded-full bg-paper px-3 py-2">
                     <Ionicons name="heart-outline" size={14} color={palette.orange} />
-                    <Text style={[styles.identityPillText, { color: palette.orange }]}>{onboarding.childName}</Text>
+                    <Text className="text-[12px] font-extrabold" style={{ color: palette.orange }}>{onboarding.childName}</Text>
                   </View>
                 ) : null}
               </View>
             ) : null}
 
-            <View style={styles.chipWrap}>
+            <View className="flex-row flex-wrap gap-2.5">
               {onboardingChips.map((item) => (
-                <View key={`${item.label}-${item.icon}`} style={styles.selectionChip}>
+                <View key={`${item.label}-${item.icon}`} className="flex-row items-center gap-[7px] rounded-full bg-paper px-3 py-[9px]">
                   <Ionicons name={item.icon} size={14} color={item.color} />
-                  <Text style={styles.selectionChipText}>{item.label}</Text>
+                  <Text className="text-[12px] font-bold text-ink">{item.label}</Text>
                 </View>
               ))}
             </View>
@@ -107,28 +111,30 @@ export default function ProfileSetupScreen() {
           ['name', onboarding.userType === 'parent' ? 'Parent Name' : 'Full Name', 'Enter your full name', 'person-outline'],
           ['email', 'Email Address', 'Enter email', 'mail-outline'],
           ['mobile', 'Mobile Number', '+91 XXXXX XXXXX', 'call-outline'],
+          ['password', 'Password', 'Create password', 'lock-closed-outline'],
           ['address', 'Address', 'Enter your address', 'location-outline'],
           ['city', 'City', 'Enter city', 'business-outline'],
           ['stateName', 'State', 'Enter state', 'map-outline'],
         ].map(([key, label, placeholder, icon]) => (
-          <View key={key} style={styles.field}>
-            <Text style={styles.label}>{label}</Text>
-            <View style={styles.inputWrap}>
+          <View key={key} className="gap-1.5">
+            <Text className="text-[12px] font-extrabold text-muted">{label}</Text>
+            <View className="h-14 flex-row items-center gap-2.5 rounded-[18px] border border-line bg-card px-4">
               <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={18} color={palette.muted} />
               <TextInput
                 value={form[key as keyof typeof form]}
                 onChangeText={(value) => update(key as keyof typeof form, value)}
                 placeholder={placeholder}
                 placeholderTextColor={palette.muted}
-                style={styles.input}
+                secureTextEntry={key === 'password'}
+                className="flex-1 text-[15px] text-ink"
               />
             </View>
           </View>
         ))}
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Gender</Text>
-          <View style={styles.genderRow}>
+        <View className="gap-1.5">
+          <Text className="text-[12px] font-extrabold text-muted">Gender</Text>
+          <View className="flex-row gap-2.5">
             {[
               { label: 'Male', icon: 'male-outline' },
               { label: 'Female', icon: 'female-outline' },
@@ -137,121 +143,58 @@ export default function ProfileSetupScreen() {
               <Pressable
                 key={gender.label}
                 onPress={() => update('gender', gender.label)}
-                style={[styles.genderButton, form.gender === gender.label && styles.genderButtonActive]}
+                className={`h-12 flex-1 flex-row items-center justify-center gap-1.5 rounded-[16px] border ${form.gender === gender.label ? 'border-brand bg-brand' : 'border-line bg-card'}`}
               >
                 <Ionicons
                   name={gender.icon as keyof typeof Ionicons.glyphMap}
                   size={16}
                   color={form.gender === gender.label ? '#fff' : palette.muted}
                 />
-                <Text style={[styles.genderButtonText, form.gender === gender.label && styles.genderButtonTextActive]}>{gender.label}</Text>
+                <Text className={`text-[13px] font-extrabold ${form.gender === gender.label ? 'text-white' : 'text-ink'}`}>{gender.label}</Text>
               </Pressable>
             ))}
           </View>
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Date of Birth</Text>
-          <View style={styles.inputWrap}>
+        <View className="gap-1.5">
+          <Text className="text-[12px] font-extrabold text-muted">Date of Birth</Text>
+          <View className="h-14 flex-row items-center gap-2.5 rounded-[18px] border border-line bg-card px-4">
             <Ionicons name="calendar-outline" size={18} color={palette.muted} />
             <TextInput
               value={form.dob}
               onChangeText={(value) => update('dob', value)}
               placeholder="YYYY-MM-DD"
               placeholderTextColor={palette.muted}
-              style={styles.input}
+              className="flex-1 text-[15px] text-ink"
             />
           </View>
         </View>
 
-        <Pressable disabled={!isValid} onPress={() => { saveOnboarding({ ...onboarding, name: form.name }); router.replace('/promo'); }} style={[styles.primaryButton, !isValid && styles.primaryButtonDisabled]}>
-          <Text style={styles.primaryButtonText}>Complete Profile</Text>
+        <Pressable
+          className="mt-3 items-center rounded-[18px] bg-brand py-4"
+          disabled={!isValid}
+          onPress={() => {
+            saveOnboarding({ ...onboarding, name: form.name });
+            saveUserProfile({
+              ...userProfile,
+              name: form.name,
+              email: form.email,
+              mobile: form.mobile,
+              password: form.password,
+              address: form.address,
+              city: form.city,
+              stateName: form.stateName,
+              gender: form.gender,
+              dob: form.dob,
+              childName: onboarding.childName,
+            });
+            router.replace('/promo');
+          }}
+          style={({ pressed }) => ({ opacity: !isValid || pressed ? 0.42 : 1 })}
+        >
+          <Text className="text-[15px] font-extrabold text-white">Complete Profile</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: palette.background },
-  container: { padding: 24, gap: 14 },
-  header: { alignItems: 'center', gap: 8, marginBottom: 8 },
-  iconCard: { width: 68, height: 68, borderRadius: 22, backgroundColor: palette.primary, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 28, fontWeight: '900', color: palette.text, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: palette.muted, textAlign: 'center' },
-  summaryCard: {
-    backgroundColor: palette.card,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 18,
-    gap: 14,
-  },
-  summaryHeader: { flexDirection: 'row', gap: 12, alignItems: 'center' },
-  summaryIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 14,
-    backgroundColor: `${palette.primary}10`,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  summaryHeaderText: { flex: 1, gap: 2 },
-  summaryTitle: { fontSize: 15, fontWeight: '900', color: palette.text },
-  summarySubtitle: { fontSize: 12, lineHeight: 18, color: palette.muted },
-  identityRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
-  identityPill: {
-    flexDirection: 'row',
-    gap: 6,
-    alignItems: 'center',
-    borderRadius: 999,
-    backgroundColor: palette.background,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  identityPillText: { fontSize: 12, fontWeight: '800', color: palette.primary },
-  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  selectionChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    borderRadius: 999,
-    backgroundColor: palette.background,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-  },
-  selectionChipText: { fontSize: 12, fontWeight: '700', color: palette.text },
-  field: { gap: 6 },
-  label: { fontSize: 12, fontWeight: '800', color: palette.muted },
-  inputWrap: {
-    height: 56,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: palette.border,
-    backgroundColor: palette.card,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  input: { flex: 1, fontSize: 15, color: palette.text },
-  genderRow: { flexDirection: 'row', gap: 10 },
-  genderButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: palette.border,
-    backgroundColor: palette.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  genderButtonActive: { backgroundColor: palette.primary, borderColor: palette.primary },
-  genderButtonText: { fontSize: 13, fontWeight: '800', color: palette.text },
-  genderButtonTextActive: { color: '#fff' },
-  primaryButton: { marginTop: 14, borderRadius: 18, backgroundColor: palette.primary, paddingVertical: 16, alignItems: 'center' },
-  primaryButtonDisabled: { opacity: 0.42 },
-  primaryButtonText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-});

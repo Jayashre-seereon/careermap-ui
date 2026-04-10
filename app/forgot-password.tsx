@@ -1,44 +1,69 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { palette } from '../src/careermap-data';
+import { existingUsers, palette } from '../src/careermap-data';
 
 export default function ForgotPasswordScreen() {
+  const [step, setStep] = useState<'email' | 'code'>('email');
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [message, setMessage] = useState('');
+
+  const handleSendReset = () => {
+    const user = existingUsers.find((item) => item.email.toLowerCase() === email.trim().toLowerCase());
+    if (!user) {
+      setMessage('User not exist with this email.');
+      return;
+    }
+    setMessage('Reset code sent. Use 1234.');
+    setStep('code');
+  };
+
+  const handleVerifyCode = () => {
+    if (code !== '1234') {
+      setMessage('Invalid reset code.');
+      return;
+    }
+    router.replace('/(drawer)/(tabs)');
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.back}>Back</Text>
+    <SafeAreaView className="flex-1 bg-paper">
+      <View className="flex-1 gap-4 px-6 py-6">
+        <Pressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => (step === 'code' ? setStep('email') : router.back())}>
+          <Ionicons name="arrow-back" size={18} color={palette.text} />
         </Pressable>
-        <View style={styles.header}>
-          <View style={styles.iconWrap}>
-            <Text style={styles.iconText}>K</Text>
+        <View className="mb-2 mt-6 items-center gap-2">
+          <View className="h-[68px] w-[68px] items-center justify-center rounded-[22px]" style={{ backgroundColor: `${palette.primary}12` }}>
+            <Text className="text-[26px] font-black text-brand">K</Text>
           </View>
-          <Text style={styles.title}>Forgot Password</Text>
-          <Text style={styles.subtitle}>Enter your email to receive a reset link</Text>
+          <Text className="text-center text-[28px] font-black text-ink">{step === 'email' ? 'Forgot Password' : 'Enter Reset Code'}</Text>
+          <Text className="max-w-[260px] text-center text-[14px] text-muted">
+            {step === 'email' ? 'Enter your email to receive a reset code' : 'Enter the 4-digit code to continue'}
+          </Text>
         </View>
-        <Text style={styles.label}>Email Address</Text>
-        <TextInput placeholder="Enter your email" placeholderTextColor={palette.muted} style={styles.input} />
-        <Pressable style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>Send Reset Link</Text>
-        </Pressable>
+        {step === 'email' ? (
+          <>
+            <Text className="text-[12px] font-extrabold text-muted">Email Address</Text>
+            <TextInput value={email} onChangeText={(value) => { setEmail(value); setMessage(''); }} placeholder="Enter your email" placeholderTextColor={palette.muted} className="h-14 rounded-[18px] border border-line bg-card px-4 text-[15px] text-ink" />
+            <Pressable className="mt-2 items-center rounded-[18px] bg-brand py-4" onPress={handleSendReset}>
+              <Text className="text-[15px] font-extrabold text-white">Send Reset Link</Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <Text className="text-[12px] font-extrabold text-muted">Reset Code</Text>
+            <TextInput value={code} onChangeText={(value) => { setCode(value.replace(/\D/g, '').slice(0, 4)); setMessage(''); }} keyboardType="number-pad" placeholder="1234" placeholderTextColor={palette.muted} className="h-14 rounded-[18px] border border-line bg-card px-4 text-[15px] text-ink" />
+            <Pressable className="mt-2 items-center rounded-[18px] bg-brand py-4" onPress={handleVerifyCode}>
+              <Text className="text-[15px] font-extrabold text-white">Verify Code</Text>
+            </Pressable>
+          </>
+        )}
+        {message ? <Text className={`text-center text-[12px] font-bold ${message.includes('not exist') || message.includes('Invalid') ? 'text-danger' : 'text-success'}`}>{message}</Text> : null}
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: palette.background },
-  container: { flex: 1, padding: 24, gap: 16 },
-  back: { fontSize: 14, fontWeight: '700', color: palette.muted },
-  header: { alignItems: 'center', gap: 8, marginTop: 24, marginBottom: 8 },
-  iconWrap: { width: 68, height: 68, borderRadius: 22, backgroundColor: `${palette.primary}12`, alignItems: 'center', justifyContent: 'center' },
-  iconText: { fontSize: 26, fontWeight: '900', color: palette.primary },
-  title: { fontSize: 28, fontWeight: '900', color: palette.text, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: palette.muted, textAlign: 'center', maxWidth: 260 },
-  label: { fontSize: 12, fontWeight: '800', color: palette.muted },
-  input: { height: 56, borderRadius: 18, borderWidth: 1, borderColor: palette.border, backgroundColor: palette.card, paddingHorizontal: 16, fontSize: 15, color: palette.text },
-  primaryButton: { marginTop: 8, borderRadius: 18, backgroundColor: palette.primary, paddingVertical: 16, alignItems: 'center' },
-  primaryButtonText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-});

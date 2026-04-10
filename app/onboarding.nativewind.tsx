@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
@@ -78,18 +77,6 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView className="flex-1 bg-paper">
       <ScrollView className="flex-1" contentContainerClassName="flex-grow gap-5 px-6 py-6" showsVerticalScrollIndicator={false}>
-        <Pressable
-          className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface"
-          onPress={() => {
-            if (step > 0) {
-              setStep((value) => value - 1);
-              return;
-            }
-            router.back();
-          }}
-        >
-          <Ionicons name="arrow-back" size={18} color={palette.text} />
-        </Pressable>
         {step > 0 && step < totalSteps - 1 ? (
           <View className="flex-row gap-1.5">
             {Array.from({ length: progressCount }).map((_, index) => (

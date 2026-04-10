@@ -1,10 +1,10 @@
 export const palette = {
   background: '#fbf7f3',
-  surface: '#fffdfb',
+  surface: '#f6efeb',
   card: '#ffffff',
-  border: '#eee4dc',
-  text: '#251d24',
-  muted: '#7d7580',
+  border: '#e8dfda',
+  text: '#262126',
+  muted: '#746e77',
   primary: '#c11e38',
   primaryDeep: '#220b34',
   secondary: '#cb9c48',
@@ -12,7 +12,7 @@ export const palette = {
   green: '#2f9367',
   blue: '#3774d8',
   purple: '#8856c9',
-  orange: '#e1712f',
+  orange: '#ea872e',
   pink: '#d9608f',
   danger: '#d04f4f',
 };
@@ -25,6 +25,25 @@ export const studentProfile = {
   stream: 'Science',
   subscription: 'Psychometric + Counselling',
 };
+
+export const existingUsers = [
+  {
+    id: 'user-1',
+    name: 'Aarav Sharma',
+    mobile: '9876543210',
+    email: 'aarav.sharma@email.com',
+    password: 'Aarav@123',
+    coupon: 'CAREER2026',
+  },
+  {
+    id: 'user-2',
+    name: 'Priya Parent',
+    mobile: '9988776655',
+    email: 'priya.parent@email.com',
+    password: 'Parent@123',
+    coupon: 'PARENTMAP',
+  },
+];
 
 export const heroStats = [
   { label: 'Saved Careers', value: '18', tone: palette.orange },
