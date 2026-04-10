@@ -59,17 +59,7 @@ export default function AssessmentScreen() {
         </View>
       </View>
 
-      <View className="gap-3 rounded-[24px] border border-line bg-card p-[18px]">
-        <Text className="text-[16px] font-extrabold text-ink">Practice Routes</Text>
-        <View className="gap-2.5">
-          <Pressable className="items-center rounded-[14px] bg-brand py-3" onPress={() => router.push('/(drawer)/quiz')}>
-            <Text className="text-[13px] font-extrabold text-white">Open Quiz Practice</Text>
-          </Pressable>
-          <Pressable className="items-center rounded-[14px] py-3" onPress={() => router.push('/(drawer)/abroad')} style={{ backgroundColor: `${palette.blue}12` }}>
-            <Text className="text-[13px] font-extrabold" style={{ color: palette.blue }}>Explore Study Abroad</Text>
-          </Pressable>
-        </View>
-      </View>
+     
     </Screen>
   );
 }

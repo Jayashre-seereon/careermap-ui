@@ -239,8 +239,7 @@ export default function HomeScreen() {
         {[
           { label: 'View Subscription Plans', path: '/(drawer)/subscription', icon: 'sparkles-outline', iconTone: palette.secondary },
           { label: 'Your Test History', path: '/(drawer)/(tabs)/profile', icon: 'time-outline', iconTone: palette.blue },
-          { label: 'Saved Careers', path: '/(drawer)/(tabs)/library', icon: 'star-outline', iconTone: palette.orange },
-        ].map((item) => (
+          ].map((item) => (
           <Pressable key={item.label} className="flex-row items-center justify-between py-2" onPress={() => router.push(item.path as never)}>
             <View className="flex-1 flex-row items-center gap-3">
               <View className="h-[34px] w-[34px] items-center justify-center rounded-[12px] bg-[#f4eeea]">

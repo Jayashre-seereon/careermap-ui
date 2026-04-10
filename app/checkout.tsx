@@ -129,14 +129,7 @@ export default function CheckoutScreen() {
 
                 {selectedMethod === 'upi' ? (
                   <View className="mt-1 gap-2.5">
-                    <Text className="text-[12px] font-extrabold text-muted">Choose UPI App</Text>
-                    <View className="flex-row flex-wrap gap-2">
-                      {quickUpiApps.map((app) => (
-                        <View key={app} className="rounded-[14px] px-3 py-2" style={{ backgroundColor: `${palette.blue}12` }}>
-                          <Text className="text-[12px] font-extrabold" style={{ color: palette.blue }}>{app}</Text>
-                        </View>
-                      ))}
-                    </View>
+                   
                     <Text className="text-[12px] font-extrabold text-muted">Add UPI ID</Text>
                     <TextInput value={upiId} onChangeText={setUpiId} autoCapitalize="none" placeholder="yourname@upi" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink" />
                   </View>

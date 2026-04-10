@@ -1,10 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Drawer } from 'expo-router/drawer';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
-
 export default function DrawerRoot() {
   const { preferences } = useAppState();
   return (

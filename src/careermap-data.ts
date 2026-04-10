@@ -29,10 +29,10 @@ export const studentProfile = {
 export const existingUsers = [
   {
     id: 'user-1',
-    name: 'Aarav Sharma',
+    name: 'Jayashree Das',
     mobile: '9876543210',
-    email: 'aarav.sharma@email.com',
-    password: 'Aarav@123',
+    email: 'jaya@email.com',
+    password: 'Jaya@123',
     coupon: 'CAREER2026',
   },
   {

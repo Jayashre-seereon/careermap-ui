@@ -42,8 +42,7 @@ export default function ProfileScreen() {
 
   const menuItems = useMemo(
     () => [
-      { label: 'Edit Profile', icon: 'create-outline' as const, tone: palette.blue, action: () => setEditMode(true), value: undefined },
-      {
+       {
         label: 'Saved Careers',
         icon: 'star-outline' as const,
         tone: palette.orange,
@@ -122,6 +121,11 @@ export default function ProfileScreen() {
       return (
         <View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#1a141f]' : 'border-line bg-[#fcf8f5]'}`}>
           {bookings.map((booking) => (
+             <Pressable
+              key={booking.id}
+              className={`gap-1 rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}
+              onPress={() => router.push('/(drawer)/book-mentor')}
+            >
             <View key={booking.id} className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}>
               <View>
                 <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{booking.mentorName}</Text>
@@ -129,6 +133,7 @@ export default function ProfileScreen() {
               </View>
               <Pill label={booking.status} tone={palette.green} />
             </View>
+            </Pressable>
           ))}
         </View>
       );
@@ -233,6 +238,8 @@ export default function ProfileScreen() {
               ['Class', onboarding.selectedClass || 'Not set'],
               ['Stream', onboarding.selectedStream || 'Not set'],
               ['Guidance', onboarding.selectedGuidance || 'Not set'],
+              ['Interests', onboarding.selectedInterests.length > 0 ? onboarding.selectedInterests.join(', ') : 'Not set'],
+              
             ].map(([label, value]) => (
               <View key={label} className="flex-row items-center justify-between rounded-[16px] bg-surface px-4 py-3">
                 <Text className="text-[12px] font-bold text-muted">{label}</Text>
@@ -240,11 +247,7 @@ export default function ProfileScreen() {
               </View>
             ))}
           </View>
-          <View className="flex-row flex-wrap gap-2">
-            {onboarding.selectedInterests.map((item) => (
-              <Pill key={item} label={item} tone={palette.primary} />
-            ))}
-          </View>
+
         </View>
 
         <Pressable

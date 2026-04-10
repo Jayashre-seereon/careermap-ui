@@ -79,12 +79,12 @@ export default function LoginScreen() {
         </Pressable>
 
         <View className="items-center gap-2.5 pt-2">
-          <View className="h-[84px] w-[84px] items-center justify-center rounded-[28px] bg-card">
-            <BeeMascot size={64} />
+          <View className="h-[96px] w-[96px] items-center justify-center rounded-[28px] bg-card">
+            <BeeMascot size={70} />
           </View>
           <Text className="text-center text-[28px] font-black text-ink">{isExistingUser ? 'Welcome Back' : 'Continue Your Journey'}</Text>
           <Text className="text-center text-[14px] text-muted">
-            {isExistingUser ? 'Login as an existing user' : 'Use OTP or coupon to continue'}
+            {isExistingUser ? 'Choose how you\'d like to login in' : 'Use OTP or coupon to continue'}
           </Text>
         </View>
 
@@ -92,8 +92,8 @@ export default function LoginScreen() {
           <View className="gap-1 rounded-[18px] border border-line bg-card p-4">
             <Text className="text-[13px] font-extrabold text-ink">Example existing users</Text>
             <Text className="text-[12px] text-muted">Mobile: `9876543210`</Text>
-            <Text className="text-[12px] text-muted">Email: `aarav.sharma@email.com`</Text>
-            <Text className="text-[12px] text-muted">Password: `Aarav@123`</Text>
+            <Text className="text-[12px] text-muted">Email: `jaya@email.com`</Text>
+            <Text className="text-[12px] text-muted">Password: `Jaya@123`</Text>
             <Text className="text-[12px] text-muted">Coupon: `CAREER2026`</Text>
           </View>
         ) : null}
@@ -208,14 +208,12 @@ export default function LoginScreen() {
         ) : null}
 
         <View className="mt-auto items-center gap-3 pb-2.5">
-          <Pressable onPress={() => router.push('/forgot-password')}>
-            <Text className="text-[13px] font-bold text-muted">Forgot Password?</Text>
-          </Pressable>
-          {!isExistingUser ? (
-            <Pressable onPress={() => router.push('/signup')}>
-              <Text className="text-[14px] font-extrabold text-brand">Create Account</Text>
-            </Pressable>
-          ) : null}
+         {isExistingUser && loginMode === 'email' ? (
+  <Pressable onPress={() => router.push('/forgot-password')}>
+    <Text className="text-[13px] font-bold text-muted">Forgot Password?</Text>
+  </Pressable>
+) : null}
+         
           <Text className="text-center text-[11px] leading-[17px] text-muted">
             By continuing, you agree to Career Map&apos;s Terms of Service and Privacy Policy.
           </Text>

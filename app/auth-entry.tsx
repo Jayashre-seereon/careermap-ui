@@ -10,8 +10,8 @@ export default function AuthEntryScreen() {
     <SafeAreaView className="flex-1 bg-paper">
       <View className="flex-1 px-6 py-6">
         <View className="flex-1 items-center justify-center gap-5">
-          <View className="h-[96px] w-[96px] items-center justify-center rounded-[30px] bg-brand">
-            <BeeMascot size={68} />
+          <View className="h-[96px] w-[96px] items-center justify-center rounded-[30px] bg-card">
+            <BeeMascot size={70} />
           </View>
           <View className="items-center gap-2">
             <Text className="text-center text-[30px] font-black text-ink">Welcome to Career Map</Text>
