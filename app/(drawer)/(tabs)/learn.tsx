@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
 
 import { useAppState } from '../../../src/app-state';
 import { masterClasses, palette } from '../../../src/careermap-data';
-import { Pill, Screen, SectionHeader } from '../../../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../../src/careermap-ui';
 
 export default function LearnScreen() {
   const { isUnlocked } = useAppState();
@@ -25,9 +25,9 @@ export default function LearnScreen() {
         title="Master Class"
         subtitle="Learning videos and sorting adapted closely from the prototype master class screen."
         action={
-          <Pressable className={`rounded-[12px] px-3 py-2 ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+          <AnimatedPressable className={`rounded-[12px] px-3 py-2 ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
             <Text className={`text-[12px] font-extrabold ${showFilters ? 'text-white' : 'text-ink'}`}>Filter</Text>
-          </Pressable>
+          </AnimatedPressable>
         }
       />
 
@@ -39,18 +39,18 @@ export default function LearnScreen() {
             { id: 'az' as const, label: 'A-Z' },
             { id: 'za' as const, label: 'Z-A' },
           ].map((item) => (
-            <Pressable key={item.id} className={`rounded-full px-3 py-2 ${sortBy === item.id ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setSortBy(item.id)}>
+            <AnimatedPressable key={item.id} className={`rounded-full px-3 py-2 ${sortBy === item.id ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setSortBy(item.id)}>
               <Text className={`text-[11px] font-extrabold ${sortBy === item.id ? 'text-white' : 'text-ink'}`}>{item.label}</Text>
-            </Pressable>
+            </AnimatedPressable>
           ))}
         </View>
       ) : null}
 
       <View className="flex-row flex-wrap gap-2.5">
         {['All', 'Engineering', 'Medical', 'Business', 'Technology', 'Design'].map((label) => (
-          <Pressable key={label} className={`rounded-full px-[13px] py-2 ${activeFilter === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveFilter(label)}>
+          <AnimatedPressable key={label} className={`rounded-full px-[13px] py-2 ${activeFilter === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveFilter(label)}>
             <Text className={`text-[12px] font-extrabold ${activeFilter === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
-          </Pressable>
+          </AnimatedPressable>
         ))}
       </View>
 
@@ -73,7 +73,7 @@ export default function LearnScreen() {
                 </View>
               </View>
             </View>
-            <Pressable
+            <AnimatedPressable
               onPress={() =>
                 item.locked && !masterClassUnlocked
                   ? router.push('/subscription')
@@ -87,7 +87,7 @@ export default function LearnScreen() {
               <Text className="text-center text-[13px] font-extrabold" style={{ color: item.locked && !masterClassUnlocked ? palette.primary : palette.primaryDeep }}>
                 {item.locked && !masterClassUnlocked ? 'Subscribe to Watch' : 'Watch Video'}
               </Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         ))}
       </View>

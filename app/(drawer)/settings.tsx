@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, Switch, Text, TextInput, View } from 'react-native';
+import { Switch, Text, TextInput, View } from 'react-native';
 
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
-import { Screen } from '../../src/careermap-ui';
+import { AnimatedPressable, Screen } from '../../src/careermap-ui';
 
 type SettingsView = 'menu' | 'password' | 'notifications' | 'help';
 
@@ -47,9 +47,9 @@ export default function SettingsScreen() {
     return (
       <Screen>
         <View className="flex-row items-center gap-3">
-          <Pressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => setView('menu')}>
+          <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => setView('menu')}>
             <Ionicons name="arrow-back" size={18} color={palette.text} />
-          </Pressable>
+          </AnimatedPressable>
           <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Change Password</Text>
         </View>
 
@@ -71,13 +71,13 @@ export default function SettingsScreen() {
                   placeholderTextColor={palette.muted}
                   className={`flex-1 text-[14px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}
                 />
-                <Pressable onPress={() => setShowPassword((current) => ({ ...current, [key]: !current[key as keyof typeof showPassword] }))}>
+                <AnimatedPressable onPress={() => setShowPassword((current) => ({ ...current, [key]: !current[key as keyof typeof showPassword] }))}>
                   <Ionicons name={showPassword[key as keyof typeof showPassword] ? 'eye-off-outline' : 'eye-outline'} size={18} color={palette.muted} />
-                </Pressable>
+                </AnimatedPressable>
               </View>
             </View>
           ))}
-          <Pressable
+          <AnimatedPressable
             className="rounded-[18px] bg-brand py-4"
             disabled={!canSave}
             onPress={() => {
@@ -85,10 +85,9 @@ export default function SettingsScreen() {
               setShowPassword({ currentPassword: false, newPassword: false, confirmPassword: false });
               setView('menu');
             }}
-            style={({ pressed }) => ({ opacity: !canSave || pressed ? 0.45 : 1 })}
           >
             <Text className="text-center text-[15px] font-extrabold text-white">Save Password</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>
     );
@@ -98,9 +97,9 @@ export default function SettingsScreen() {
     return (
       <Screen>
         <View className="flex-row items-center gap-3">
-          <Pressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => setView('menu')}>
+          <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => setView('menu')}>
             <Ionicons name="arrow-back" size={18} color={palette.text} />
-          </Pressable>
+          </AnimatedPressable>
           <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Notification Preferences</Text>
         </View>
 
@@ -138,9 +137,9 @@ export default function SettingsScreen() {
     return (
       <Screen>
         <View className="flex-row items-center gap-3">
-          <Pressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => setView('menu')}>
+          <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => setView('menu')}>
             <Ionicons name="arrow-back" size={18} color={palette.text} />
-          </Pressable>
+          </AnimatedPressable>
           <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Help Centre</Text>
         </View>
 
@@ -169,16 +168,15 @@ export default function SettingsScreen() {
               className={`min-h-[130px] rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#3a2f40] bg-[#312636] text-white' : 'border-line bg-surface text-ink'}`}
             />
           </View>
-          <Pressable
+          <AnimatedPressable
             className="rounded-[18px] bg-brand py-4"
             onPress={() => {
               setHelpForm({ email: '', message: '' });
               setView('menu');
             }}
-            style={({ pressed }) => ({ opacity: pressed ? 0.45 : 1 })}
           >
             <Text className="text-center text-[15px] font-extrabold text-white">Send to Email Support</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>
     );
@@ -187,15 +185,15 @@ export default function SettingsScreen() {
   return (
     <Screen>
       <View className="flex-row items-center gap-3">
-        <Pressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => router.back()}>
+        <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={18} color={palette.text} />
-        </Pressable>
+        </AnimatedPressable>
         <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Settings</Text>
       </View>
 
       <View className={`overflow-hidden rounded-[24px] border ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
         {settingsItems.map((item, index) => (
-          <Pressable
+          <AnimatedPressable
             key={item.label}
             className={`flex-row items-center justify-between px-4 py-4 ${index < settingsItems.length - 1 ? 'border-b border-line' : ''}`}
             onPress={item.action}
@@ -207,14 +205,14 @@ export default function SettingsScreen() {
               <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.label}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={palette.muted} />
-          </Pressable>
+          </AnimatedPressable>
         ))}
       </View>
 
-      <Pressable className="flex-row items-center justify-center gap-2 rounded-[18px] border border-[#efc8c0] bg-[#fff4f2] py-4" onPress={() => router.replace('/')}>
+      <AnimatedPressable className="flex-row items-center justify-center gap-2 rounded-[18px] border border-[#efc8c0] bg-[#fff4f2] py-4" onPress={() => router.replace('/')}>
         <Ionicons name="log-out-outline" size={18} color={palette.danger} />
         <Text className="text-[14px] font-extrabold text-danger">Logout</Text>
-      </Pressable>
+      </AnimatedPressable>
     </Screen>
   );
 }

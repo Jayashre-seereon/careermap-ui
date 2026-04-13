@@ -1,24 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
-import { palette } from '../../src/careermap-data';
-import { Screen, SectionHeader } from '../../src/careermap-ui';
-
-const exams = [
-    { name: 'JEE Main', authority: 'NTA', date: 'April 2025', eligibility: 'Class 12 pass (PCM)', type: 'Central', category: 'Engineering' },
-    { name: 'NEET UG', authority: 'NTA', date: 'May 2025', eligibility: 'Class 12 pass (PCB)', type: 'Central', category: 'Medical' },
-    { name: 'CLAT', authority: 'NLUs', date: 'December 2024', eligibility: 'Class 12 pass', type: 'Central', category: 'Law' },
-    { name: 'CUET', authority: 'NTA', date: 'May 2025', eligibility: 'Class 12 pass', type: 'Central', category: 'General' },
-    { name: 'BITSAT', authority: 'BITS Pilani', date: 'May 2025', eligibility: 'Class 12 (PCM)', type: 'Private', category: 'Engineering' },
-    { name: 'CAT', authority: 'IIMs', date: 'November 2025', eligibility: 'Graduate', type: 'Central', category: 'Business' },
-    { name: 'MHT CET', authority: 'Maharashtra Govt', date: 'May 2025', eligibility: 'Class 12 (PCM/PCB)', type: 'State', category: 'Engineering' },
-    { name: 'KCET', authority: 'Karnataka Govt', date: 'April 2025', eligibility: 'Class 12 pass', type: 'State', category: 'Engineering' },
-    { name: 'AIIMS INI CET', authority: 'AIIMS', date: 'July 2025', eligibility: 'MBBS pass', type: 'Central', category: 'Medical' },
-    { name: 'NIFT Entrance', authority: 'NIFT', date: 'February 2025', eligibility: 'Class 12 pass', type: 'Central', category: 'Design' },
-    { name: 'GATE', authority: 'IIT', date: 'February 2026', eligibility: 'B.Tech/B.E.', type: 'Central', category: 'Engineering' },
-    { name: 'VITEEE', authority: 'VIT', date: 'April 2025', eligibility: 'Class 12 (PCM)', type: 'Private', category: 'Engineering' },
-];
+import { entranceExams, palette } from '../../src/careermap-data';
+import { AnimatedPressable, Screen, SectionHeader } from '../../src/careermap-ui';
 
 const typeFilters = ['All', 'Central', 'State', 'Private'];
 const categoryFilters = ['All', 'Engineering', 'Medical', 'Business', 'Law', 'Design', 'General'];
@@ -28,7 +14,7 @@ export default function EntranceExamScreen() {
     const [catFilter, setCatFilter] = useState('All');
     const [showFilters, setShowFilters] = useState(false);
 
-    let filtered = exams;
+    let filtered = entranceExams;
     if (typeFilter !== 'All') filtered = filtered.filter(e => e.type === typeFilter);
     if (catFilter !== 'All') filtered = filtered.filter(e => e.category === catFilter);
 
@@ -37,12 +23,12 @@ export default function EntranceExamScreen() {
             <SectionHeader title="Entrance Exams" subtitle="Practice tests and exam preparation guides." />
 
             <View className="px-6 py-3">
-                <Pressable className={`self-start rounded-full border px-3 py-1.5 ${showFilters ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setShowFilters(!showFilters)}>
+                <AnimatedPressable className={`self-start rounded-full border px-3 py-1.5 ${showFilters ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setShowFilters(!showFilters)}>
                     <View className="flex-row items-center">
                         <Ionicons name="filter" size={16} color={showFilters ? palette.surface : palette.text} />
                         <Text className={`ml-1.5 text-[12px] font-semibold ${showFilters ? 'text-surface' : 'text-ink'}`}>Filters</Text>
                     </View>
-                </Pressable>
+                </AnimatedPressable>
             </View>
 
             {showFilters && (
@@ -50,17 +36,17 @@ export default function EntranceExamScreen() {
                     <Text className="mb-2 mt-2 text-[12px] font-bold uppercase text-muted">Exam Type</Text>
                     <View className="flex-row flex-wrap gap-2">
                         {typeFilters.map(f => (
-                            <Pressable key={f} className={`rounded-2xl border px-3 py-1.5 ${typeFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setTypeFilter(f)}>
+                            <AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${typeFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setTypeFilter(f)}>
                                 <Text className={`text-[11px] font-semibold ${typeFilter === f ? 'text-surface' : 'text-ink'}`}>{f}</Text>
-                            </Pressable>
+                            </AnimatedPressable>
                         ))}
                     </View>
                     <Text className="mb-2 mt-2 text-[12px] font-bold uppercase text-muted">Category</Text>
                     <View className="flex-row flex-wrap gap-2">
                         {categoryFilters.map(f => (
-                            <Pressable key={f} className={`rounded-2xl border px-3 py-1.5 ${catFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setCatFilter(f)}>
+                            <AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${catFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setCatFilter(f)}>
                                 <Text className={`text-[11px] font-semibold ${catFilter === f ? 'text-surface' : 'text-ink'}`}>{f}</Text>
-                            </Pressable>
+                            </AnimatedPressable>
                         ))}
                     </View>
                 </View>
@@ -68,7 +54,11 @@ export default function EntranceExamScreen() {
 
             <ScrollView contentContainerClassName="px-6 pb-6" showsVerticalScrollIndicator={false}>
                 {filtered.map((exam) => (
-                    <View key={exam.name} className="mb-3 rounded-[12px] bg-card p-4 shadow-card">
+                    <AnimatedPressable
+                      key={exam.name}
+                      className="mb-3 rounded-[12px] bg-card p-4 shadow-card"
+                      onPress={() => router.push({ pathname: '/(drawer)/entrance-exam-detail', params: { examId: exam.id } })}
+                    >
                         <View className="flex-row items-start">
                             <View className="mr-3 h-10 w-10 items-center justify-center rounded-[10px]" style={{ backgroundColor: `${palette.primary}15` }}>
                                 <Ionicons name="document-text-outline" size={20} color={palette.primary} />
@@ -90,11 +80,11 @@ export default function EntranceExamScreen() {
                                     </View>
                                 </View>
                             </View>
-                            <Pressable className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: `${palette.primary}15` }}>
+                            <View className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: `${palette.primary}15` }}>
                                 <Ionicons name="open-outline" size={16} color={palette.primary} />
-                            </Pressable>
+                            </View>
                         </View>
-                    </View>
+                    </AnimatedPressable>
                 ))}
                 {filtered.length === 0 && (
                     <View className="items-center justify-center py-12">

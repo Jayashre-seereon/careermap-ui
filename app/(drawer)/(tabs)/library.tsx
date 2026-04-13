@@ -7,6 +7,9 @@ import { useAppState } from '../../../src/app-state';
 import { Screen } from '../../../src/careermap-ui';
 import { palette } from '../../../src/careermap-data';
 
+const MAX_FREE_ITEMS = 5;
+const PREVIEW_SECONDS = 15;
+
 const streams = [
   { name: 'Science', emoji: '🔬', desc: 'Medical, Engineering & Research' },
   { name: 'Commerce', emoji: '📊', desc: 'Business, Finance & Accounting' },
@@ -15,7 +18,7 @@ const streams = [
   { name: 'Neutral', emoji: '⚡', desc: 'Law, Education & Defence' },
 ];
 
-const categories = {
+const categories: Record<string, { name: string; emoji: string }[]> = {
   Science: [
     { name: 'Medical', emoji: '🏥' },
     { name: 'Engineering', emoji: '⚙️' },
@@ -212,22 +215,22 @@ const careerDetails: Record<string, {
   institutes: string[];
 }> = {
   'General Medicine': {
-    title: 'General Medicine',
-    overview: 'General medicine doctors provide comprehensive medical care, diagnose and treat a wide range of illnesses, and manage patient health.',
-    path: ['10+2 (PCB)', 'NEET UG', 'MBBS (5.5 years)', 'MD General Medicine (3 years)', 'General Physician'],
+    title: 'General Medicine (MD)',
+    overview: 'General Medicine involves the diagnosis, treatment, and prevention of adult diseases. Physicians in this specialization manage a wide range of health conditions and often serve as the first point of specialist care for patients.',
+    path: ['10+2 (PCB)', 'MBBS (5.5 years)', 'Internship (1 year)', 'MD General Medicine (3 years)', 'Senior Resident', 'Consultant / Professor'],
     education: 'MBBS followed by MD in General Medicine',
-    exams: ['NEET UG', 'NEET PG'],
-    jobs: ['General Physician', 'Hospital Doctor', 'Clinic Doctor', 'Medical Officer'],
+    exams: ['NEET UG', 'NEET PG', 'AIIMS', 'JIPMER'],
+    jobs: ['General Physician', 'Consultant', 'Hospital Medical Officer', 'Academic Professor', 'ICU Specialist'],
     salary: '₹8-25 LPA',
-    institutes: ['AIIMS Delhi', 'KEM Mumbai', 'CMC Vellore', 'Christian Medical College'],
+    institutes: ['AIIMS Delhi', 'CMC Vellore', 'JIPMER', 'Maulana Azad Medical College', 'KEM Mumbai'],
   },
   'Surgery': {
-    title: 'Surgery',
-    overview: 'Surgeons perform surgical procedures, manage surgical emergencies, and provide operative care for patients.',
-    path: ['10+2 (PCB)', 'NEET UG', 'MBBS (5.5 years)', 'MS Surgery (3 years)', 'Surgeon'],
-    education: 'MBBS followed by MS in Surgery',
-    exams: ['NEET UG', 'NEET PG'],
-    jobs: ['Surgeon', 'General Surgeon', 'Surgical Consultant', 'Hospital Surgeon'],
+    title: 'General Surgery (MS)',
+    overview: 'General Surgery focuses on operative treatment for trauma, abdominal conditions, oncologic cases, and emergency surgical care. Surgeons combine diagnosis, procedural skill, and post-operative management.',
+    path: ['10+2 (PCB)', 'MBBS (5.5 years)', 'Internship', 'MS General Surgery (3 years)', 'MCh Specialization', 'Senior Surgeon'],
+    education: 'MBBS + MS in General Surgery, with MCh for super-specialization',
+    exams: ['NEET UG', 'NEET PG', 'NEET SS'],
+    jobs: ['General Surgeon', 'Laparoscopic Surgeon', 'Trauma Surgeon', 'Surgical Oncologist'],
     salary: '₹10-30 LPA',
     institutes: ['AIIMS Delhi', 'PGIMER Chandigarh', 'SGPGI Lucknow'],
   },
@@ -361,8 +364,8 @@ export default function CareerLibraryScreen() {
     if (currentLevel === 'details' && locked && !contentLocked) {
       const timer = setTimeout(() => {
         setContentLocked(true);
-      }, 10000);
-      setContentTimer(10);
+      }, PREVIEW_SECONDS * 1000);
+      setContentTimer(PREVIEW_SECONDS);
       const interval = setInterval(() => {
         setContentTimer(prev => {
           if (prev && prev > 1) return prev - 1;
@@ -446,14 +449,33 @@ export default function CareerLibraryScreen() {
     const programList = programs[selectedCategory!] || [];
     return (
       <View className="gap-3">
-        {programList.map((program) => (
-          <Pressable key={program.name} onPress={() => handleProgramSelect(program.name)} className="flex-row items-center rounded-[12px] border border-line bg-card p-3">
+        {programList.map((program, index) => {
+          const itemLocked = locked && index >= MAX_FREE_ITEMS;
+          return (
+          <Pressable
+            key={program.name}
+            onPress={() => {
+              if (!itemLocked) handleProgramSelect(program.name);
+            }}
+            className={`flex-row items-center rounded-[12px] border border-line bg-card p-3 ${itemLocked ? 'opacity-55' : ''}`}
+          >
             <View className="flex-1 flex-row items-center">
               <Text className="mr-3 text-[24px]">{program.emoji}</Text>
               <Text className="flex-1 text-[14px] font-semibold text-ink">{program.name}</Text>
             </View>
+            <Ionicons name={itemLocked ? 'lock-closed' : 'chevron-forward'} size={18} color={itemLocked ? palette.muted : palette.primary} />
           </Pressable>
-        ))}
+        )})}
+        {locked && programList.length > MAX_FREE_ITEMS ? (
+          <View className="items-center rounded-[18px] border border-[#efd5cb] bg-[#fff7f3] px-5 py-5">
+            <Ionicons name="lock-closed" size={24} color={palette.primary} />
+            <Text className="mt-2 text-[15px] font-extrabold text-ink">Unlock Full Career Library</Text>
+            <Text className="mt-1 text-center text-[12px] leading-5 text-muted">Subscribe to explore all programs and specializations from this branch.</Text>
+            <Pressable onPress={() => router.push('/(drawer)/subscription')} className="mt-3 rounded-[12px] bg-brand px-5 py-3">
+              <Text className="text-[13px] font-extrabold text-white">View Plans</Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
     );
   };
@@ -464,20 +486,39 @@ export default function CareerLibraryScreen() {
       return (
         <Pressable onPress={() => handleSpecializationSelect(selectedProgram!)} className="items-center rounded-[16px] border border-line bg-card p-6">
           <Text className="mb-2 text-[18px] font-bold text-ink">{selectedProgram}</Text>
-          <Text className="text-[13px] text-muted">Tap to explore details</Text>
+          <Text className="text-[13px] text-muted">View general details</Text>
         </Pressable>
       );
     }
     return (
       <View className="gap-3">
-        {specializationList.map((specialization) => (
-          <Pressable key={specialization.name} onPress={() => handleSpecializationSelect(specialization.name)} className="flex-row items-center rounded-[12px] border border-line bg-card p-3">
+        {specializationList.map((specialization, index) => {
+          const itemLocked = locked && index >= MAX_FREE_ITEMS;
+          return (
+          <Pressable
+            key={specialization.name}
+            onPress={() => {
+              if (!itemLocked) handleSpecializationSelect(specialization.name);
+            }}
+            className={`flex-row items-center rounded-[12px] border border-line bg-card p-3 ${itemLocked ? 'opacity-55' : ''}`}
+          >
             <View className="flex-1 flex-row items-center">
               <Text className="mr-3 text-[24px]">{specialization.emoji}</Text>
               <Text className="flex-1 text-[14px] font-semibold text-ink">{specialization.name}</Text>
             </View>
+            <Ionicons name={itemLocked ? 'lock-closed' : 'chevron-forward'} size={18} color={itemLocked ? palette.muted : palette.primary} />
           </Pressable>
-        ))}
+        )})}
+        {locked && specializationList.length > MAX_FREE_ITEMS ? (
+          <View className="items-center rounded-[18px] border border-[#efd5cb] bg-[#fff7f3] px-5 py-5">
+            <Ionicons name="lock-closed" size={24} color={palette.primary} />
+            <Text className="mt-2 text-[15px] font-extrabold text-ink">Unlock All Specializations</Text>
+            <Text className="mt-1 text-center text-[12px] leading-5 text-muted">Subscribe to open the remaining specializations and full career detail pages.</Text>
+            <Pressable onPress={() => router.push('/(drawer)/subscription')} className="mt-3 rounded-[12px] bg-brand px-5 py-3">
+              <Text className="text-[13px] font-extrabold text-white">View Plans</Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
     );
   };
@@ -491,7 +532,7 @@ export default function CareerLibraryScreen() {
         <View className="items-center justify-center gap-4 py-[60px]">
           <Ionicons name="lock-closed" size={48} color={palette.primary} />
           <Text className="text-[18px] font-bold text-ink">Preview Time Expired</Text>
-          <Text className="text-center text-[14px] text-muted">Subscribe to unlock full access to all career details.</Text>
+          <Text className="text-center text-[14px] text-muted">Subscribe to unlock full access to all career details, education paths, and salary insights.</Text>
           <Pressable onPress={() => router.push('/(drawer)/subscription')} className="rounded-[12px] bg-brand px-6 py-3">
             <Text className="text-[14px] font-bold text-white">Unlock Full Access</Text>
           </Pressable>
@@ -508,7 +549,13 @@ export default function CareerLibraryScreen() {
           </View>
         )}
 
-        <Text className="mb-4 text-[20px] font-extrabold text-ink">{detail.title}</Text>
+        <View className="mb-4 items-center rounded-[24px] border border-[#f0e2da] bg-[#fff9f6] px-4 py-6">
+          <View className="mb-3 h-[76px] w-[76px] items-center justify-center rounded-[24px] bg-[#ffecef]">
+            <Ionicons name="school-outline" size={34} color={palette.primary} />
+          </View>
+          <Text className="text-center text-[24px] font-black text-ink">{detail.title}</Text>
+          <Text className="mt-2 text-center text-[13px] leading-5 text-muted">{detail.overview}</Text>
+        </View>
         <Pressable
           onPress={() => toggleSavedCareer(detail.title)}
           className={`mb-4 flex-row items-center justify-center gap-2 rounded-[14px] border px-4 py-3 ${isSaved ? 'border-brand bg-brand' : 'border-line bg-card'}`}
@@ -517,12 +564,7 @@ export default function CareerLibraryScreen() {
           <Text className={`text-[13px] font-extrabold ${isSaved ? 'text-white' : 'text-brand'}`}>{isSaved ? 'Saved to Wishlist' : 'Save to Wishlist'}</Text>
         </Pressable>
 
-        <View className="mb-5">
-          <Text className="mb-2 text-[14px] font-bold text-ink">Overview</Text>
-          <Text className="text-[13px] leading-5 text-muted">{detail.overview}</Text>
-        </View>
-
-        <View className="mb-5">
+        <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
           <Text className="mb-2 text-[14px] font-bold text-ink">Career Path</Text>
           {detail.path.map((step, i) => (
             <View key={i} className="mb-2.5 flex-row items-start">
@@ -532,31 +574,31 @@ export default function CareerLibraryScreen() {
           ))}
         </View>
 
-        <View className="mb-5">
+        <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
           <Text className="mb-2 text-[14px] font-bold text-ink">Education</Text>
           <Text className="text-[13px] leading-5 text-muted">{detail.education}</Text>
         </View>
 
-        <View className="mb-5">
+        <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
           <Text className="mb-2 text-[14px] font-bold text-ink">Entrance Exams</Text>
           {detail.exams.map(exam => (
             <Text key={exam} className="mb-1.5 text-[13px] text-muted">• {exam}</Text>
           ))}
         </View>
 
-        <View className="mb-5">
+        <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
           <Text className="mb-2 text-[14px] font-bold text-ink">Job Opportunities</Text>
           {detail.jobs.map(job => (
             <Text key={job} className="mb-1.5 text-[13px] text-muted">• {job}</Text>
           ))}
         </View>
 
-        <View className="mb-5">
+        <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
           <Text className="mb-2 text-[14px] font-bold text-ink">Salary Range</Text>
           <Text className="text-[16px] font-bold text-brand">{detail.salary}</Text>
         </View>
 
-        <View className="mb-5">
+        <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
           <Text className="mb-2 text-[14px] font-bold text-ink">Top Institutes</Text>
           {detail.institutes.map(institute => (
             <Text key={institute} className="mb-1.5 text-[13px] text-muted">★ {institute}</Text>

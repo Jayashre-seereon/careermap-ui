@@ -1,10 +1,11 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppState } from '../src/app-state';
 import { palette, subscriptions } from '../src/careermap-data';
+import { AnimatedPressable } from '../src/careermap-ui';
 
 export default function PaymentSuccessScreen() {
   const { planId, transactionId, method } = useLocalSearchParams<{
@@ -72,9 +73,9 @@ export default function PaymentSuccessScreen() {
           ))}
         </View>
 
-        <Pressable className="w-full items-center rounded-[18px] bg-brand py-4" onPress={() => router.replace('/(drawer)/(tabs)/')}>
+        <AnimatedPressable className="w-full items-center rounded-[18px] bg-brand py-4" onPress={() => router.replace('/(drawer)/(tabs)/')}>
           <Text className="text-[15px] font-extrabold text-white">Go to Dashboard</Text>
-        </Pressable>
+        </AnimatedPressable>
       </View>
     </SafeAreaView>
   );

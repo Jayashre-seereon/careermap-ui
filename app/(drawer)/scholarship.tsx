@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
 
 import { useAppState } from '../../src/app-state';
 import { palette, scholarships } from '../../src/careermap-data';
-import { Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
 
 export default function ScholarshipScreen() {
   const { isUnlocked } = useAppState();
@@ -44,7 +44,7 @@ export default function ScholarshipScreen() {
           title={item.name}
           subtitle="Scholarship detail page closely matching the reference structure."
           action={
-            <Pressable
+            <AnimatedPressable
               className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]"
               onPress={() => {
                 setSelectedIndex(null);
@@ -53,7 +53,7 @@ export default function ScholarshipScreen() {
               }}
             >
               <Ionicons name="arrow-back" size={18} color={palette.text} />
-            </Pressable>
+            </AnimatedPressable>
           }
         />
 
@@ -70,9 +70,9 @@ export default function ScholarshipScreen() {
             </View>
             <Text className="text-center text-[20px] font-black text-ink">Preview Time Expired</Text>
             <Text className="text-center text-[14px] leading-[22px] text-muted">Subscribe to access full scholarship details, requirements, and application links.</Text>
-            <Pressable className="w-full rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/subscription')}>
+            <AnimatedPressable className="w-full rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/subscription')}>
               <Text className="text-center text-[14px] font-extrabold text-white">View Plans</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         ) : (
           <>
@@ -118,9 +118,9 @@ export default function ScholarshipScreen() {
               ))}
             </View>
 
-            <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => Linking.openURL(item.link)}>
+            <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => Linking.openURL(item.link)}>
               <Text className="text-center text-[14px] font-extrabold text-white">Apply Now</Text>
-            </Pressable>
+            </AnimatedPressable>
           </>
         )}
       </Screen>
@@ -133,9 +133,9 @@ export default function ScholarshipScreen() {
         title="Scholarships"
         subtitle="Scholarship directory with filters and drill-down cards adapted from the prototype."
         action={
-          <Pressable className={`rounded-[12px] px-3 py-2 ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+          <AnimatedPressable className={`rounded-[12px] px-3 py-2 ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
             <Text className={`text-[12px] font-extrabold ${showFilters ? 'text-white' : 'text-ink'}`}>Filter</Text>
-          </Pressable>
+          </AnimatedPressable>
         }
       />
 
@@ -153,16 +153,16 @@ export default function ScholarshipScreen() {
         <View className="gap-2.5">
           <View className="flex-row flex-wrap gap-2">
             {['All', 'Active', 'Expired', 'Due Date Expired', 'Closed'].map((label) => (
-              <Pressable key={label} className={`rounded-full px-3 py-2 ${activeStatus === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveStatus(label)}>
+              <AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${activeStatus === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveStatus(label)}>
                 <Text className={`text-[11px] font-extrabold ${activeStatus === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
-              </Pressable>
+              </AnimatedPressable>
             ))}
           </View>
           <View className="flex-row flex-wrap gap-2">
             {(['Default', 'A-Z', 'Z-A'] as const).map((label) => (
-              <Pressable key={label} className={`rounded-full px-3 py-2 ${sortBy === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setSortBy(label)}>
+              <AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${sortBy === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setSortBy(label)}>
                 <Text className={`text-[11px] font-extrabold ${sortBy === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
-              </Pressable>
+              </AnimatedPressable>
             ))}
           </View>
         </View>
@@ -170,7 +170,7 @@ export default function ScholarshipScreen() {
 
       <View className="gap-3">
         {filtered.slice(0, scholarshipUnlocked ? filtered.length : 6).map((item) => (
-          <Pressable
+          <AnimatedPressable
             key={item.name}
             className="gap-3 rounded-[22px] border border-line bg-card p-4"
             onPress={() => {
@@ -199,7 +199,7 @@ export default function ScholarshipScreen() {
               </View>
             </View>
             <Pill label={item.tag} tone={palette.primary} />
-          </Pressable>
+          </AnimatedPressable>
         ))}
       </View>
 
@@ -207,9 +207,9 @@ export default function ScholarshipScreen() {
         <View className="gap-2 rounded-[22px] border border-line bg-card p-4">
           <Text className="text-[16px] font-extrabold text-ink">Subscribe to See More</Text>
           <Text className="text-[13px] leading-5 text-muted">More scholarship listings and full application details stay locked until subscription.</Text>
-          <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/subscription')}>
+          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/subscription')}>
             <Text className="text-center text-[14px] font-extrabold text-white">Subscribe to More</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       ) : null}
     </Screen>

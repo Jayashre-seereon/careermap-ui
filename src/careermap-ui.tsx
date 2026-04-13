@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppState } from './app-state';
@@ -13,11 +14,31 @@ type HeaderProps = {
 
 export function Screen({ children }: { children: React.ReactNode }) {
   const { preferences } = useAppState();
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(18)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 260,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 280,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [opacity, translateY]);
+
   return (
     <SafeAreaView className={`flex-1 ${preferences.darkMode ? 'bg-[#140f17]' : 'bg-paper'}`} edges={['top']}>
-      <ScrollView className="flex-1" contentContainerClassName="gap-[18px] px-5 py-5" showsVerticalScrollIndicator={false}>
-        {children}
-      </ScrollView>
+      <Animated.View className="flex-1" style={{ opacity, transform: [{ translateY }] }}>
+        <ScrollView className="flex-1" contentContainerClassName="gap-[18px] px-5 py-5" showsVerticalScrollIndicator={false}>
+          {children}
+        </ScrollView>
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -90,18 +111,7 @@ export function InfoCard({
     return content;
   }
 
-  return (
-    <Pressable
-      className="min-w-[47%] flex-1 rounded-[24px]"
-      onPress={onPress}
-      style={({ pressed }) => ({
-        opacity: pressed ? 0.92 : 1,
-        transform: [{ scale: pressed ? 0.985 : 1 }],
-      })}
-    >
-      {content}
-    </Pressable>
-  );
+  return <AnimatedPressable className="min-w-[47%] flex-1 rounded-[24px]" onPress={onPress}>{content}</AnimatedPressable>;
 }
 
 export function ListRow({
@@ -117,13 +127,9 @@ export function ListRow({
 }) {
   const { preferences } = useAppState();
   return (
-    <Pressable
+    <AnimatedPressable
       className={`flex-row items-center justify-between gap-3 rounded-[20px] border px-4 py-[15px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}
       onPress={onPress}
-      style={({ pressed }) => ({
-        opacity: pressed ? 0.92 : 1,
-        transform: [{ scale: pressed ? 0.985 : 1 }],
-      })}
     >
       <View className="flex-1 flex-row items-center gap-3">
         <View className={`h-[34px] w-[34px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-[#f8ece7]'}`}>
@@ -135,7 +141,7 @@ export function ListRow({
         {value ? <Text className={`text-[12px] font-semibold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{value}</Text> : null}
         <Ionicons name="chevron-forward" size={18} color={palette.muted} />
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -155,5 +161,45 @@ export function StatCard({
       <Text className={`text-[24px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{value}</Text>
       <Text className={`text-[12px] font-semibold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
     </View>
+  );
+}
+
+export function AnimatedPressable({
+  children,
+  onPress,
+  className,
+  disabled,
+  style,
+}: {
+  children: React.ReactNode;
+  onPress?: () => void;
+  className?: string;
+  disabled?: boolean;
+  style?: any;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const animateTo = (value: number) => {
+    Animated.spring(scale, {
+      toValue: value,
+      useNativeDriver: true,
+      speed: 28,
+      bounciness: 4,
+    }).start();
+  };
+
+  return (
+    <Animated.View style={[{ transform: [{ scale }] }, style]}>
+      <Pressable
+        className={className}
+        disabled={disabled}
+        onPress={onPress}
+        onPressIn={() => animateTo(0.97)}
+        onPressOut={() => animateTo(1)}
+        style={({ pressed }) => ({ opacity: disabled ? 0.5 : pressed ? 0.96 : 1 })}
+      >
+        {children}
+      </Pressable>
+    </Animated.View>
   );
 }

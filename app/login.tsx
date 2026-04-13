@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BeeMascot } from '../src/bee-mascot';
 import { existingUsers, palette } from '../src/careermap-data';
+import { AnimatedPressable } from '../src/careermap-ui';
 
 export default function LoginScreen() {
   const { userType } = useLocalSearchParams<{ userType?: string }>();
@@ -74,9 +75,9 @@ export default function LoginScreen() {
   return (
     <SafeAreaView className="flex-1 bg-paper">
       <View className="flex-1 gap-6 px-6 py-6">
-        <Pressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
+        <AnimatedPressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={18} color={palette.text} />
-        </Pressable>
+        </AnimatedPressable>
 
         <View className="items-center gap-2.5 pt-2">
           <View className="h-[96px] w-[96px] items-center justify-center rounded-[28px] bg-card">
@@ -99,16 +100,16 @@ export default function LoginScreen() {
         ) : null}
 
         <View className="flex-row gap-1 rounded-[18px] bg-[#e8e2de] p-1">
-          <Pressable className={`flex-1 items-center rounded-[14px] py-3 ${loginMode === 'mobile' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('mobile')}>
+          <AnimatedPressable className={`flex-1 items-center rounded-[14px] py-3 ${loginMode === 'mobile' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('mobile')}>
             <Text className={`text-[12px] font-extrabold ${loginMode === 'mobile' ? 'text-white' : 'text-muted'}`}>Mobile OTP</Text>
-          </Pressable>
-          <Pressable className={`flex-1 items-center rounded-[14px] py-3 ${loginMode === 'coupon' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('coupon')}>
+          </AnimatedPressable>
+          <AnimatedPressable className={`flex-1 items-center rounded-[14px] py-3 ${loginMode === 'coupon' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('coupon')}>
             <Text className={`text-[12px] font-extrabold ${loginMode === 'coupon' ? 'text-white' : 'text-muted'}`}>Coupon</Text>
-          </Pressable>
+          </AnimatedPressable>
           {isExistingUser ? (
-            <Pressable className={`flex-1 items-center rounded-[14px] py-3 ${loginMode === 'email' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('email')}>
+            <AnimatedPressable className={`flex-1 items-center rounded-[14px] py-3 ${loginMode === 'email' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('email')}>
               <Text className={`text-[12px] font-extrabold ${loginMode === 'email' ? 'text-white' : 'text-muted'}`}>Email</Text>
-            </Pressable>
+            </AnimatedPressable>
           ) : null}
         </View>
 
@@ -129,14 +130,13 @@ export default function LoginScreen() {
                 className="flex-1 text-[15px] text-ink"
               />
             </View>
-            <Pressable
+            <AnimatedPressable
               className="mt-1.5 items-center rounded-[18px] bg-brand py-4"
               disabled={mobile.length !== 10}
               onPress={handleSendOtp}
-              style={({ pressed }) => ({ opacity: mobile.length !== 10 || pressed ? 0.42 : 1 })}
             >
               <Text className="text-[15px] font-extrabold text-white">Send OTP</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         ) : null}
 
@@ -154,14 +154,13 @@ export default function LoginScreen() {
               placeholderTextColor={palette.muted}
               className="h-14 rounded-[18px] border border-line bg-card px-4 text-[15px] text-ink"
             />
-            <Pressable
+            <AnimatedPressable
               className="mt-1.5 items-center rounded-[18px] bg-brand py-4"
               disabled={coupon.length < 3}
               onPress={handleCouponLogin}
-              style={({ pressed }) => ({ opacity: coupon.length < 3 || pressed ? 0.42 : 1 })}
             >
               <Text className="text-[15px] font-extrabold text-white">{isExistingUser ? 'Login with Coupon' : 'Continue with Coupon'}</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         ) : null}
 
@@ -192,14 +191,13 @@ export default function LoginScreen() {
               placeholderTextColor={palette.muted}
               className="h-14 rounded-[18px] border border-line bg-card px-4 text-[15px] text-ink"
             />
-            <Pressable
+            <AnimatedPressable
               className="mt-1.5 items-center rounded-[18px] bg-brand py-4"
               disabled={!email || !password}
               onPress={handleEmailLogin}
-              style={({ pressed }) => ({ opacity: !email || !password || pressed ? 0.42 : 1 })}
             >
               <Text className="text-[15px] font-extrabold text-white">Login with Email</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         ) : null}
 
@@ -209,9 +207,9 @@ export default function LoginScreen() {
 
         <View className="mt-auto items-center gap-3 pb-2.5">
          {isExistingUser && loginMode === 'email' ? (
-  <Pressable onPress={() => router.push('/forgot-password')}>
+  <AnimatedPressable onPress={() => router.push('/forgot-password')}>
     <Text className="text-[13px] font-bold text-muted">Forgot Password?</Text>
-  </Pressable>
+  </AnimatedPressable>
 ) : null}
          
           <Text className="text-center text-[11px] leading-[17px] text-muted">

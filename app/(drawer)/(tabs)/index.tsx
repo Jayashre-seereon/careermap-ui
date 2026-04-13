@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import { useAppState } from '../../../src/app-state';
-import { Pill, Screen, SectionHeader } from '../../../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../../src/careermap-ui';
 import { featuredInstitutes, featuredMentors, featuredScholarships, moduleCards, palette, studentProfile } from '../../../src/careermap-data';
 
 const personalityQuestions = [
@@ -49,9 +49,9 @@ export default function HomeScreen() {
     return (
       <Screen>
         <View className="flex-row items-center gap-3">
-          <Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] border border-line bg-card" onPress={resetPersonality}>
+          <AnimatedPressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] border border-line bg-card" onPress={resetPersonality}>
             <Ionicons name="chevron-back" size={18} color={palette.text} />
-          </Pressable>
+          </AnimatedPressable>
           <Text className="text-[18px] font-black text-ink">Know Your Personality</Text>
         </View>
 
@@ -71,7 +71,7 @@ export default function HomeScreen() {
           {current.options.map((option, index) => {
             const active = answers[currentQuestion] === index;
             return (
-              <Pressable
+              <AnimatedPressable
                 key={option}
                 className={`rounded-[18px] border p-4 ${active ? 'border-brand bg-brand' : 'border-line bg-card'}`}
                 onPress={() => {
@@ -81,18 +81,18 @@ export default function HomeScreen() {
                 }}
               >
                 <Text className={`text-[14px] font-bold ${active ? 'text-white' : 'text-ink'}`}>{String.fromCharCode(65 + index)}. {option}</Text>
-              </Pressable>
+              </AnimatedPressable>
             );
           })}
         </View>
 
         <View className="flex-row gap-3">
-          <Pressable className="flex-1 items-center rounded-[16px] border border-line bg-card py-[14px]" disabled={currentQuestion === 0} onPress={() => setCurrentQuestion((value) => value - 1)} style={({ pressed }) => ({ opacity: currentQuestion === 0 || pressed ? 0.42 : 1 })}>
+          <AnimatedPressable className="flex-1 items-center rounded-[16px] border border-line bg-card py-[14px]" disabled={currentQuestion === 0} onPress={() => setCurrentQuestion((value) => value - 1)}>
             <Text className={`text-[14px] font-extrabold ${currentQuestion === 0 ? 'text-muted' : 'text-ink'}`}>Previous</Text>
-          </Pressable>
-          <Pressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={answers[currentQuestion] === null} onPress={() => currentQuestion < personalityQuestions.length - 1 ? setCurrentQuestion((value) => value + 1) : setCompletedPersonality(true)} style={({ pressed }) => ({ opacity: answers[currentQuestion] === null || pressed ? 0.42 : 1 })}>
+          </AnimatedPressable>
+          <AnimatedPressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={answers[currentQuestion] === null} onPress={() => currentQuestion < personalityQuestions.length - 1 ? setCurrentQuestion((value) => value + 1) : setCompletedPersonality(true)}>
             <Text className="text-[14px] font-extrabold text-white">{currentQuestion < personalityQuestions.length - 1 ? 'Next' : 'See Results'}</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>
     );
@@ -121,14 +121,14 @@ export default function HomeScreen() {
           <View className="w-full gap-2.5 rounded-[24px] border border-line bg-card p-[18px]">
             <Text className="text-[16px] font-extrabold text-ink">Get a Full Psychometric Analysis</Text>
             <Text className="text-[13px] leading-5 text-muted">Take the deeper assessment to unlock a richer career report with stronger recommendations.</Text>
-            <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/(drawer)/(tabs)/assessment')}>
+            <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/(drawer)/(tabs)/assessment')}>
               <Text className="text-center text-[14px] font-extrabold text-white">Take Full Psychometric Test</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
 
-          <Pressable className="w-full items-center rounded-[16px] border border-line bg-card py-[14px]" onPress={resetPersonality}>
+          <AnimatedPressable className="w-full items-center rounded-[16px] border border-line bg-card py-[14px]" onPress={resetPersonality}>
             <Text className="text-[14px] font-extrabold text-ink">Back to Dashboard</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>
     );
@@ -146,9 +146,9 @@ export default function HomeScreen() {
             <Text className="text-[18px] font-black text-ink">{userProfile.name || onboarding.name || studentProfile.name}</Text>
           </View>
         </View>
-        <Pressable className="h-[42px] w-[42px] items-center justify-center rounded-[16px] border border-line bg-card" onPress={() => router.push('/(drawer)/notifications')}>
+        <AnimatedPressable className="h-[42px] w-[42px] items-center justify-center rounded-[16px] border border-line bg-card" onPress={() => router.push('/(drawer)/notifications')}>
           <Ionicons name="notifications-outline" size={20} color={palette.text} />
-        </Pressable>
+        </AnimatedPressable>
       </View>
 
       <View className="overflow-hidden rounded-[28px] bg-brand p-[22px]">
@@ -167,44 +167,44 @@ export default function HomeScreen() {
               ? 'Take the comprehensive psychometric test to get detailed career insights and recommendations.'
               : 'Answer quick questions to discover your personality type and ideal career direction.'}
           </Text>
-          <Pressable className="mt-1 self-start rounded-full bg-white px-4 py-2.5" onPress={() => isUnlocked('psychometric-test') ? router.push('/(drawer)/psychometric-test') : setShowPersonalityTest(true)}>
+          <AnimatedPressable className="mt-1 self-start rounded-full bg-white px-4 py-2.5" onPress={() => isUnlocked('psychometric-test') ? router.push('/(drawer)/psychometric-test') : setShowPersonalityTest(true)}>
             <Text className="text-[13px] font-extrabold text-brand">{isUnlocked('psychometric-test') ? 'Take Full Psychometric Test' : 'Take the Test'}</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </View>
 
       <SectionHeader title="Explore Modules" />
       <View className="flex-row flex-wrap gap-3">
         {moduleCards.map((card) => (
-          <Pressable key={card.title} className="min-w-[96px] w-[31%]" onPress={() => router.push(card.route as never)}>
+          <AnimatedPressable key={card.title} className="min-w-[96px] w-[31%]" onPress={() => router.push(card.route as never)}>
             <View className="min-h-[100px] items-center justify-center gap-2 rounded-[22px] border bg-card p-[14px]" style={{ borderColor: `${card.tone}30` }}>
               <View className="h-[42px] w-[42px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${card.tone}14` }}>
                 <Ionicons name={card.icon as keyof typeof Ionicons.glyphMap} size={21} color={card.tone} />
               </View>
               <Text className="text-center text-[14px] font-extrabold text-ink">{card.title}</Text>
             </View>
-          </Pressable>
+          </AnimatedPressable>
         ))}
       </View>
 
-      <SectionHeader title="Explore Your Mentors" action={<Pressable onPress={() => router.push('/(drawer)/book-mentor')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></Pressable>} />
+      <SectionHeader title="Explore Your Mentors" action={<AnimatedPressable onPress={() => router.push('/(drawer)/book-mentor')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
         {featuredMentors.map((mentor) => (
-          <Pressable key={mentor.name} className="w-[164px] items-center gap-1.5 rounded-[22px] border border-line bg-card p-4" onPress={() => router.push('/(drawer)/book-mentor')}>
+          <AnimatedPressable key={mentor.name} className="w-[164px] items-center gap-1.5 rounded-[22px] border border-line bg-card p-4" onPress={() => router.push('/(drawer)/book-mentor')}>
             <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
               <Ionicons name="person" size={22} color={mentor.accent} />
             </View>
             <Text className="text-center text-[13px] font-extrabold text-ink">{mentor.name}</Text>
             <Text className="text-center text-[11px] font-bold text-brand">{mentor.specialty}</Text>
             <Text className="text-center text-[11px] text-muted">{mentor.rating} rating | {mentor.experience}</Text>
-          </Pressable>
+          </AnimatedPressable>
         ))}
       </ScrollView>
 
-      <SectionHeader title="Explore Scholarships" action={<Pressable onPress={() => router.push('/(drawer)/scholarship')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></Pressable>} />
+      <SectionHeader title="Explore Scholarships" action={<AnimatedPressable onPress={() => router.push('/(drawer)/scholarship')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>} />
       <View className="gap-3">
         {featuredScholarships.map((item) => (
-          <Pressable key={item.name} className="flex-row items-center gap-3 rounded-[22px] border border-line bg-card p-4" onPress={() => router.push('/(drawer)/scholarship')}>
+          <AnimatedPressable key={item.name} className="flex-row items-center gap-3 rounded-[22px] border border-line bg-card p-4" onPress={() => router.push('/(drawer)/scholarship')}>
             <View className="h-[42px] w-[42px] items-center justify-center rounded-[14px] bg-[#edf9f1]">
               <Ionicons name="ribbon-outline" size={20} color={palette.green} />
             </View>
@@ -216,21 +216,21 @@ export default function HomeScreen() {
               <Pill label={item.tag} tone={palette.primary} />
               <Text className="text-[11px] text-muted">{item.deadline}</Text>
             </View>
-          </Pressable>
+          </AnimatedPressable>
         ))}
       </View>
 
-      <SectionHeader title="Explore Institutes" action={<Pressable onPress={() => router.push('/(drawer)/institute')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></Pressable>} />
+      <SectionHeader title="Explore Institutes" action={<AnimatedPressable onPress={() => router.push('/(drawer)/institute')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
         {featuredInstitutes.map((item) => (
-          <Pressable key={item.name} className="w-[164px] items-center gap-1.5 rounded-[22px] border border-line bg-card p-4" onPress={() => router.push('/(drawer)/institute')}>
+          <AnimatedPressable key={item.name} className="w-[164px] items-center gap-1.5 rounded-[22px] border border-line bg-card p-4" onPress={() => router.push('/(drawer)/institute')}>
             <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${palette.blue}14` }}>
               <Ionicons name="business-outline" size={22} color={palette.blue} />
             </View>
             <Text className="text-center text-[13px] font-extrabold text-ink">{item.name}</Text>
             <Text className="text-center text-[11px] font-bold text-brand">{item.location}</Text>
             <Text className="text-center text-[11px] text-muted">{item.type}</Text>
-          </Pressable>
+          </AnimatedPressable>
         ))}
       </ScrollView>
 
@@ -240,7 +240,7 @@ export default function HomeScreen() {
           { label: 'View Subscription Plans', path: '/(drawer)/subscription', icon: 'sparkles-outline', iconTone: palette.secondary },
           { label: 'Your Test History', path: '/(drawer)/(tabs)/profile', icon: 'time-outline', iconTone: palette.blue },
           ].map((item) => (
-          <Pressable key={item.label} className="flex-row items-center justify-between py-2" onPress={() => router.push(item.path as never)}>
+          <AnimatedPressable key={item.label} className="flex-row items-center justify-between py-2" onPress={() => router.push(item.path as never)}>
             <View className="flex-1 flex-row items-center gap-3">
               <View className="h-[34px] w-[34px] items-center justify-center rounded-[12px] bg-[#f4eeea]">
                 <Ionicons name={item.icon as keyof typeof Ionicons.glyphMap} size={17} color={item.iconTone} />
@@ -248,7 +248,7 @@ export default function HomeScreen() {
               <Text className="text-[14px] font-bold text-ink">{item.label}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={palette.muted} />
-          </Pressable>
+          </AnimatedPressable>
         ))}
       </View>
     </Screen>

@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BeeMascot } from '../src/bee-mascot';
+import { AnimatedPressable } from '../src/careermap-ui';
 
 export default function AuthEntryScreen() {
   return (
@@ -20,7 +21,7 @@ export default function AuthEntryScreen() {
             </Text>
           </View>
           <View className="w-full gap-4">
-            <Pressable className="rounded-[24px] border border-line bg-card p-5" onPress={() => router.push('/onboarding')}>
+            <AnimatedPressable className="rounded-[24px] border border-line bg-card p-5" onPress={() => router.push('/onboarding')}>
               <View className="flex-row items-center gap-4">
                 <View className="h-14 w-14 items-center justify-center rounded-[18px] bg-brand">
                   <Ionicons name="person-add-outline" size={26} color="#fff" />
@@ -30,8 +31,8 @@ export default function AuthEntryScreen() {
                   <Text className="mt-1 text-[12px] leading-5 text-muted">Start onboarding and create your profile.</Text>
                 </View>
               </View>
-            </Pressable>
-            <Pressable className="rounded-[24px] border border-line bg-card p-5" onPress={() => router.push({ pathname: '/login', params: { userType: 'existing' } })}>
+            </AnimatedPressable>
+            <AnimatedPressable className="rounded-[24px] border border-line bg-card p-5" onPress={() => router.push({ pathname: '/login', params: { userType: 'existing' } })}>
               <View className="flex-row items-center gap-4">
                 <View className="h-14 w-14 items-center justify-center rounded-[18px] bg-surface">
                   <Ionicons name="log-in-outline" size={26} color="#c11e38" />
@@ -41,7 +42,7 @@ export default function AuthEntryScreen() {
                   <Text className="mt-1 text-[12px] leading-5 text-muted">Login with OTP, coupon, or email and password.</Text>
                 </View>
               </View>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         </View>
       </View>

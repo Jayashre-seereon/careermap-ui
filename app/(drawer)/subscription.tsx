@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { useAppState } from '../../src/app-state';
 import { palette, subscriptions } from '../../src/careermap-data';
-import { Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
 
 export default function SubscriptionScreen() {
   const { activePlanId } = useAppState();
@@ -35,7 +35,7 @@ export default function SubscriptionScreen() {
                 </View>
               ))}
             </View>
-            <Pressable
+            <AnimatedPressable
               className="mt-1 rounded-[14px] py-3"
               onPress={() => router.push({ pathname: '/checkout', params: { planId: plan.id } })}
               style={{ backgroundColor: activePlanId === plan.id ? `${palette.green}14` : palette.primary }}
@@ -43,7 +43,7 @@ export default function SubscriptionScreen() {
               <Text className="text-center text-[14px] font-extrabold" style={{ color: activePlanId === plan.id ? palette.green : '#fff' }}>
                 {activePlanId === plan.id ? 'Current Plan' : 'Choose Plan'}
               </Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         ))}
       </View>

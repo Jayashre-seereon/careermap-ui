@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppState } from '../src/app-state';
 import { palette } from '../src/careermap-data';
+import { AnimatedPressable } from '../src/careermap-ui';
 
 const selectionMeta = [
   { key: 'selectedClass', label: 'Class', icon: 'school-outline', color: palette.blue },
@@ -58,9 +59,9 @@ export default function ProfileSetupScreen() {
   return (
     <SafeAreaView className="flex-1 bg-paper">
       <ScrollView className="flex-1" contentContainerClassName="gap-[14px] px-6 py-6" showsVerticalScrollIndicator={false}>
-        <Pressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
+        <AnimatedPressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={18} color={palette.text} />
-        </Pressable>
+        </AnimatedPressable>
         <View className="mb-2 items-center gap-2">
           <View className="h-[68px] w-[68px] items-center justify-center rounded-[22px] bg-brand">
             <Ionicons name="person-circle-outline" size={34} color="#fff" />
@@ -140,7 +141,7 @@ export default function ProfileSetupScreen() {
               { label: 'Female', icon: 'female-outline' },
               { label: 'Other', icon: 'transgender-outline' },
             ].map((gender) => (
-              <Pressable
+              <AnimatedPressable
                 key={gender.label}
                 onPress={() => update('gender', gender.label)}
                 className={`h-12 flex-1 flex-row items-center justify-center gap-1.5 rounded-[16px] border ${form.gender === gender.label ? 'border-brand bg-brand' : 'border-line bg-card'}`}
@@ -151,7 +152,7 @@ export default function ProfileSetupScreen() {
                   color={form.gender === gender.label ? '#fff' : palette.muted}
                 />
                 <Text className={`text-[13px] font-extrabold ${form.gender === gender.label ? 'text-white' : 'text-ink'}`}>{gender.label}</Text>
-              </Pressable>
+              </AnimatedPressable>
             ))}
           </View>
         </View>
@@ -170,7 +171,7 @@ export default function ProfileSetupScreen() {
           </View>
         </View>
 
-        <Pressable
+        <AnimatedPressable
           className="mt-3 items-center rounded-[18px] bg-brand py-4"
           disabled={!isValid}
           onPress={() => {
@@ -190,10 +191,9 @@ export default function ProfileSetupScreen() {
             });
             router.replace('/promo');
           }}
-          style={({ pressed }) => ({ opacity: !isValid || pressed ? 0.42 : 1 })}
         >
           <Text className="text-[15px] font-extrabold text-white">Complete Profile</Text>
-        </Pressable>
+        </AnimatedPressable>
       </ScrollView>
     </SafeAreaView>
   );

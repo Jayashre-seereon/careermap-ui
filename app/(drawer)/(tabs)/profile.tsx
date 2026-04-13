@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 
 import { useAppState } from '../../../src/app-state';
 import { palette } from '../../../src/careermap-data';
-import { Pill, Screen } from '../../../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen } from '../../../src/careermap-ui';
 
 export default function ProfileScreen() {
   const { mode } = useLocalSearchParams<{ mode?: string }>();
@@ -84,14 +84,14 @@ export default function ProfileScreen() {
       return (
         <View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#1a141f]' : 'border-line bg-[#fcf8f5]'}`}>
           {savedCareers.map((career) => (
-            <Pressable
+            <AnimatedPressable
               key={career}
               className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}
               onPress={() => router.push('/(drawer)/(tabs)/library')}
             >
               <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{career}</Text>
               <Ionicons name="chevron-forward" size={16} color={palette.muted} />
-            </Pressable>
+            </AnimatedPressable>
           ))}
         </View>
       );
@@ -101,7 +101,7 @@ export default function ProfileScreen() {
       return (
         <View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#1a141f]' : 'border-line bg-[#fcf8f5]'}`}>
           {testHistory.map((item) => (
-            <Pressable
+            <AnimatedPressable
               key={item.id}
               className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}
               onPress={() => router.push('/(drawer)/(tabs)/assessment')}
@@ -111,7 +111,7 @@ export default function ProfileScreen() {
                 <Text className={`mt-1 text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.subtitle}</Text>
               </View>
               <Pill label={item.status} tone={item.status === 'Completed' ? palette.green : palette.secondary} />
-            </Pressable>
+            </AnimatedPressable>
           ))}
         </View>
       );
@@ -121,7 +121,7 @@ export default function ProfileScreen() {
       return (
         <View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#1a141f]' : 'border-line bg-[#fcf8f5]'}`}>
           {bookings.map((booking) => (
-             <Pressable
+             <AnimatedPressable
               key={booking.id}
               className={`gap-1 rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}
               onPress={() => router.push('/(drawer)/book-mentor')}
@@ -133,7 +133,7 @@ export default function ProfileScreen() {
               </View>
               <Pill label={booking.status} tone={palette.green} />
             </View>
-            </Pressable>
+            </AnimatedPressable>
           ))}
         </View>
       );
@@ -143,7 +143,7 @@ export default function ProfileScreen() {
       return (
         <View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#1a141f]' : 'border-line bg-[#fcf8f5]'}`}>
           {subscriptionRecords.map((record) => (
-            <Pressable
+            <AnimatedPressable
               key={record.id}
               className={`gap-1 rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}
               onPress={() => router.push('/(drawer)/subscription')}
@@ -154,7 +154,7 @@ export default function ProfileScreen() {
               </View>
               <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Valid until: {record.expiryDate}</Text>
               <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>TXN: {record.transactionId}</Text>
-            </Pressable>
+            </AnimatedPressable>
           ))}
         </View>
       );
@@ -167,9 +167,9 @@ export default function ProfileScreen() {
     return (
       <Screen>
         <View className="flex-row items-center gap-3">
-          <Pressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => setEditMode(false)}>
+          <AnimatedPressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => setEditMode(false)}>
             <Ionicons name="arrow-back" size={18} color={palette.text} />
-          </Pressable>
+          </AnimatedPressable>
           <Text className="text-[20px] font-black text-ink">Edit Profile</Text>
         </View>
 
@@ -217,13 +217,13 @@ export default function ProfileScreen() {
               {['Male', 'Female', 'Other'].map((option) => {
                 const active = form.gender === option;
                 return (
-                  <Pressable
+                  <AnimatedPressable
                     key={option}
                     className={`flex-1 rounded-[16px] border py-3 ${active ? 'border-brand bg-brand' : 'border-line bg-card'}`}
                     onPress={() => updateField('gender', option)}
                   >
                     <Text className={`text-center text-[13px] font-extrabold ${active ? 'text-white' : 'text-ink'}`}>{option}</Text>
-                  </Pressable>
+                  </AnimatedPressable>
                 );
               })}
             </View>
@@ -250,7 +250,7 @@ export default function ProfileScreen() {
 
         </View>
 
-        <Pressable
+        <AnimatedPressable
           className="rounded-[18px] bg-brand py-4"
           onPress={() => {
             saveUserProfile(form);
@@ -258,7 +258,7 @@ export default function ProfileScreen() {
           }}
         >
           <Text className="text-center text-[15px] font-extrabold text-white">Save Changes</Text>
-        </Pressable>
+        </AnimatedPressable>
       </Screen>
     );
   }
@@ -267,9 +267,9 @@ export default function ProfileScreen() {
     <Screen>
       <View className="flex-row items-center justify-between">
         <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>My Profile</Text>
-        <Pressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={toggleDarkMode}>
+        <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={toggleDarkMode}>
           <Ionicons name={preferences.darkMode ? 'sunny-outline' : 'moon-outline'} size={18} color={preferences.darkMode ? palette.secondary : palette.muted} />
-        </Pressable>
+        </AnimatedPressable>
       </View>
 
       <View className={`items-center rounded-[28px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
@@ -306,7 +306,7 @@ export default function ProfileScreen() {
 
           return (
             <View key={item.label}>
-              <Pressable
+              <AnimatedPressable
                 className={`flex-row items-center justify-between px-4 py-4 ${index < menuItems.length - 1 || isOpen ? 'border-b border-line' : ''}`}
                 onPress={item.action}
               >
@@ -324,17 +324,17 @@ export default function ProfileScreen() {
                     color={palette.muted}
                   />
                 </View>
-              </Pressable>
+              </AnimatedPressable>
               {isOpen ? renderInlineSection(sectionKey) : null}
             </View>
           );
         })}
       </View>
 
-      <Pressable className="flex-row items-center justify-center gap-2 rounded-[18px] border border-[#efc8c0] bg-[#fff4f2] py-4" onPress={() => router.replace('/')}>
+      <AnimatedPressable className="flex-row items-center justify-center gap-2 rounded-[18px] border border-[#efc8c0] bg-[#fff4f2] py-4" onPress={() => router.replace('/')}>
         <Ionicons name="log-out-outline" size={18} color={palette.danger} />
         <Text className="text-[14px] font-extrabold text-danger">Logout</Text>
-      </Pressable>
+      </AnimatedPressable>
 
       <Text className={`text-center text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
         Current plan: {hasActiveSubscription ? activePlanId : 'No active plan'}

@@ -83,6 +83,12 @@ export default function DrawerRoot() {
           }}
         />
         <Drawer.Screen
+          name="entrance-exam-detail"
+          options={{
+            drawerItemStyle: { display: 'none' },
+          }}
+        />
+        <Drawer.Screen
           name="quiz"
           options={{
             drawerItemStyle: { display: 'none' },

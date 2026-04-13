@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { palette } from '../src/careermap-data';
+import { AnimatedPressable } from '../src/careermap-ui';
 
 export default function SignupScreen() {
   const [form, setForm] = useState({
@@ -21,9 +22,9 @@ export default function SignupScreen() {
   return (
     <SafeAreaView className="flex-1 bg-paper">
       <ScrollView className="flex-1" contentContainerClassName="gap-[14px] px-6 py-6" showsVerticalScrollIndicator={false}>
-        <Pressable onPress={() => router.back()}>
+        <AnimatedPressable onPress={() => router.back()}>
           <Text className="text-[14px] font-bold text-muted">Back</Text>
-        </Pressable>
+        </AnimatedPressable>
         <Text className="text-[30px] font-black text-ink">Create Account</Text>
         <Text className="mb-1.5 text-[14px] text-muted">Join Career Map today</Text>
 
@@ -49,9 +50,9 @@ export default function SignupScreen() {
           </View>
         ))}
 
-        <Pressable className="mt-3 items-center rounded-[18px] bg-brand py-4" onPress={() => router.push('/otp-verify')}>
+        <AnimatedPressable className="mt-3 items-center rounded-[18px] bg-brand py-4" onPress={() => router.push('/otp-verify')}>
           <Text className="text-[15px] font-extrabold text-white">Register</Text>
-        </Pressable>
+        </AnimatedPressable>
       </ScrollView>
     </SafeAreaView>
   );
