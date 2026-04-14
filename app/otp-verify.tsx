@@ -6,14 +6,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { palette } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
+import { AnimatedBackground } from '@/src/animated-background';
 
 export default function OtpVerifyScreen() {
   const { next, identifier } = useLocalSearchParams<{ next?: string; identifier?: string }>();
   const [otp, setOtp] = useState('');
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
-      <View className="flex-1 items-center justify-center gap-[14px] px-6">
+   <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
+          <AnimatedBackground /> 
+             <View className="flex-1 items-center justify-center gap-[14px] px-6">
         <AnimatedPressable className="absolute left-6 top-6 h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={18} color={palette.text} />
         </AnimatedPressable>
@@ -28,7 +30,7 @@ export default function OtpVerifyScreen() {
           className="h-[60px] w-full max-w-[220px] rounded-[18px] border border-line bg-card px-4 text-center text-[22px] font-extrabold tracking-[12px] text-ink"
         />
         <AnimatedPressable
-          className="mt-2 w-full max-w-[260px] items-center rounded-[18px] bg-brand py-4"
+          className="mt-2 w-full max-w-[260px] items-center rounded-[18px] bg-brand py-4 px-4"
           disabled={otp.length !== 4}
           onPress={() => router.replace(next || '/profile-setup')}
         >

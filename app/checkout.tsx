@@ -53,7 +53,7 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
+    <SafeAreaView className="flex-1 bg-transparent">
       <View className="flex-1 px-5 pt-2.5">
         <View className="mb-[14px] flex-row items-start gap-3">
           <Pressable className="rounded-[14px] border border-line bg-card px-[14px] py-[11px]" onPress={() => router.back()}>

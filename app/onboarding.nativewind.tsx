@@ -75,7 +75,7 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
+    <SafeAreaView className="flex-1 bg-transparent">
       <ScrollView className="flex-1" contentContainerClassName="flex-grow gap-5 px-6 py-6" showsVerticalScrollIndicator={false}>
         {step > 0 && step < totalSteps - 1 ? (
           <View className="flex-row gap-1.5">

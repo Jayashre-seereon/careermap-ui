@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BeeMascot } from '../src/bee-mascot';
 import { existingUsers, palette } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
+import { AnimatedBackground } from '@/src/animated-background';
 
 export default function LoginScreen() {
   const { userType } = useLocalSearchParams<{ userType?: string }>();
@@ -73,8 +74,9 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
-      <View className="flex-1 gap-6 px-6 py-6">
+<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
+       <AnimatedBackground /> 
+        <View className="flex-1 gap-6 px-6 py-6">
         <AnimatedPressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={18} color={palette.text} />
         </AnimatedPressable>
@@ -100,14 +102,14 @@ export default function LoginScreen() {
         ) : null}
 
         <View className="flex-row gap-1 rounded-[18px] bg-[#e8e2de] p-1">
-          <AnimatedPressable className={`flex-1 items-center rounded-[14px] py-3 ${loginMode === 'mobile' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('mobile')}>
+          <AnimatedPressable className={`flex-1 items-center rounded-[14px] py-3 px-3 ${loginMode === 'mobile' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('mobile')}>
             <Text className={`text-[12px] font-extrabold ${loginMode === 'mobile' ? 'text-white' : 'text-muted'}`}>Mobile OTP</Text>
           </AnimatedPressable>
-          <AnimatedPressable className={`flex-1 items-center rounded-[14px] py-3 ${loginMode === 'coupon' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('coupon')}>
+          <AnimatedPressable className={`flex-1 items-center rounded-[14px] py-3 px-3 ${loginMode === 'coupon' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('coupon')}>
             <Text className={`text-[12px] font-extrabold ${loginMode === 'coupon' ? 'text-white' : 'text-muted'}`}>Coupon</Text>
           </AnimatedPressable>
           {isExistingUser ? (
-            <AnimatedPressable className={`flex-1 items-center rounded-[14px] py-3 ${loginMode === 'email' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('email')}>
+            <AnimatedPressable className={`flex-1 items-center rounded-[14px] py-3 px-3 ${loginMode === 'email' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('email')}>
               <Text className={`text-[12px] font-extrabold ${loginMode === 'email' ? 'text-white' : 'text-muted'}`}>Email</Text>
             </AnimatedPressable>
           ) : null}

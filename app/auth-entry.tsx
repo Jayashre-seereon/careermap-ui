@@ -2,14 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import { AnimatedBackground } from '../src/animated-background';
 import { BeeMascot } from '../src/bee-mascot';
 import { AnimatedPressable } from '../src/careermap-ui';
 
 export default function AuthEntryScreen() {
   return (
-    <SafeAreaView className="flex-1 bg-paper">
-      <View className="flex-1 px-6 py-6">
+      <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
+       <AnimatedBackground /> 
+    <View style={{ flex: 1, backgroundColor: 'transparent', paddingHorizontal: 24, paddingVertical: 24 }}>
+    
         <View className="flex-1 items-center justify-center gap-5">
           <View className="h-[96px] w-[96px] items-center justify-center rounded-[30px] bg-card">
             <BeeMascot size={70} />

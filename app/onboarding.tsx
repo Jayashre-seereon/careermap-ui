@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppState } from '../src/app-state';
 import { BeeMascot } from '../src/bee-mascot';
 import { palette } from '../src/careermap-data';
+import { AnimatedBackground } from '@/src/animated-background';
 
 const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate'];
 const streamOptions = ['Science', 'Commerce', 'Arts & Humanities', 'Vocational', 'Not Sure Yet'];
@@ -76,8 +77,9 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
-      <ScrollView className="flex-1" contentContainerClassName="flex-grow gap-5 px-6 py-6" showsVerticalScrollIndicator={false}>
+  <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
+         <AnimatedBackground /> 
+          <ScrollView className="flex-1" contentContainerClassName="flex-grow gap-5 px-6 py-6" showsVerticalScrollIndicator={false}>
         <Pressable
           className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface"
           onPress={() => {

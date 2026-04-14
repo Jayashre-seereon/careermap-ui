@@ -176,8 +176,8 @@ export default function HomeScreen() {
       <SectionHeader title="Explore Modules" />
       <View className="flex-row flex-wrap gap-3">
         {moduleCards.map((card) => (
-          <Pressable key={card.title} className="min-w-[96px] w-[31%]" onPress={() => router.push(card.route as never)}>
-            <View className="min-h-[100px] items-center justify-center gap-2 rounded-[22px] border bg-card p-[14px]" style={{ borderColor: `${card.tone}30` }}>
+        <Pressable key={card.title} style={{ width: '31%' }} onPress={() => router.push(card.route as never)}>
+ <View className="aspect-square items-center justify-center gap-2 rounded-[22px] border bg-card p-[14px]" style={{ borderColor: `${card.tone}30` }}>
               <View className="h-[42px] w-[42px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${card.tone}14` }}>
                 <Ionicons name={card.icon as keyof typeof Ionicons.glyphMap} size={21} color={card.tone} />
               </View>

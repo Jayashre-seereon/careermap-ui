@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BeeMascot } from '../src/bee-mascot';
+import { AnimatedBackground } from '@/src/animated-background';
 
 const features = [
   { title: 'Career Library', desc: '500+ career options across streams' },
@@ -18,8 +19,9 @@ export default function PromoScreen() {
 
   if (page === 0) {
     return (
-      <SafeAreaView className="flex-1 bg-paper">
-        <View className="flex-1 items-center justify-center gap-[18px] overflow-hidden bg-brand px-6">
+     <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
+            <AnimatedBackground /> 
+               <View className="flex-1 items-center justify-center gap-[18px] overflow-hidden bg-brand px-6">
           <Pressable className="absolute right-[18px] top-[18px] z-10 h-[34px] w-[34px] items-center justify-center rounded-full bg-white/20" onPress={() => router.replace('/(drawer)')}>
             <Text className="text-[13px] font-black text-white">X</Text>
           </Pressable>

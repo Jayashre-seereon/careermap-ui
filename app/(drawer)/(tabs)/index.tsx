@@ -153,9 +153,7 @@ export default function HomeScreen() {
 
       <View className="overflow-hidden rounded-[28px] bg-brand p-[22px]">
         <View className="absolute bottom-[-34px] right-[-28px] h-[148px] w-[148px] rounded-full bg-white/10" />
-        <View className="absolute right-[18px] top-[18px]">
-          <Text className="text-[28px] font-black text-white/15">Mind</Text>
-        </View>
+       
         <View className="gap-2">
           <View className="flex-row items-center gap-1.5">
             <Ionicons name="sparkles" size={14} color="#f6ce63" />
@@ -176,8 +174,9 @@ export default function HomeScreen() {
       <SectionHeader title="Explore Modules" />
       <View className="flex-row flex-wrap gap-3">
         {moduleCards.map((card) => (
-          <AnimatedPressable key={card.title} className="min-w-[96px] w-[31%]" onPress={() => router.push(card.route as never)}>
-            <View className="min-h-[100px] items-center justify-center gap-2 rounded-[22px] border bg-card p-[14px]" style={{ borderColor: `${card.tone}30` }}>
+       <AnimatedPressable key={card.title} style={{ width: '31%' }} onPress={() => router.push(card.route as never)}>   
+        <View className="aspect-square items-center justify-center gap-2 rounded-[22px] border bg-card p-[14px]"
+ style={{ borderColor: `${card.tone}30` }}>
               <View className="h-[42px] w-[42px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${card.tone}14` }}>
                 <Ionicons name={card.icon as keyof typeof Ionicons.glyphMap} size={21} color={card.tone} />
               </View>

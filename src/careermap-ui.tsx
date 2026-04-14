@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppState } from './app-state';
 import { palette } from './careermap-data';
-
+import { AnimatedBackground } from './animated-background';
 type HeaderProps = {
   title: string;
   subtitle?: string;
@@ -34,6 +34,7 @@ export function Screen({ children }: { children: React.ReactNode }) {
 
   return (
     <SafeAreaView className={`flex-1 ${preferences.darkMode ? 'bg-[#140f17]' : 'bg-paper'}`} edges={['top']}>
+      <AnimatedBackground />  {/* 👈 ADD THIS LINE */}
       <Animated.View className="flex-1" style={{ opacity, transform: [{ translateY }] }}>
         <ScrollView className="flex-1" contentContainerClassName="gap-[18px] px-5 py-5" showsVerticalScrollIndicator={false}>
           {children}

@@ -20,7 +20,7 @@ export default function SignupScreen() {
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
+    <SafeAreaView className="flex-1 bg-transparent">
       <ScrollView className="flex-1" contentContainerClassName="gap-[14px] px-6 py-6" showsVerticalScrollIndicator={false}>
         <AnimatedPressable onPress={() => router.back()}>
           <Text className="text-[14px] font-bold text-muted">Back</Text>

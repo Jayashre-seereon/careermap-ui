@@ -32,7 +32,7 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
+    <SafeAreaView className="flex-1 bg-transparent">
       <View className="flex-1 gap-4 px-6 py-6">
         <AnimatedPressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => (step === 'code' ? setStep('email') : router.back())}>
           <Ionicons name="arrow-back" size={18} color={palette.text} />

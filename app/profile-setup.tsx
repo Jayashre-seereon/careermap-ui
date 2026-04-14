@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppState } from '../src/app-state';
 import { palette } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
+import { AnimatedBackground } from '@/src/animated-background';
 
 const selectionMeta = [
   { key: 'selectedClass', label: 'Class', icon: 'school-outline', color: palette.blue },
@@ -57,8 +58,9 @@ export default function ProfileSetupScreen() {
     onboarding.selectedPriorities.length > 0;
 
   return (
-    <SafeAreaView className="flex-1 bg-paper">
-      <ScrollView className="flex-1" contentContainerClassName="gap-[14px] px-6 py-6" showsVerticalScrollIndicator={false}>
+   <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
+          <AnimatedBackground />  
+            <ScrollView className="flex-1" contentContainerClassName="gap-[14px] px-6 py-6" showsVerticalScrollIndicator={false}>
         <AnimatedPressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={18} color={palette.text} />
         </AnimatedPressable>
@@ -144,7 +146,7 @@ export default function ProfileSetupScreen() {
               <AnimatedPressable
                 key={gender.label}
                 onPress={() => update('gender', gender.label)}
-                className={`h-12 flex-1 flex-row items-center justify-center gap-1.5 rounded-[16px] border ${form.gender === gender.label ? 'border-brand bg-brand' : 'border-line bg-card'}`}
+                className={`h-12 flex-1 px-3 py-2 flex-row items-center justify-center gap-1.5 rounded-[16px] border ${form.gender === gender.label ? 'border-brand bg-brand' : 'border-line bg-card'}`}
               >
                 <Ionicons
                   name={gender.icon as keyof typeof Ionicons.glyphMap}
