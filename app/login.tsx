@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BeeMascot } from '../src/bee-mascot';
@@ -74,10 +74,18 @@ export default function LoginScreen() {
   };
 
   return (
-<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
-       <AnimatedBackground /> 
-        <View className="flex-1 gap-6 px-6 py-6">
-        <AnimatedPressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
+      <AnimatedBackground />
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="flex-grow gap-6 px-6 py-6"
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <AnimatedPressable
+          className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface"
+          onPress={() => router.back()}
+        >
           <Ionicons name="arrow-back" size={18} color={palette.text} />
         </AnimatedPressable>
 
@@ -85,33 +93,68 @@ export default function LoginScreen() {
           <View className="h-[96px] w-[96px] items-center justify-center rounded-[28px] bg-card">
             <BeeMascot size={70} />
           </View>
-          <Text className="text-center text-[28px] font-black text-ink">{isExistingUser ? 'Welcome Back' : 'Continue Your Journey'}</Text>
+          <Text className="text-center text-[28px] font-black text-ink">
+            {isExistingUser ? 'Welcome Back' : 'Continue Your Journey'}
+          </Text>
           <Text className="text-center text-[14px] text-muted">
-            {isExistingUser ? 'Choose how you\'d like to login in' : 'Use OTP or coupon to continue'}
+            {isExistingUser ? "Choose how you'd like to log in" : 'Use OTP or coupon to continue'}
           </Text>
         </View>
 
         {isExistingUser ? (
           <View className="gap-1 rounded-[18px] border border-line bg-card p-4">
             <Text className="text-[13px] font-extrabold text-ink">Example existing users</Text>
-            <Text className="text-[12px] text-muted">Mobile: `9876543210`</Text>
-            <Text className="text-[12px] text-muted">Email: `jaya@email.com`</Text>
-            <Text className="text-[12px] text-muted">Password: `Jaya@123`</Text>
-            <Text className="text-[12px] text-muted">Coupon: `CAREER2026`</Text>
+            <Text className="text-[12px] text-muted">Mobile: 9876543210</Text>
+            <Text className="text-[12px] text-muted">Email: jaya@email.com</Text>
+            <Text className="text-[12px] text-muted">Password: Jaya@123</Text>
+            <Text className="text-[12px] text-muted">Coupon: CAREER2026</Text>
           </View>
         ) : null}
 
-        <View className="flex-row gap-1 rounded-[18px] bg-[#e8e2de] p-1">
-          <AnimatedPressable className={`flex-1 items-center rounded-[14px] py-3 px-3 ${loginMode === 'mobile' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('mobile')}>
-            <Text className={`text-[12px] font-extrabold ${loginMode === 'mobile' ? 'text-white' : 'text-muted'}`}>Mobile OTP</Text>
-          </AnimatedPressable>
-          <AnimatedPressable className={`flex-1 items-center rounded-[14px] py-3 px-3 ${loginMode === 'coupon' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('coupon')}>
-            <Text className={`text-[12px] font-extrabold ${loginMode === 'coupon' ? 'text-white' : 'text-muted'}`}>Coupon</Text>
-          </AnimatedPressable>
-          {isExistingUser ? (
-            <AnimatedPressable className={`flex-1 items-center rounded-[14px] py-3 px-3 ${loginMode === 'email' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('email')}>
-              <Text className={`text-[12px] font-extrabold ${loginMode === 'email' ? 'text-white' : 'text-muted'}`}>Email</Text>
+        <View className="flex-row rounded-[18px] bg-[#e8e2de] p-1">
+          <View className="flex-1 px-[2px]">
+            <AnimatedPressable
+              className={`items-center rounded-[14px] px-2 py-3 ${loginMode === 'mobile' ? 'bg-brand' : ''}`}
+              onPress={() => setLoginMode('mobile')}
+            >
+              <Text
+                className={`text-center text-[12px] font-extrabold ${
+                  loginMode === 'mobile' ? 'text-white' : 'text-muted'
+                }`}
+              >
+                Mobile OTP
+              </Text>
             </AnimatedPressable>
+          </View>
+          <View className="flex-1 px-[2px]">
+            <AnimatedPressable
+              className={`items-center rounded-[14px] px-2 py-3 ${loginMode === 'coupon' ? 'bg-brand' : ''}`}
+              onPress={() => setLoginMode('coupon')}
+            >
+              <Text
+                className={`text-center text-[12px] font-extrabold ${
+                  loginMode === 'coupon' ? 'text-white' : 'text-muted'
+                }`}
+              >
+                Coupon
+              </Text>
+            </AnimatedPressable>
+          </View>
+          {isExistingUser ? (
+            <View className="flex-1 px-[2px]">
+              <AnimatedPressable
+                className={`items-center rounded-[14px] px-2 py-3 ${loginMode === 'email' ? 'bg-brand' : ''}`}
+                onPress={() => setLoginMode('email')}
+              >
+                <Text
+                  className={`text-center text-[12px] font-extrabold ${
+                    loginMode === 'email' ? 'text-white' : 'text-muted'
+                  }`}
+                >
+                  Email
+                </Text>
+              </AnimatedPressable>
+            </View>
           ) : null}
         </View>
 
@@ -161,7 +204,9 @@ export default function LoginScreen() {
               disabled={coupon.length < 3}
               onPress={handleCouponLogin}
             >
-              <Text className="text-[15px] font-extrabold text-white">{isExistingUser ? 'Login with Coupon' : 'Continue with Coupon'}</Text>
+              <Text className="text-[15px] font-extrabold text-white">
+                {isExistingUser ? 'Login with Coupon' : 'Continue with Coupon'}
+              </Text>
             </AnimatedPressable>
           </View>
         ) : null}
@@ -204,21 +249,27 @@ export default function LoginScreen() {
         ) : null}
 
         {status.type !== 'idle' ? (
-          <Text className={`text-center text-[12px] font-bold ${status.type === 'error' ? 'text-danger' : 'text-success'}`}>{status.message}</Text>
+          <Text
+            className={`text-center text-[12px] font-bold ${
+              status.type === 'error' ? 'text-danger' : 'text-success'
+            }`}
+          >
+            {status.message}
+          </Text>
         ) : null}
 
         <View className="mt-auto items-center gap-3 pb-2.5">
-         {isExistingUser && loginMode === 'email' ? (
-  <AnimatedPressable onPress={() => router.push('/forgot-password')}>
-    <Text className="text-[13px] font-bold text-muted">Forgot Password?</Text>
-  </AnimatedPressable>
-) : null}
-         
+          {isExistingUser && loginMode === 'email' ? (
+            <AnimatedPressable onPress={() => router.push('/forgot-password')}>
+              <Text className="text-[13px] font-bold text-muted">Forgot Password?</Text>
+            </AnimatedPressable>
+          ) : null}
+
           <Text className="text-center text-[11px] leading-[17px] text-muted">
-            By continuing, you agree to Career Map&apos;s Terms of Service and Privacy Policy.
+            By continuing, you agree to Career Map's Terms of Service and Privacy Policy.
           </Text>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
