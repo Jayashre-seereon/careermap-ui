@@ -3,27 +3,27 @@ import { Animated, Dimensions, StyleSheet, View } from 'react-native';
 import Svg, { Path, Line } from 'react-native-svg';
 const { width, height } = Dimensions.get('window');
 const PARTICLES = [
-    { x: 0.08, y: 0.12, size: 18, opacity: 0.18, duration: 4000, delay: 0 },
-    { x: 0.85, y: 0.08, size: 12, opacity: 0.12, duration: 5500, delay: 500 },
-    { x: 0.15, y: 0.45, size: 22, opacity: 0.10, duration: 6000, delay: 1000 },
-    { x: 0.75, y: 0.35, size: 16, opacity: 0.15, duration: 4800, delay: 300 },
-    { x: 0.45, y: 0.20, size: 10, opacity: 0.12, duration: 5200, delay: 800 },
-    { x: 0.90, y: 0.60, size: 20, opacity: 0.10, duration: 7000, delay: 200 },
-    { x: 0.25, y: 0.75, size: 14, opacity: 0.14, duration: 4500, delay: 1200 },
-    { x: 0.60, y: 0.80, size: 18, opacity: 0.10, duration: 6500, delay: 600 },
-    { x: 0.35, y: 0.55, size: 8, opacity: 0.12, duration: 5000, delay: 400 },
-    { x: 0.70, y: 0.15, size: 24, opacity: 0.08, duration: 8000, delay: 900 },
+    { x: 0.08, y: 0.12, size: 18, opacity: 0.1, duration: 4000, delay: 0 },
+    { x: 0.85, y: 0.08, size: 12, opacity: 0.1, duration: 5500, delay: 500 },
+    { x: 0.15, y: 0.45, size: 22, opacity: 0.1, duration: 6000, delay: 1000 },
+    { x: 0.75, y: 0.35, size: 16, opacity: 0.1, duration: 4800, delay: 300 },
+    { x: 0.45, y: 0.20, size: 10, opacity: 0.1, duration: 5200, delay: 800 },
+    { x: 0.90, y: 0.60, size: 20, opacity: 0.1, duration: 7000, delay: 200 },
+    { x: 0.25, y: 0.75, size: 14, opacity: 0.1, duration: 4500, delay: 1200 },
+    { x: 0.60, y: 0.80, size: 18, opacity: 0.1, duration: 6500, delay: 600 },
+    { x: 0.35, y: 0.55, size: 8, opacity: 0.1, duration: 5000, delay: 400 },
+    { x: 0.70, y: 0.15, size: 24, opacity: 0.1, duration: 8000, delay: 900 },
 ];
 const PENCILS = [
-    { x: 0.05, y: 0.22, size: 30, opacity: 0.20, duration: 2800, delay: 0, rotate: '35deg' },
-    { x: 0.78, y: 0.52, size: 26, opacity: 0.18, duration: 2400, delay: 400, rotate: '-25deg' },
-    { x: 0.42, y: 0.82, size: 28, opacity: 0.16, duration: 3000, delay: 800, rotate: '50deg' },
+    { x: 0.05, y: 0.22, size: 20, opacity: 0.1, duration: 2800, delay: 0, rotate: '35deg' },
+    { x: 0.78, y: 0.52, size: 20, opacity: 0.1, duration: 2400, delay: 400, rotate: '-25deg' },
+    { x: 0.42, y: 0.82, size: 20, opacity: 0.1, duration: 3000, delay: 800, rotate: '50deg' },
 ];
 const BOOKS = [
-    { x: 0.82, y: 0.22, size: 32, opacity: 0.18, duration: 2600, delay: 200 },
-    { x: 0.08, y: 0.62, size: 28, opacity: 0.16, duration: 3000, delay: 600 },
-    { x: 0.50, y: 0.42, size: 30, opacity: 0.14, duration: 2800, delay: 1000 },
-    { x: 0.30, y: 0.88, size: 26, opacity: 0.15, duration: 3200, delay: 400 },
+    { x: 0.82, y: 0.22, size: 20, opacity: 0.1, duration: 2600, delay: 200 },
+    { x: 0.08, y: 0.62, size: 20, opacity: 0.1, duration: 3000, delay: 600 },
+    { x: 0.50, y: 0.42, size: 20, opacity: 0.1, duration: 2800, delay: 1000 },
+    { x: 0.30, y: 0.88, size: 20, opacity: 0.1, duration: 3200, delay: 400 },
 ];
 const COLOR = '#c0392b';
 function Particle({ x, y, size, opacity, duration, delay }) {
