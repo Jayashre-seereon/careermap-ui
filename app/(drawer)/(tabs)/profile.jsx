@@ -5,6 +5,7 @@ import { Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../../src/app-state';
 import { palette } from '../../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen } from '../../../src/careermap-ui';
+import { StaggerFadeUpItem } from '../../../src/page-transition';
 export default function ProfileScreen() {
     const { mode } = useLocalSearchParams();
     const { activePlanId, bookings, hasActiveSubscription, onboarding, preferences, savedCareers, saveUserProfile, subscriptionRecords, testHistory, toggleDarkMode, userProfile, } = useAppState();
@@ -59,10 +60,12 @@ export default function ProfileScreen() {
     const renderInlineSection = (section) => {
         if (section === 'saved' && savedCareers.length > 0) {
             return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#1a141f]' : 'border-line bg-[#fcf8f5]'}`}>
-          {savedCareers.map((career) => (<AnimatedPressable key={career} className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/(tabs)/library')}>
-              <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{career}</Text>
-              <Ionicons name="chevron-forward" size={16} color={palette.muted}/>
-            </AnimatedPressable>))}
+          {savedCareers.map((career, index) => (<StaggerFadeUpItem key={career} index={index}>
+              <AnimatedPressable className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/(tabs)/library')}>
+                <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{career}</Text>
+                <Ionicons name="chevron-forward" size={16} color={palette.muted}/>
+              </AnimatedPressable>
+            </StaggerFadeUpItem>))}
         </View>);
         }
         if (section === 'tests' && testHistory.length > 0) {
@@ -205,7 +208,8 @@ export default function ProfileScreen() {
                             ? 'subscription'
                             : null;
             const isOpen = sectionKey !== null && openSection === sectionKey;
-            return (<View key={item.label}>
+            return (<StaggerFadeUpItem key={item.label} index={index}>
+              <View>
               <AnimatedPressable className={`flex-row items-center justify-between px-4 py-4 ${index < menuItems.length - 1 || isOpen ? 'border-b border-line' : ''}`} onPress={item.action}>
                 <View className="flex-row items-center gap-3">
                   <View className="h-9 w-9 items-center justify-center rounded-[12px] bg-surface">
@@ -219,7 +223,8 @@ export default function ProfileScreen() {
                 </View>
               </AnimatedPressable>
               {isOpen ? renderInlineSection(sectionKey) : null}
-            </View>);
+            </View>
+            </StaggerFadeUpItem>);
         })}
       </View>
 

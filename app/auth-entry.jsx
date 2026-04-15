@@ -1,16 +1,71 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Easing, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedBackground } from '../src/animated-background';
 import { BeeMascot } from '../src/bee-mascot';
 import { AnimatedPressable } from '../src/careermap-ui';
 export default function AuthEntryScreen() {
+    const screenOpacity = useRef(new Animated.Value(0)).current;
+    const screenTranslate = useRef(new Animated.Value(24)).current;
+    const heroOpacity = useRef(new Animated.Value(0)).current;
+    const heroTranslate = useRef(new Animated.Value(18)).current;
+    const cardsOpacity = useRef(new Animated.Value(0)).current;
+    const cardsTranslate = useRef(new Animated.Value(24)).current;
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(screenOpacity, {
+                toValue: 1,
+                duration: 340,
+                easing: Easing.out(Easing.ease),
+                useNativeDriver: true,
+            }),
+            Animated.timing(screenTranslate, {
+                toValue: 0,
+                duration: 340,
+                easing: Easing.out(Easing.ease),
+                useNativeDriver: true,
+            }),
+        ]).start();
+        Animated.sequence([
+            Animated.delay(120),
+            Animated.parallel([
+                Animated.timing(heroOpacity, {
+                    toValue: 1,
+                    duration: 280,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(heroTranslate, {
+                    toValue: 0,
+                    duration: 280,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                }),
+            ]),
+            Animated.parallel([
+                Animated.timing(cardsOpacity, {
+                    toValue: 1,
+                    duration: 320,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(cardsTranslate, {
+                    toValue: 0,
+                    duration: 320,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: true,
+                }),
+            ]),
+        ]).start();
+    }, [cardsOpacity, cardsTranslate, heroOpacity, heroTranslate, screenOpacity, screenTranslate]);
     return (<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
        <AnimatedBackground /> 
-    <View style={{ flex: 1, backgroundColor: 'transparent', paddingHorizontal: 24, paddingVertical: 24 }}>
+    <Animated.View style={{ flex: 1, backgroundColor: 'transparent', paddingHorizontal: 24, paddingVertical: 24, opacity: screenOpacity, transform: [{ translateY: screenTranslate }] }}>
     
         <View className="flex-1 items-center justify-center gap-5">
+          <Animated.View className="items-center gap-5" style={{ opacity: heroOpacity, transform: [{ translateY: heroTranslate }] }}>
           <View className="h-[96px] w-[96px] items-center justify-center rounded-[30px] bg-card">
             <BeeMascot size={70}/>
           </View>
@@ -20,6 +75,8 @@ export default function AuthEntryScreen() {
               Choose how you want to continue.
             </Text>
           </View>
+          </Animated.View>
+          <Animated.View className="w-full gap-4" style={{ opacity: cardsOpacity, transform: [{ translateY: cardsTranslate }] }}>
           <View className="w-full gap-4">
             <AnimatedPressable className="rounded-[24px] border border-line bg-card p-5" onPress={() => router.push('/onboarding')}>
               <View className="flex-row items-center gap-4">
@@ -44,7 +101,8 @@ export default function AuthEntryScreen() {
               </View>
             </AnimatedPressable>
           </View>
+          </Animated.View>
         </View>
-      </View>
+      </Animated.View>
     </SafeAreaView>);
 }

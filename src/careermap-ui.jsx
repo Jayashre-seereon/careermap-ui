@@ -1,35 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppState } from './app-state';
 import { palette } from './careermap-data';
 import { AnimatedBackground } from './animated-background';
+import { ZoomInPage } from './page-transition';
 export function Screen({ children }) {
     const { preferences } = useAppState();
-    const opacity = useRef(new Animated.Value(0)).current;
-    const translateY = useRef(new Animated.Value(18)).current;
-    useEffect(() => {
-        Animated.parallel([
-            Animated.timing(opacity, {
-                toValue: 1,
-                duration: 260,
-                useNativeDriver: true,
-            }),
-            Animated.timing(translateY, {
-                toValue: 0,
-                duration: 280,
-                useNativeDriver: true,
-            }),
-        ]).start();
-    }, [opacity, translateY]);
     return (<SafeAreaView className={`flex-1 ${preferences.darkMode ? 'bg-[#140f17]' : 'bg-paper'}`} edges={['top']}>
       <AnimatedBackground />  {/* 👈 ADD THIS LINE */}
-      <Animated.View className="flex-1" style={{ opacity, transform: [{ translateY }] }}>
+      <ZoomInPage style={{ flex: 1 }}>
         <ScrollView className="flex-1" contentContainerClassName="gap-[18px] px-5 py-5" showsVerticalScrollIndicator={false}>
           {children}
         </ScrollView>
-      </Animated.View>
+      </ZoomInPage>
     </SafeAreaView>);
 }
 export function SectionHeader({ title, subtitle, action }) {

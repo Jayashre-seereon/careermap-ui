@@ -5,6 +5,7 @@ import { Switch, Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { AnimatedPressable, Screen } from '../../src/careermap-ui';
+import { StaggerFadeUpItem } from '../../src/page-transition';
 export default function SettingsScreen() {
     const { preferences, toggleDarkMode, updatePreferences } = useAppState();
     const [view, setView] = useState('menu');
@@ -130,7 +131,8 @@ export default function SettingsScreen() {
       </View>
 
       <View className={`overflow-hidden rounded-[24px] border ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
-        {settingsItems.map((item, index) => (<AnimatedPressable key={item.label} className={`flex-row items-center justify-between px-4 py-4 ${index < settingsItems.length - 1 ? 'border-b border-line' : ''}`} onPress={item.action}>
+        {settingsItems.map((item, index) => (<StaggerFadeUpItem key={item.label} index={index}>
+          <AnimatedPressable className={`flex-row items-center justify-between px-4 py-4 ${index < settingsItems.length - 1 ? 'border-b border-line' : ''}`} onPress={item.action}>
             <View className="flex-row items-center gap-3">
               <View className={`h-9 w-9 items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}>
                 <Ionicons name={item.icon} size={18} color={item.color}/>
@@ -138,7 +140,8 @@ export default function SettingsScreen() {
               <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.label}</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={palette.muted}/>
-          </AnimatedPressable>))}
+          </AnimatedPressable>
+          </StaggerFadeUpItem>))}
       </View>
 
       <AnimatedPressable className="flex-row items-center justify-center gap-2 rounded-[18px] border border-[#efc8c0] bg-[#fff4f2] py-4" onPress={() => router.replace('/')}>

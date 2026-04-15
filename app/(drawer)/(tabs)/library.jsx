@@ -5,6 +5,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../../../src/app-state';
 import { Screen } from '../../../src/careermap-ui';
 import { palette } from '../../../src/careermap-data';
+import { StaggerFadeUpItem } from '../../../src/page-transition';
 const MAX_FREE_ITEMS = 5;
 const PREVIEW_SECONDS = 15;
 const streams = [
@@ -409,7 +410,8 @@ export default function CareerLibraryScreen() {
         return (<View className="gap-3">
         {programList.map((program, index) => {
                 const itemLocked = locked && index >= MAX_FREE_ITEMS;
-                return (<Pressable key={program.name} onPress={() => {
+                return (<StaggerFadeUpItem key={program.name} index={index}>
+                  <Pressable onPress={() => {
                         if (!itemLocked)
                             handleProgramSelect(program.name);
                     }} className={`flex-row items-center rounded-[12px] border border-line bg-card p-3 ${itemLocked ? 'opacity-55' : ''}`}>
@@ -418,7 +420,8 @@ export default function CareerLibraryScreen() {
               <Text className="flex-1 text-[14px] font-semibold text-ink">{program.name}</Text>
             </View>
             <Ionicons name={itemLocked ? 'lock-closed' : 'chevron-forward'} size={18} color={itemLocked ? palette.muted : palette.primary}/>
-          </Pressable>);
+          </Pressable>
+          </StaggerFadeUpItem>);
             })}
         {locked && programList.length > MAX_FREE_ITEMS ? (<View className="items-center rounded-[18px] border border-[#efd5cb] bg-[#fff7f3] px-5 py-5">
             <Ionicons name="lock-closed" size={24} color={palette.primary}/>
@@ -441,7 +444,8 @@ export default function CareerLibraryScreen() {
         return (<View className="gap-3">
         {specializationList.map((specialization, index) => {
                 const itemLocked = locked && index >= MAX_FREE_ITEMS;
-                return (<Pressable key={specialization.name} onPress={() => {
+                return (<StaggerFadeUpItem key={specialization.name} index={index}>
+                  <Pressable onPress={() => {
                         if (!itemLocked)
                             handleSpecializationSelect(specialization.name);
                     }} className={`flex-row items-center rounded-[12px] border border-line bg-card p-3 ${itemLocked ? 'opacity-55' : ''}`}>
@@ -450,7 +454,8 @@ export default function CareerLibraryScreen() {
               <Text className="flex-1 text-[14px] font-semibold text-ink">{specialization.name}</Text>
             </View>
             <Ionicons name={itemLocked ? 'lock-closed' : 'chevron-forward'} size={18} color={itemLocked ? palette.muted : palette.primary}/>
-          </Pressable>);
+          </Pressable>
+          </StaggerFadeUpItem>);
             })}
         {locked && specializationList.length > MAX_FREE_ITEMS ? (<View className="items-center rounded-[18px] border border-[#efd5cb] bg-[#fff7f3] px-5 py-5">
             <Ionicons name="lock-closed" size={24} color={palette.primary}/>

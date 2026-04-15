@@ -7,6 +7,7 @@ import { BeeMascot } from '../src/bee-mascot';
 import { existingUsers, palette } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
 import { AnimatedBackground } from '../src/animated-background';
+import { ZoomInPage } from '../src/page-transition';
 export default function LoginScreen() {
     const { userType } = useLocalSearchParams();
     const isExistingUser = userType === 'existing';
@@ -60,6 +61,7 @@ export default function LoginScreen() {
     };
     return (<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
       <AnimatedBackground />
+      <ZoomInPage style={{ flex: 1 }}>
       <ScrollView className="flex-1" contentContainerClassName="flex-grow gap-6 px-6 py-6" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <AnimatedPressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={18} color={palette.text}/>
@@ -166,5 +168,6 @@ export default function LoginScreen() {
           </Text>
         </View>
       </ScrollView>
+      </ZoomInPage>
     </SafeAreaView>);
 }

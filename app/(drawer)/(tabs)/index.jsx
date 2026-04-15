@@ -5,6 +5,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../../../src/app-state';
 import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../../src/careermap-ui';
 import { featuredInstitutes, featuredMentors, featuredScholarships, moduleCards, palette, studentProfile } from '../../../src/careermap-data';
+import { ZoomInPage } from '../../../src/page-transition';
 const personalityQuestions = [
     { q: 'When faced with a problem, I prefer to:', options: ['Analyze data systematically', 'Brainstorm creative solutions', 'Discuss with others', 'Act quickly on instinct'] },
     { q: 'In my free time, I enjoy:', options: ['Reading or researching', 'Creating art or music', 'Socializing with friends', 'Physical activities or sports'] },
@@ -115,6 +116,7 @@ export default function HomeScreen() {
       </Screen>);
     }
     return (<Screen>
+      <ZoomInPage>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-3">
           <View className="h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: `${palette.primary}12` }}>
@@ -218,5 +220,6 @@ export default function HomeScreen() {
             <Ionicons name="chevron-forward" size={18} color={palette.muted}/>
           </AnimatedPressable>))}
       </View>
+      </ZoomInPage>
     </Screen>);
 }

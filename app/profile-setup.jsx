@@ -7,6 +7,7 @@ import { useAppState } from '../src/app-state';
 import { palette } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
 import { AnimatedBackground } from '../src/animated-background';
+import { ZoomInPage } from '../src/page-transition';
 const selectionMeta = [
     { key: 'selectedClass', label: 'Class', icon: 'school-outline', color: palette.blue },
     { key: 'selectedStream', label: 'Stream', icon: 'layers-outline', color: palette.purple },
@@ -48,6 +49,7 @@ export default function ProfileSetupScreen() {
         onboarding.selectedPriorities.length > 0;
     return (<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
           <AnimatedBackground />  
+            <ZoomInPage style={{ flex: 1 }}>
             <ScrollView className="flex-1" contentContainerClassName="gap-[14px] px-6 py-6" showsVerticalScrollIndicator={false}>
         <AnimatedPressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={18} color={palette.text}/>
@@ -148,5 +150,6 @@ export default function ProfileSetupScreen() {
           <Text className="text-[15px] font-extrabold text-white">Complete Profile</Text>
         </AnimatedPressable>
       </ScrollView>
+      </ZoomInPage>
     </SafeAreaView>);
 }

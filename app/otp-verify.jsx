@@ -6,11 +6,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { palette } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
 import { AnimatedBackground } from '../src/animated-background';
+import { ZoomInPage } from '../src/page-transition';
 export default function OtpVerifyScreen() {
     const { next, identifier } = useLocalSearchParams();
     const [otp, setOtp] = useState('');
     return (<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
           <AnimatedBackground /> 
+             <ZoomInPage style={{ flex: 1 }}>
              <View className="flex-1 items-center justify-center gap-[14px] px-6">
         <AnimatedPressable className="absolute left-6 top-6 h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={18} color={palette.text}/>
@@ -22,5 +24,6 @@ export default function OtpVerifyScreen() {
           <Text className="text-[15px] font-extrabold text-white">Verify and Continue</Text>
         </AnimatedPressable>
       </View>
+      </ZoomInPage>
     </SafeAreaView>);
 }

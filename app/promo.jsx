@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BeeMascot } from '../src/bee-mascot';
 import { AnimatedBackground } from '../src/animated-background';
+import { StaggerFadeUpItem, ZoomInPage } from '../src/page-transition';
 const features = [
     { title: 'Career Library', desc: '500+ career options across streams' },
     { title: 'Psychometric Tests', desc: 'Discover strengths and ideal fit' },
@@ -14,8 +15,10 @@ const features = [
 export default function PromoScreen() {
     const [page, setPage] = useState(0);
     if (page === 0) {
-        return (<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
+        return (
+        <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
             <AnimatedBackground /> 
+               <ZoomInPage style={{ flex: 1 }}>
                <View className="flex-1 items-center justify-center gap-[18px] overflow-hidden bg-brand px-6">
           <Pressable className="absolute right-[18px] top-[18px] z-10 h-[34px] w-[34px] items-center justify-center rounded-full bg-white/20" onPress={() => router.replace('/(drawer)')}>
             <Text className="text-[13px] font-black text-white">X</Text>
@@ -38,17 +41,23 @@ export default function PromoScreen() {
             <Text className="text-center text-[15px] font-extrabold text-brand">Next</Text>
           </Pressable>
         </View>
+        </ZoomInPage>
       </SafeAreaView>);
     }
-    return (<SafeAreaView className="flex-1 bg-paper">
-      <View className="flex-1 justify-center gap-[18px] px-6">
+    return (
+     <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
+            <AnimatedBackground /> 
+         <ZoomInPage style={{ flex: 1 }}>
+         <View className="flex-1 justify-center gap-[18px] px-6">
         <Text className="text-center text-[30px] font-black text-ink">What You Can Explore</Text>
         <Text className="mb-1.5 text-center text-[14px] text-muted">Everything you need for career guidance</Text>
         <View className="gap-3">
-          {features.map((feature) => (<View key={feature.title} className="gap-1 rounded-[20px] border border-line bg-card p-4">
+          {features.map((feature, index) => (<StaggerFadeUpItem key={feature.title} index={index}>
+            <View className="gap-1 rounded-[20px] border border-line bg-card p-4">
               <Text className="text-[15px] font-extrabold text-ink">{feature.title}</Text>
               <Text className="text-[12px] leading-[18px] text-muted">{feature.desc}</Text>
-            </View>))}
+            </View>
+          </StaggerFadeUpItem>))}
         </View>
         <View className="mt-1 flex-row gap-2 self-center">
           <View className="h-2 w-2 rounded-full bg-black/20"/>
@@ -58,5 +67,6 @@ export default function PromoScreen() {
           <Text className="text-center text-[15px] font-extrabold text-white">Explore the App</Text>
         </Pressable>
       </View>
+      </ZoomInPage>
     </SafeAreaView>);
 }

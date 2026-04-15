@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppState } from '../src/app-state';
 import { BeeMascot } from '../src/bee-mascot';
@@ -32,8 +32,28 @@ export default function OnboardingScreen() {
     const [selectedStrengths, setSelectedStrengths] = useState([]);
     const [selectedPriorities, setSelectedPriorities] = useState([]);
     const [selectedGuidance, setSelectedGuidance] = useState('');
+    const stepOpacity = useRef(new Animated.Value(0)).current;
+    const stepTranslate = useRef(new Animated.Value(34)).current;
     const totalSteps = 11;
     const progressCount = totalSteps - 2;
+    useEffect(() => {
+        stepOpacity.setValue(0);
+        stepTranslate.setValue(34);
+        Animated.parallel([
+            Animated.timing(stepOpacity, {
+                toValue: 1,
+                duration: 320,
+                easing: Easing.out(Easing.ease),
+                useNativeDriver: true,
+            }),
+            Animated.timing(stepTranslate, {
+                toValue: 0,
+                duration: 320,
+                easing: Easing.out(Easing.ease),
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, [step, stepOpacity, stepTranslate]);
     const toggleMulti = (value, selected, setSelected) => {
         setSelected(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value]);
     };
@@ -93,6 +113,7 @@ export default function OnboardingScreen() {
             {Array.from({ length: progressCount }).map((_, index) => (<View key={index} className={`h-1.5 flex-1 rounded-full ${index < step ? 'bg-brand' : 'bg-[#e6e0dc]'}`}/>))}
           </View>) : null}
 
+        <Animated.View style={{ opacity: stepOpacity, transform: [{ translateX: stepTranslate }] }}>
         {step === 0 ? (<View className="flex-grow items-center justify-center gap-4 py-7">
             <BeeMascot size={86}/>
             <Text className="text-center text-[28px] font-black leading-9 text-ink">Choose Your Way</Text>
@@ -160,6 +181,7 @@ export default function OnboardingScreen() {
                 : "We've personalised your career journey. Let's sign you in to get started."}
             </Text>
           </View>) : null}
+        </Animated.View>
 
         <Pressable className="mt-auto items-center rounded-[18px] bg-brand py-4" disabled={!canProceed()} onPress={next} style={({ pressed }) => ({ opacity: !canProceed() || pressed ? 0.42 : 1 })}>
           <Text className="text-[16px] font-extrabold text-white">
