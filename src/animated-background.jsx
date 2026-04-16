@@ -139,7 +139,7 @@ function BookParticle({ x, y, size, opacity, duration, delay }) {
     const pageW = size * 1.2;
     const pageH = size * 1.4;
     const spineW = size * 0.08;
-    const cx = pageW + spineW / 2; // spine x centre
+    const cx = pageW + spineW / 2; 
     const totalW = pageW * 2 + spineW + 4;
     const totalH = pageH + size * 0.3;
     // left page path
