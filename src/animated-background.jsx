@@ -22,8 +22,9 @@ const PENCILS = [
 const BOOKS = [
     { x: 0.82, y: 0.22, size: 20, opacity: 0.1, duration: 2600, delay: 200 },
     { x: 0.08, y: 0.62, size: 20, opacity: 0.1, duration: 3000, delay: 600 },
-    { x: 0.50, y: 0.42, size: 20, opacity: 0.1, duration: 2800, delay: 1000 },
+    { x: 0.50, y: 0.52, size: 20, opacity: 0.1, duration: 2800, delay: 1000 },
     { x: 0.30, y: 0.88, size: 20, opacity: 0.1, duration: 3200, delay: 400 },
+    { x: 0.3, y: 0.10, size: 20, opacity: 0.1, duration: 2400, delay: 800 },
 ];
 const COLOR = '#c0392b';
 function Particle({ x, y, size, opacity, duration, delay }) {
@@ -142,10 +143,8 @@ function BookParticle({ x, y, size, opacity, duration, delay }) {
 }
 export function AnimatedBackground() {
     return (<View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {/* Gradient blobs */}
-      <View style={[StyleSheet.absoluteFill, styles.blob1]}/>
-      <View style={[StyleSheet.absoluteFill, styles.blob2]}/>
-      {/* Circular particles */}
+      
+       {/* Circular particles */}
       {PARTICLES.map((p, i) => (<Particle key={i} {...p}/>))}
       {/* Pencils */}
       {PENCILS.map((p, i) => (<PencilParticle key={i} {...p}/>))}
@@ -153,23 +152,4 @@ export function AnimatedBackground() {
       {BOOKS.map((p, i) => (<BookParticle key={i} {...p}/>))}
     </View>);
 }
-const styles = StyleSheet.create({
-    blob1: {
-        top: -100,
-        left: -80,
-        width: 320,
-        height: 320,
-        borderRadius: 160,
-        backgroundColor: 'rgba(192,57,43,0.07)',
-        position: 'absolute',
-    },
-    blob2: {
-        bottom: -80,
-        right: -60,
-        width: 280,
-        height: 280,
-        borderRadius: 140,
-        backgroundColor: 'rgba(192,57,43,0.05)',
-        position: 'absolute',
-    },
-});
+

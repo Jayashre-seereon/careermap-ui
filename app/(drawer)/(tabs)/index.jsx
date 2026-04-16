@@ -132,7 +132,7 @@ export default function HomeScreen() {
         </AnimatedPressable>
       </View>
 
-      <View className="overflow-hidden rounded-[28px] bg-brand p-[22px]">
+      <View className="overflow-hidden rounded-[28px] bg-brand p-[22px]" style={{ marginTop: 18 ,marginBottom: 12}}>
         <View className="absolute bottom-[-34px] right-[-28px] h-[148px] w-[148px] rounded-full bg-white/10"/>
        
         <View className="gap-2">
@@ -152,8 +152,8 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <SectionHeader title="Explore Modules"/>
-      <View className="flex-row flex-wrap gap-3">
+      <SectionHeader title="Explore Modules" />
+      <View className="flex-row flex-wrap gap-3 mt-4 mb-2">
         {moduleCards.map((card) => (<AnimatedPressable key={card.title} style={{ width: '31%' }} onPress={() => router.push(card.route)}>   
         <View className="aspect-square items-center justify-center gap-2 rounded-[22px] border bg-card p-[14px]" style={{ borderColor: `${card.tone}30` }}>
               <View className="h-[42px] w-[42px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${card.tone}14` }}>
@@ -164,10 +164,10 @@ export default function HomeScreen() {
           </AnimatedPressable>))}
       </View>
 
-      <SectionHeader title="Explore Your Mentors" action={<AnimatedPressable onPress={() => router.push('/(drawer)/book-mentor')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>}/>
+      <SectionHeader title="Explore Your Mentors" action={<AnimatedPressable onPress={() => router.push('/(drawer)/book-mentor')}><Text className="text-[12px] font-extrabold text-brand mt-4 ">See all</Text></AnimatedPressable>}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
-        {featuredMentors.map((mentor) => (<AnimatedPressable key={mentor.name} className="w-[164px] items-center gap-1.5 rounded-[22px] border border-line bg-card p-4" onPress={() => router.push('/(drawer)/book-mentor')}>
-            <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
+        {featuredMentors.map((mentor) => (<AnimatedPressable key={mentor.name} className="w-[164px] items-center gap-1.5 rounded-[22px] border border-line bg-card p-4 mb-4 mt-4" onPress={() => router.push('/(drawer)/book-mentor')}>
+            <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px] " style={{ backgroundColor: `${mentor.accent}15` }}>
               <Ionicons name="person" size={22} color={mentor.accent}/>
             </View>
             <Text className="text-center text-[13px] font-extrabold text-ink">{mentor.name}</Text>
@@ -177,8 +177,8 @@ export default function HomeScreen() {
       </ScrollView>
 
       <SectionHeader title="Explore Scholarships" action={<AnimatedPressable onPress={() => router.push('/(drawer)/scholarship')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>}/>
-      <View className="gap-3">
-        {featuredScholarships.map((item) => (<AnimatedPressable key={item.name} className="flex-row items-center gap-3 rounded-[22px] border border-line bg-card p-4" onPress={() => router.push('/(drawer)/scholarship')}>
+      <View className="gap-3 mb-4 mt-4">
+        {featuredScholarships.map((item) => (<AnimatedPressable key={item.name} className="flex-row items-center gap-3 rounded-[22px] border border-line bg-card p-4  " onPress={() => router.push('/(drawer)/scholarship')}>
             <View className="h-[42px] w-[42px] items-center justify-center rounded-[14px] bg-[#edf9f1]">
               <Ionicons name="ribbon-outline" size={20} color={palette.green}/>
             </View>
@@ -195,7 +195,7 @@ export default function HomeScreen() {
 
       <SectionHeader title="Explore Institutes" action={<AnimatedPressable onPress={() => router.push('/(drawer)/institute')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
-        {featuredInstitutes.map((item) => (<AnimatedPressable key={item.name} className="w-[164px] items-center gap-1.5 rounded-[22px] border border-line bg-card p-4" onPress={() => router.push('/(drawer)/institute')}>
+        {featuredInstitutes.map((item) => (<AnimatedPressable key={item.name} className="w-[164px] items-center gap-1.5 rounded-[22px] border border-line bg-card p-4 mb-4 mt-4" onPress={() => router.push('/(drawer)/institute')}>
             <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${palette.blue}14` }}>
               <Ionicons name="business-outline" size={22} color={palette.blue}/>
             </View>
