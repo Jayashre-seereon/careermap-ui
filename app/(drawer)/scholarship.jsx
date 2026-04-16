@@ -14,6 +14,7 @@ export default function ScholarshipScreen() {
     const [selectedIndex, setSelectedIndex] = useState(null);
     const [detailTimer, setDetailTimer] = useState(10);
     const [detailLocked, setDetailLocked] = useState(false);
+    const animationKey = selectedIndex !== null ? `scholarship-${selectedIndex}` : `scholarship-list-${activeStatus}-${sortBy}-${showFilters ? 'filters' : 'plain'}`;
     let filtered = activeStatus === 'All' ? [...scholarships] : scholarships.filter((item) => item.status === activeStatus);
     if (sortBy === 'A-Z')
         filtered.sort((a, b) => a.name.localeCompare(b.name));
@@ -36,7 +37,7 @@ export default function ScholarshipScreen() {
     }, [selectedIndex, scholarshipUnlocked, detailLocked]);
     if (selectedIndex !== null) {
         const item = scholarships[selectedIndex];
-        return (<Screen>
+        return (<Screen animationKey={animationKey}>
         <SectionHeader title={item.name} subtitle="Scholarship detail page closely matching the reference structure." action={<AnimatedPressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => {
                     setSelectedIndex(null);
                     setDetailTimer(10);
@@ -105,7 +106,7 @@ export default function ScholarshipScreen() {
           </>)}
       </Screen>);
     }
-    return (<Screen>
+    return (<Screen animationKey={animationKey}>
       <SectionHeader title="Scholarships" subtitle="Scholarship directory with filters and drill-down cards adapted from the prototype." action={<AnimatedPressable className={`rounded-[12px] px-3 py-2 ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
             <Text className={`text-[12px] font-extrabold ${showFilters ? 'text-white' : 'text-ink'}`}>Filter</Text>
           </AnimatedPressable>}/>

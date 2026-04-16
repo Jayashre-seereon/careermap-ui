@@ -15,7 +15,7 @@ export default function EntranceExamScreen() {
         filtered = filtered.filter(e => e.type === typeFilter);
     if (catFilter !== 'All')
         filtered = filtered.filter(e => e.category === catFilter);
-    return (<Screen>
+    return (<Screen scroll={false}>
             <SectionHeader title="Entrance Exams" subtitle="Practice tests and exam preparation guides."/>
 
             <View className="px-6 py-3">
@@ -42,7 +42,7 @@ export default function EntranceExamScreen() {
                     </View>
                 </View>)}
 
-            <ScrollView contentContainerClassName="px-6 pb-6" showsVerticalScrollIndicator={false}>
+            <ScrollView className="flex-1" contentContainerClassName="gap-3 px-6 pb-6" showsVerticalScrollIndicator={false}>
                 {filtered.map((exam) => (<AnimatedPressable key={exam.name} className="mb-3 rounded-[12px] bg-card p-4 shadow-card" onPress={() => router.push({ pathname: '/(drawer)/entrance-exam-detail', params: { examId: exam.id } })}>
                         <View className="flex-row items-start">
                             <View className="mr-3 h-10 w-10 items-center justify-center rounded-[10px]" style={{ backgroundColor: `${palette.primary}15` }}>

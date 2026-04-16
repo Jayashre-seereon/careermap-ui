@@ -340,6 +340,7 @@ export default function CareerLibraryScreen() {
     const [contentTimer, setContentTimer] = useState(null);
     const [contentLocked, setContentLocked] = useState(false);
     const locked = !isUnlocked('career-library');
+    const animationKey = `${currentLevel}-${selectedStream ?? 'none'}-${selectedCategory ?? 'none'}-${selectedProgram ?? 'none'}-${selectedSpecialization ?? 'none'}`;
     useEffect(() => {
         if (currentLevel === 'details' && locked && !contentLocked) {
             const timer = setTimeout(() => {
@@ -480,7 +481,7 @@ export default function CareerLibraryScreen() {
           </Pressable>
         </View>);
         }
-        return (<ScrollView contentContainerClassName="p-4">
+        return (<ScrollView className="flex-1" contentContainerClassName="px-4 pb-4" showsVerticalScrollIndicator={false}>
         {locked && !contentLocked && contentTimer !== null && (<View className="mb-4 flex-row items-center gap-2 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.orange}20` }}>
             <Ionicons name="time-outline" size={20} color={palette.orange}/>
             <Text className="text-[13px] font-semibold" style={{ color: palette.orange }}>Free preview: {contentTimer}s remaining</Text>
@@ -545,7 +546,7 @@ export default function CareerLibraryScreen() {
             return selectedSpecialization;
         return 'Career Library';
     };
-    return (<Screen>
+    return (<Screen scroll={false} animationKey={animationKey}>
       <View className="flex-row items-center px-6 py-4">
         {currentLevel !== 'streams' && (<Pressable onPress={handleBack} className="mr-3 h-10 w-10 items-center justify-center rounded-full">
             <Ionicons name="chevron-back" size={24} color={palette.text}/>
@@ -553,7 +554,7 @@ export default function CareerLibraryScreen() {
         <Text className="text-[18px] font-extrabold text-ink">{getTitle()}</Text>
       </View>
 
-      {currentLevel === 'details' ? (renderDetails()) : (<ScrollView contentContainerClassName="gap-3 p-4">
+      {currentLevel === 'details' ? (renderDetails()) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-4 pb-4" showsVerticalScrollIndicator={false}>
           {currentLevel === 'streams' && renderStreams()}
           {currentLevel === 'categories' && renderCategories()}
           {currentLevel === 'programs' && renderPrograms()}

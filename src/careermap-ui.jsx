@@ -1,22 +1,29 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRef } from 'react';
+import { Children, useRef } from 'react';
 import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppState } from './app-state';
-import { palette } from './careermap-data';
 import { AnimatedBackground } from './animated-background';
-import { ZoomInPage } from './page-transition';
-export function Screen({ children }) {
+import { palette } from './careermap-data';
+import { StaggerFadeUpItem, ZoomInPage } from './page-transition';
+
+export function Screen({ children, scroll = true, contentContainerClassName = 'gap-[18px] px-5 py-5', animationKey = 'default' }) {
     const { preferences } = useAppState();
+    const animatedChildren = Children.toArray(children).map((child, index) => (<StaggerFadeUpItem key={index} index={index}>
+      {child}
+    </StaggerFadeUpItem>));
     return (<SafeAreaView className={`flex-1 ${preferences.darkMode ? 'bg-[#140f17]' : 'bg-paper'}`} edges={['top']}>
-      <AnimatedBackground />  {/* 👈 ADD THIS LINE */}
-      <ZoomInPage style={{ flex: 1 }}>
-        <ScrollView className="flex-1" contentContainerClassName="gap-[18px] px-5 py-5" showsVerticalScrollIndicator={false}>
-          {children}
-        </ScrollView>
+      <AnimatedBackground />
+      <ZoomInPage key={animationKey} style={{ flex: 1 }}>
+        {scroll ? (<ScrollView className="flex-1" contentContainerClassName={contentContainerClassName} showsVerticalScrollIndicator={false}>
+            {animatedChildren}
+          </ScrollView>) : (<View className={contentContainerClassName} style={{ flex: 1 }}>
+            {animatedChildren}
+          </View>)}
       </ZoomInPage>
     </SafeAreaView>);
 }
+
 export function SectionHeader({ title, subtitle, action }) {
     const { preferences } = useAppState();
     return (<View className="flex-row items-end justify-between gap-3">
@@ -27,6 +34,7 @@ export function SectionHeader({ title, subtitle, action }) {
       {action}
     </View>);
 }
+
 export function HeroCard({ eyebrow, title, description, }) {
     const { preferences } = useAppState();
     return (<View className={`gap-2.5 rounded-[28px] border p-[22px] shadow-card ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
@@ -35,6 +43,7 @@ export function HeroCard({ eyebrow, title, description, }) {
       <Text className={`text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{description}</Text>
     </View>);
 }
+
 export function Pill({ label, tone = palette.primary }) {
     return (<View className="self-start rounded-full px-3 py-[7px]" style={{ backgroundColor: `${tone}15` }}>
       <Text className="text-[12px] font-bold" style={{ color: tone }}>
@@ -42,6 +51,7 @@ export function Pill({ label, tone = palette.primary }) {
       </Text>
     </View>);
 }
+
 export function InfoCard({ icon, title, subtitle, onPress, }) {
     const { preferences } = useAppState();
     const content = (<View className={`min-h-[140px] min-w-[47%] flex-1 gap-2.5 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
@@ -56,6 +66,7 @@ export function InfoCard({ icon, title, subtitle, onPress, }) {
     }
     return <AnimatedPressable className="min-w-[47%] flex-1 rounded-[24px]" onPress={onPress}>{content}</AnimatedPressable>;
 }
+
 export function ListRow({ icon, title, value, onPress, }) {
     const { preferences } = useAppState();
     return (<AnimatedPressable className={`flex-row items-center justify-between gap-3 rounded-[20px] border px-4 py-[15px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={onPress}>
@@ -71,6 +82,7 @@ export function ListRow({ icon, title, value, onPress, }) {
       </View>
     </AnimatedPressable>);
 }
+
 export function StatCard({ label, value, tone, }) {
     const { preferences } = useAppState();
     return (<View className={`flex-1 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
@@ -79,6 +91,7 @@ export function StatCard({ label, value, tone, }) {
       <Text className={`text-[12px] font-semibold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
     </View>);
 }
+
 export function AnimatedPressable({ children, onPress, className, disabled, style, }) {
     const scale = useRef(new Animated.Value(1)).current;
     const animateTo = (value) => {

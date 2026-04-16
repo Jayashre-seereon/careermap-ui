@@ -15,8 +15,9 @@ export default function PsychometricTestScreen() {
     const [current, setCurrent] = useState(0);
     const [answers, setAnswers] = useState(Array(questions.length).fill(null));
     const [completed, setCompleted] = useState(false);
+    const animationKey = !isUnlocked('psychometric-test') ? 'psychometric-locked' : completed ? 'psychometric-complete' : `psychometric-${current}`;
     if (!isUnlocked('psychometric-test')) {
-        return (<Screen>
+        return (<Screen animationKey={animationKey}>
         <SectionHeader title="Psychometric Test Locked" subtitle="This full assessment unlocks after subscription payment."/>
         <View className="items-center gap-3 rounded-[28px] border border-line bg-card p-[22px]">
           <Text className="text-center text-[18px] font-extrabold text-ink">Subscribe to continue with the full psychometric test.</Text>
@@ -33,7 +34,7 @@ export default function PsychometricTestScreen() {
         setAnswers(next);
     };
     if (completed) {
-        return (<Screen>
+        return (<Screen animationKey={animationKey}>
         <SectionHeader title="Psychometric Result" subtitle="A simplified mobile result inspired by the web prototype."/>
         <View className="items-center gap-3 rounded-[28px] border border-line bg-card p-[22px]">
           <Text className="text-[42px] font-black text-brand">84%</Text>
@@ -47,7 +48,7 @@ export default function PsychometricTestScreen() {
         </View>
       </Screen>);
     }
-    return (<Screen>
+    return (<Screen animationKey={animationKey}>
       <SectionHeader title="Psychometric Test" subtitle={`Question ${current + 1} of ${questions.length}`} action={<Text className="text-[12px] font-extrabold text-brand">{Math.round(((current + 1) / questions.length) * 100)}%</Text>}/>
 
       <View className="rounded-[24px] border border-line bg-card p-5">

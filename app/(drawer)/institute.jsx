@@ -9,6 +9,7 @@ export default function InstituteScreen() {
     const [typeFilter, setTypeFilter] = useState('All');
     const [careerFilter, setCareerFilter] = useState('All');
     const [sortAZ, setSortAZ] = useState(false);
+    const animationKey = selectedIndex !== null ? `institute-${selectedIndex}` : `institute-list-${typeFilter}-${careerFilter}-${sortAZ ? 'az' : 'default'}-${showFilters ? 'filters' : 'plain'}`;
     let filtered = [...institutes];
     if (typeFilter !== 'All')
         filtered = filtered.filter((item) => item.type === typeFilter);
@@ -18,7 +19,7 @@ export default function InstituteScreen() {
         filtered.sort((a, b) => a.name.localeCompare(b.name));
     if (selectedIndex !== null) {
         const item = filtered[selectedIndex];
-        return (<Screen>
+        return (<Screen animationKey={animationKey}>
         <SectionHeader title={item.name} subtitle="Institute detail view shaped to match the reference prototype." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => setSelectedIndex(null)}>
               <Ionicons name="arrow-back" size={18} color={palette.text}/>
             </Pressable>}/>
@@ -53,7 +54,7 @@ export default function InstituteScreen() {
         </Pressable>
       </Screen>);
     }
-    return (<Screen>
+    return (<Screen animationKey={animationKey}>
       <SectionHeader title="Institutes" subtitle="Institute directory with filters and detail cards based on the reference prototype." action={<View className="flex-row gap-2">
             <Pressable className={`rounded-[12px] px-2.5 py-2 ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
               <Text className={`text-[11px] font-extrabold ${showFilters ? 'text-white' : 'text-ink'}`}>Filter</Text>

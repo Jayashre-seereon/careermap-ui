@@ -64,9 +64,10 @@ export default function AuthEntryScreen() {
        <AnimatedBackground /> 
     <Animated.View style={{ flex: 1, backgroundColor: 'transparent', paddingHorizontal: 24, paddingVertical: 24, opacity: screenOpacity, transform: [{ translateY: screenTranslate }] }}>
     
-        <View className="flex-1 items-center justify-center gap-5">
-          <Animated.View className="items-center gap-5" style={{ opacity: heroOpacity, transform: [{ translateY: heroTranslate }] }}>
-          <View className="h-[96px] w-[96px] items-center justify-center rounded-[30px] bg-card">
+        <View className="flex-1 items-center justify-center">
+          <View className="w-full max-w-[360px] items-center gap-5 self-center">
+          <Animated.View className="items-center gap-5 self-center" style={{ opacity: heroOpacity, transform: [{ translateY: heroTranslate }] }}>
+          <View className="h-[96px] w-[96px] items-center justify-center self-center rounded-[30px] bg-card">
             <BeeMascot size={70}/>
           </View>
           <View className="items-center gap-2">
@@ -76,8 +77,8 @@ export default function AuthEntryScreen() {
             </Text>
           </View>
           </Animated.View>
-          <Animated.View className="w-full gap-4" style={{ opacity: cardsOpacity, transform: [{ translateY: cardsTranslate }] }}>
-          <View className="w-full gap-4">
+          <Animated.View className="w-full gap-4 self-center" style={{ opacity: cardsOpacity, transform: [{ translateY: cardsTranslate }] }}>
+          <View className="w-full gap-4 self-center">
             <AnimatedPressable className="rounded-[24px] border border-line bg-card p-5" onPress={() => router.push('/onboarding')}>
               <View className="flex-row items-center gap-4">
                 <View className="h-14 w-14 items-center justify-center rounded-[18px] bg-brand">
@@ -102,6 +103,7 @@ export default function AuthEntryScreen() {
             </AnimatedPressable>
           </View>
           </Animated.View>
+          </View>
         </View>
       </Animated.View>
     </SafeAreaView>);

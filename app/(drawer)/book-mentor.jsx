@@ -14,6 +14,15 @@ export default function BookMentorScreen() {
     const [upiId, setUpiId] = useState('');
     const [booked, setBooked] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const animationKey = processing
+        ? 'processing'
+        : booked && selectedIndex !== null
+            ? `booked-${selectedIndex}`
+            : selectedIndex !== null && showPayment
+                ? `payment-${selectedIndex}-${selectedDate || 'date'}-${selectedSlot || 'slot'}`
+                : selectedIndex !== null
+                    ? `mentor-${selectedIndex}`
+                    : 'mentor-list';
     const dates = useMemo(() => Array.from({ length: 14 }, (_, index) => {
         const current = new Date();
         current.setDate(current.getDate() + index);
@@ -46,7 +55,7 @@ export default function BookMentorScreen() {
         return () => clearTimeout(timer);
     }, [addBooking, processing, selectedDate, selectedIndex, selectedSlot]);
     if (processing) {
-        return (<Screen>
+        return (<Screen animationKey={animationKey}>
         <SectionHeader title="Processing" subtitle="Confirming your mentor booking." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => setProcessing(false)}>
               <Ionicons name="arrow-back" size={18} color={palette.text}/>
             </Pressable>}/>
@@ -59,7 +68,7 @@ export default function BookMentorScreen() {
     }
     if (booked && selectedIndex !== null) {
         const mentor = mentors[selectedIndex];
-        return (<Screen>
+        return (<Screen animationKey={animationKey}>
         <SectionHeader title="Booking Confirmed" subtitle="The mentor booking flow now mirrors the prototype much more closely." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => {
                     setBooked(false);
                     setSelectedIndex(null);
@@ -97,7 +106,7 @@ export default function BookMentorScreen() {
     if (selectedIndex !== null && showPayment) {
         const mentor = mentors[selectedIndex];
         const canPay = selectedPayment !== '' && (selectedPayment !== 'upi' || upiId.includes('@'));
-        return (<Screen>
+        return (<Screen animationKey={animationKey}>
         <SectionHeader title="Payment" subtitle="Booking summary and payment choices adapted from the prototype flow." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => setShowPayment(false)}>
               <Ionicons name="arrow-back" size={18} color={palette.text}/>
             </Pressable>}/>
@@ -153,7 +162,7 @@ export default function BookMentorScreen() {
     }
     if (selectedIndex !== null) {
         const mentor = mentors[selectedIndex];
-        return (<Screen>
+        return (<Screen animationKey={animationKey}>
         <SectionHeader title="Mentor Profile" subtitle="Profile, schedule selection, and booking flow aligned with the reference prototype." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => setSelectedIndex(null)}>
               <Ionicons name="arrow-back" size={18} color={palette.text}/>
             </Pressable>}/>
@@ -207,7 +216,7 @@ export default function BookMentorScreen() {
         </Pressable>
       </Screen>);
     }
-    return (<Screen>
+    return (<Screen animationKey={animationKey}>
       <SectionHeader title="Book Mentor" subtitle="Mentor list and booking flow adapted closely from the prototype."/>
       <View className="gap-2 rounded-[24px] border border-line bg-card p-5">
         <Text className="text-[20px] font-black text-ink">Expert Guidance for the Next Big Decision</Text>

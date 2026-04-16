@@ -17,6 +17,13 @@ export default function AbroadScreen() {
     const [courseInterest, setCourseInterest] = useState('');
     const [budgetRange, setBudgetRange] = useState('');
     const [preferredIntake, setPreferredIntake] = useState('');
+    const animationKey = submitted
+        ? 'submitted'
+        : showForm
+            ? `form-${preferredCountry || 'blank'}`
+            : selected !== null
+                ? `country-${selected}`
+                : 'country-list';
     useEffect(() => {
         if (selected === null || unlocked || detailLocked)
             return;
@@ -33,7 +40,7 @@ export default function AbroadScreen() {
         return () => clearInterval(timer);
     }, [selected, unlocked, detailLocked]);
     if (submitted) {
-        return (<Screen>
+        return (<Screen animationKey={animationKey}>
         <SectionHeader title="Request Sent" subtitle="Consultation request state added to match the prototype flow." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => {
                     setSubmitted(false);
                     setShowForm(false);
@@ -63,7 +70,7 @@ export default function AbroadScreen() {
       </Screen>);
     }
     if (showForm) {
-        return (<Screen>
+        return (<Screen animationKey={animationKey}>
         <SectionHeader title="Consultation Form" subtitle="A lightweight consultancy form matching the prototype structure." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => setShowForm(false)}>
               <Ionicons name="arrow-back" size={18} color={palette.text}/>
             </Pressable>}/>
@@ -85,7 +92,7 @@ export default function AbroadScreen() {
     }
     if (selected !== null) {
         const country = studyAbroadCountries[selected];
-        return (<Screen>
+        return (<Screen animationKey={animationKey}>
         <SectionHeader title={country.name} subtitle="Expanded country detail page adapted from the reference prototype." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => {
                     setSelected(null);
                     setDetailTimer(10);
@@ -158,7 +165,7 @@ export default function AbroadScreen() {
           </>)}
       </Screen>);
     }
-    return (<Screen>
+    return (<Screen animationKey={animationKey}>
       <SectionHeader title="Study Abroad" subtitle="Country list and consultancy flow adapted from the prototype."/>
       <View className="items-center gap-2 rounded-[26px] border border-line bg-card p-5">
         <View className="h-[60px] w-[60px] items-center justify-center rounded-[20px]" style={{ backgroundColor: `${palette.teal}12` }}>
