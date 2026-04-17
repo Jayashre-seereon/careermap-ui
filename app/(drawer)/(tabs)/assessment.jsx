@@ -9,8 +9,7 @@ export default function AssessmentScreen() {
     const testUnlocked = isUnlocked('psychometric-test');
     const psychometricPlan = subscriptions.find((plan) => plan.id === 'psychometric');
     return (<Screen>
-      <View className="overflow-hidden rounded-[34px] bg-[#fcf8f5] px-4 pb-8 pt-3">
-       
+      <View className="px-1 pb-8 pt-3">
         <View className="mb-7 flex-row items-center gap-3">
           <AnimatedPressable onPress={() => (router.canGoBack() ? router.back() : router.push('/(drawer)/(tabs)/library'))} className="h-10 w-10 items-center justify-center rounded-full bg-white" style={{
             shadowColor: '#967c75',

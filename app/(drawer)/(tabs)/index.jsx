@@ -24,7 +24,7 @@ export default function HomeScreen() {
     const [completedPersonality, setCompletedPersonality] = useState(false);
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState(Array(personalityQuestions.length).fill(null));
-    const { isUnlocked, onboarding, userProfile } = useAppState();
+    const { isUnlocked, onboarding, unreadNotificationsCount, userProfile } = useAppState();
     const personalityResult = useMemo(() => {
         const counts = [0, 0, 0, 0];
         answers.forEach((answer) => {
@@ -126,7 +126,12 @@ export default function HomeScreen() {
           </View>
         </View>
         <AnimatedPressable className="h-[42px] w-[42px] items-center justify-center rounded-[16px] border border-line bg-card" onPress={() => router.push('/(drawer)/notifications')}>
-          <Ionicons name="notifications-outline" size={20} color={palette.text}/>
+          <View className="items-center justify-center">
+            <Ionicons name="notifications-outline" size={20} color={palette.text}/>
+            {unreadNotificationsCount > 0 ? (<View className="absolute -right-2 -top-2 min-w-[18px] rounded-full bg-brand px-1 py-[1px]">
+                <Text className="text-center text-[10px] font-extrabold text-white">{unreadNotificationsCount}</Text>
+              </View>) : null}
+          </View>
         </AnimatedPressable>
       </View>
 

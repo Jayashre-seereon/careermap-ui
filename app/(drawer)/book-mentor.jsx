@@ -12,8 +12,26 @@ export default function BookMentorScreen() {
     const [showPayment, setShowPayment] = useState(false);
     const [selectedPayment, setSelectedPayment] = useState('');
     const [upiId, setUpiId] = useState('');
+    const [cardName, setCardName] = useState('');
+    const [cardNumber, setCardNumber] = useState('');
+    const [cardExpiry, setCardExpiry] = useState('');
+    const [cardCvv, setCardCvv] = useState('');
+    const [selectedBank, setSelectedBank] = useState('');
     const [booked, setBooked] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const formatCardNumber = (value) => value.replace(/\D/g, '').slice(0, 16);
+    const formatExpiry = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 4);
+        if (digits.length < 3)
+            return digits;
+        return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    };
+    const isValidExpiry = (value) => {
+        if (!/^\d{2}\/\d{2}$/.test(value))
+            return false;
+        const [month] = value.split('/').map(Number);
+        return month >= 1 && month <= 12;
+    };
     const animationKey = processing
         ? 'processing'
         : booked && selectedIndex !== null
@@ -77,6 +95,11 @@ export default function BookMentorScreen() {
                     setShowPayment(false);
                     setSelectedPayment('');
                     setUpiId('');
+                    setCardName('');
+                    setCardNumber('');
+                    setCardExpiry('');
+                    setCardCvv('');
+                    setSelectedBank('');
                 }}>
               <Ionicons name="arrow-back" size={18} color={palette.text}/>
             </Pressable>}/>
@@ -97,6 +120,11 @@ export default function BookMentorScreen() {
                 setShowPayment(false);
                 setSelectedPayment('');
                 setUpiId('');
+                setCardName('');
+                setCardNumber('');
+                setCardExpiry('');
+                setCardCvv('');
+                setSelectedBank('');
             }}>
             <Text className="text-center text-[14px] font-extrabold text-white">Back to Mentor List</Text>
           </Pressable>
@@ -105,7 +133,13 @@ export default function BookMentorScreen() {
     }
     if (selectedIndex !== null && showPayment) {
         const mentor = mentors[selectedIndex];
-        const canPay = selectedPayment !== '' && (selectedPayment !== 'upi' || upiId.includes('@'));
+        const canPay = selectedPayment === 'upi'
+            ? upiId.includes('@')
+            : selectedPayment === 'card'
+                ? cardName.trim().length > 0 && cardNumber.length === 16 && isValidExpiry(cardExpiry) && cardCvv.length >= 3
+                : selectedPayment === 'netbanking'
+                    ? selectedBank.length > 0
+                    : false;
         return (<Screen animationKey={animationKey}>
         <SectionHeader title="Payment" subtitle="Booking summary and payment choices adapted from the prototype flow." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => setShowPayment(false)}>
               <Ionicons name="arrow-back" size={18} color={palette.text}/>
@@ -144,10 +178,25 @@ export default function BookMentorScreen() {
 
         {selectedPayment === 'upi' ? (<TextInput value={upiId} onChangeText={setUpiId} placeholder="yourname@upi" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-card px-4 py-[14px] text-[14px] text-ink"/>) : null}
 
+        {selectedPayment === 'card' ? (<View className="gap-2.5">
+            <TextInput value={cardName} onChangeText={setCardName} placeholder="Name on card" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-card px-4 py-[14px] text-[14px] text-ink"/>
+            <TextInput value={cardNumber} onChangeText={(value) => setCardNumber(formatCardNumber(value))} keyboardType="number-pad" placeholder="1234567890123456" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-card px-4 py-[14px] text-[14px] text-ink"/>
+            <View className="flex-row gap-2.5">
+              <TextInput value={cardExpiry} onChangeText={(value) => setCardExpiry(formatExpiry(value))} keyboardType="number-pad" placeholder="MM/YY" placeholderTextColor={palette.muted} className="flex-1 rounded-[16px] border border-line bg-card px-4 py-[14px] text-[14px] text-ink"/>
+              <TextInput value={cardCvv} onChangeText={(value) => setCardCvv(value.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" secureTextEntry placeholder="CVV" placeholderTextColor={palette.muted} className="flex-1 rounded-[16px] border border-line bg-card px-4 py-[14px] text-[14px] text-ink"/>
+            </View>
+          </View>) : null}
+
         {selectedPayment === 'netbanking' ? (<View className="flex-row flex-wrap gap-2.5">
-            {['SBI', 'HDFC Bank', 'ICICI Bank', 'Axis Bank'].map((bank) => (<View key={bank} className="min-w-[47%] items-center rounded-[14px] border border-line bg-card py-3">
-                <Text className="text-[12px] font-extrabold text-ink">{bank}</Text>
-              </View>))}
+            {['SBI', 'HDFC Bank', 'ICICI Bank', 'Axis Bank'].map((bank) => {
+                const active = selectedBank === bank;
+                return (<Pressable key={bank} className="min-w-[47%] items-center rounded-[14px] border py-3" onPress={() => setSelectedBank(bank)} style={{
+                        borderColor: active ? palette.primary : palette.border,
+                        backgroundColor: active ? `${palette.primary}08` : palette.card,
+                    }}>
+                <Text className="text-[12px] font-extrabold" style={{ color: active ? palette.primary : palette.text }}>{bank}</Text>
+              </Pressable>);
+            })}
           </View>) : null}
 
         <View className="flex-row items-center gap-2 rounded-[14px] px-3 py-2.5" style={{ backgroundColor: `${palette.green}10` }}>

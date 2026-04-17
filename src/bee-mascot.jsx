@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, PanResponder } from 'react-native';
 const beeImage = require('../assets/images/career-bee.png');
-export function BeeMascot({ size = 100, style }) {
+export function BeeMascot({ size = 100, style, draggable = true }) {
     const position = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
     const floatAnim = useRef(new Animated.Value(0)).current;
     useEffect(() => {
@@ -18,7 +18,7 @@ export function BeeMascot({ size = 100, style }) {
             }),
         ])).start();
     }, [floatAnim]);
-    const panResponder = useMemo(() => PanResponder.create({
+    const panResponder = useMemo(() => draggable ? PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onPanResponderGrant: () => {
             position.setOffset({ x: position.x._value ?? 0, y: position.y._value ?? 0 });
@@ -36,7 +36,7 @@ export function BeeMascot({ size = 100, style }) {
                 speed: 14,
             }).start();
         },
-    }), [position]);
+    }) : null, [draggable, position]);
     return (<Animated.View className="items-center justify-center" style={[
             style,
             {
@@ -44,7 +44,7 @@ export function BeeMascot({ size = 100, style }) {
                 height: size,
                 transform: [...position.getTranslateTransform(), { translateY: floatAnim }],
             },
-        ]} {...panResponder.panHandlers}>
+        ]} {...(panResponder?.panHandlers ?? {})}>
             <Animated.Image source={beeImage} className="h-full w-full" style={{ width: size, height: size }} resizeMode="contain"/>
         </Animated.View>);
 }

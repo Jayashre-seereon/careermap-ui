@@ -293,7 +293,7 @@ export default function SplashRoute() {
             ]).start();
         }, 2850);
 
-        const navTimer = setTimeout(() => router.replace('/onboarding'), 3350);
+        const navTimer = setTimeout(() => router.replace('/auth-entry'), 3350);
 
         // ── 3 side-entry blobs: enter → 3-point float loop ────────────────
         Animated.parallel([

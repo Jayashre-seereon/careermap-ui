@@ -1,13 +1,17 @@
 import '../global.css';
-import { Stack } from 'expo-router';
+import { Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AppStateProvider, useAppState } from '../src/app-state';
+import { CareerBeeAssistant } from '../src/career-bee-assistant';
 function RootNavigator() {
     const { preferences } = useAppState();
+    const segments = useSegments();
+    const showAssistant = segments[0] === '(drawer)';
     return (<>
       <StatusBar style={preferences.darkMode ? 'light' : 'dark'}/>
       <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
         <Stack.Screen name="index"/>
+        <Stack.Screen name="auth-entry"/>
         <Stack.Screen name="onboarding"/>
         <Stack.Screen name="login"/>
         <Stack.Screen name="signup"/>
@@ -19,6 +23,7 @@ function RootNavigator() {
         <Stack.Screen name="payment-success"/>
         <Stack.Screen name="(drawer)"/>
       </Stack>
+      <CareerBeeAssistant hidden={!showAssistant}/>
     </>);
 }
 export default function RootLayout() {

@@ -1,8 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BeeMascot } from '../src/bee-mascot';
+import { useAppState } from '../src/app-state';
 import { AnimatedBackground } from '../src/animated-background';
 import { StaggerFadeUpItem, ZoomInPage } from '../src/page-transition';
 const features = [
@@ -12,14 +14,37 @@ const features = [
     { title: 'Scholarships & Exams', desc: 'Stay updated on opportunities' },
     { title: 'Study Abroad', desc: 'Explore international education paths' },
 ];
+
 export default function PromoScreen() {
+    const { clearPromoMessage, promoMessage } = useAppState();
     const [page, setPage] = useState(0);
+
+    useEffect(() => {
+        if (!promoMessage) {
+            return undefined;
+        }
+        const timer = setTimeout(() => clearPromoMessage(), 2600);
+        return () => clearTimeout(timer);
+    }, [clearPromoMessage, promoMessage]);
+
     if (page === 0) {
         return (
         <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
             <AnimatedBackground /> 
                <ZoomInPage style={{ flex: 1 }}>
                <View className="flex-1 items-center justify-center gap-[18px] overflow-hidden bg-brand px-6">
+          {promoMessage ? (<View className="absolute left-6 right-6 top-6 z-20 flex-row items-center gap-3 rounded-[20px] border border-[#d7ecd9] bg-white px-4 py-3" style={{
+                shadowColor: '#2f9367',
+                shadowOpacity: 0.12,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 6 },
+                elevation: 4,
+            }}>
+              <View className="h-10 w-10 items-center justify-center rounded-full bg-[#e7f7ec]">
+                <Ionicons name="checkmark" size={20} color="#2f9367"/>
+              </View>
+              <Text className="flex-1 text-[13px] font-extrabold text-[#1f5135]">{promoMessage}</Text>
+            </View>) : null}
           <Pressable className="absolute right-[18px] top-[18px] z-10 h-[34px] w-[34px] items-center justify-center rounded-full bg-white/20" onPress={() => router.replace('/(drawer)')}>
             <Text className="text-[13px] font-black text-white">X</Text>
           </Pressable>

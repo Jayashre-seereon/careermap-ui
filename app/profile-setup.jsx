@@ -15,7 +15,8 @@ const selectionMeta = [
     { key: 'selectedGuidance', label: 'Guidance', icon: 'chatbubble-ellipses-outline', color: palette.green },
 ];
 export default function ProfileSetupScreen() {
-    const { onboarding, saveOnboarding, saveUserProfile, userProfile } = useAppState();
+    const { onboarding, saveOnboarding, saveUserProfile, showPromoMessage, userProfile } = useAppState();
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [form, setForm] = useState({
         name: onboarding.userType === 'parent' ? onboarding.name : onboarding.name,
         email: userProfile.email,
@@ -130,7 +131,8 @@ export default function ProfileSetupScreen() {
           </View>
         </View>
 
-        <AnimatedPressable className="mt-3 items-center rounded-[18px] bg-brand py-4" disabled={!isValid} onPress={() => {
+        <AnimatedPressable className="mt-3 items-center rounded-[18px] bg-brand py-4" disabled={!isValid || isSubmitting} onPress={() => {
+            setIsSubmitting(true);
             saveOnboarding({ ...onboarding, name: form.name });
             saveUserProfile({
                 ...userProfile,
@@ -145,9 +147,10 @@ export default function ProfileSetupScreen() {
                 dob: form.dob,
                 childName: onboarding.childName,
             });
+            showPromoMessage('Profile created successfully.');
             router.replace('/promo');
         }}>
-          <Text className="text-[15px] font-extrabold text-white">Complete Profile</Text>
+          <Text className="text-[15px] font-extrabold text-white">{isSubmitting ? 'Creating Profile...' : 'Complete Profile'}</Text>
         </AnimatedPressable>
       </ScrollView>
       </ZoomInPage>

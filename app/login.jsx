@@ -163,6 +163,12 @@ export default function LoginScreen() {
               <Text className="text-[13px] font-bold text-muted">Forgot Password?</Text>
             </AnimatedPressable>) : null}
 
+          <AnimatedPressable onPress={() => router.replace(isExistingUser ? '/onboarding' : '/auth-entry')}>
+            <Text className="text-[13px] font-bold text-brand">
+              {isExistingUser ? 'New user? Start onboarding' : 'Existing user? Go to login options'}
+            </Text>
+          </AnimatedPressable>
+
           <Text className="text-center text-[11px] leading-[17px] text-muted">
             By continuing, you agree to Career Map&apos;s Terms of Service and Privacy Policy.
           </Text>

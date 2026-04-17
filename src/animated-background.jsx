@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Dimensions, StyleSheet, View } from 'react-native';
 import Svg, { Path, Line } from 'react-native-svg';
+import { useAppState } from './app-state';
 const { width, height } = Dimensions.get('window');
 const PARTICLES = [
     { x: 0.08, y: 0.12, size: 18, opacity: 0.1, duration: 4000, delay: 0 },
@@ -26,13 +27,6 @@ const BOOKS = [
     { x: 0.30, y: 0.88, size: 20, opacity: 0.1, duration: 3200, delay: 400 },
     { x: 0.3, y: 0.10, size: 20, opacity: 0.1, duration: 2400, delay: 800 },
 ];
-const AMBIENT_ORBS = [
-    { x: 0.80, y: 0.00, size: 250, color: 'rgba(255,255,255,0.18)', duration: 3000, delay: 0, travel: 22 },
-    { x: 0.68, y: 0.08, size: 140, color: 'rgba(255,255,255,0.12)', duration: 2400, delay: 300, travel: 16 },
-    { x: -0.10, y: 0.72, size: 270, color: 'rgba(255,255,255,0.10)', duration: 3400, delay: 700, travel: 26 },
-    { x: 0.00, y: 0.03, size: 190, color: 'rgba(192,57,43,0.16)', duration: 3200, delay: 200, travel: 18 },
-];
-const COLOR = '#c0392b';
 function AmbientOrb({ x, y, size, color, duration, delay, travel }) {
     const anim = useRef(new Animated.Value(0)).current;
     useEffect(() => {
@@ -59,7 +53,7 @@ function AmbientOrb({ x, y, size, color, duration, delay, travel }) {
             transform: [{ translateY }, { scale }],
         }}/>);
 }
-function Particle({ x, y, size, opacity, duration, delay }) {
+function Particle({ x, y, size, opacity, duration, delay, color }) {
     const anim = useRef(new Animated.Value(0)).current;
     useEffect(() => {
         const loop = Animated.loop(Animated.sequence([
@@ -79,12 +73,12 @@ function Particle({ x, y, size, opacity, duration, delay }) {
             width: size,
             height: size,
             borderRadius: size / 2,
-            backgroundColor: COLOR,
+            backgroundColor: color,
             opacity: animatedOpacity,
             transform: [{ translateY }],
         }}/>);
 }
-function PencilParticle({ x, y, size, opacity, duration, delay, rotate }) {
+function PencilParticle({ x, y, size, opacity, duration, delay, rotate, color, eraserColor, bandColor, tipColor }) {
     const anim = useRef(new Animated.Value(0)).current;
     useEffect(() => {
         const loop = Animated.loop(Animated.sequence([
@@ -109,21 +103,21 @@ function PencilParticle({ x, y, size, opacity, duration, delay, rotate }) {
             alignItems: 'center',
         }}>
       {/* Eraser */}
-      <View style={{ width: size * 0.45, height: bodyH, backgroundColor: '#e8a0a0', borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }}/>
+      <View style={{ width: size * 0.45, height: bodyH, backgroundColor: eraserColor, borderTopLeftRadius: 3, borderBottomLeftRadius: 3 }}/>
       {/* Band */}
-      <View style={{ width: 3, height: bodyH, backgroundColor: '#b07070' }}/>
+      <View style={{ width: 3, height: bodyH, backgroundColor: bandColor }}/>
       {/* Body */}
-      <View style={{ width: bodyW, height: bodyH, backgroundColor: COLOR }}/>
+      <View style={{ width: bodyW, height: bodyH, backgroundColor: color }}/>
       {/* Tip */}
       <View style={{
             width: 0, height: 0,
             borderTopWidth: bodyH / 2, borderBottomWidth: bodyH / 2, borderLeftWidth: size * 0.55,
-            borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: COLOR,
+            borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: tipColor,
             opacity: 0.7,
         }}/>
     </Animated.View>);
 }
-function BookParticle({ x, y, size, opacity, duration, delay }) {
+function BookParticle({ x, y, size, opacity, duration, delay, color, lineColor }) {
     const anim = useRef(new Animated.Value(0)).current;
     useEffect(() => {
         const loop = Animated.loop(Animated.sequence([
@@ -139,7 +133,7 @@ function BookParticle({ x, y, size, opacity, duration, delay }) {
     const pageW = size * 1.2;
     const pageH = size * 1.4;
     const spineW = size * 0.08;
-    const cx = pageW + spineW / 2; // spine x centre
+    const cx = pageW + spineW / 2; 
     const totalW = pageW * 2 + spineW + 4;
     const totalH = pageH + size * 0.3;
     // left page path
@@ -159,28 +153,61 @@ function BookParticle({ x, y, size, opacity, duration, delay }) {
         }}>
       <Svg width={totalW} height={totalH}>
         {/* Left page */}
-        <Path d={leftPage} fill={COLOR} opacity={0.55}/>
+        <Path d={leftPage} fill={color} opacity={0.55}/>
         {/* Right page */}
-        <Path d={rightPage} fill={COLOR} opacity={0.45}/>
+        <Path d={rightPage} fill={color} opacity={0.45}/>
         {/* Spine */}
-        <Line x1={cx} y1={0} x2={cx} y2={pageH} stroke={COLOR} strokeWidth={spineW} opacity={0.9}/>
+        <Line x1={cx} y1={0} x2={cx} y2={pageH} stroke={color} strokeWidth={spineW} opacity={0.9}/>
         {/* Left page ruled lines */}
-        {lineRows.map((frac, i) => (<Line key={`ll${i}`} x1={size * 0.15} y1={pageH * frac} x2={pageW * 0.85} y2={pageH * frac - size * 0.05} stroke="#ffffff" strokeWidth={1.2} opacity={0.3}/>))}
+        {lineRows.map((frac, i) => (<Line key={`ll${i}`} x1={size * 0.15} y1={pageH * frac} x2={pageW * 0.85} y2={pageH * frac - size * 0.05} stroke={lineColor} strokeWidth={1.2} opacity={0.3}/>))}
         {/* Right page ruled lines */}
-        {lineRows.map((frac, i) => (<Line key={`rl${i}`} x1={pageW + spineW + size * 0.15} y1={pageH * frac - size * 0.05} x2={pageW * 2} y2={pageH * frac} stroke="#ffffff" strokeWidth={1.2} opacity={0.3}/>))}
+        {lineRows.map((frac, i) => (<Line key={`rl${i}`} x1={pageW + spineW + size * 0.15} y1={pageH * frac - size * 0.05} x2={pageW * 2} y2={pageH * frac} stroke={lineColor} strokeWidth={1.2} opacity={0.3}/>))}
         {/* Open-spine bottom arc */}
-        <Path d={bottomArc} fill="none" stroke={COLOR} strokeWidth={1.5} opacity={0.6}/>
+        <Path d={bottomArc} fill="none" stroke={color} strokeWidth={1.5} opacity={0.6}/>
       </Svg>
     </Animated.View>);
 }
 export function AnimatedBackground() {
+    const { preferences } = useAppState();
+    const theme = useMemo(() => preferences.darkMode
+        ? {
+            particle: '#8d1738',
+            book: '#78102f',
+            line: '#ffffff',
+            pencil: '#a01944',
+            eraser: '#de8ea9',
+            band: '#732239',
+            tip: '#a01944',
+            orbs: [
+                { x: 0.78, y: -0.02, size: 250, color: 'rgba(126,20,55,0.28)', duration: 3200, delay: 0, travel: 20 },
+                { x: 0.58, y: 0.08, size: 180, color: 'rgba(255,255,255,0.05)', duration: 2600, delay: 250, travel: 14 },
+                { x: -0.12, y: 0.70, size: 290, color: 'rgba(85,5,24,0.42)', duration: 3500, delay: 600, travel: 24 },
+                { x: 0.06, y: 0.02, size: 210, color: 'rgba(255,255,255,0.03)', duration: 2800, delay: 150, travel: 12 },
+            ],
+        }
+        : {
+            particle: '#c0392b',
+            book: '#c0392b',
+            line: '#ffffff',
+            pencil: '#c0392b',
+            eraser: '#e8a0a0',
+            band: '#b07070',
+            tip: '#c0392b',
+            orbs: [
+                { x: 0.80, y: 0.00, size: 250, color: 'rgba(255,255,255,0.18)', duration: 3000, delay: 0, travel: 22 },
+                { x: 0.68, y: 0.08, size: 140, color: 'rgba(255,255,255,0.12)', duration: 2400, delay: 300, travel: 16 },
+                { x: -0.10, y: 0.72, size: 270, color: 'rgba(255,255,255,0.10)', duration: 3400, delay: 700, travel: 26 },
+                { x: 0.00, y: 0.03, size: 190, color: 'rgba(192,57,43,0.16)', duration: 3200, delay: 200, travel: 18 },
+            ],
+        }, [preferences.darkMode]);
     return (<View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {preferences.darkMode ? <View style={[StyleSheet.absoluteFill, { backgroundColor: '#050505' }]} /> : null}
        {/* Circular particles */}
-      {PARTICLES.map((p, i) => (<Particle key={i} {...p}/>))}
+      {PARTICLES.map((p, i) => (<Particle key={i} {...p} color={theme.particle}/>))}
       {/* Pencils */}
-      {PENCILS.map((p, i) => (<PencilParticle key={i} {...p}/>))}
+      {PENCILS.map((p, i) => (<PencilParticle key={i} {...p} color={theme.pencil} eraserColor={theme.eraser} bandColor={theme.band} tipColor={theme.tip}/>))}
       {/* Open books */}
-      {BOOKS.map((p, i) => (<BookParticle key={i} {...p}/>))}
+      {BOOKS.map((p, i) => (<BookParticle key={i} {...p} color={theme.book} lineColor={theme.line}/>))}
     </View>);
 }
 
