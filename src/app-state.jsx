@@ -51,6 +51,7 @@ const AppStateContext = createContext(null);
 export function AppStateProvider({ children }) {
     const [activePlanId, setActivePlanId] = useState(null);
     const [profileEditRequestKey, setProfileEditRequestKey] = useState(0);
+    const [promoMessage, setPromoMessage] = useState('');
     const [onboarding, setOnboarding] = useState(initialOnboardingState);
     const [userProfile, setUserProfile] = useState(initialUserProfile);
     const [preferences, setPreferences] = useState(initialPreferences);
@@ -69,6 +70,9 @@ export function AppStateProvider({ children }) {
         activatePlan: (planId) => setActivePlanId(planId),
         profileEditRequestKey,
         requestProfileEdit: () => setProfileEditRequestKey((current) => current + 1),
+        promoMessage,
+        showPromoMessage: (message) => setPromoMessage(message),
+        clearPromoMessage: () => setPromoMessage(''),
         saveOnboarding: (data) => setOnboarding(data),
         userProfile,
         saveUserProfile: (data) => setUserProfile(data),
@@ -110,7 +114,7 @@ export function AppStateProvider({ children }) {
             ]
             : [],
         unreadNotificationsCount: notificationItems.filter((item) => item.unread).length,
-    }), [activePlanId, bookings, onboarding, preferences, profileEditRequestKey, savedCareers, testHistory, userProfile]);
+    }), [activePlanId, bookings, onboarding, preferences, profileEditRequestKey, promoMessage, savedCareers, testHistory, userProfile]);
     return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }
 export function useAppState() {

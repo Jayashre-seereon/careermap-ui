@@ -15,8 +15,8 @@ const selectionMeta = [
     { key: 'selectedGuidance', label: 'Guidance', icon: 'chatbubble-ellipses-outline', color: palette.green },
 ];
 export default function ProfileSetupScreen() {
-    const { onboarding, saveOnboarding, saveUserProfile, userProfile } = useAppState();
-    const [successMessage, setSuccessMessage] = useState('');
+    const { onboarding, saveOnboarding, saveUserProfile, showPromoMessage, userProfile } = useAppState();
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [form, setForm] = useState({
         name: onboarding.userType === 'parent' ? onboarding.name : onboarding.name,
         email: userProfile.email,
@@ -51,33 +51,7 @@ export default function ProfileSetupScreen() {
     return (<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
           <AnimatedBackground />  
             <ZoomInPage style={{ flex: 1 }}>
-            {successMessage ? (<View className="flex-1 px-6 py-6">
-                <View className="flex-1 items-center justify-center">
-                  <View className="w-full max-w-[420px] rounded-[32px] border border-[#cfe5d5] bg-card px-6 py-8" style={{
-                shadowColor: '#5f8167',
-                shadowOpacity: 0.12,
-                shadowRadius: 20,
-                shadowOffset: { width: 0, height: 10 },
-                elevation: 4,
-            }}>
-                    <View className="items-center gap-4">
-                      <View className="h-[84px] w-[84px] items-center justify-center rounded-full bg-[#e7f7ec]">
-                        <Ionicons name="checkmark-circle" size={56} color="#2f9367"/>
-                      </View>
-                      <View className="items-center gap-2">
-                        <Text className="text-center text-[28px] font-black text-ink">Profile created</Text>
-                        <Text className="text-center text-[15px] leading-6 text-muted">
-                          {successMessage}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <AnimatedPressable className="mt-8 items-center rounded-[18px] bg-brand py-4" onPress={() => router.replace('/promo')}>
-                      <Text className="text-[15px] font-extrabold text-white">Continue</Text>
-                    </AnimatedPressable>
-                  </View>
-                </View>
-              </View>) : (<ScrollView className="flex-1" contentContainerClassName="gap-[14px] px-6 py-6" showsVerticalScrollIndicator={false}>
+            <ScrollView className="flex-1" contentContainerClassName="gap-[14px] px-6 py-6" showsVerticalScrollIndicator={false}>
         <AnimatedPressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={18} color={palette.text}/>
         </AnimatedPressable>
@@ -157,7 +131,8 @@ export default function ProfileSetupScreen() {
           </View>
         </View>
 
-        <AnimatedPressable className="mt-3 items-center rounded-[18px] bg-brand py-4" disabled={!isValid || !!successMessage} onPress={() => {
+        <AnimatedPressable className="mt-3 items-center rounded-[18px] bg-brand py-4" disabled={!isValid || isSubmitting} onPress={() => {
+            setIsSubmitting(true);
             saveOnboarding({ ...onboarding, name: form.name });
             saveUserProfile({
                 ...userProfile,
@@ -172,11 +147,12 @@ export default function ProfileSetupScreen() {
                 dob: form.dob,
                 childName: onboarding.childName,
             });
-            setSuccessMessage('Profile created successfully.');
+            showPromoMessage('Profile created successfully.');
+            router.replace('/promo');
         }}>
-          <Text className="text-[15px] font-extrabold text-white">{successMessage ? 'Profile Created' : 'Complete Profile'}</Text>
+          <Text className="text-[15px] font-extrabold text-white">{isSubmitting ? 'Creating Profile...' : 'Complete Profile'}</Text>
         </AnimatedPressable>
-      </ScrollView>)}
+      </ScrollView>
       </ZoomInPage>
     </SafeAreaView>);
 }
