@@ -12,7 +12,7 @@ export function Screen({ children, scroll = true, contentContainerClassName = 'g
     const animatedChildren = Children.toArray(children).map((child, index) => (<StaggerFadeUpItem key={index} index={index}>
       {child}
     </StaggerFadeUpItem>));
-    return (<SafeAreaView className={`flex-1 ${preferences.darkMode ? 'bg-[#140f17]' : 'bg-paper'}`} edges={['top']}>
+    return (<SafeAreaView className={`flex-1 ${preferences.darkMode ? 'bg-[#050505]' : 'bg-paper'}`} edges={['top']}>
       <AnimatedBackground />
       <ZoomInPage key={animationKey} style={{ flex: 1 }}>
         {scroll ? (<ScrollView className="flex-1" contentContainerClassName={contentContainerClassName} showsVerticalScrollIndicator={false}>
@@ -37,7 +37,7 @@ export function SectionHeader({ title, subtitle, action }) {
 
 export function HeroCard({ eyebrow, title, description, }) {
     const { preferences } = useAppState();
-    return (<View className={`gap-2.5 rounded-[28px] border p-[22px] shadow-card ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+    return (<View className={`gap-2.5 rounded-[28px] border p-[22px] shadow-card ${preferences.darkMode ? 'border-[#35101b] bg-[#0f0f10]' : 'border-line bg-card'}`}>
       <Text className="text-[12px] font-bold uppercase tracking-[1px] text-brand">{eyebrow}</Text>
       <Text className={`text-[28px] font-black leading-[34px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
       <Text className={`text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{description}</Text>
@@ -54,8 +54,8 @@ export function Pill({ label, tone = palette.primary }) {
 
 export function InfoCard({ icon, title, subtitle, onPress, }) {
     const { preferences } = useAppState();
-    const content = (<View className={`min-h-[140px] min-w-[47%] flex-1 gap-2.5 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
-      <View className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-[#f8ece7]'}`}>
+    const content = (<View className={`min-h-[140px] min-w-[47%] flex-1 gap-2.5 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#35101b] bg-[#0f0f10]' : 'border-line bg-card'}`}>
+      <View className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#1b1014]' : 'bg-[#f8ece7]'}`}>
         <Ionicons name={icon} size={20} color={palette.primary}/>
       </View>
       <Text className={`text-[16px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
@@ -69,9 +69,9 @@ export function InfoCard({ icon, title, subtitle, onPress, }) {
 
 export function ListRow({ icon, title, value, onPress, }) {
     const { preferences } = useAppState();
-    return (<AnimatedPressable className={`flex-row items-center justify-between gap-3 rounded-[20px] border px-4 py-[15px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={onPress}>
+    return (<AnimatedPressable className={`flex-row items-center justify-between gap-3 rounded-[20px] border px-4 py-[15px] ${preferences.darkMode ? 'border-[#35101b] bg-[#0f0f10]' : 'border-line bg-card'}`} onPress={onPress}>
       <View className="flex-1 flex-row items-center gap-3">
-        <View className={`h-[34px] w-[34px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-[#f8ece7]'}`}>
+        <View className={`h-[34px] w-[34px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#1b1014]' : 'bg-[#f8ece7]'}`}>
           <Ionicons name={icon} size={18} color={palette.primary}/>
         </View>
         <Text className={`flex-1 text-[15px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
@@ -85,7 +85,7 @@ export function ListRow({ icon, title, value, onPress, }) {
 
 export function StatCard({ label, value, tone, }) {
     const { preferences } = useAppState();
-    return (<View className={`flex-1 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+    return (<View className={`flex-1 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#35101b] bg-[#0f0f10]' : 'border-line bg-card'}`}>
       <View className="h-[10px] w-[10px] rounded-full" style={{ backgroundColor: tone }}/>
       <Text className={`text-[24px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{value}</Text>
       <Text className={`text-[12px] font-semibold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>

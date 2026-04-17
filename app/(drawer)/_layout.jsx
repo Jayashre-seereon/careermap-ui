@@ -1,10 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Drawer } from 'expo-router/drawer';
+import { Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 export default function DrawerRoot() {
-    const { preferences } = useAppState();
+    const { preferences, unreadNotificationsCount } = useAppState();
+    const renderDrawerIcon = (name) => {
+        const DrawerIcon = ({ color, size }) => (<View className="items-center justify-center">
+        <Ionicons name={name} color={color} size={size}/>
+        {name === 'notifications-outline' && unreadNotificationsCount > 0 ? (<View className="absolute -right-2 -top-1 min-w-[18px] rounded-full bg-brand px-1 py-[1px]">
+            <Text className="text-center text-[10px] font-extrabold text-white">{unreadNotificationsCount}</Text>
+          </View>) : null}
+      </View>);
+        DrawerIcon.displayName = `${name.replace(/[^a-z0-9]/gi, '')}DrawerIcon`;
+        return DrawerIcon;
+    };
     return (<GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer screenOptions={{
             headerStyle: { backgroundColor: preferences.darkMode ? '#1b151f' : palette.surface },
@@ -18,36 +29,36 @@ export default function DrawerRoot() {
         <Drawer.Screen name="(tabs)" options={{
             title: 'CareerMap',
             drawerLabel: 'Dashboard',
-            drawerIcon: ({ color, size }) => <Ionicons name="grid" color={color} size={size}/>,
+            drawerIcon: renderDrawerIcon('grid'),
             headerShown: false,
         }}/>
         <Drawer.Screen name="notifications" options={{
             title: 'Notifications',
-            drawerIcon: ({ color, size }) => <Ionicons name="notifications-outline" color={color} size={size}/>,
+            drawerIcon: renderDrawerIcon('notifications-outline'),
         }}/>
         <Drawer.Screen name="scholarship" options={{
             title: 'Scholarships',
-            drawerIcon: ({ color, size }) => <Ionicons name="ribbon-outline" color={color} size={size}/>,
+            drawerIcon: renderDrawerIcon('ribbon-outline'),
         }}/>
         <Drawer.Screen name="institute" options={{
             title: 'Institutes',
-            drawerIcon: ({ color, size }) => <Ionicons name="business-outline" color={color} size={size}/>,
+            drawerIcon: renderDrawerIcon('business-outline'),
         }}/>
         <Drawer.Screen name="entrance-exam" options={{
             title: 'Entrance Exam',
-            drawerIcon: ({ color, size }) => <Ionicons name="clipboard-outline" color={color} size={size}/>,
+            drawerIcon: renderDrawerIcon('clipboard-outline'),
         }}/>
         <Drawer.Screen name="subscription" options={{
             title: 'Subscription',
-            drawerIcon: ({ color, size }) => <Ionicons name="card-outline" color={color} size={size}/>,
+            drawerIcon: renderDrawerIcon('card-outline'),
         }}/>
         <Drawer.Screen name="settings" options={{
             title: 'Settings',
-            drawerIcon: ({ color, size }) => <Ionicons name="settings-outline" color={color} size={size}/>,
+            drawerIcon: renderDrawerIcon('settings-outline'),
         }}/>
         <Drawer.Screen name="book-mentor" options={{
             title: 'Book Mentor',
-            drawerIcon: ({ color, size }) => <Ionicons name="people-outline" color={color} size={size}/>,
+            drawerIcon: renderDrawerIcon('people-outline'),
         }}/>
         <Drawer.Screen name="psychometric-test" options={{
             drawerItemStyle: { display: 'none' },

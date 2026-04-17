@@ -10,6 +10,24 @@ const paymentMethods = [
 ];
 const popularBanks = ['SBI', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Kotak', 'Bank of Baroda'];
 const quickUpiApps = ['GPay', 'PhonePe', 'Paytm'];
+function formatCardNumber(value) {
+    return value.replace(/\D/g, '').slice(0, 16);
+}
+function formatExpiry(value) {
+    const digits = value.replace(/\D/g, '').slice(0, 4);
+    if (digits.length < 3)
+        return digits;
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+}
+function isValidExpiry(value) {
+    if (!/^\d{2}\/\d{2}$/.test(value))
+        return false;
+    const [month] = value.split('/').map(Number);
+    return month >= 1 && month <= 12;
+}
+function normalizeCardName(value) {
+    return value.replace(/\s+/g, ' ').trimStart();
+}
 export default function CheckoutScreen() {
     const { planId } = useLocalSearchParams();
     const plan = subscriptions.find((item) => item.id === planId) ?? subscriptions[0];
@@ -26,7 +44,7 @@ export default function CheckoutScreen() {
         if (selectedMethod === 'upi')
             return upiId.includes('@');
         if (selectedMethod === 'card') {
-            return cardName.trim().length > 0 && cardNumber.length === 16 && cardExpiry.length === 5 && cardCvv.length >= 3;
+            return cardName.trim().length > 0 && cardNumber.length === 16 && isValidExpiry(cardExpiry) && cardCvv.length >= 3;
         }
         return selectedBank.length > 0;
     })();
@@ -122,13 +140,13 @@ export default function CheckoutScreen() {
 
                 {selectedMethod === 'card' ? (<View className="mt-1 gap-2.5">
                     <Text className="text-[12px] font-extrabold text-muted">Cardholder Name</Text>
-                    <TextInput value={cardName} onChangeText={setCardName} placeholder="Name on card" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
+                    <TextInput value={cardName} onChangeText={(value) => setCardName(normalizeCardName(value))} autoCapitalize="words" placeholder="Name on card" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
                     <Text className="text-[12px] font-extrabold text-muted">Card Number</Text>
-                    <TextInput value={cardNumber} onChangeText={(value) => setCardNumber(value.replace(/\D/g, '').slice(0, 16))} keyboardType="number-pad" placeholder="1234567890123456" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
+                    <TextInput value={cardNumber} onChangeText={(value) => setCardNumber(formatCardNumber(value))} keyboardType="number-pad" placeholder="1234567890123456" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
                     <View className="flex-row gap-2.5">
                       <View className="flex-1 gap-2.5">
                         <Text className="text-[12px] font-extrabold text-muted">Expiry</Text>
-                        <TextInput value={cardExpiry} onChangeText={(value) => setCardExpiry(value.slice(0, 5))} placeholder="MM/YY" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
+                        <TextInput value={cardExpiry} onChangeText={(value) => setCardExpiry(formatExpiry(value))} keyboardType="number-pad" placeholder="MM/YY" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
                       </View>
                       <View className="flex-1 gap-2.5">
                         <Text className="text-[12px] font-extrabold text-muted">CVV</Text>

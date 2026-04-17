@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { Text, View } from 'react-native';
-import { BeeMascot } from '../../src/bee-mascot';
 import { entranceExams, palette } from '../../src/careermap-data';
 import { AnimatedPressable, Screen } from '../../src/careermap-ui';
 function DetailCard({ title, children, }) {
@@ -30,17 +29,7 @@ export default function EntranceExamDetailScreen() {
         { label: 'Frequency', value: exam.frequency },
         { label: 'Eligibility', value: exam.eligibility },
     ];
-    return (<Screen>
-      <View className="overflow-hidden rounded-[34px] bg-[#fcf8f5] px-4 pb-8 pt-3">
-        <View className="absolute left-[-32px] top-[92px] h-[120px] w-[120px] rounded-full bg-[#fff1f2]"/>
-        <View className="absolute right-[-18px] top-[40px] h-[130px] w-[130px] rounded-full bg-[#fff6f1]"/>
-        <View className="absolute left-[38px] top-[210px] h-3 w-3 rounded-full bg-[#d8f1e7]"/>
-        <View className="absolute left-[66px] top-[270px] h-4 w-4 rotate-12 rounded-[4px] bg-[#efe8ff]"/>
-        <View className="absolute right-[88px] top-[126px] h-4 w-4 rounded-full bg-[#f8d8de]"/>
-        <View className="absolute right-[54px] top-[178px] h-[7px] w-[7px] rounded-full bg-[#d7ecea]"/>
-        <View className="absolute right-[28px] top-[226px] h-[18px] w-[3px] rotate-45 rounded-full bg-[#f8e4d4]"/>
-        <View className="absolute right-[54px] top-[288px] h-[10px] w-[10px] rounded-[3px] bg-[#eef5ef]"/>
-
+    return (<Screen contentContainerClassName="gap-[18px] px-5 py-5 pb-8">
         <View className="mb-7 flex-row items-center gap-3">
           <AnimatedPressable onPress={() => (router.canGoBack() ? router.back() : router.push('/(drawer)/entrance-exam'))} className="h-10 w-10 items-center justify-center rounded-full bg-white" style={{
             shadowColor: '#967c75',
@@ -119,10 +108,5 @@ export default function EntranceExamDetailScreen() {
             </View>
           </AnimatedPressable>
         </View>
-
-        <View className="absolute bottom-7 right-4">
-          <BeeMascot size={58}/>
-        </View>
-      </View>
     </Screen>);
 }

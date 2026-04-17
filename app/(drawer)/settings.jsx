@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Switch, Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { AnimatedPressable, Screen } from '../../src/careermap-ui';
 import { StaggerFadeUpItem } from '../../src/page-transition';
 export default function SettingsScreen() {
-    const { preferences, toggleDarkMode, updatePreferences } = useAppState();
+    const { preferences, requestProfileEdit, toggleDarkMode, updatePreferences } = useAppState();
     const [view, setView] = useState('menu');
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
@@ -23,13 +23,23 @@ export default function SettingsScreen() {
         email: '',
         message: '',
     });
+    const [feedbackMessage, setFeedbackMessage] = useState('');
+    useEffect(() => {
+        if (!feedbackMessage)
+            return;
+        const timer = setTimeout(() => setFeedbackMessage(''), 2600);
+        return () => clearTimeout(timer);
+    }, [feedbackMessage]);
     const settingsItems = useMemo(() => [
-        { label: 'Edit Profile', icon: 'person-outline', color: palette.blue, action: () => router.push({ pathname: '/(drawer)/(tabs)/profile', params: { mode: 'edit' } }) },
+        { label: 'Edit Profile', icon: 'person-outline', color: palette.blue, action: () => {
+                requestProfileEdit();
+                router.navigate('/(drawer)/(tabs)/profile');
+            } },
         { label: 'Change Password', icon: 'lock-closed-outline', color: palette.purple, action: () => setView('password') },
         { label: 'Notification Preferences', icon: 'notifications-outline', color: palette.orange, action: () => setView('notifications') },
         { label: preferences.darkMode ? 'Light Mode' : 'Dark Mode', icon: preferences.darkMode ? 'sunny-outline' : 'moon-outline', color: palette.secondary, action: toggleDarkMode },
         { label: 'Help Centre', icon: 'help-circle-outline', color: palette.teal, action: () => setView('help') },
-    ], [preferences.darkMode, toggleDarkMode]);
+    ], [preferences.darkMode, requestProfileEdit, toggleDarkMode]);
     if (view === 'password') {
         const canSave = passwordForm.currentPassword.length > 0 &&
             passwordForm.newPassword.length >= 6 &&
@@ -60,10 +70,13 @@ export default function SettingsScreen() {
           <AnimatedPressable className="rounded-[18px] bg-brand py-4" disabled={!canSave} onPress={() => {
                 setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
                 setShowPassword({ currentPassword: false, newPassword: false, confirmPassword: false });
-                setView('menu');
+                setFeedbackMessage('Password changed successfully.');
             }}>
             <Text className="text-center text-[15px] font-extrabold text-white">Save Password</Text>
           </AnimatedPressable>
+          {feedbackMessage ? (<View className={`rounded-[18px] border px-4 py-3 ${preferences.darkMode ? 'border-[#22462f] bg-[#102016]' : 'border-[#cde7d4] bg-[#edf8f0]'}`}>
+              <Text className="text-[13px] font-extrabold text-success">{feedbackMessage}</Text>
+            </View>) : null}
         </View>
       </Screen>);
     }
@@ -115,10 +128,13 @@ export default function SettingsScreen() {
           </View>
           <AnimatedPressable className="rounded-[18px] bg-brand py-4" onPress={() => {
                 setHelpForm({ email: '', message: '' });
-                setView('menu');
+                setFeedbackMessage('Help request sent successfully.');
             }}>
             <Text className="text-center text-[15px] font-extrabold text-white">Send to Email Support</Text>
           </AnimatedPressable>
+          {feedbackMessage ? (<View className={`rounded-[18px] border px-4 py-3 ${preferences.darkMode ? 'border-[#22462f] bg-[#102016]' : 'border-[#cde7d4] bg-[#edf8f0]'}`}>
+              <Text className="text-[13px] font-extrabold text-success">{feedbackMessage}</Text>
+            </View>) : null}
         </View>
       </Screen>);
     }
@@ -129,6 +145,10 @@ export default function SettingsScreen() {
         </AnimatedPressable>
         <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Settings</Text>
       </View>
+
+      {feedbackMessage && view === 'menu' ? (<View className={`rounded-[18px] border px-4 py-3 ${preferences.darkMode ? 'border-[#22462f] bg-[#102016]' : 'border-[#cde7d4] bg-[#edf8f0]'}`}>
+          <Text className="text-[13px] font-extrabold text-success">{feedbackMessage}</Text>
+        </View>) : null}
 
       <View className={`overflow-hidden rounded-[24px] border ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
         {settingsItems.map((item, index) => (<StaggerFadeUpItem key={item.label} index={index}>

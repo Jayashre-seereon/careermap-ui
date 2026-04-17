@@ -12,8 +12,10 @@ const features = [
     { title: 'Scholarships & Exams', desc: 'Stay updated on opportunities' },
     { title: 'Study Abroad', desc: 'Explore international education paths' },
 ];
+
 export default function PromoScreen() {
     const [page, setPage] = useState(0);
+
     if (page === 0) {
         return (
         <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 

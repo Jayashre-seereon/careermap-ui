@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { entranceExams, palette } from '../../src/careermap-data';
 import { AnimatedPressable, Screen, SectionHeader } from '../../src/careermap-ui';
 const typeFilters = ['All', 'Central', 'State', 'Private'];
@@ -15,19 +15,15 @@ export default function EntranceExamScreen() {
         filtered = filtered.filter(e => e.type === typeFilter);
     if (catFilter !== 'All')
         filtered = filtered.filter(e => e.category === catFilter);
-    return (<Screen scroll={false}>
-            <SectionHeader title="Entrance Exams" subtitle="Practice tests and exam preparation guides."/>
-
-            <View className="px-6 py-3">
-                <AnimatedPressable className={`self-start rounded-full border px-3 py-1.5 ${showFilters ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setShowFilters(!showFilters)}>
+    return (<Screen>
+            <SectionHeader title="Entrance Exams" subtitle="Practice tests and exam preparation guides." action={<AnimatedPressable className={`self-start rounded-full border px-3 py-1.5 ${showFilters ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setShowFilters(!showFilters)}>
                     <View className="flex-row items-center">
                         <Ionicons name="filter" size={16} color={showFilters ? palette.surface : palette.text}/>
                         <Text className={`ml-1.5 text-[12px] font-semibold ${showFilters ? 'text-surface' : 'text-ink'}`}>Filters</Text>
                     </View>
-                </AnimatedPressable>
-            </View>
+                </AnimatedPressable>}/>
 
-            {showFilters && (<View className="px-6 pb-3">
+            {showFilters && (<View className="gap-3">
                     <Text className="mb-2 mt-2 text-[12px] font-bold uppercase text-muted">Exam Type</Text>
                     <View className="flex-row flex-wrap gap-2">
                         {typeFilters.map(f => (<AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${typeFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setTypeFilter(f)}>
@@ -42,7 +38,7 @@ export default function EntranceExamScreen() {
                     </View>
                 </View>)}
 
-            <ScrollView className="flex-1" contentContainerClassName="gap-3 px-6 pb-6" showsVerticalScrollIndicator={false}>
+            <View className="gap-3">
                 {filtered.map((exam) => (<AnimatedPressable key={exam.name} className="mb-3 rounded-[12px] bg-card p-4 shadow-card" onPress={() => router.push({ pathname: '/(drawer)/entrance-exam-detail', params: { examId: exam.id } })}>
                         <View className="flex-row items-start">
                             <View className="mr-3 h-10 w-10 items-center justify-center rounded-[10px]" style={{ backgroundColor: `${palette.primary}15` }}>
@@ -73,6 +69,6 @@ export default function EntranceExamScreen() {
                 {filtered.length === 0 && (<View className="items-center justify-center py-12">
                         <Text className="text-[14px] text-muted">No exams match your filters</Text>
                     </View>)}
-            </ScrollView>
+            </View>
         </Screen>);
 }

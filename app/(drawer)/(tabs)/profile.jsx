@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../../src/app-state';
@@ -7,19 +7,18 @@ import { palette } from '../../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen } from '../../../src/careermap-ui';
 import { StaggerFadeUpItem } from '../../../src/page-transition';
 export default function ProfileScreen() {
-    const { mode } = useLocalSearchParams();
-    const { activePlanId, bookings, hasActiveSubscription, onboarding, preferences, savedCareers, saveUserProfile, subscriptionRecords, testHistory, toggleDarkMode, userProfile, } = useAppState();
-    const [editMode, setEditMode] = useState(mode === 'edit');
+    const { activePlanId, bookings, hasActiveSubscription, onboarding, preferences, profileEditRequestKey, requestProfileEdit, savedCareers, saveUserProfile, subscriptionRecords, testHistory, toggleDarkMode, userProfile, } = useAppState();
+    const [editMode, setEditMode] = useState(false);
     const [form, setForm] = useState(userProfile);
     const [openSection, setOpenSection] = useState(null);
     useEffect(() => {
         setForm(userProfile);
     }, [userProfile]);
     useEffect(() => {
-        if (mode === 'edit') {
+        if (profileEditRequestKey > 0) {
             setEditMode(true);
         }
-    }, [mode]);
+    }, [profileEditRequestKey]);
     const displayName = onboarding.userType === 'parent' ? userProfile.name || 'Parent User' : userProfile.name || 'Student User';
     const profileClass = onboarding.selectedClass || 'Class 11';
     const profileStream = onboarding.selectedStream || 'Science';
@@ -194,6 +193,9 @@ export default function ProfileScreen() {
           <Pill label={profileStream} tone={palette.purple}/>
         </View>
         {onboarding.userType === 'parent' ? <Pill label="Parent Account" tone={palette.secondary}/> : null}
+        <AnimatedPressable className="mt-4 rounded-[16px] bg-brand px-5 py-3" onPress={requestProfileEdit}>
+          <Text className="text-[13px] font-extrabold text-white">Edit Profile</Text>
+        </AnimatedPressable>
       </View>
 
       <View className={`overflow-hidden rounded-[24px] border ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>

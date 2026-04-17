@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState } from 'react';
+import { notifications as notificationItems } from './careermap-data';
 const planFeatures = {
     psychometric: ['psychometric-test'],
     premium: ['psychometric-test', 'book-mentor', 'master-class', 'career-library'],
@@ -49,6 +50,7 @@ const initialBookings = [
 const AppStateContext = createContext(null);
 export function AppStateProvider({ children }) {
     const [activePlanId, setActivePlanId] = useState(null);
+    const [profileEditRequestKey, setProfileEditRequestKey] = useState(0);
     const [onboarding, setOnboarding] = useState(initialOnboardingState);
     const [userProfile, setUserProfile] = useState(initialUserProfile);
     const [preferences, setPreferences] = useState(initialPreferences);
@@ -65,6 +67,8 @@ export function AppStateProvider({ children }) {
             return planFeatures[activePlanId].includes(feature);
         },
         activatePlan: (planId) => setActivePlanId(planId),
+        profileEditRequestKey,
+        requestProfileEdit: () => setProfileEditRequestKey((current) => current + 1),
         saveOnboarding: (data) => setOnboarding(data),
         userProfile,
         saveUserProfile: (data) => setUserProfile(data),
@@ -105,7 +109,8 @@ export function AppStateProvider({ children }) {
                 },
             ]
             : [],
-    }), [activePlanId, bookings, onboarding, preferences, savedCareers, testHistory, userProfile]);
+        unreadNotificationsCount: notificationItems.filter((item) => item.unread).length,
+    }), [activePlanId, bookings, onboarding, preferences, profileEditRequestKey, savedCareers, testHistory, userProfile]);
     return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }
 export function useAppState() {
