@@ -139,7 +139,7 @@ export default function ProfileScreen() {
             <View className="flex-row gap-2.5">
               {['Male', 'Female', 'Other'].map((option) => {
                 const active = form.gender === option;
-                return (<AnimatedPressable key={option} className={`flex-1 rounded-[16px] border py-3 ${active ? 'border-brand bg-brand' : 'border-line bg-card'}`} onPress={() => updateField('gender', option)}>
+                return (<AnimatedPressable key={option} className={`flex-1 rounded-[16px] border py-2 px-3 ${active ? 'border-brand bg-brand' : 'border-line bg-card'}`} onPress={() => updateField('gender', option)}>
                     <Text className={`text-center text-[13px] font-extrabold ${active ? 'text-white' : 'text-ink'}`}>{option}</Text>
                   </AnimatedPressable>);
             })}
@@ -230,7 +230,7 @@ export default function ProfileScreen() {
         })}
       </View>
 
-      <AnimatedPressable className="flex-row items-center justify-center gap-2 rounded-[18px] border border-[#efc8c0] bg-[#fff4f2] py-4" onPress={() => router.replace('/')}>
+      <AnimatedPressable className="flex-row items-center justify-center gap-2 rounded-[18px] border border-[#efc8c0] bg-[#fff4f2] py-4" onPress={() => router.replace('/auth-entry')}>
         <Ionicons name="log-out-outline" size={18} color={palette.danger}/>
         <Text className="text-[14px] font-extrabold text-danger">Logout</Text>
       </AnimatedPressable>

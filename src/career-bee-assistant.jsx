@@ -50,6 +50,7 @@ export function CareerBeeAssistant({ hidden = false }) {
         },
     ]);
     const bubbleScale = useRef(new Animated.Value(1)).current;
+   
     const sheetAnim = useRef(new Animated.Value(0)).current;
     const overlayOpacity = useRef(new Animated.Value(0)).current;
 
@@ -57,7 +58,7 @@ export function CareerBeeAssistant({ hidden = false }) {
         launcherShadow: preferences.darkMode ? '#000000' : '#6e1730',
         sheet: preferences.darkMode ? '#090909' : '#ffffff',
         sheetBorder: preferences.darkMode ? '#2d0f18' : '#eadadf',
-        sheetHeader: preferences.darkMode ? '#2a0613' : '#7e1437',
+        sheetHeader: preferences.darkMode ? '#2a0613' : '#b41d36',
         sheetSubtle: preferences.darkMode ? '#101010' : '#fff7f9',
         text: preferences.darkMode ? '#ffffff' : palette.text,
         muted: preferences.darkMode ? '#b8a9b0' : palette.muted,
@@ -71,7 +72,7 @@ export function CareerBeeAssistant({ hidden = false }) {
             toValue: value,
             useNativeDriver: true,
             speed: 20,
-            bounciness: 7,
+            bounciness: 10,
         }).start();
     };
 
@@ -103,7 +104,7 @@ export function CareerBeeAssistant({ hidden = false }) {
             }),
             Animated.timing(sheetAnim, {
                 toValue: 0,
-                duration: 220,
+                duration: 200,
                 easing: Easing.in(Easing.ease),
                 useNativeDriver: true,
             }),
@@ -254,7 +255,7 @@ export function CareerBeeAssistant({ hidden = false }) {
                     style={{
                         position: 'absolute',
                         right: 18,
-                        bottom: Math.max(insets.bottom + 22, 28),
+                        bottom: Math.max(insets.bottom + 22, 55),
                         transform: [{ scale: bubbleScale }],
                         zIndex: 9999,
                         elevation: 9999,
@@ -264,22 +265,10 @@ export function CareerBeeAssistant({ hidden = false }) {
                         onPress={openSheet}
                         onPressIn={() => animateBubble(0.94)}
                         onPressOut={() => animateBubble(1)}
-                        style={{
-                            height: 62,
-                            width: 62,
-                            borderRadius: 31,
-                            backgroundColor: '#7e1437',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            shadowColor: themed.launcherShadow,
-                            shadowOpacity: 0.35,
-                            shadowRadius: 20,
-                            shadowOffset: { width: 0, height: 10 },
-                            elevation: 12,
-                        }}
+                       
                     >
-                        <View style={{ height: 56, width: 56, borderRadius: 28, backgroundColor: '#7e1437', alignItems: 'center', justifyContent: 'center' }}>
-                            <BeeMascot size={36} draggable={false} />
+                        <View style={{ height: 50, width: 50, borderRadius: 28, backgroundColor: '#b41d36', alignItems: 'center', justifyContent: 'center' }}>
+                            <BeeMascot size={30} draggable={false} />
                         </View>
                     </Pressable>
                 </Animated.View>) : null}

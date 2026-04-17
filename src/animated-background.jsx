@@ -202,7 +202,6 @@ export function AnimatedBackground() {
         }, [preferences.darkMode]);
     return (<View style={StyleSheet.absoluteFill} pointerEvents="none">
       {preferences.darkMode ? <View style={[StyleSheet.absoluteFill, { backgroundColor: '#050505' }]} /> : null}
-      {theme.orbs.map((orb, i) => (<AmbientOrb key={`orb-${i}`} {...orb}/>))}
        {/* Circular particles */}
       {PARTICLES.map((p, i) => (<Particle key={i} {...p} color={theme.particle}/>))}
       {/* Pencils */}

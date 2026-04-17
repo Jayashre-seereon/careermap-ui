@@ -61,7 +61,7 @@ export default function PaymentSuccessScreen() {
             </View>))}
         </View>
 
-        <AnimatedPressable className="w-full items-center rounded-[18px] bg-brand py-4" onPress={() => router.replace('/(drawer)/(tabs)/')}>
+        <AnimatedPressable className="w-full items-center rounded-[18px] bg-brand py-3 px-4" onPress={() => router.replace('/(drawer)/(tabs)/')}>
           <Text className="text-[15px] font-extrabold text-white">Go to Dashboard</Text>
         </AnimatedPressable>
       </View>
