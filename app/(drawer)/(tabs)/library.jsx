@@ -1,13 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../../../src/app-state';
-import { Screen } from '../../../src/careermap-ui';
+import { Screen, UnlockBottomSheet } from '../../../src/careermap-ui';
 import { palette } from '../../../src/careermap-data';
 import { StaggerFadeUpItem } from '../../../src/page-transition';
-const MAX_FREE_ITEMS = 5;
-const PREVIEW_SECONDS = 15;
+import { openSubscriptionPrompt } from '../../../src/subscription-flow';
 const streams = [
     { name: 'Science', emoji: '🔬', desc: 'Medical, Engineering & Research' },
     { name: 'Commerce', emoji: '📊', desc: 'Business, Finance & Accounting' },
@@ -331,32 +330,36 @@ const defaultDetail = (name) => ({
     institutes: ['Leading Institutes'],
 });
 export default function CareerLibraryScreen() {
-    const { isUnlocked, savedCareers, toggleSavedCareer } = useAppState();
+    const params = useLocalSearchParams();
+    const { canAccessFreeDetail, isUnlocked, registerFreeDetailAccess, savedCareers, toggleSavedCareer } = useAppState();
     const [currentLevel, setCurrentLevel] = useState('streams');
     const [selectedStream, setSelectedStream] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedProgram, setSelectedProgram] = useState(null);
     const [selectedSpecialization, setSelectedSpecialization] = useState(null);
-    const [contentTimer, setContentTimer] = useState(null);
-    const [contentLocked, setContentLocked] = useState(false);
-    const locked = !isUnlocked('career-library');
+    const [showUnlockSheet, setShowUnlockSheet] = useState(false);
     const animationKey = `${currentLevel}-${selectedStream ?? 'none'}-${selectedCategory ?? 'none'}-${selectedProgram ?? 'none'}-${selectedSpecialization ?? 'none'}`;
+    const detailKey = selectedSpecialization ?? selectedProgram;
+    const detailUnlocked = detailKey ? canAccessFreeDetail('career-library', detailKey) : true;
+    const returnTarget = useMemo(() => ({
+        pathname: '/(drawer)/(tabs)/library',
+        params: {
+            level: 'details',
+            stream: selectedStream,
+            category: selectedCategory,
+            program: selectedProgram,
+            specialization: selectedSpecialization,
+        },
+    }), [selectedCategory, selectedProgram, selectedSpecialization, selectedStream]);
     useEffect(() => {
-        if (currentLevel === 'details' && locked && !contentLocked) {
-            const timer = setTimeout(() => {
-                setContentLocked(true);
-            }, PREVIEW_SECONDS * 1000);
-            setContentTimer(PREVIEW_SECONDS);
-            const interval = setInterval(() => {
-                setContentTimer(prev => {
-                    if (prev && prev > 1)
-                        return prev - 1;
-                    return 0;
-                });
-            }, 1000);
-            return () => { clearTimeout(timer); clearInterval(interval); };
+        if (typeof params.level === 'string') {
+            setCurrentLevel(params.level);
         }
-    }, [currentLevel, locked, contentLocked]);
+        setSelectedStream(typeof params.stream === 'string' ? params.stream : null);
+        setSelectedCategory(typeof params.category === 'string' ? params.category : null);
+        setSelectedProgram(typeof params.program === 'string' ? params.program : null);
+        setSelectedSpecialization(typeof params.specialization === 'string' ? params.specialization : null);
+    }, [params.category, params.level, params.program, params.specialization, params.stream]);
     const handleStreamSelect = (stream) => {
         setSelectedStream(stream);
         setCurrentLevel('categories');
@@ -369,15 +372,19 @@ export default function CareerLibraryScreen() {
         setSelectedProgram(program);
         setCurrentLevel('specializations');
     };
+    const canOpenCareerItem = (itemKey) => isUnlocked('career-library') || canAccessFreeDetail('career-library', itemKey);
     const handleSpecializationSelect = (specialization) => {
+        if (!canOpenCareerItem(specialization)) {
+            setShowUnlockSheet(true);
+            return;
+        }
+        registerFreeDetailAccess('career-library', specialization);
         setSelectedSpecialization(specialization);
         setCurrentLevel('details');
-        setContentLocked(false);
     };
     const handleBack = () => {
         if (currentLevel === 'details') {
             setSelectedSpecialization(null);
-            setContentLocked(false);
             setCurrentLevel('specializations');
         }
         else if (currentLevel === 'specializations') {
@@ -410,82 +417,67 @@ export default function CareerLibraryScreen() {
         const programList = programs[selectedCategory] || [];
         return (<View className="gap-3">
         {programList.map((program, index) => {
-                const itemLocked = locked && index >= MAX_FREE_ITEMS;
+                const unlockedItem = canOpenCareerItem(program.name);
                 return (<StaggerFadeUpItem key={program.name} index={index}>
                   <Pressable onPress={() => {
-                        if (!itemLocked)
-                            handleProgramSelect(program.name);
-                    }} className={`flex-row items-center rounded-[12px] border border-line bg-card p-3 ${itemLocked ? 'opacity-55' : ''}`}>
+                        handleProgramSelect(program.name);
+                    }} className="flex-row items-center rounded-[12px] border border-line bg-card p-3">
             <View className="flex-1 flex-row items-center">
               <Text className="mr-3 text-[24px]">{program.emoji}</Text>
               <Text className="flex-1 text-[14px] font-semibold text-ink">{program.name}</Text>
             </View>
-            <Ionicons name={itemLocked ? 'lock-closed' : 'chevron-forward'} size={18} color={itemLocked ? palette.muted : palette.primary}/>
+            {!isUnlocked('career-library') ? (<View className="mr-2 rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
+                <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
+              </View>) : null}
+            <Ionicons name={unlockedItem ? 'chevron-forward' : 'lock-closed'} size={18} color={unlockedItem ? palette.primary : palette.muted}/>
           </Pressable>
           </StaggerFadeUpItem>);
             })}
-        {locked && programList.length > MAX_FREE_ITEMS ? (<View className="items-center rounded-[18px] border border-[#efd5cb] bg-[#fff7f3] px-5 py-5">
-            <Ionicons name="lock-closed" size={24} color={palette.primary}/>
-            <Text className="mt-2 text-[15px] font-extrabold text-ink">Unlock Full Career Library</Text>
-            <Text className="mt-1 text-center text-[12px] leading-5 text-muted">Subscribe to explore all programs and specializations from this branch.</Text>
-            <Pressable onPress={() => router.push('/(drawer)/subscription')} className="mt-3 rounded-[12px] bg-brand px-5 py-3">
-              <Text className="text-[13px] font-extrabold text-white">View Plans</Text>
-            </Pressable>
-          </View>) : null}
       </View>);
     };
     const renderSpecializations = () => {
         const specializationList = specializations[selectedProgram] || [];
         if (specializationList.length === 0) {
+            const unlockedItem = canOpenCareerItem(selectedProgram);
             return (<Pressable onPress={() => handleSpecializationSelect(selectedProgram)} className="items-center rounded-[16px] border border-line bg-card p-6">
           <Text className="mb-2 text-[18px] font-bold text-ink">{selectedProgram}</Text>
-          <Text className="text-[13px] text-muted">View general details</Text>
+          <Text className="text-[13px] text-muted">{unlockedItem ? 'View general details' : 'Tap to unlock this career'}</Text>
+          {!isUnlocked('career-library') ? (<View className="mt-3 rounded-full px-3 py-1.5" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
+              <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE ACCESS' : 'LOCKED'}</Text>
+            </View>) : null}
         </Pressable>);
         }
         return (<View className="gap-3">
         {specializationList.map((specialization, index) => {
-                const itemLocked = locked && index >= MAX_FREE_ITEMS;
+                const unlockedItem = canOpenCareerItem(specialization.name);
                 return (<StaggerFadeUpItem key={specialization.name} index={index}>
                   <Pressable onPress={() => {
-                        if (!itemLocked)
-                            handleSpecializationSelect(specialization.name);
-                    }} className={`flex-row items-center rounded-[12px] border border-line bg-card p-3 ${itemLocked ? 'opacity-55' : ''}`}>
+                        handleSpecializationSelect(specialization.name);
+                    }} className="flex-row items-center rounded-[12px] border border-line bg-card p-3">
             <View className="flex-1 flex-row items-center">
               <Text className="mr-3 text-[24px]">{specialization.emoji}</Text>
               <Text className="flex-1 text-[14px] font-semibold text-ink">{specialization.name}</Text>
             </View>
-            <Ionicons name={itemLocked ? 'lock-closed' : 'chevron-forward'} size={18} color={itemLocked ? palette.muted : palette.primary}/>
+            {!isUnlocked('career-library') ? (<View className="mr-2 rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
+                <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
+              </View>) : null}
+            <Ionicons name={unlockedItem ? 'chevron-forward' : 'lock-closed'} size={18} color={unlockedItem ? palette.primary : palette.muted}/>
           </Pressable>
           </StaggerFadeUpItem>);
             })}
-        {locked && specializationList.length > MAX_FREE_ITEMS ? (<View className="items-center rounded-[18px] border border-[#efd5cb] bg-[#fff7f3] px-5 py-5">
-            <Ionicons name="lock-closed" size={24} color={palette.primary}/>
-            <Text className="mt-2 text-[15px] font-extrabold text-ink">Unlock All Specializations</Text>
-            <Text className="mt-1 text-center text-[12px] leading-5 text-muted">Subscribe to open the remaining specializations and full career detail pages.</Text>
-            <Pressable onPress={() => router.push('/(drawer)/subscription')} className="mt-3 rounded-[12px] bg-brand px-5 py-3">
-              <Text className="text-[13px] font-extrabold text-white">View Plans</Text>
-            </Pressable>
-          </View>) : null}
       </View>);
     };
     const renderDetails = () => {
         const detail = careerDetails[selectedSpecialization] || defaultDetail(selectedSpecialization);
         const isSaved = savedCareers.includes(detail.title);
-        if (contentLocked && locked) {
-            return (<View className="items-center justify-center gap-4 py-[60px]">
-          <Ionicons name="lock-closed" size={48} color={palette.primary}/>
-          <Text className="text-[18px] font-bold text-ink">Preview Time Expired</Text>
-          <Text className="text-center text-[14px] text-muted">Subscribe to unlock full access to all career details, education paths, and salary insights.</Text>
-          <Pressable onPress={() => router.push('/(drawer)/subscription')} className="rounded-[12px] bg-brand px-6 py-3">
-            <Text className="text-[14px] font-bold text-white">Unlock Full Access</Text>
-          </Pressable>
-        </View>);
-        }
-        return (<ScrollView className="flex-1" contentContainerClassName="px-4 pb-4" showsVerticalScrollIndicator={false}>
-        {locked && !contentLocked && contentTimer !== null && (<View className="mb-4 flex-row items-center gap-2 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.orange}20` }}>
-            <Ionicons name="time-outline" size={20} color={palette.orange}/>
-            <Text className="text-[13px] font-semibold" style={{ color: palette.orange }}>Free preview: {contentTimer}s remaining</Text>
-          </View>)}
+        return (<View className="flex-1">
+        <ScrollView className="flex-1" contentContainerClassName="px-4 pb-4" showsVerticalScrollIndicator={false}>
+        {!isUnlocked('career-library') ? (<View className="mb-4 flex-row items-center gap-2 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${detailUnlocked ? palette.green : palette.orange}14` }}>
+            <Ionicons name={detailUnlocked ? 'sparkles-outline' : 'lock-closed'} size={18} color={detailUnlocked ? palette.green : palette.orange}/>
+            <Text className="flex-1 text-[12px] font-semibold" style={{ color: detailUnlocked ? palette.green : palette.orange }}>
+              {detailUnlocked ? 'Your first career detail is unlocked for free.' : 'You have already used the free career detail. Subscribe to view more.'}
+            </Text>
+          </View>) : null}
 
         <View className="mb-4 items-center rounded-[24px] border border-[#f0e2da] bg-[#fff9f6] px-4 py-6">
           <View className="mb-3 h-[76px] w-[76px] items-center justify-center rounded-[24px] bg-[#ffecef]">
@@ -531,7 +523,8 @@ export default function CareerLibraryScreen() {
           <Text className="mb-2 text-[14px] font-bold text-ink">Top Institutes</Text>
           {detail.institutes.map(institute => (<Text key={institute} className="mb-1.5 text-[13px] text-muted">★ {institute}</Text>))}
         </View>
-      </ScrollView>);
+      </ScrollView>
+      </View>);
     };
     const getTitle = () => {
         if (currentLevel === 'streams')
@@ -560,5 +553,9 @@ export default function CareerLibraryScreen() {
           {currentLevel === 'programs' && renderPrograms()}
           {currentLevel === 'specializations' && renderSpecializations()}
         </ScrollView>)}
+      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career Library" subtitle="Subscribe to more careers, salary insights, education paths, and institute details." onClose={() => setShowUnlockSheet(false)} onPress={() => {
+                setShowUnlockSheet(false);
+                openSubscriptionPrompt(returnTarget);
+            }}/>) : null}
     </Screen>);
 }

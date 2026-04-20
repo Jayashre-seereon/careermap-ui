@@ -1,12 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect } from 'react';
-import { Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppState } from '../src/app-state';
 import { palette, subscriptions } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
+import { decodeReturnTarget } from '../src/subscription-flow';
 export default function PaymentSuccessScreen() {
-    const { planId, transactionId, method } = useLocalSearchParams();
+    const { planId, transactionId, method, returnTo } = useLocalSearchParams();
     const { activatePlan } = useAppState();
     const plan = subscriptions.find((item) => item.id === planId) ?? subscriptions[0];
     const paymentMethodLabel = method === 'upi' ? 'UPI' : method === 'card' ? 'Credit / Debit Card' : method === 'netbanking' ? 'Net Banking' : 'UPI';
@@ -14,16 +15,58 @@ export default function PaymentSuccessScreen() {
         month: 'long',
         year: 'numeric',
     });
+    const celebration = useRef(new Animated.Value(0)).current;
+    const returnTarget = decodeReturnTarget(returnTo);
+    const confetti = [
+        { top: 22, left: 30, color: palette.secondary, rotate: '-18deg' },
+        { top: 42, right: 26, color: palette.teal, rotate: '16deg' },
+        { top: 88, left: 14, color: palette.blue, rotate: '32deg' },
+        { top: 102, right: 18, color: palette.orange, rotate: '-28deg' },
+        { bottom: 110, left: 22, color: palette.pink, rotate: '18deg' },
+        { bottom: 124, right: 28, color: palette.green, rotate: '-14deg' },
+    ];
     useEffect(() => {
         if (plan.id) {
             activatePlan(plan.id);
         }
     }, [activatePlan, plan.id]);
+    useEffect(() => {
+        Animated.spring(celebration, {
+            toValue: 1,
+            useNativeDriver: true,
+            speed: 12,
+            bounciness: 10,
+        }).start();
+    }, [celebration]);
+    const handleContinue = () => {
+        if (returnTarget) {
+            router.replace(returnTarget);
+            return;
+        }
+        router.replace('/(drawer)/(tabs)/');
+    };
     return (<SafeAreaView className="flex-1 bg-paper">
-      <View className="flex-1 items-center justify-center gap-4 px-6 py-6">
-        <View className="h-[84px] w-[84px] items-center justify-center rounded-[28px]" style={{ backgroundColor: `${palette.green}14` }}>
-          <Text className="text-[28px] font-black text-success">OK</Text>
-        </View>
+      <View className="flex-1 items-center justify-center gap-4 overflow-hidden px-6 py-6">
+        {confetti.map((piece, index) => (<Animated.View key={index} className="absolute h-4 w-4 rounded-[4px]" style={[
+                piece,
+                {
+                    backgroundColor: piece.color,
+                    transform: [
+                        { translateY: celebration.interpolate({ inputRange: [0, 1], outputRange: [-24, 0] }) },
+                        { scale: celebration.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }) },
+                        { rotate: piece.rotate },
+                    ],
+                    opacity: celebration.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+                },
+            ]}/>))}
+        <Animated.View style={{
+                transform: [{ scale: celebration.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }],
+                opacity: celebration,
+            }}>
+          <View className="h-[108px] w-[108px] items-center justify-center rounded-[34px] border border-[#d7f0e1]" style={{ backgroundColor: `${palette.green}14` }}>
+            <Text className="text-[38px] font-black text-success">OK</Text>
+          </View>
+        </Animated.View>
         <Text className="text-center text-[30px] font-black text-ink">Payment Successful</Text>
         <Text className="max-w-[280px] text-center text-[14px] leading-[22px] text-muted">
           {plan.name} is now active and premium features have been unlocked.
@@ -61,8 +104,8 @@ export default function PaymentSuccessScreen() {
             </View>))}
         </View>
 
-        <AnimatedPressable className="w-full items-center rounded-[18px] bg-brand py-3 px-4" onPress={() => router.replace('/(drawer)/(tabs)/')}>
-          <Text className="text-[15px] font-extrabold text-white">Go to Dashboard</Text>
+        <AnimatedPressable className="w-full items-center rounded-[18px] bg-brand px-4 py-3" onPress={handleContinue}>
+          <Text className="text-[15px] font-extrabold text-white">{returnTarget ? 'Back to Your Page' : 'Go to Dashboard'}</Text>
         </AnimatedPressable>
       </View>
     </SafeAreaView>);

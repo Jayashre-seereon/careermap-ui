@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette, subscriptions } from '../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
 export default function SubscriptionScreen() {
     const { activePlanId } = useAppState();
+    const { returnTo } = useLocalSearchParams();
     return (<Screen>
       <SectionHeader title="Subscription Plans" subtitle="Key plans from the Vercel prototype, adapted here as mobile cards."/>
 
@@ -25,7 +26,13 @@ export default function SubscriptionScreen() {
                   <Text className="text-[14px] font-semibold text-ink">{feature}</Text>
                 </View>))}
             </View>
-            <AnimatedPressable className="mt-1 rounded-[14px] py-3" onPress={() => router.push({ pathname: '/checkout', params: { planId: plan.id } })} style={{ backgroundColor: activePlanId === plan.id ? `${palette.green}14` : palette.primary }}>
+            <AnimatedPressable className="mt-1 rounded-[14px] py-3" onPress={() => router.push({
+                pathname: '/checkout',
+                params: {
+                    planId: plan.id,
+                    ...(returnTo ? { returnTo } : {}),
+                },
+            })} style={{ backgroundColor: activePlanId === plan.id ? `${palette.green}14` : palette.primary }}>
               <Text className="text-center text-[14px] font-extrabold" style={{ color: activePlanId === plan.id ? palette.green : '#fff' }}>
                 {activePlanId === plan.id ? 'Current Plan' : 'Choose Plan'}
               </Text>

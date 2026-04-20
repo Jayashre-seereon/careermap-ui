@@ -554,6 +554,7 @@ export const assessmentPolicies = [
     'Each subscription includes 1 psychometric test.',
     'Test validity lasts 1 year from purchase date.',
     'A new purchase is required for a retake.',
+    'Study Abroad Access unlocks only the abroad module.',
 ];
 export const masterClasses = [
     {
@@ -813,16 +814,23 @@ export const subscriptions = [
         id: 'premium',
         name: 'Psychometric + Counselling',
         price: 'Rs 3,000',
-        description: 'The most complete student package from the web prototype.',
-        features: ['Detailed report', '1-on-1 counselling', 'Mentor booking access'],
+        description: 'Unlock assessment, mentor booking, and master classes together.',
+        features: ['Detailed report', '1-on-1 counselling', 'Mentor booking access', 'Master class access'],
         recommended: true,
     },
     {
         id: 'infocentre',
         name: 'Infocentre Access',
         price: 'Rs 5,000',
-        description: 'Premium library, videos, scholarships, and counselling support.',
-        features: ['Career library', 'Master class videos', 'Scholarship info'],
+        description: 'Unlock all core info modules except study abroad.',
+        features: ['Psychometric test', 'Career library', 'Master class videos', 'Mentor booking', 'Scholarship info'],
+    },
+    {
+        id: 'abroad',
+        name: 'Study Abroad Access',
+        price: 'Rs 2,500',
+        description: 'Unlock only the Study Abroad module and counselling request flow.',
+        features: ['Study Abroad module', 'Country details', 'Consultation request access'],
     },
 ];
 export const settingsItems = [

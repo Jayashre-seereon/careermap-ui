@@ -28,7 +28,7 @@ function normalizeCardName(value) {
     return value.replace(/\s+/g, ' ').trimStart();
 }
 export default function CheckoutScreen() {
-    const { planId } = useLocalSearchParams();
+    const { planId, returnTo } = useLocalSearchParams();
     const plan = subscriptions.find((item) => item.id === planId) ?? subscriptions[0];
     const [selectedMethod, setSelectedMethod] = useState('upi');
     const [upiId, setUpiId] = useState('');
@@ -58,6 +58,7 @@ export default function CheckoutScreen() {
                     planId: plan.id,
                     transactionId,
                     method: selectedMethod,
+                    ...(returnTo ? { returnTo } : {}),
                 },
             });
         }, 1800);

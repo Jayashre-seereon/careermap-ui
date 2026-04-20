@@ -1,65 +1,50 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Linking, Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette, scholarships } from '../../src/careermap-data';
-import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
+import { openSubscriptionPrompt } from '../../src/subscription-flow';
 export default function ScholarshipScreen() {
-    const { isUnlocked } = useAppState();
+    const params = useLocalSearchParams();
+    const { canAccessFreeDetail, isUnlocked, registerFreeDetailAccess } = useAppState();
     const scholarshipUnlocked = isUnlocked('scholarship');
     const [showFilters, setShowFilters] = useState(false);
     const [activeStatus, setActiveStatus] = useState('All');
     const [sortBy, setSortBy] = useState('Default');
     const [selectedIndex, setSelectedIndex] = useState(null);
-    const [detailTimer, setDetailTimer] = useState(10);
-    const [detailLocked, setDetailLocked] = useState(false);
+    const [showUnlockSheet, setShowUnlockSheet] = useState(false);
     const animationKey = selectedIndex !== null ? `scholarship-${selectedIndex}` : `scholarship-list-${activeStatus}-${sortBy}-${showFilters ? 'filters' : 'plain'}`;
+    const selectedScholarship = selectedIndex !== null ? scholarships[selectedIndex] : null;
+    const detailUnlocked = selectedScholarship ? canAccessFreeDetail('scholarship', selectedScholarship.name) : true;
     let filtered = activeStatus === 'All' ? [...scholarships] : scholarships.filter((item) => item.status === activeStatus);
     if (sortBy === 'A-Z')
         filtered.sort((a, b) => a.name.localeCompare(b.name));
     if (sortBy === 'Z-A')
         filtered.sort((a, b) => b.name.localeCompare(a.name));
     useEffect(() => {
-        if (selectedIndex === null || scholarshipUnlocked || detailLocked)
-            return;
-        const timer = setInterval(() => {
-            setDetailTimer((value) => {
-                if (value <= 1) {
-                    clearInterval(timer);
-                    setDetailLocked(true);
-                    return 0;
-                }
-                return value - 1;
-            });
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [selectedIndex, scholarshipUnlocked, detailLocked]);
+        if (typeof params.selected === 'string') {
+            setSelectedIndex(Number(params.selected));
+        }
+    }, [params.selected]);
     if (selectedIndex !== null) {
         const item = scholarships[selectedIndex];
         return (<Screen animationKey={animationKey}>
         <SectionHeader title={item.name} subtitle="Scholarship detail page closely matching the reference structure." action={<AnimatedPressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => {
                     setSelectedIndex(null);
-                    setDetailTimer(10);
-                    setDetailLocked(false);
                 }}>
               <Ionicons name="arrow-back" size={18} color={palette.text}/>
             </AnimatedPressable>}/>
 
-        {!scholarshipUnlocked && !detailLocked ? (<View className="self-start rounded-full bg-[#f2ebe6] px-3 py-2">
-            <Text className="text-[12px] font-extrabold text-brand">{detailTimer}s preview</Text>
+        {!scholarshipUnlocked ? (<View className="self-start rounded-full px-3 py-2" style={{ backgroundColor: `${detailUnlocked ? palette.green : palette.orange}14` }}>
+            <Text className="text-[12px] font-extrabold" style={{ color: detailUnlocked ? palette.green : palette.orange }}>
+              {detailUnlocked ? '1 free scholarship detail unlocked' : 'Subscribe to unlock more scholarship details'}
+            </Text>
           </View>) : null}
 
-        {detailLocked ? (<View className="items-center gap-3 rounded-[24px] border border-line bg-card p-6">
-            <View className="h-14 w-14 items-center justify-center rounded-[18px] bg-brand">
-              <Ionicons name="lock-closed-outline" size={28} color="#fff"/>
-            </View>
-            <Text className="text-center text-[20px] font-black text-ink">Preview Time Expired</Text>
-            <Text className="text-center text-[14px] leading-[22px] text-muted">Subscribe to access full scholarship details, requirements, and application links.</Text>
-            <AnimatedPressable className="w-full rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/subscription')}>
-              <Text className="text-center text-[14px] font-extrabold text-white">View Plans</Text>
-            </AnimatedPressable>
-          </View>) : (<>
+        <View className="relative">
+          <>
             <View className="items-center gap-2 py-2">
               <View className="h-[68px] w-[68px] items-center justify-center rounded-[22px]" style={{ backgroundColor: `${palette.green}14` }}>
                 <Ionicons name="ribbon-outline" size={28} color={palette.green}/>
@@ -103,7 +88,8 @@ export default function ScholarshipScreen() {
             <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => Linking.openURL(item.link)}>
               <Text className="text-center text-[14px] font-extrabold text-white">Apply Now</Text>
             </AnimatedPressable>
-          </>)}
+          </>
+        </View>
       </Screen>);
     }
     return (<Screen animationKey={animationKey}>
@@ -136,9 +122,12 @@ export default function ScholarshipScreen() {
 
       <View className="gap-3">
         {filtered.slice(0, scholarshipUnlocked ? filtered.length : 6).map((item) => (<AnimatedPressable key={item.name} className="gap-3 rounded-[22px] border border-line bg-card p-4" onPress={() => {
+                if (!scholarshipUnlocked && !canAccessFreeDetail('scholarship', item.name)) {
+                    setShowUnlockSheet(true);
+                    return;
+                }
+                registerFreeDetailAccess('scholarship', item.name);
                 setSelectedIndex(scholarships.indexOf(item));
-                setDetailTimer(10);
-                setDetailLocked(false);
             }}>
             <View className="flex-row gap-3">
               <View className="h-[50px] w-[50px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.green}14` }}>
@@ -166,9 +155,13 @@ export default function ScholarshipScreen() {
       {!scholarshipUnlocked && filtered.length > 4 ? (<View className="gap-2 rounded-[22px] border border-line bg-card p-4">
           <Text className="text-[16px] font-extrabold text-ink">Subscribe to See More</Text>
           <Text className="text-[13px] leading-5 text-muted">More scholarship listings and full application details stay locked until subscription.</Text>
-          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/subscription')}>
+          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => openSubscriptionPrompt({ pathname: '/(drawer)/scholarship' })}>
             <Text className="text-center text-[14px] font-extrabold text-white">Subscribe to More</Text>
           </AnimatedPressable>
         </View>) : null}
+      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Scholarships" subtitle="Subscribe to more scholarship details, requirements, and application links." onClose={() => setShowUnlockSheet(false)} onPress={() => {
+                setShowUnlockSheet(false);
+                openSubscriptionPrompt({ pathname: '/(drawer)/scholarship' });
+            }}/>) : null}
     </Screen>);
 }

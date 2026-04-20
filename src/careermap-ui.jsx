@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Children, useRef } from 'react';
-import { Animated, Pressable, ScrollView, Text, View } from 'react-native';
+import { Animated, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppState } from './app-state';
 import { AnimatedBackground } from './animated-background';
@@ -107,4 +107,61 @@ export function AnimatedPressable({ children, onPress, className, disabled, styl
         {children}
       </Pressable>
     </Animated.View>);
+}
+
+export function LockedDetailOverlay({ title = 'Unlock', subtitle = 'Subscribe to more', onPress }) {
+    return (<View className="absolute inset-0 items-center justify-center px-5" style={{ backgroundColor: 'rgba(34, 11, 52, 0.28)' }}>
+      <View className="w-full max-w-[340px] items-center rounded-[28px] border border-white/55 bg-white/94 px-6 py-7 shadow-card">
+        <View className="absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full bg-[#f8e8d8]">
+          <Ionicons name="lock-closed" size={18} color={palette.primary}/>
+        </View>
+        <View className="h-[68px] w-[68px] items-center justify-center rounded-[22px]" style={{ backgroundColor: `${palette.primary}14` }}>
+          <Ionicons name="lock-closed" size={30} color={palette.primary}/>
+        </View>
+        <Text className="mt-4 text-[24px] font-black text-ink">{title}</Text>
+        <Text className="mt-1 text-center text-[13px] leading-5 text-muted">{subtitle}</Text>
+        <AnimatedPressable className="mt-5 w-full rounded-[18px] bg-brand py-3.5" onPress={onPress}>
+          <Text className="text-center text-[14px] font-extrabold text-white">Unlock Now</Text>
+        </AnimatedPressable>
+      </View>
+    </View>);
+}
+
+export function UnlockBottomSheet({ title = 'Unlock More', subtitle = 'Subscribe to more', onClose, onPress }) {
+    return (<Modal animationType="fade" transparent visible onRequestClose={onClose}>
+      <View className="flex-1 justify-end">
+        <Pressable className="absolute inset-0" onPress={onClose}>
+          <View className="absolute inset-0 bg-[#140b18]/45"/>
+          <View className="absolute inset-0 bg-white/10"/>
+        </Pressable>
+
+        <View className="absolute inset-x-0 bottom-0 px-4 pb-4">
+          <View className="overflow-hidden rounded-[34px] border border-white/70 bg-white shadow-card">
+            <View className="absolute inset-x-0 top-0 h-20 bg-[#fff2f4]"/>
+            <View className="px-6 pb-8 pt-4">
+              <View className="mb-5 items-center">
+                <View className="h-1.5 w-16 rounded-full bg-[#e8d7d3]"/>
+              </View>
+
+              <View className="mb-4 flex-row justify-end">
+                <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-[#f9f1ee]" onPress={onClose}>
+                  <Ionicons name="close" size={18} color={palette.text}/>
+                </Pressable>
+              </View>
+
+              <View className="items-center">
+                <View className="h-[76px] w-[76px] items-center justify-center rounded-[24px] border border-[#ffd8df] bg-[#fff5f7]">
+                  <Ionicons name="lock-closed" size={34} color={palette.primary}/>
+                </View>
+                <Text className="mt-5 text-center text-[26px] font-black text-ink">{title}</Text>
+                <Text className="mt-2 px-3 text-center text-[14px] leading-6 text-muted">{subtitle}</Text>
+                <AnimatedPressable className="mt-7 w-full rounded-[20px] bg-brand py-4" onPress={onPress}>
+                  <Text className="text-center text-[15px] font-extrabold text-white">View Plans & Unlock</Text>
+                </AnimatedPressable>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>);
 }
