@@ -67,8 +67,8 @@ export default function AuthEntryScreen() {
         <View className="flex-1 items-center justify-center">
           <View className="w-full max-w-[360px] items-center gap-5 self-center">
           <Animated.View className="items-center gap-5 self-center" style={{ opacity: heroOpacity, transform: [{ translateY: heroTranslate }] }}>
-          <View className="h-[96px] w-[96px] items-center justify-center self-center rounded-[30px] bg-card">
-            <BeeMascot size={70}/>
+          <View className="h-[96px] w-[96px] items-center justify-center self-center ">
+            <BeeMascot size={100}/>
           </View>
           <View className="items-center gap-2">
             <Text className="text-center text-[30px] font-black text-ink">Welcome to Career Map</Text>

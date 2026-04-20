@@ -159,10 +159,9 @@ export function CareerBeeAssistant({ hidden = false }) {
                                 maxHeight: '72%',
                             }}
                         >
-                            <View style={{ backgroundColor: themed.sheetHeader, paddingHorizontal: 18, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                <View style={{ height: 42, width: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}>
-                                    <BeeMascot size={30} draggable={false} />
-                                </View>
+                            <View style={{ backgroundColor: themed.sheetHeader, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                      <BeeMascot size={50} draggable={false} />
+                            
                                 <View style={{ flex: 1 }}>
                                     <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Career Bee</Text>
                                     <Text style={{ color: '#f7c6d5', fontSize: 11, fontWeight: '700' }}>Always here for you</Text>
@@ -267,9 +266,8 @@ export function CareerBeeAssistant({ hidden = false }) {
                         onPressOut={() => animateBubble(1)}
                        
                     >
-                        <View style={{ height: 50, width: 50, borderRadius: 28, backgroundColor: '#b41d36', alignItems: 'center', justifyContent: 'center' }}>
-                            <BeeMascot size={30} draggable={false} />
-                        </View>
+                          <BeeMascot size={100} draggable={false} />
+                     
                     </Pressable>
                 </Animated.View>) : null}
         </View>

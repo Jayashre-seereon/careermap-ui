@@ -8,9 +8,9 @@ import { useAppState } from '../src/app-state';
 import { AnimatedBackground } from '../src/animated-background';
 import { StaggerFadeUpItem, ZoomInPage } from '../src/page-transition';
 const features = [
+    { title: 'Psychometric Tests ⭐', desc: 'Discover strengths and ideal fit ' },
     { title: 'Career Library', desc: '500+ career options across streams' },
-    { title: 'Psychometric Tests', desc: 'Discover strengths and ideal fit' },
-    { title: 'Expert Mentors', desc: 'Guidance from counsellors and experts' },
+     { title: 'Expert Mentors', desc: 'Guidance from counsellors and experts' },
     { title: 'Scholarships & Exams', desc: 'Stay updated on opportunities' },
     { title: 'Study Abroad', desc: 'Explore international education paths' },
 ];

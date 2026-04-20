@@ -110,8 +110,7 @@ export default function AbroadScreen() {
               <View className="h-[72px] w-[72px] items-center justify-center rounded-[24px]" style={{ backgroundColor: `${palette.primary}10` }}>
                 <Text className="text-[18px] font-black text-brand">{country.flag}</Text>
               </View>
-              <Text className="text-center text-[24px] font-black text-ink">{country.name}</Text>
-              <Text className="text-center text-[13px] leading-5 text-muted">{country.description}</Text>
+               <Text className="text-center text-[13px] leading-5 text-muted">{country.description}</Text>
             </View>
 
             <View className="gap-3 rounded-[26px] border border-line bg-card p-[22px]">
@@ -140,23 +139,23 @@ export default function AbroadScreen() {
                     ['Top Universities', country.topUniversities.map((item) => `- ${item}`)],
                     ['Scholarships', country.scholarships.map((item) => `- ${item}`)],
                     ['Requirements', country.requirements.map((item) => `- ${item}`)],
-                ].map(([title, lines]) => (<View key={title} className="gap-2.5 rounded-[26px] border border-line bg-card p-[22px]">
+                ].map(([title, lines]) => (<View key={title} className="gap-2.5 rounded-[26px] border border-line bg-card mt-3 p-[22px]">
                 <Text className="text-[15px] font-extrabold text-brand">{title}</Text>
                 {lines.map((line) => (<Text key={line} className="text-[13px] leading-5 text-muted">{line}</Text>))}
               </View>))}
 
-            <View className="gap-2.5 rounded-[26px] border border-line bg-card p-[22px]">
+            <View className="gap-2.5 rounded-[26px] border border-line bg-card p-[22px] mt-3">
               <Text className="text-[15px] font-extrabold text-brand">Popular Courses</Text>
               <View className="flex-row flex-wrap gap-2">
                 {country.popularCourses.map((course) => (<Pill key={course} label={course} tone={palette.primary}/>))}
               </View>
             </View>
 
-            <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => {
+            <Pressable className="rounded-[16px] bg-brand py-[14px] mt-3" onPress={() => {
                     setPreferredCountry(country.name);
                     setShowForm(true);
                 }}>
-              <Text className="text-center text-[14px] font-extrabold text-white">Consult Now</Text>
+              <Text className="text-center text-[14px]  font-extrabold text-white">Consult Now</Text>
             </Pressable>
           </>
         </View>

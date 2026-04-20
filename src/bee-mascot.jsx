@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, PanResponder } from 'react-native';
-const beeImage = require('../assets/images/career-bee.png');
+const beeImage = require('../assets/images/bee.png');
 export function BeeMascot({ size = 100, style, draggable = true }) {
     const position = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
     const floatAnim = useRef(new Animated.Value(0)).current;

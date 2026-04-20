@@ -83,7 +83,7 @@ export default function OnboardingScreen() {
 
         {step === 0 ? (<View className="flex-grow items-center justify-center gap-4 py-7">
             <BeeMascot size={86}/>
-            <Text className="text-center text-[28px] font-black leading-9 text-ink">Choose Your Way</Text>
+            <Text className="text-center text-[28px] font-black leading-9 text-ink">Choose Your Roadmap</Text>
             <Text className="max-w-[300px] text-center text-[14px] leading-[22px] text-muted">Tell us who you are so we can personalize your experience</Text>
             <View className="w-full gap-4">
               <Pressable onPress={() => setUserType('student')} className={`flex-row items-center gap-4 rounded-[24px] border-2 p-[18px] ${userType === 'student' ? 'border-brand bg-[#fff1f4]' : 'border-line bg-card'}`}>

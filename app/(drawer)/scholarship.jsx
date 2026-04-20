@@ -72,12 +72,12 @@ export default function ScholarshipScreen() {
               </View>
             </View>
 
-            <View className="gap-2.5 rounded-[22px] border border-line bg-card p-4">
+            <View className="gap-2.5 rounded-[22px] border border-line bg-card p-4 mt-3">
               <Text className="text-[14px] font-extrabold text-brand">About This Scholarship</Text>
               <Text className="text-[13px] leading-[21px] text-muted">{item.description}</Text>
             </View>
 
-            <View className="gap-2.5 rounded-[22px] border border-line bg-card p-4">
+            <View className="gap-2.5 rounded-[22px] border border-line bg-card p-4 mt-3">
               <Text className="text-[14px] font-extrabold text-brand">Requirements</Text>
               {item.requirements.map((requirement) => (<View key={requirement} className="flex-row items-center gap-2.5">
                   <View className="h-2 w-2 rounded-full bg-brand"/>
@@ -85,7 +85,7 @@ export default function ScholarshipScreen() {
                 </View>))}
             </View>
 
-            <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => Linking.openURL(item.link)}>
+            <AnimatedPressable className="rounded-[16px] bg-brand py-[14px] mt-3" onPress={() => Linking.openURL(item.link)}>
               <Text className="text-center text-[14px] font-extrabold text-white">Apply Now</Text>
             </AnimatedPressable>
           </>
@@ -109,7 +109,7 @@ export default function ScholarshipScreen() {
 
       {showFilters ? (<View className="gap-2.5">
           <View className="flex-row flex-wrap gap-2">
-            {['All', 'Active', 'Expired', 'Due Date Expired', 'Closed'].map((label) => (<AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${activeStatus === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveStatus(label)}>
+            {['All', 'Active', 'Expired',].map((label) => (<AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${activeStatus === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveStatus(label)}>
                 <Text className={`text-[11px] font-extrabold ${activeStatus === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
               </AnimatedPressable>))}
           </View>
@@ -152,13 +152,7 @@ export default function ScholarshipScreen() {
           </AnimatedPressable>))}
       </View>
 
-      {!scholarshipUnlocked && filtered.length > 4 ? (<View className="gap-2 rounded-[22px] border border-line bg-card p-4">
-          <Text className="text-[16px] font-extrabold text-ink">Subscribe to See More</Text>
-          <Text className="text-[13px] leading-5 text-muted">More scholarship listings and full application details stay locked until subscription.</Text>
-          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => openSubscriptionPrompt({ pathname: '/(drawer)/scholarship' })}>
-            <Text className="text-center text-[14px] font-extrabold text-white">Subscribe to More</Text>
-          </AnimatedPressable>
-        </View>) : null}
+     
       {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Scholarships" subtitle="Subscribe to more scholarship details, requirements, and application links." onClose={() => setShowUnlockSheet(false)} onPress={() => {
                 setShowUnlockSheet(false);
                 openSubscriptionPrompt({ pathname: '/(drawer)/scholarship' });

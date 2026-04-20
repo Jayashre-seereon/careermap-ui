@@ -68,8 +68,8 @@ export default function LoginScreen() {
         </AnimatedPressable>
 
         <View className="items-center gap-2.5 pt-2">
-          <View className="h-[96px] w-[96px] items-center justify-center rounded-[28px] bg-card">
-            <BeeMascot size={70}/>
+          <View className="h-[96px] w-[96px] items-center justify-center ">
+            <BeeMascot size={100}/>
           </View>
           <Text className="text-center text-[28px] font-black text-ink">
             {isExistingUser ? 'Welcome Back' : 'Continue Your Journey'}

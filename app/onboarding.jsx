@@ -7,17 +7,19 @@ import { useAppState } from '../src/app-state';
 import { BeeMascot } from '../src/bee-mascot';
 import { palette } from '../src/careermap-data';
 import { AnimatedBackground } from '../src/animated-background';
-const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate', 'Other'];
-const streamOptions = ['Science', 'Commerce', 'Arts & Humanities', 'Vocational', 'Not Sure Yet', 'Other'];
-const interestOptions = ['Technology & Computers', 'Problem Solving', 'Creativity & Design', 'Helping People', 'Business'];
+const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate', 'Post Graduate', 'Working Professional', 'Other'];
+const streamOptions = ['Science', 'Commerce', 'Arts', 'Other'];
+const interestOptions = ['Science & Tech', 'Problem Solving','Research & Discovery','Art & Literature','Business ','Sports','Creativity & Design','Dance & Music','Helping People','Public Speaking' ];
 const clarityOptions = [
     'Clear on my goal, need the right path',
     'Choosing between a few options',
     "Confused between my choice and parents' expectations",
     'I keep changing my options',
+    'I have limited awareness of options',
+    'I have no idea what to do',
 ];
-const strengthOptions = ['Analytical Thinking', 'Communication', 'Creativity', 'Leadership', 'Problem-solving'];
-const priorityOptions = ['High Earning Potential', 'Passion and Interest', 'Work-Life Balance', 'Growth and Advancement'];
+const strengthOptions = ['Analytical Thinking', 'Communication', 'Creativity', 'Leadership', 'Problem-solving','Teamwork','Time Management','Adaptability','Critical Thinking','Emotional Intelligence','Technical Skills','Decision Making'];
+const priorityOptions = ['High Earning Potential ', 'Passion and Interest', 'Work-Life Balance', 'Job Security', 'Making a Positive Impact', 'Creative Freedom','Intellectual Growth & Advancement'];
 const guidanceOptions = ['Yes, I would like counselling', 'Maybe after an assessment', 'I prefer to explore on my own'];
 export default function OnboardingScreen() {
     const { saveOnboarding } = useAppState();
@@ -121,8 +123,8 @@ export default function OnboardingScreen() {
 
         <Animated.View style={{ opacity: stepOpacity, transform: [{ translateX: stepTranslate }] }}>
         {step === 0 ? (<View className="flex-grow items-center justify-center gap-4 py-7">
-            <BeeMascot size={86}/>
-            <Text className="text-center text-[28px] font-black leading-9 text-ink">Choose Your Way</Text>
+            <BeeMascot size={100}/>
+            <Text className="text-center text-[28px] font-black leading-9 text-ink">Choose Your Roadmap</Text>
             <Text className="max-w-[300px] text-center text-[14px] leading-[22px] text-muted">Tell us who you are so we can personalize your experience</Text>
             <View className="w-full gap-4">
               <Pressable onPress={() => setUserType('student')} className={`flex-row items-center gap-4 rounded-[24px] border-2 p-[18px] ${userType === 'student' ? 'border-brand bg-[#fff1f4]' : 'border-line bg-card'}`}>
@@ -147,7 +149,7 @@ export default function OnboardingScreen() {
           </View>) : null}
 
         {step === 1 ? (<View className="flex-grow items-center justify-center gap-4 py-7">
-            <BeeMascot size={68}/>
+            <BeeMascot size={100}/>
             <Text className="text-center text-[28px] font-black leading-9 text-ink">{userType === 'parent' ? 'Welcome, Parent!' : "Hi! I'm your Career Guide"}</Text>
             <Text className="max-w-[300px] text-center text-[14px] leading-[22px] text-muted">
               {userType === 'parent'
@@ -166,7 +168,7 @@ export default function OnboardingScreen() {
 
         {step === 3 && userType === 'parent' ? (<StepInput title="What's your child's name?" icon="Child" value={childName} setValue={setChildName} placeholder="Enter your child's name"/>) : null}
 
-        {step === 4 ? (<ChoiceGrid title={userType === 'parent' ? 'Which class is your child in?' : 'Which stream interests you?'} icon={userType === 'parent' ? 'Class' : 'Stream'} options={userType === 'parent' ? studentClassOptions : streamOptions} selected={userType === 'parent' ? selectedClass : selectedStream} onSelect={(value) => {
+        {step === 4 ? (<ChoiceGrid title={userType === 'parent' ? 'Which class is your child in?' : 'Which Stream Excites you the most?'} icon={userType === 'parent' ? 'Class' : 'Stream'} options={userType === 'parent' ? studentClassOptions : streamOptions} selected={userType === 'parent' ? selectedClass : selectedStream} onSelect={(value) => {
                 if (userType === 'parent') {
                     setSelectedClass(value);
                     if (value !== 'Other')
@@ -226,7 +228,7 @@ function ChoiceList({ title, subtitle, icon, options, selected, onSelect, }) {
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
       <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
       <Text className="text-center text-[13px] text-muted">{subtitle}</Text>
-      <View className="gap-2.5">
+<View className="flex-row flex-wrap gap-3">
         {options.map((option) => (<Chip key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>))}
       </View>
     </View>);
@@ -236,7 +238,7 @@ function MultiChoice({ title, subtitle, icon, options, selected, onToggle, }) {
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
       <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
       <Text className="text-center text-[13px] text-muted">{subtitle}</Text>
-      <View className="gap-2.5">
+     <View className="flex-row flex-wrap gap-3">
         {options.map((option) => (<Chip key={option} label={option} active={selected.includes(option)} onPress={() => onToggle(option)}/>))}
       </View>
     </View>);
