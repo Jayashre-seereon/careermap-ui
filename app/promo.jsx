@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BeeMascot } from '../src/bee-mascot';
 import { useAppState } from '../src/app-state';
@@ -31,8 +31,6 @@ export default function PromoScreen() {
             const timer = setTimeout(() => setPage(1), 3000);
             return () => clearTimeout(timer);
         }
-        const timer = setTimeout(() => router.replace('/(drawer)'), 3000);
-        return () => clearTimeout(timer);
     }, [page]);
 
     if (page === 0) {
@@ -90,6 +88,9 @@ export default function PromoScreen() {
           <View className="h-2 w-2 rounded-full bg-black/20"/>
           <View className="h-2 w-7 rounded-full bg-brand"/>
         </View>
+        <Pressable className="rounded-[18px] bg-brand py-4" onPress={() => router.replace('/(drawer)')}>
+          <Text className="text-center text-[15px] font-extrabold text-white">Next</Text>
+        </Pressable>
       </View>
       </ZoomInPage>
     </SafeAreaView>);

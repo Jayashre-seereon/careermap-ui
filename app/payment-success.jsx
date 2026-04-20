@@ -45,7 +45,7 @@ export default function PaymentSuccessScreen() {
                 return;
             }
             router.replace('/(drawer)/(tabs)/');
-        }, 2600);
+        }, 3000);
         return () => clearTimeout(timer);
     }, [returnTarget]);
     const handleContinue = () => {
@@ -55,24 +55,34 @@ export default function PaymentSuccessScreen() {
         }
         router.replace('/(drawer)/(tabs)/');
     };
-    const fullScreenConfetti = Array.from({ length: 24 }, (_, index) => ({
-        top: `${8 + (index % 6) * 14}%`,
-        left: `${6 + (index * 11) % 88}%`,
+    const fullScreenConfetti = Array.from({ length: 56 }, (_, index) => ({
+        top: `${4 + (index % 8) * 11}%`,
+        left: `${4 + (index * 9) % 92}%`,
         color: [palette.secondary, palette.teal, palette.blue, palette.orange, palette.pink, palette.green, palette.primary][index % 7],
-        rotate: `${(index % 2 === 0 ? -1 : 1) * (10 + (index % 5) * 8)}deg`,
+        rotate: `${(index % 2 === 0 ? -1 : 1) * (10 + (index % 5) * 10)}deg`,
     }));
     return (<SafeAreaView className="flex-1 bg-paper">
       <View className="flex-1 items-center justify-center gap-4 overflow-hidden px-6 py-6">
+        <Animated.View className="absolute inset-0" style={{
+                opacity: celebration.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 1, 1] }),
+                transform: [{ scale: celebration.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }],
+            }}>
+          <View className="absolute inset-0 bg-[#fff7ef]"/>
+          <View className="absolute left-[-20%] top-[10%] h-[240px] w-[240px] rounded-full bg-[#ffd7df]/60"/>
+          <View className="absolute right-[-18%] top-[18%] h-[220px] w-[220px] rounded-full bg-[#dff7ea]/75"/>
+          <View className="absolute bottom-[6%] left-[12%] h-[210px] w-[210px] rounded-full bg-[#dfeaff]/65"/>
+          <View className="absolute bottom-[-8%] right-[6%] h-[230px] w-[230px] rounded-full bg-[#fff0d6]/80"/>
+        </Animated.View>
         {fullScreenConfetti.map((piece, index) => (<Animated.View key={`blast-${index}`} className="absolute h-3 w-3 rounded-[3px]" style={{
                 top: piece.top,
                 left: piece.left,
                 backgroundColor: piece.color,
                 opacity: celebration.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 1, 1] }),
                 transform: [
-                    { translateY: celebration.interpolate({ inputRange: [0, 1], outputRange: [-120, 180] }) },
-                    { translateX: celebration.interpolate({ inputRange: [0, 1], outputRange: [0, (index % 2 === 0 ? -1 : 1) * (16 + (index % 4) * 10)] }) },
+                    { translateY: celebration.interpolate({ inputRange: [0, 1], outputRange: [-180, 260] }) },
+                    { translateX: celebration.interpolate({ inputRange: [0, 1], outputRange: [0, (index % 2 === 0 ? -1 : 1) * (30 + (index % 6) * 12)] }) },
                     { rotate: piece.rotate },
-                    { scale: celebration.interpolate({ inputRange: [0, 0.25, 1], outputRange: [0.2, 1, 0.9] }) },
+                    { scale: celebration.interpolate({ inputRange: [0, 0.18, 1], outputRange: [0.15, 1.15, 0.9] }) },
                 ],
             }}/>))}
         {confetti.map((piece, index) => (<Animated.View key={index} className="absolute h-4 w-4 rounded-[4px]" style={[
@@ -91,8 +101,8 @@ export default function PaymentSuccessScreen() {
                 transform: [{ scale: celebration.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) }],
                 opacity: celebration,
             }}>
-          <View className="h-[108px] w-[108px] items-center justify-center rounded-[34px] border border-[#d7f0e1]" style={{ backgroundColor: `${palette.green}14` }}>
-            <Text className="text-[38px] font-black text-success">OK</Text>
+          <View className="h-[118px] w-[118px] items-center justify-center rounded-[38px] border-2 border-[#d7f0e1]" style={{ backgroundColor: `${palette.green}14` }}>
+            <Text className="text-[40px] font-black text-success">OK</Text>
           </View>
         </Animated.View>
         <Text className="text-center text-[30px] font-black text-ink">Payment Successful</Text>
@@ -133,7 +143,7 @@ export default function PaymentSuccessScreen() {
         </View>
 
         <AnimatedPressable className="w-full items-center rounded-[18px] bg-brand px-4 py-3" onPress={handleContinue}>
-          <Text className="text-[15px] font-extrabold text-white">{returnTarget ? 'Returning...' : 'Go to Dashboard'}</Text>
+          <Text className="text-[15px] font-extrabold text-white">{returnTarget ? 'Returning to previous page...' : 'Go to Dashboard'}</Text>
         </AnimatedPressable>
       </View>
     </SafeAreaView>);
