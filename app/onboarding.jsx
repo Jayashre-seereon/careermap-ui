@@ -7,8 +7,8 @@ import { useAppState } from '../src/app-state';
 import { BeeMascot } from '../src/bee-mascot';
 import { palette } from '../src/careermap-data';
 import { AnimatedBackground } from '../src/animated-background';
-const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate'];
-const streamOptions = ['Science', 'Commerce', 'Arts & Humanities', 'Vocational', 'Not Sure Yet'];
+const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate', 'Other'];
+const streamOptions = ['Science', 'Commerce', 'Arts & Humanities', 'Vocational', 'Not Sure Yet', 'Other'];
 const interestOptions = ['Technology & Computers', 'Problem Solving', 'Creativity & Design', 'Helping People', 'Business'];
 const clarityOptions = [
     'Clear on my goal, need the right path',
@@ -27,6 +27,8 @@ export default function OnboardingScreen() {
     const [childName, setChildName] = useState('');
     const [selectedClass, setSelectedClass] = useState('');
     const [selectedStream, setSelectedStream] = useState('');
+    const [otherClass, setOtherClass] = useState('');
+    const [otherStream, setOtherStream] = useState('');
     const [selectedInterests, setSelectedInterests] = useState([]);
     const [selectedClarity, setSelectedClarity] = useState('');
     const [selectedStrengths, setSelectedStrengths] = useState([]);
@@ -34,7 +36,7 @@ export default function OnboardingScreen() {
     const [selectedGuidance, setSelectedGuidance] = useState('');
     const stepOpacity = useRef(new Animated.Value(0)).current;
     const stepTranslate = useRef(new Animated.Value(34)).current;
-    const totalSteps = 11;
+    const totalSteps = 10;
     const progressCount = totalSteps - 2;
     useEffect(() => {
         stepOpacity.setValue(0);
@@ -63,11 +65,15 @@ export default function OnboardingScreen() {
         if (step === 2)
             return name.trim().length > 0;
         if (step === 3)
-            return userType === 'parent' ? childName.trim().length > 0 : selectedClass !== '';
+            return userType === 'parent' ? childName.trim().length > 0 : selectedClass !== '' && (selectedClass !== 'Other' || otherClass.trim().length > 0);
         if (step === 4)
-            return userType === 'parent' ? selectedClass !== '' : selectedStream !== '';
+            return userType === 'parent'
+                ? selectedClass !== '' && (selectedClass !== 'Other' || otherClass.trim().length > 0)
+                : selectedStream !== '' && (selectedStream !== 'Other' || otherStream.trim().length > 0);
         if (step === 5)
-            return userType === 'parent' ? selectedStream !== '' : selectedInterests.length > 0;
+            return userType === 'parent'
+                ? selectedStream !== '' && (selectedStream !== 'Other' || otherStream.trim().length > 0)
+                : selectedInterests.length > 0;
         if (step === 6)
             return selectedClarity !== '';
         if (step === 7)
@@ -87,8 +93,8 @@ export default function OnboardingScreen() {
             userType,
             name,
             childName,
-            selectedClass,
-            selectedStream,
+            selectedClass: selectedClass === 'Other' ? otherClass.trim() : selectedClass,
+            selectedStream: selectedStream === 'Other' ? otherStream.trim() : selectedStream,
             selectedInterests,
             selectedClarity,
             selectedStrengths,
@@ -152,15 +158,33 @@ export default function OnboardingScreen() {
 
         {step === 2 ? (<StepInput title="What's your name?" icon="Name" value={name} setValue={setName} placeholder={userType === 'parent' ? 'Enter your name' : 'Enter your full name'}/>) : null}
 
-        {step === 3 && userType === 'student' ? (<ChoiceGrid title="Which class are you in?" icon="Class" options={studentClassOptions} selected={selectedClass} onSelect={setSelectedClass}/>) : null}
+        {step === 3 && userType === 'student' ? (<ChoiceGrid title="Which class are you in?" icon="Class" options={studentClassOptions} selected={selectedClass} onSelect={(value) => {
+                setSelectedClass(value);
+                if (value !== 'Other')
+                    setOtherClass('');
+            }} otherValue={otherClass} setOtherValue={setOtherClass}/>) : null}
 
         {step === 3 && userType === 'parent' ? (<StepInput title="What's your child's name?" icon="Child" value={childName} setValue={setChildName} placeholder="Enter your child's name"/>) : null}
 
-        {step === 4 ? (<ChoiceGrid title={userType === 'parent' ? 'Which class is your child in?' : 'Which stream interests you?'} icon={userType === 'parent' ? 'Class' : 'Stream'} options={userType === 'parent' ? studentClassOptions : streamOptions} selected={userType === 'parent' ? selectedClass : selectedStream} onSelect={userType === 'parent' ? setSelectedClass : setSelectedStream}/>) : null}
+        {step === 4 ? (<ChoiceGrid title={userType === 'parent' ? 'Which class is your child in?' : 'Which stream interests you?'} icon={userType === 'parent' ? 'Class' : 'Stream'} options={userType === 'parent' ? studentClassOptions : streamOptions} selected={userType === 'parent' ? selectedClass : selectedStream} onSelect={(value) => {
+                if (userType === 'parent') {
+                    setSelectedClass(value);
+                    if (value !== 'Other')
+                        setOtherClass('');
+                    return;
+                }
+                setSelectedStream(value);
+                if (value !== 'Other')
+                    setOtherStream('');
+            }} otherValue={userType === 'parent' ? otherClass : otherStream} setOtherValue={userType === 'parent' ? setOtherClass : setOtherStream}/>) : null}
 
         {step === 5 && userType === 'student' ? (<MultiChoice title="What are your interests?" subtitle="Select all that apply" icon="Interests" options={interestOptions} selected={selectedInterests} onToggle={(value) => toggleMulti(value, selectedInterests, setSelectedInterests)}/>) : null}
 
-        {step === 5 && userType === 'parent' ? (<ChoiceGrid title="Which stream interests your child?" icon="Stream" options={streamOptions} selected={selectedStream} onSelect={setSelectedStream}/>) : null}
+        {step === 5 && userType === 'parent' ? (<ChoiceGrid title="Which stream interests your child?" icon="Stream" options={streamOptions} selected={selectedStream} onSelect={(value) => {
+                setSelectedStream(value);
+                if (value !== 'Other')
+                    setOtherStream('');
+            }} otherValue={otherStream} setOtherValue={setOtherStream}/>) : null}
 
         {step === 6 ? (<ChoiceList title="Career Clarity" subtitle="How clear are you about your direction?" icon="Clarity" options={clarityOptions} selected={selectedClarity} onSelect={setSelectedClarity}/>) : null}
 
@@ -170,22 +194,11 @@ export default function OnboardingScreen() {
 
         {step === 9 ? (<ChoiceList title="Guidance Preference" subtitle="Would you like expert career guidance?" icon="Guidance" options={guidanceOptions} selected={selectedGuidance} onSelect={setSelectedGuidance}/>) : null}
 
-        {step === 10 ? (<View className="flex-grow items-center justify-center gap-4 py-7">
-            <Text className="text-[36px] font-black text-brand">Done</Text>
-            <Text className="text-center text-[28px] font-black leading-9 text-ink">
-              {userType === 'parent' ? "Great! We've personalized the experience for your child" : `Your profile is ready, ${name || 'Explorer'}!`}
-            </Text>
-            <Text className="max-w-[300px] text-center text-[14px] leading-[22px] text-muted">
-              {userType === 'parent'
-                ? "Your child's career exploration journey is ready. Let's sign you in."
-                : "We've personalised your career journey. Let's sign you in to get started."}
-            </Text>
-          </View>) : null}
         </Animated.View>
 
         <Pressable className="mt-auto items-center rounded-[18px] bg-brand py-4" disabled={!canProceed()} onPress={next} style={({ pressed }) => ({ opacity: !canProceed() || pressed ? 0.42 : 1 })}>
           <Text className="text-[16px] font-extrabold text-white">
-            {step === 0 ? 'Continue' : step === 1 ? 'Start Journey' : step === 9 ? 'Finish' : step === 10 ? 'Continue' : 'Next'}
+            {step === 0 ? 'Continue' : step === 1 ? 'Start Journey' : step === 9 ? 'Finish' : 'Next'}
           </Text>
         </Pressable>
       </ScrollView>
@@ -198,13 +211,14 @@ function StepInput({ title, icon, value, setValue, placeholder, }) {
       <TextInput value={value} onChangeText={setValue} placeholder={placeholder} placeholderTextColor={palette.muted} className="h-14 rounded-[18px] border border-line bg-card px-4 text-[16px] text-ink"/>
     </View>);
 }
-function ChoiceGrid({ title, icon, options, selected, onSelect, }) {
+function ChoiceGrid({ title, icon, options, selected, onSelect, otherValue, setOtherValue, }) {
     return (<View className="gap-[14px] pt-2">
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
       <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
       <View className="flex-row flex-wrap gap-3">
         {options.map((option) => (<Chip key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>))}
       </View>
+      {selected === 'Other' ? (<TextInput value={otherValue} onChangeText={setOtherValue} placeholder="Please write here" placeholderTextColor={palette.muted} className="h-14 rounded-[18px] border border-line bg-card px-4 text-[16px] text-ink"/>) : null}
     </View>);
 }
 function ChoiceList({ title, subtitle, icon, options, selected, onSelect, }) {

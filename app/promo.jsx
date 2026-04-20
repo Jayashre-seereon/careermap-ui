@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BeeMascot } from '../src/bee-mascot';
 import { useAppState } from '../src/app-state';
@@ -26,6 +26,14 @@ export default function PromoScreen() {
         const timer = setTimeout(() => clearPromoMessage(), 2600);
         return () => clearTimeout(timer);
     }, [clearPromoMessage, promoMessage]);
+    useEffect(() => {
+        if (page === 0) {
+            const timer = setTimeout(() => setPage(1), 3000);
+            return () => clearTimeout(timer);
+        }
+        const timer = setTimeout(() => router.replace('/(drawer)'), 3000);
+        return () => clearTimeout(timer);
+    }, [page]);
 
     if (page === 0) {
         return (
@@ -45,9 +53,6 @@ export default function PromoScreen() {
               </View>
               <Text className="flex-1 text-[13px] font-extrabold text-[#1f5135]">{promoMessage}</Text>
             </View>) : null}
-          <Pressable className="absolute right-[18px] top-[18px] z-10 h-[34px] w-[34px] items-center justify-center rounded-full bg-white/20" onPress={() => router.replace('/(drawer)')}>
-            <Text className="text-[13px] font-black text-white">X</Text>
-          </Pressable>
           <View className="absolute right-[-70px] top-20 h-[220px] w-[220px] rounded-full bg-white/10"/>
           <View className="absolute bottom-[-80px] left-[-80px] h-[260px] w-[260px] rounded-full bg-white/10"/>
           <View className="h-[104px] w-[104px] items-center justify-center rounded-[30px] bg-white">
@@ -62,9 +67,6 @@ export default function PromoScreen() {
             <View className="h-2 w-7 rounded-full bg-white"/>
             <View className="h-2 w-2 rounded-full bg-black/20"/>
           </View>
-          <Pressable className="self-stretch rounded-[18px] bg-white py-4" onPress={() => setPage(1)}>
-            <Text className="text-center text-[15px] font-extrabold text-brand">Next</Text>
-          </Pressable>
         </View>
         </ZoomInPage>
       </SafeAreaView>);
@@ -88,9 +90,6 @@ export default function PromoScreen() {
           <View className="h-2 w-2 rounded-full bg-black/20"/>
           <View className="h-2 w-7 rounded-full bg-brand"/>
         </View>
-        <Pressable className="rounded-[18px] bg-brand py-4" onPress={() => router.replace('/(drawer)')}>
-          <Text className="text-center text-[15px] font-extrabold text-white">Explore the App</Text>
-        </Pressable>
       </View>
       </ZoomInPage>
     </SafeAreaView>);
