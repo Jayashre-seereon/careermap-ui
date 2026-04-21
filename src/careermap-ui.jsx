@@ -148,14 +148,14 @@ export function UnlockBottomSheet({ title = 'Unlock More', subtitle = 'Subscribe
 
         <View className="absolute inset-x-0 bottom-0 px-4 pb-4">
           <View className="overflow-hidden rounded-[34px] border border-white/70 bg-white shadow-card">
-            <View className="absolute inset-x-0 top-0 h-20 bg-[#fff2f4]"/>
+            <View className="absolute inset-x-0 top-0 h-20 bg-brand"/>
             <View className="px-6 pb-8 pt-4">
-              <View className="mb-5 items-center">
-                <View className="h-1.5 w-16 rounded-full bg-[#e8d7d3]"/>
+              <View className="mb-8 items-center">
+                <View className="h-1 w-16 rounded-full bg-[#e8d7d3]"/>
               </View>
 
               <View className="mb-4 flex-row justify-end">
-                <Pressable className="h-10 w-10 items-center justify-center rounded-full bg-[#f9f1ee]" onPress={onClose}>
+                <Pressable className="h-10 w-10 items-center justify-center  rounded-full bg-[#f9f1ee]" onPress={onClose}>
                   <Ionicons name="close" size={18} color={palette.text}/>
                 </Pressable>
               </View>
@@ -167,7 +167,7 @@ export function UnlockBottomSheet({ title = 'Unlock More', subtitle = 'Subscribe
                 <Text className="mt-5 text-center text-[26px] font-black text-ink">{title}</Text>
                 <Text className="mt-2 px-3 text-center text-[14px] leading-6 text-muted">{subtitle}</Text>
                 <AnimatedPressable className="mt-7 w-full rounded-[20px] bg-brand py-4" onPress={onPress}>
-                  <Text className="text-center text-[15px] font-extrabold text-white">View Plans & Unlock</Text>
+                  <Text className="text-center px-2 text-[15px] font-extrabold text-white">View Plans & Unlock</Text>
                 </AnimatedPressable>
               </View>
             </View>

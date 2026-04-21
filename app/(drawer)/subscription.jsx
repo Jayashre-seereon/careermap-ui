@@ -10,16 +10,16 @@ export default function SubscriptionScreen() {
     return (<Screen>
       <SectionHeader title="Subscription Plans" subtitle="Key plans from the Vercel prototype, adapted here as mobile cards."/>
 
-      <View className="gap-[14px]">
-        {subscriptions.map((plan) => (<View key={plan.id} className={`gap-3 rounded-[24px]  bg-card p-[18px]${plan.recommended || plan.highestseller
+      <View className="gap-[14px] ">
+        {subscriptions.map((plan) => (<View key={plan.id} className={`gap-3 p-4 rounded-[24px]  bg-card p-[18px]${plan.recommended || plan.highestseller
   ? 'border-[#dcb3a3] shadow-card'
   : 'border-line'}`}>
-            <View className="flex-row items-start justify-between gap-3">
+            <View className="flex-row items-start justify-between gap-3 ">
               <View className="flex-1 gap-1.5">
                 <Text className="text-[18px] font-black text-ink">{plan.name}</Text>
                 <Text className="text-[13px] leading-5 text-muted">{plan.description}</Text>
               </View>
-             <View className="flex-row gap-2">
+             <View className="flex-row gap-2 ">
   {plan.recommended ? (
     <Pill label="Recommended" tone={palette.primary} />
   ) : null}
@@ -29,7 +29,7 @@ export default function SubscriptionScreen() {
   ) : null}
 </View>  </View>
             <Text className="text-[28px] font-black text-brand">{plan.price}</Text>
-            <View className="gap-2.5">
+            <View className="gap-2.5 ">
               {plan.features.map((feature) => (<View key={feature} className="flex-row items-center gap-2.5">
                   <Ionicons name="checkmark-circle" size={18} color={palette.green}/>
                   <Text className="text-[14px] font-semibold text-ink">{feature}</Text>

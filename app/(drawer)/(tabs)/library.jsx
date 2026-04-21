@@ -550,8 +550,8 @@ export default function CareerLibraryScreen() {
             return selectedSpecialization;
         return 'Career Library';
     };
-    return (<Screen scroll={false} animationKey={animationKey}>
-      <View className="flex-row items-center px-5 py-2">
+    return (<Screen scroll={true} animationKey={animationKey}>
+      <View className="flex-row items-center">
         {currentLevel !== 'streams' && (<Pressable onPress={handleBack} className="mr-3 h-10 w-10 items-center justify-center rounded-full">
             <Ionicons name="chevron-back" size={24} color={palette.text}/>
           </Pressable>)}
