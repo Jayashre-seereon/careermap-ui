@@ -1,11 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Children, useRef } from 'react';
-import { Animated, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Animated, DeviceEventEmitter, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppState } from './app-state';
 import { AnimatedBackground } from './animated-background';
 import { palette } from './careermap-data';
 import { StaggerFadeUpItem, ZoomInPage } from './page-transition';
+
+export const mobileAssistantScrollProps = {
+    scrollEventThrottle: 16,
+    onScrollBeginDrag: () => DeviceEventEmitter.emit('careermap:scroll-active'),
+    onMomentumScrollBegin: () => DeviceEventEmitter.emit('careermap:scroll-active'),
+    onScrollEndDrag: () => DeviceEventEmitter.emit('careermap:scroll-idle'),
+    onMomentumScrollEnd: () => DeviceEventEmitter.emit('careermap:scroll-idle'),
+};
 
 export function Screen({ children, scroll = true, contentContainerClassName = 'gap-[18px] px-5 py-5', animationKey = 'default' }) {
     const { preferences } = useAppState();
@@ -18,9 +26,9 @@ export function Screen({ children, scroll = true, contentContainerClassName = 'g
     return (<SafeAreaView className={`flex-1 ${preferences.darkMode ? 'bg-[#050505]' : 'bg-paper'}`} edges={['top']}>
       <AnimatedBackground />
       <ZoomInPage key={animationKey} style={{ flex: 1 }}>
-        {scroll ? (<ScrollView className="flex-1" contentContainerClassName={contentContainerClassName} contentContainerStyle={{ paddingBottom: contentPaddingBottom }} showsVerticalScrollIndicator={false}>
+        {scroll ? (<ScrollView className="flex-1" contentContainerClassName={contentContainerClassName} contentContainerStyle={{ paddingBottom: contentPaddingBottom }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
             {animatedChildren}
-          </ScrollView>) : (<View className={contentContainerClassName} style={{ flex: 1, paddingBottom: contentPaddingBottom }}>
+          </ScrollView>) : (<View className={contentContainerClassName} style={{ flex: 1 }}>
             {animatedChildren}
           </View>)}
       </ZoomInPage>
