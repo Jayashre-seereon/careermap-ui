@@ -21,7 +21,6 @@ const clarityOptions = [
 ];
 const strengthOptions = ['Analytical Thinking', 'Communication', 'Creativity', 'Leadership', 'Problem-solving','Teamwork','Time Management','Adaptability','Critical Thinking','Emotional Intelligence','Technical Skills','Decision Making'];
 const priorityOptions = ['High Earning Potential ', 'Passion and Interest', 'Work-Life Balance', 'Job Security', 'Making a Positive Impact', 'Creative Freedom','Intellectual Growth & Advancement'];
-const guidanceOptions = ['Yes, I would like counselling', 'Maybe after an assessment', 'I prefer to explore on my own'];
 export default function OnboardingScreen() {
     const { saveOnboarding } = useAppState();
     const [userType, setUserType] = useState('');
@@ -36,7 +35,7 @@ export default function OnboardingScreen() {
     const [selectedClarity, setSelectedClarity] = useState('');
     const [selectedStrengths, setSelectedStrengths] = useState([]);
     const [selectedPriorities, setSelectedPriorities] = useState([]);
-    const [selectedGuidance, setSelectedGuidance] = useState('');
+    const [isOnboardingSaved, setIsOnboardingSaved] = useState(false);
     const stepOpacity = useRef(new Animated.Value(0)).current;
     const stepTranslate = useRef(new Animated.Value(34)).current;
     const totalSteps = 10;
@@ -83,27 +82,30 @@ export default function OnboardingScreen() {
             return selectedStrengths.length > 0;
         if (step === 8)
             return selectedPriorities.length > 0;
-        if (step === 9)
-            return selectedGuidance !== '';
         return true;
     };
     const next = () => {
+        if (step === 8 && !isOnboardingSaved) {
+            saveOnboarding({
+                userType,
+                name,
+                childName,
+                selectedClass: selectedClass === 'Other' ? otherClass.trim() : selectedClass,
+                selectedStream: selectedStream === 'Other' ? otherStream.trim() : selectedStream,
+                selectedInterests,
+                selectedClarity,
+                selectedStrengths,
+                selectedPriorities,
+                selectedGuidance: '',
+            });
+            setIsOnboardingSaved(true);
+            setStep(step + 1);
+            return;
+        }
         if (step < totalSteps - 1) {
             setStep(step + 1);
             return;
         }
-        saveOnboarding({
-            userType,
-            name,
-            childName,
-            selectedClass: selectedClass === 'Other' ? otherClass.trim() : selectedClass,
-            selectedStream: selectedStream === 'Other' ? otherStream.trim() : selectedStream,
-            selectedInterests,
-            selectedClarity,
-            selectedStrengths,
-            selectedPriorities,
-            selectedGuidance,
-        });
         router.replace('/login');
     };
     return (<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
@@ -195,13 +197,13 @@ export default function OnboardingScreen() {
 
         {step === 8 ? (<MultiChoice title="Career Priorities" subtitle="What matters most to you in a career?" icon="Priorities" options={priorityOptions} selected={selectedPriorities} onToggle={(value) => toggleMulti(value, selectedPriorities, setSelectedPriorities)}/>) : null}
 
-        {step === 9 ? (<ChoiceList title="Guidance Preference" subtitle="Would you like expert career guidance?" icon="Guidance" options={guidanceOptions} selected={selectedGuidance} onSelect={setSelectedGuidance}/>) : null}
+        {step === 9 ? (<SuccessStep/>) : null}
 
         </Animated.View>
 
         <AnimatedPressable className="mt-auto items-center rounded-[18px] bg-brand py-4" disabled={!canProceed()} onPress={next}>
           <Text className="text-[16px] font-extrabold text-white">
-            {step === 0 ? 'Continue' : step === 1 ? 'Start Journey' : step === 9 ? 'Finish' : 'Next'}
+            {step === 0 ? 'Continue' : step === 1 ? 'Start Journey' : step === 8 ? 'Finish' : step === 9 ? 'Continue' : 'Next'}
           </Text>
         </AnimatedPressable>
       </ScrollView>
@@ -218,9 +220,7 @@ function ChoiceGrid({ title, icon, options, selected, onSelect, otherValue, setO
     return (<View className="gap-[14px] pt-2">
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
       <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
-      <View className="flex-row flex-wrap gap-3">
-        {options.map((option) => (<Chip key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>))}
-      </View>
+      <ChoiceRows options={options} renderOption={(option) => <Chip key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>}/>
       {selected === 'Other' ? (<TextInput value={otherValue} onChangeText={setOtherValue} placeholder="Please write here" placeholderTextColor={palette.muted} className="h-14 rounded-[18px] border border-line bg-card px-4 text-[16px] text-ink"/>) : null}
     </View>);
 }
@@ -229,9 +229,7 @@ function ChoiceList({ title, subtitle, icon, options, selected, onSelect, }) {
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
       <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
       <Text className="text-center text-[13px] text-muted">{subtitle}</Text>
-<View className="flex-row flex-wrap gap-3">
-        {options.map((option) => (<Chip key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>))}
-      </View>
+      <ChoiceRows options={options} renderOption={(option) => <Chip key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>}/>
     </View>);
 }
 function MultiChoice({ title, subtitle, icon, options, selected, onToggle, }) {
@@ -239,13 +237,95 @@ function MultiChoice({ title, subtitle, icon, options, selected, onToggle, }) {
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
       <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
       <Text className="text-center text-[13px] text-muted">{subtitle}</Text>
-     <View className="flex-row flex-wrap gap-3">
-        {options.map((option) => (<Chip key={option} label={option} active={selected.includes(option)} onPress={() => onToggle(option)}/>))}
-      </View>
+      <ChoiceRows options={options} renderOption={(option) => <Chip key={option} label={option} active={selected.includes(option)} onPress={() => onToggle(option)}/>}/>
+    </View>);
+}
+function ChoiceRows({ options, renderOption }) {
+    const rows = chunkOptions(options);
+    return (<View className="gap-3">
+      {rows.map((row, index) => (<View key={`row-${index}`} className="flex-row gap-3">
+          <View className="flex-1">{renderOption(row[0])}</View>
+          <View className="flex-1">{row[1] ? renderOption(row[1]) : <View className="min-h-[64px]"/>}</View>
+        </View>))}
     </View>);
 }
 function Chip({ label, active, onPress }) {
-    return (<AnimatedPressable onPress={onPress} className={`min-w-[47%] rounded-[18px] border px-4 py-[14px] ${active ? 'border-brand bg-brand' : 'border-line bg-card'}`} gradient={active}>
-      <Text className={`text-center text-[13px] font-bold ${active ? 'text-white' : 'text-ink'}`}>{label}</Text>
+    return (<AnimatedPressable onPress={onPress} className={`min-h-[64px] w-full items-center justify-center rounded-[18px] border px-3 py-[14px] ${active ? 'border-brand bg-brand' : 'border-line bg-card'}`} gradient={active}>
+      <Text className={`text-center text-[13px] font-bold leading-[18px] ${active ? 'text-white' : 'text-ink'}`}>{label}</Text>
     </AnimatedPressable>);
+}
+function SuccessStep() {
+    return (<View className="flex-grow items-center justify-center gap-5 py-5">
+      <CelebrationBurst/>
+      <View className="items-center gap-3">
+        <Text className="text-center text-[28px] font-black leading-9 text-ink">Great! We&apos;ve personalized your experience</Text>
+        <Text className="max-w-[310px] text-center text-[15px] leading-6 text-muted">
+          Your career journey is ready. Let&apos;s sign you in to get started!
+        </Text>
+      </View>
+    </View>);
+}
+function CelebrationBurst() {
+    const burst = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+        burst.setValue(0);
+        Animated.loop(Animated.sequence([
+            Animated.timing(burst, {
+                toValue: 1,
+                duration: 1500,
+                easing: Easing.out(Easing.cubic),
+                useNativeDriver: true,
+            }),
+            Animated.timing(burst, {
+                toValue: 0,
+                duration: 0,
+                useNativeDriver: true,
+            }),
+        ])).start();
+    }, [burst]);
+    const pieces = [
+        { color: '#ff6b6b', x: -86, y: -72, rotate: '-20deg', delay: 0 },
+        { color: '#ffd166', x: -58, y: -104, rotate: '18deg', delay: 0.08 },
+        { color: '#06d6a0', x: 0, y: -118, rotate: '-10deg', delay: 0.15 },
+        { color: '#118ab2', x: 58, y: -104, rotate: '22deg', delay: 0.23 },
+        { color: '#f78c6b', x: 86, y: -72, rotate: '-16deg', delay: 0.3 },
+        { color: '#ef476f', x: -104, y: -16, rotate: '28deg', delay: 0.18 },
+        { color: '#8338ec', x: 102, y: -18, rotate: '-26deg', delay: 0.12 },
+    ];
+    return (<View className="items-center justify-center pb-6 pt-12">
+      <View className="relative h-[220px] w-[220px] items-center justify-center">
+        {pieces.map((piece, index) => {
+            const translateY = burst.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, piece.y],
+            });
+            const translateX = burst.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, piece.x],
+            });
+            const scale = burst.interpolate({
+                inputRange: [0, 0.2, 1],
+                outputRange: [0.4, 1, 0.92],
+            });
+            const opacity = burst.interpolate({
+                inputRange: [0, piece.delay, 1],
+                outputRange: [0, 1, 0],
+            });
+            return (<Animated.View key={`${piece.color}-${index}`} style={{
+                    opacity,
+                    transform: [{ translateX }, { translateY }, { scale }, { rotate: piece.rotate }],
+                }} className="absolute left-1/2 top-1/2 h-4 w-2 rounded-full" >
+                <View style={{ backgroundColor: piece.color }} className="h-4 w-2 rounded-full"/>
+              </Animated.View>);
+        })}
+        <BeeMascot size={112}/>
+      </View>
+    </View>);
+}
+function chunkOptions(options) {
+    const rows = [];
+    for (let index = 0; index < options.length; index += 2) {
+        rows.push(options.slice(index, index + 2));
+    }
+    return rows;
 }
