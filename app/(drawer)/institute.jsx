@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Linking, ScrollView, Text, View } from 'react-native';
 import { institutes, palette } from '../../src/careermap-data';
-import { Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
 export default function InstituteScreen() {
     const [selectedIndex, setSelectedIndex] = useState(null);
     const [showFilters, setShowFilters] = useState(false);
@@ -20,9 +20,9 @@ export default function InstituteScreen() {
     if (selectedIndex !== null) {
         const item = filtered[selectedIndex];
         return (<Screen animationKey={animationKey}>
-        <SectionHeader title={item.name} subtitle="Institute detail view shaped to match the reference prototype." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => setSelectedIndex(null)}>
+        <SectionHeader title={item.name} subtitle="Institute detail view shaped to match the reference prototype." action={<AnimatedPressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => setSelectedIndex(null)}>
               <Ionicons name="arrow-back" size={18} color={palette.text}/>
-            </Pressable>}/>
+            </AnimatedPressable>}/>
 
         <View className="items-center gap-2 py-2">
           <View className="h-[68px] w-[68px] items-center justify-center rounded-[22px]" style={{ backgroundColor: `${palette.primary}12` }}>
@@ -49,39 +49,39 @@ export default function InstituteScreen() {
           </View>
         </View>
 
-        <Pressable className="items-center rounded-[16px] py-[14px]" onPress={() => Linking.openURL(item.website)} style={{ backgroundColor: `${palette.primary}12` }}>
-          <Text className="text-[14px] font-extrabold text-brand">Visit Official Website</Text>
-        </Pressable>
+        <AnimatedPressable className="items-center rounded-[16px] bg-brand py-[14px]" onPress={() => Linking.openURL(item.website)}>
+          <Text className="text-[14px] font-extrabold text-white">Visit Official Website</Text>
+        </AnimatedPressable>
       </Screen>);
     }
     return (<Screen animationKey={animationKey}>
       <SectionHeader title="Institutes" subtitle="Institute directory with filters and detail cards based on the reference prototype." action={<View className="flex-row gap-2">
-            <Pressable className={`rounded-[12px] px-2.5 py-2 ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
-              <Text className={`text-[11px] font-extrabold ${showFilters ? 'text-white' : 'text-ink'}`}>Filter</Text>
-            </Pressable>
-            <Pressable className={`rounded-[12px] px-2.5 py-2 ${sortAZ ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setSortAZ((value) => !value)}>
+            <AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+              <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : palette.text}/>
+            </AnimatedPressable>
+            <AnimatedPressable className={`rounded-[12px] px-2.5 py-2 ${sortAZ ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setSortAZ((value) => !value)}>
               <Text className={`text-[11px] font-extrabold ${sortAZ ? 'text-white' : 'text-ink'}`}>A-Z</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>}/>
 
       {showFilters ? (<View className="gap-2.5">
           <Text className="text-[11px] font-extrabold uppercase tracking-[0.7px] text-muted">Institute Type</Text>
-          <View className="flex-row flex-wrap gap-2.5">
-            {['All', 'Engineering', 'Medical', 'Business', 'Design', 'Law'].map((label) => (<Pressable key={label} className={`rounded-full px-3 py-2 ${typeFilter === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setTypeFilter(label)}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2.5 pr-1">
+            {['All', 'Engineering', 'Medical', 'Business', 'Design', 'Law'].map((label) => (<AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${typeFilter === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setTypeFilter(label)}>
                 <Text className={`text-[11px] font-extrabold ${typeFilter === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
-              </Pressable>))}
-          </View>
+              </AnimatedPressable>))}
+          </ScrollView>
 
           <Text className="text-[11px] font-extrabold uppercase tracking-[0.7px] text-muted">Career</Text>
-          <View className="flex-row flex-wrap gap-2.5">
-            {['All', 'Engineering', 'Medical', 'Business', 'Design', 'Law'].map((label) => (<Pressable key={`career-${label}`} onPress={() => setCareerFilter(label)} className={`rounded-full px-3 py-2 ${careerFilter === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2.5 pr-1">
+            {['All', 'Engineering', 'Medical', 'Business', 'Design', 'Law'].map((label) => (<AnimatedPressable key={`career-${label}`} onPress={() => setCareerFilter(label)} className={`rounded-full px-3 py-2 ${careerFilter === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`}>
                 <Text className={`text-[11px] font-extrabold ${careerFilter === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
-              </Pressable>))}
-          </View>
+              </AnimatedPressable>))}
+          </ScrollView>
         </View>) : null}
 
       <View className="gap-3">
-        {filtered.map((item, index) => (<Pressable key={item.name} className="gap-3 rounded-[22px] border border-line bg-card p-4" onPress={() => setSelectedIndex(index)}>
+        {filtered.map((item, index) => (<AnimatedPressable key={item.name} className="gap-3 rounded-[22px] border border-line bg-card p-4" onPress={() => setSelectedIndex(index)}>
             <View className="flex-row gap-3">
               <View className="h-[50px] w-[50px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
                 <Ionicons name={item.icon} size={20} color={palette.primary}/>
@@ -95,7 +95,7 @@ export default function InstituteScreen() {
                 </View>
               </View>
             </View>
-          </Pressable>))}
+          </AnimatedPressable>))}
       </View>
     </Screen>);
 }

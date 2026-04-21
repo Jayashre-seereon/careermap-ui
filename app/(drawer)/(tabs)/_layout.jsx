@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppState } from '../../../src/app-state';
 import { palette } from '../../../src/careermap-data';
 export default function TabsLayout() {
     const { preferences } = useAppState();
+    const insets = useSafeAreaInsets();
     return (<Tabs screenOptions={{
             headerShown: false,
             tabBarActiveTintColor: palette.primary,
@@ -11,8 +13,8 @@ export default function TabsLayout() {
             tabBarStyle: {
                 backgroundColor: preferences.darkMode ? '#1b151f' : palette.surface,
                 borderTopColor: preferences.darkMode ? '#2d2430' : palette.border,
-                height: 66,
-                paddingBottom: 8,
+                height: 58 + Math.max(insets.bottom, 8),
+                paddingBottom: Math.max(insets.bottom, 8),
                 paddingTop: 8,
             },
             tabBarLabelStyle: {

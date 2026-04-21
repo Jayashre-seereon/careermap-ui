@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, Text, View } from 'react-native';
 
-const beeImage = require('../assets/images/career-bee.png');
+const beeImage = require('../assets/images/bee.png');
 
 function RippleRing({ progress, endScale, borderWidth, baseOpacity }) {
     const scale = progress.interpolate({
@@ -340,6 +340,8 @@ export default function SplashRoute() {
             clearTimeout(exitTimer);
             clearTimeout(navTimer);
         };
+        // This splash sequence is intentionally initialized once on mount with stable Animated refs.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ── interpolations ────────────────────────────────────────────────────

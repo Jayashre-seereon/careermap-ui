@@ -16,6 +16,7 @@ export default function LoginScreen() {
     const [coupon, setCoupon] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [status, setStatus] = useState({
         type: 'idle',
         message: '',
@@ -68,8 +69,8 @@ export default function LoginScreen() {
         </AnimatedPressable>
 
         <View className="items-center gap-2.5 pt-2">
-          <View className="h-[96px] w-[96px] items-center justify-center rounded-[28px] bg-card">
-            <BeeMascot size={70}/>
+          <View className="h-[96px] w-[96px] items-center justify-center ">
+            <BeeMascot size={100}/>
           </View>
           <Text className="text-center text-[28px] font-black text-ink">
             {isExistingUser ? 'Welcome Back' : 'Continue Your Journey'}
@@ -145,10 +146,15 @@ export default function LoginScreen() {
                 setStatus({ type: 'idle', message: '' });
             }} autoCapitalize="none" keyboardType="email-address" placeholder="Enter email" placeholderTextColor={palette.muted} className="h-14 rounded-[18px] border border-line bg-card px-4 text-[15px] text-ink"/>
             <Text className="text-[12px] font-extrabold text-muted">Password</Text>
-            <TextInput value={password} onChangeText={(value) => {
-                setPassword(value);
-                setStatus({ type: 'idle', message: '' });
-            }} secureTextEntry placeholder="Enter password" placeholderTextColor={palette.muted} className="h-14 rounded-[18px] border border-line bg-card px-4 text-[15px] text-ink"/>
+            <View className="h-14 flex-row items-center gap-2.5 rounded-[18px] border border-line bg-card px-4">
+              <TextInput value={password} onChangeText={(value) => {
+                    setPassword(value);
+                    setStatus({ type: 'idle', message: '' });
+                }} secureTextEntry={!showPassword} placeholder="Enter password" placeholderTextColor={palette.muted} className="flex-1 text-[15px] text-ink"/>
+              <AnimatedPressable onPress={() => setShowPassword((value) => !value)}>
+                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={palette.muted}/>
+              </AnimatedPressable>
+            </View>
             <AnimatedPressable className="mt-1.5 items-center rounded-[18px] bg-brand py-4" disabled={!email || !password} onPress={handleEmailLogin}>
               <Text className="text-[15px] font-extrabold text-white">Login with Email</Text>
             </AnimatedPressable>

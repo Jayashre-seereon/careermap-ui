@@ -11,6 +11,7 @@ export default function ProfileScreen() {
     const [editMode, setEditMode] = useState(false);
     const [form, setForm] = useState(userProfile);
     const [openSection, setOpenSection] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
     useEffect(() => {
         setForm(userProfile);
     }, [userProfile]);
@@ -126,7 +127,12 @@ export default function ProfileScreen() {
                 { key: 'dob', label: 'Date of Birth', placeholder: 'YYYY-MM-DD', keyboardType: 'numbers-and-punctuation' },
             ].map((field) => (<View key={field.key} className="gap-1.5">
               <Text className="text-[12px] font-extrabold text-muted">{field.label}</Text>
-              <TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} secureTextEntry={field.key === 'password'} className="rounded-[18px] border border-line bg-surface px-4 py-[14px] text-[14px] text-ink"/>
+              {field.key === 'password' ? (<View className="flex-row items-center gap-3 rounded-[18px] border border-line bg-surface px-4 py-[14px]">
+                  <TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} secureTextEntry={!showPassword} className="flex-1 text-[14px] text-ink"/>
+                  <AnimatedPressable onPress={() => setShowPassword((value) => !value)}>
+                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={palette.muted}/>
+                  </AnimatedPressable>
+                </View>) : (<TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} className="rounded-[18px] border border-line bg-surface px-4 py-[14px] text-[14px] text-ink"/>)}
             </View>))}
 
           {onboarding.userType === 'parent' ? (<View className="gap-1.5">

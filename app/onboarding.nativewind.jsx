@@ -1,10 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppState } from '../src/app-state';
 import { BeeMascot } from '../src/bee-mascot';
 import { palette } from '../src/careermap-data';
+import { AnimatedPressable } from '../src/careermap-ui';
 const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate'];
 const streamOptions = ['Science', 'Commerce', 'Arts & Humanities', 'Vocational', 'Not Sure Yet'];
 const interestOptions = ['Technology & Computers', 'Problem Solving', 'Creativity & Design', 'Helping People', 'Business'];
@@ -16,7 +18,6 @@ const clarityOptions = [
 ];
 const strengthOptions = ['Analytical Thinking', 'Communication', 'Creativity', 'Leadership', 'Problem-solving'];
 const priorityOptions = ['High Earning Potential', 'Passion and Interest', 'Work-Life Balance', 'Growth and Advancement'];
-const guidanceOptions = ['Yes, I would like counselling', 'Maybe after an assessment', 'I prefer to explore on my own'];
 export default function OnboardingScreen() {
     const { saveOnboarding } = useAppState();
     const [userType, setUserType] = useState('');
@@ -29,8 +30,7 @@ export default function OnboardingScreen() {
     const [selectedClarity, setSelectedClarity] = useState('');
     const [selectedStrengths, setSelectedStrengths] = useState([]);
     const [selectedPriorities, setSelectedPriorities] = useState([]);
-    const [selectedGuidance, setSelectedGuidance] = useState('');
-    const totalSteps = 11;
+    const totalSteps = 10;
     const progressCount = totalSteps - 2;
     const toggleMulti = (value, selected, setSelected) => {
         setSelected(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value]);
@@ -52,8 +52,6 @@ export default function OnboardingScreen() {
             return selectedStrengths.length > 0;
         if (step === 8)
             return selectedPriorities.length > 0;
-        if (step === 9)
-            return selectedGuidance !== '';
         return true;
     };
     const next = () => {
@@ -71,7 +69,7 @@ export default function OnboardingScreen() {
             selectedClarity,
             selectedStrengths,
             selectedPriorities,
-            selectedGuidance,
+            selectedGuidance: '',
         });
         router.replace('/login');
     };
@@ -83,7 +81,7 @@ export default function OnboardingScreen() {
 
         {step === 0 ? (<View className="flex-grow items-center justify-center gap-4 py-7">
             <BeeMascot size={86}/>
-            <Text className="text-center text-[28px] font-black leading-9 text-ink">Choose Your Way</Text>
+            <Text className="text-center text-[28px] font-black leading-9 text-ink">Choose Your Roadmap</Text>
             <Text className="max-w-[300px] text-center text-[14px] leading-[22px] text-muted">Tell us who you are so we can personalize your experience</Text>
             <View className="w-full gap-4">
               <Pressable onPress={() => setUserType('student')} className={`flex-row items-center gap-4 rounded-[24px] border-2 p-[18px] ${userType === 'student' ? 'border-brand bg-[#fff1f4]' : 'border-line bg-card'}`}>
@@ -135,25 +133,11 @@ export default function OnboardingScreen() {
 
         {step === 8 ? (<MultiChoice title="Career Priorities" subtitle="What matters most to you in a career?" icon="Priorities" options={priorityOptions} selected={selectedPriorities} onToggle={(value) => toggleMulti(value, selectedPriorities, setSelectedPriorities)}/>) : null}
 
-        {step === 9 ? (<ChoiceList title="Guidance Preference" subtitle="Would you like expert career guidance?" icon="Guidance" options={guidanceOptions} selected={selectedGuidance} onSelect={setSelectedGuidance}/>) : null}
+        {step === 9 ? (<SuccessStep/>) : null}
 
-        {step === 10 ? (<View className="flex-grow items-center justify-center gap-4 py-7">
-            <Text className="text-[36px] font-black text-brand">Done</Text>
-            <Text className="text-center text-[28px] font-black leading-9 text-ink">
-              {userType === 'parent' ? "Great! We've personalized the experience for your child" : `Your profile is ready, ${name || 'Explorer'}!`}
-            </Text>
-            <Text className="max-w-[300px] text-center text-[14px] leading-[22px] text-muted">
-              {userType === 'parent'
-                ? "Your child's career exploration journey is ready. Let's sign you in."
-                : "We've personalised your career journey. Let's sign you in to get started."}
-            </Text>
-          </View>) : null}
-
-        <Pressable className="mt-auto items-center rounded-[18px] bg-brand py-4" disabled={!canProceed()} onPress={next} style={({ pressed }) => ({ opacity: !canProceed() || pressed ? 0.42 : 1 })}>
-          <Text className="text-[16px] font-extrabold text-white">
-            {step === 0 ? 'Continue' : step === 1 ? 'Start Journey' : step === 9 ? 'Finish' : step === 10 ? 'Continue' : 'Next'}
-          </Text>
-        </Pressable>
+        <AnimatedPressable className="mt-auto items-center rounded-[18px] bg-brand py-4" disabled={!canProceed()} onPress={next}>
+          <ButtonLabel label={step === 0 ? 'Continue' : step === 1 ? 'Start Journey' : step === 8 ? 'Finish' : step === 9 ? 'Continue' : 'Next'} showArrow={step === 0 || step === 9 || (step > 1 && step < 8)}/>
+        </AnimatedPressable>
       </ScrollView>
     </SafeAreaView>);
 }
@@ -168,9 +152,7 @@ function ChoiceGrid({ title, icon, options, selected, onSelect, }) {
     return (<View className="gap-[14px] pt-2">
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
       <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
-      <View className="flex-row flex-wrap gap-3">
-        {options.map((option) => (<Chip key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>))}
-      </View>
+      <ChoiceRows options={options} renderOption={(option) => <Chip key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>}/>
     </View>);
 }
 function ChoiceList({ title, subtitle, icon, options, selected, onSelect, }) {
@@ -178,9 +160,7 @@ function ChoiceList({ title, subtitle, icon, options, selected, onSelect, }) {
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
       <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
       <Text className="text-center text-[13px] text-muted">{subtitle}</Text>
-      <View className="gap-2.5">
-        {options.map((option) => (<Chip key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>))}
-      </View>
+      <ChoiceRows options={options} renderOption={(option) => <Chip key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>}/>
     </View>);
 }
 function MultiChoice({ title, subtitle, icon, options, selected, onToggle, }) {
@@ -188,13 +168,135 @@ function MultiChoice({ title, subtitle, icon, options, selected, onToggle, }) {
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
       <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
       <Text className="text-center text-[13px] text-muted">{subtitle}</Text>
-      <View className="gap-2.5">
-        {options.map((option) => (<Chip key={option} label={option} active={selected.includes(option)} onPress={() => onToggle(option)}/>))}
-      </View>
+      <ChoiceRows options={options} renderOption={(option) => <Chip key={option} label={option} active={selected.includes(option)} onPress={() => onToggle(option)}/>}/>
+    </View>);
+}
+function ChoiceRows({ options, renderOption }) {
+    const rows = chunkOptions(options);
+    return (<View className="gap-3">
+      {rows.map((row, index) => (<View key={`row-${index}`} className="flex-row gap-3">
+          <View className="flex-1">{renderOption(row[0])}</View>
+          <View className="flex-1">{row[1] ? renderOption(row[1]) : <View className="min-h-[64px]"/>}</View>
+        </View>))}
     </View>);
 }
 function Chip({ label, active, onPress }) {
-    return (<Pressable onPress={onPress} className={`min-w-[47%] rounded-[18px] border px-4 py-[14px] ${active ? 'border-brand bg-brand' : 'border-line bg-card'}`}>
-      <Text className={`text-center text-[13px] font-bold ${active ? 'text-white' : 'text-ink'}`}>{label}</Text>
-    </Pressable>);
+    return (<AnimatedPressable onPress={onPress} className={`min-h-[64px] w-full items-center justify-center rounded-[18px] border px-3 py-[14px] ${active ? 'border-brand bg-brand' : 'border-line bg-card'}`} gradient={active}>
+      <Text className={`text-center text-[13px] font-bold leading-[18px] ${active ? 'text-white' : 'text-ink'}`}>{label}</Text>
+    </AnimatedPressable>);
+}
+function SuccessStep() {
+    return (<View className="flex-grow items-center justify-end gap-4 pt-8 pb-2">
+      <BeeArrivalAnimation/>
+      <View className="items-center gap-3">
+        <Text className="text-center text-[28px] font-black leading-9 text-ink">Great! We&apos;ve personalized your experience</Text>
+        <Text className="max-w-[310px] text-center text-[15px] leading-6 text-muted">
+          Your career journey is ready. Let&apos;s sign you in to get started!
+        </Text>
+      </View>
+    </View>);
+}
+function BeeArrivalAnimation() {
+    const boxScale = useRef(new Animated.Value(0)).current;
+    const boxRotate = useRef(new Animated.Value(-180)).current;
+    const beeOpacity = useRef(new Animated.Value(0)).current;
+    const beeTranslate = useRef(new Animated.Value(18)).current;
+    const beeEntranceScale = useRef(new Animated.Value(0.72)).current;
+    const beeFloat = useRef(new Animated.Value(0)).current;
+    const beeRotate = useRef(new Animated.Value(0)).current;
+    const beeScale = useRef(new Animated.Value(1)).current;
+    const ringPulse = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+        boxScale.setValue(0);
+        boxRotate.setValue(-180);
+        beeOpacity.setValue(0);
+        beeTranslate.setValue(18);
+        beeEntranceScale.setValue(0.72);
+        beeFloat.setValue(0);
+        beeRotate.setValue(0);
+        beeScale.setValue(1);
+        ringPulse.setValue(0);
+        const loops = [];
+        const entrance = Animated.parallel([
+            Animated.spring(boxScale, { toValue: 1, stiffness: 140, damping: 11, mass: 0.85, useNativeDriver: true }),
+            Animated.timing(boxRotate, { toValue: 0, duration: 720, easing: Easing.out(Easing.back(1.1)), useNativeDriver: true }),
+            Animated.sequence([
+                Animated.delay(180),
+                Animated.parallel([
+                    Animated.timing(beeOpacity, { toValue: 1, duration: 280, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+                    Animated.spring(beeTranslate, { toValue: 0, stiffness: 170, damping: 16, mass: 0.8, useNativeDriver: true }),
+                    Animated.spring(beeEntranceScale, { toValue: 1, stiffness: 180, damping: 15, mass: 0.82, useNativeDriver: true }),
+                ]),
+            ]),
+        ]);
+        entrance.start();
+        const floatLoop = Animated.loop(Animated.parallel([
+            Animated.sequence([
+                Animated.timing(beeFloat, { toValue: -8, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+                Animated.timing(beeFloat, { toValue: 0, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+            ]),
+            Animated.sequence([
+                Animated.timing(beeRotate, { toValue: 8, duration: 375, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+                Animated.timing(beeRotate, { toValue: -8, duration: 375, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+                Animated.timing(beeRotate, { toValue: 0, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+            ]),
+            Animated.sequence([
+                Animated.timing(beeScale, { toValue: 1.05, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+                Animated.timing(beeScale, { toValue: 1, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+            ]),
+        ]));
+        const ringLoop = Animated.loop(Animated.sequence([
+            Animated.timing(ringPulse, { toValue: 1, duration: 1450, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+            Animated.timing(ringPulse, { toValue: 0, duration: 0, useNativeDriver: true }),
+            Animated.delay(250),
+        ]));
+        loops.push(floatLoop, ringLoop);
+        const startTimer = setTimeout(() => {
+            floatLoop.start();
+            ringLoop.start();
+        }, 520);
+        return () => {
+            clearTimeout(startTimer);
+            loops.forEach((loop) => loop.stop());
+        };
+    }, [beeEntranceScale, beeFloat, beeOpacity, beeRotate, beeScale, beeTranslate, boxRotate, boxScale, ringPulse]);
+    const boxSpin = boxRotate.interpolate({ inputRange: [-180, 0], outputRange: ['-180deg', '0deg'] });
+    const beeTilt = beeRotate.interpolate({ inputRange: [-8, 8], outputRange: ['-8deg', '8deg'] });
+    const ringScale = ringPulse.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 1.75],
+    });
+    const ringOpacity = ringPulse.interpolate({
+        inputRange: [0, 0.72, 1],
+        outputRange: [0.22, 0, 0],
+    });
+    return (<View className="items-center justify-center pb-2 pt-3">
+      <View className="relative h-[170px] w-full items-center justify-center overflow-hidden">
+        <Animated.View style={{
+                opacity: ringOpacity,
+                transform: [{ scale: ringScale }],
+            }} className="absolute h-36 w-36 rounded-full border border-brand/25 bg-[#fff1f4]"/>
+        <Animated.View className="h-[108px] w-[108px] items-center justify-center rounded-[32px] bg-white" style={{ transform: [{ scale: boxScale }, { rotate: boxSpin }] }}>
+          <Animated.View style={{
+                    opacity: beeOpacity,
+                    transform: [{ translateY: beeTranslate }, { scale: beeEntranceScale }, { translateY: beeFloat }, { rotate: beeTilt }, { scale: beeScale }],
+                }}>
+            <BeeMascot size={76}/>
+          </Animated.View>
+        </Animated.View>
+      </View>
+    </View>);
+}
+function ButtonLabel({ label, showArrow = false }) {
+    return (<View className="flex-row items-center justify-center gap-2">
+      <Text className="text-[16px] font-extrabold text-white">{label}</Text>
+      {showArrow ? <Ionicons name="arrow-forward" size={18} color="#ffffff"/> : null}
+    </View>);
+}
+function chunkOptions(options) {
+    const rows = [];
+    for (let index = 0; index < options.length; index += 2) {
+        rows.push(options.slice(index, index + 2));
+    }
+    return rows;
 }

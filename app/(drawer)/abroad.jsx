@@ -1,18 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette, studyAbroadCountries } from '../../src/careermap-data';
-import { Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
+import { openSubscriptionPrompt } from '../../src/subscription-flow';
 export default function AbroadScreen() {
-    const { isUnlocked } = useAppState();
+    const params = useLocalSearchParams();
+    const { canAccessFreeDetail, isUnlocked, registerFreeDetailAccess } = useAppState();
     const unlocked = isUnlocked('abroad-consultancy');
     const [selected, setSelected] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    const [detailTimer, setDetailTimer] = useState(10);
-    const [detailLocked, setDetailLocked] = useState(false);
+    const [showUnlockSheet, setShowUnlockSheet] = useState(false);
     const [preferredCountry, setPreferredCountry] = useState('');
     const [courseInterest, setCourseInterest] = useState('');
     const [budgetRange, setBudgetRange] = useState('');
@@ -24,21 +25,21 @@ export default function AbroadScreen() {
             : selected !== null
                 ? `country-${selected}`
                 : 'country-list';
+    const selectedCountry = selected !== null ? studyAbroadCountries[selected] : null;
+    const detailUnlocked = selectedCountry ? canAccessFreeDetail('abroad-consultancy', selectedCountry.name) : true;
+    const formReturnTarget = useMemo(() => ({
+        pathname: '/(drawer)/abroad',
+        params: { selected: selected !== null ? String(selected) : undefined, showForm: 'true', preferredCountry: preferredCountry || undefined },
+    }), [preferredCountry, selected]);
     useEffect(() => {
-        if (selected === null || unlocked || detailLocked)
-            return;
-        const timer = setInterval(() => {
-            setDetailTimer((value) => {
-                if (value <= 1) {
-                    clearInterval(timer);
-                    setDetailLocked(true);
-                    return 0;
-                }
-                return value - 1;
-            });
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [selected, unlocked, detailLocked]);
+        if (typeof params.selected === 'string') {
+            setSelected(Number(params.selected));
+        }
+        setShowForm(params.showForm === 'true');
+        if (typeof params.preferredCountry === 'string') {
+            setPreferredCountry(params.preferredCountry);
+        }
+    }, [params.preferredCountry, params.selected, params.showForm]);
     if (submitted) {
         return (<Screen animationKey={animationKey}>
         <SectionHeader title="Request Sent" subtitle="Consultation request state added to match the prototype flow." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => {
@@ -56,7 +57,7 @@ export default function AbroadScreen() {
           <Text className="text-[14px] leading-[22px] text-muted">
             Your study abroad consultation request has been recorded. We will help you shortlist countries, courses, and scholarship options.
           </Text>
-          <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => {
+          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => {
                 setSubmitted(false);
                 setShowForm(false);
                 setPreferredCountry('');
@@ -65,7 +66,7 @@ export default function AbroadScreen() {
                 setPreferredIntake('');
             }}>
             <Text className="text-center text-[14px] font-extrabold text-white">Done</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>);
     }
@@ -84,9 +85,9 @@ export default function AbroadScreen() {
               <Text className="text-[12px] font-extrabold text-muted">{label}</Text>
               <TextInput value={value} onChangeText={setter} placeholder={placeholder} placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-4 py-[14px] text-[13px] text-ink"/>
             </View>))}
-          <Pressable className="rounded-[16px] py-[14px]" onPress={() => (unlocked ? setSubmitted(true) : router.push('/subscription'))} style={{ backgroundColor: palette.primary }}>
+          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => (unlocked ? setSubmitted(true) : openSubscriptionPrompt(formReturnTarget))}>
             <Text className="text-center text-[14px] font-extrabold text-white">{unlocked ? 'Submit Request' : 'Subscribe to Submit'}</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>);
     }
@@ -95,27 +96,21 @@ export default function AbroadScreen() {
         return (<Screen animationKey={animationKey}>
         <SectionHeader title={country.name} subtitle="Expanded country detail page adapted from the reference prototype." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => {
                     setSelected(null);
-                    setDetailTimer(10);
-                    setDetailLocked(false);
                 }}>
               <Ionicons name="arrow-back" size={18} color={palette.text}/>
             </Pressable>}/>
-        {!unlocked && !detailLocked ? (<View className="self-start rounded-full px-3 py-2" style={{ backgroundColor: `${palette.orange}12` }}>
-            <Text className="text-[11px] font-extrabold" style={{ color: palette.orange }}>{detailTimer}s preview</Text>
+        {!unlocked ? (<View className="self-start rounded-full px-3 py-2" style={{ backgroundColor: `${detailUnlocked ? palette.green : palette.orange}12` }}>
+            <Text className="text-[11px] font-extrabold" style={{ color: detailUnlocked ? palette.green : palette.orange }}>
+              {detailUnlocked ? '1 free country detail unlocked' : 'Subscribe to unlock more country details'}
+            </Text>
           </View>) : null}
-        {detailLocked ? (<View className="gap-3 rounded-[26px] border border-line bg-card p-[22px]">
-            <Text className="text-[24px] font-black text-ink">Preview Time Expired</Text>
-            <Text className="text-[14px] leading-[22px] text-muted">Subscribe to access full country details and guidance.</Text>
-            <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/subscription')}>
-              <Text className="text-center text-[14px] font-extrabold text-white">View Plans</Text>
-            </Pressable>
-          </View>) : (<>
+        <View className="relative">
+          <>
             <View className="items-center gap-2 py-1.5">
               <View className="h-[72px] w-[72px] items-center justify-center rounded-[24px]" style={{ backgroundColor: `${palette.primary}10` }}>
                 <Text className="text-[18px] font-black text-brand">{country.flag}</Text>
               </View>
-              <Text className="text-center text-[24px] font-black text-ink">{country.name}</Text>
-              <Text className="text-center text-[13px] leading-5 text-muted">{country.description}</Text>
+               <Text className="text-center text-[13px] leading-5 text-muted">{country.description}</Text>
             </View>
 
             <View className="gap-3 rounded-[26px] border border-line bg-card p-[22px]">
@@ -144,25 +139,26 @@ export default function AbroadScreen() {
                     ['Top Universities', country.topUniversities.map((item) => `- ${item}`)],
                     ['Scholarships', country.scholarships.map((item) => `- ${item}`)],
                     ['Requirements', country.requirements.map((item) => `- ${item}`)],
-                ].map(([title, lines]) => (<View key={title} className="gap-2.5 rounded-[26px] border border-line bg-card p-[22px]">
+                ].map(([title, lines]) => (<View key={title} className="gap-2.5 rounded-[26px] border border-line bg-card mt-3 p-[22px]">
                 <Text className="text-[15px] font-extrabold text-brand">{title}</Text>
                 {lines.map((line) => (<Text key={line} className="text-[13px] leading-5 text-muted">{line}</Text>))}
               </View>))}
 
-            <View className="gap-2.5 rounded-[26px] border border-line bg-card p-[22px]">
+            <View className="gap-2.5 rounded-[26px] border border-line bg-card p-[22px] mt-3">
               <Text className="text-[15px] font-extrabold text-brand">Popular Courses</Text>
               <View className="flex-row flex-wrap gap-2">
                 {country.popularCourses.map((course) => (<Pill key={course} label={course} tone={palette.primary}/>))}
               </View>
             </View>
 
-            <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => {
+            <AnimatedPressable className="rounded-[16px] bg-brand py-[14px] mt-3" onPress={() => {
                     setPreferredCountry(country.name);
                     setShowForm(true);
                 }}>
-              <Text className="text-center text-[14px] font-extrabold text-white">Consult Now</Text>
-            </Pressable>
-          </>)}
+              <Text className="text-center text-[14px]  font-extrabold text-white">Consult Now</Text>
+            </AnimatedPressable>
+          </>
+        </View>
       </Screen>);
     }
     return (<Screen animationKey={animationKey}>
@@ -176,9 +172,12 @@ export default function AbroadScreen() {
       </View>
       <View className="gap-3">
         {studyAbroadCountries.map((country, index) => (<Pressable key={country.name} className="gap-1.5 rounded-[22px] border border-line bg-card p-[18px]" onPress={() => {
+                if (!unlocked && !canAccessFreeDetail('abroad-consultancy', country.name)) {
+                    setShowUnlockSheet(true);
+                    return;
+                }
+                registerFreeDetailAccess('abroad-consultancy', country.name);
                 setSelected(index);
-                setDetailTimer(10);
-                setDetailLocked(false);
             }}>
             <View className="flex-row items-center gap-3">
               <View className="h-11 w-11 items-center justify-center rounded-[14px]" style={{ backgroundColor: `${palette.primary}10` }}>
@@ -193,8 +192,12 @@ export default function AbroadScreen() {
             </View>
           </Pressable>))}
       </View>
-      <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => setShowForm(true)}>
+      <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => (unlocked ? setShowForm(true) : setShowUnlockSheet(true))}>
         <Text className="text-center text-[14px] font-extrabold text-white">Consult Now</Text>
-      </Pressable>
+      </AnimatedPressable>
+      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Study Abroad" subtitle="Subscribe to more country details, scholarships, visa guidance, and counselling access." onClose={() => setShowUnlockSheet(false)} onPress={() => {
+                setShowUnlockSheet(false);
+                openSubscriptionPrompt(showForm ? formReturnTarget : { pathname: '/(drawer)/abroad' });
+            }}/>) : null}
     </Screen>);
 }

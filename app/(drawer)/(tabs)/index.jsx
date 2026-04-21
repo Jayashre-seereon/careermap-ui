@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { useAppState } from '../../../src/app-state';
 import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../../src/careermap-ui';
 import { featuredInstitutes, featuredMentors, featuredScholarships, moduleCards, palette, studentProfile } from '../../../src/careermap-data';
@@ -25,6 +25,9 @@ export default function HomeScreen() {
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState(Array(personalityQuestions.length).fill(null));
     const { isUnlocked, onboarding, unreadNotificationsCount, userProfile } = useAppState();
+    const { width } = useWindowDimensions();
+    const moduleCardWidth = width < 390 ? '48%' : '31%';
+    const lockableModuleTitles = ['Career Library', 'Master Class', 'Book Mentor', 'Scholarships', 'Study Abroad'];
     const personalityResult = useMemo(() => {
         const counts = [0, 0, 0, 0];
         answers.forEach((answer) => {
@@ -157,14 +160,24 @@ export default function HomeScreen() {
 
       <SectionHeader title="Explore Modules" />
       <View className="flex-row flex-wrap gap-3 mt-4 mb-2">
-        {moduleCards.map((card) => (<AnimatedPressable key={card.title} style={{ width: '31%' }} onPress={() => router.push(card.route)}>
-        <View className="aspect-square items-center justify-center gap-2 rounded-[22px] border bg-card p-[14px]" style={{ borderColor: `${card.tone}30` }}>
+        {moduleCards.map((card) => {
+                const showLock = lockableModuleTitles.includes(card.title) && !((card.title === 'Career Library' && isUnlocked('career-library'))
+                    || (card.title === 'Master Class' && isUnlocked('master-class'))
+                    || (card.title === 'Book Mentor' && isUnlocked('book-mentor'))
+                    || (card.title === 'Scholarships' && isUnlocked('scholarship'))
+                    || (card.title === 'Study Abroad' && isUnlocked('abroad-consultancy')));
+                return (<AnimatedPressable key={card.title} style={{ width: moduleCardWidth }} onPress={() => router.push(card.route)}>
+        <View className="relative aspect-square items-center justify-center gap-2 rounded-[22px] border bg-card p-[14px]" style={{ borderColor: `${card.tone}30` }}>
+              {showLock ? (<View className="absolute right-3 top-3 h-7 w-7 items-center justify-center rounded-full bg-[#f8e8d8]">
+                  <Ionicons name="lock-closed" size={13} color={palette.primary}/>
+                </View>) : null}
               <View className="h-[42px] w-[42px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${card.tone}14` }}>
                 <Ionicons name={card.icon} size={21} color={card.tone}/>
               </View>
               <Text className="text-center text-[14px] font-extrabold text-ink">{card.title}</Text>
             </View>
-          </AnimatedPressable>))}
+          </AnimatedPressable>);
+            })}
       </View>
 
       <SectionHeader title="Explore Your Mentors" action={<AnimatedPressable onPress={() => router.push('/(drawer)/book-mentor')}><Text className="text-[12px] font-extrabold text-brand mt-4 ">See all</Text></AnimatedPressable>}/>

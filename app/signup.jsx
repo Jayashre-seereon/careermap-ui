@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, TextInput, View } from 'react-native';
@@ -13,6 +14,10 @@ export default function SignupScreen() {
         confirmPassword: '',
         city: '',
         state: '',
+    });
+    const [showPassword, setShowPassword] = useState({
+        password: false,
+        confirmPassword: false,
     });
     const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
     return (<SafeAreaView className="flex-1 bg-transparent">
@@ -33,7 +38,12 @@ export default function SignupScreen() {
             ['state', 'State', 'Enter state'],
         ].map(([key, label, placeholder]) => (<View key={key} className="gap-1.5">
             <Text className="text-[12px] font-extrabold text-muted">{label}</Text>
-            <TextInput value={form[key]} onChangeText={(value) => update(key, value)} placeholder={placeholder} placeholderTextColor={palette.muted} className="h-14 rounded-[18px] border border-line bg-card px-4 text-[15px] text-ink" secureTextEntry={key.toLowerCase().includes('password')}/>
+            {key.toLowerCase().includes('password') ? (<View className="h-14 flex-row items-center gap-2.5 rounded-[18px] border border-line bg-card px-4">
+                <TextInput value={form[key]} onChangeText={(value) => update(key, value)} placeholder={placeholder} placeholderTextColor={palette.muted} className="flex-1 text-[15px] text-ink" secureTextEntry={!showPassword[key]}/>
+                <AnimatedPressable onPress={() => setShowPassword((current) => ({ ...current, [key]: !current[key] }))}>
+                  <Ionicons name={showPassword[key] ? 'eye-off-outline' : 'eye-outline'} size={18} color={palette.muted}/>
+                </AnimatedPressable>
+              </View>) : (<TextInput value={form[key]} onChangeText={(value) => update(key, value)} placeholder={placeholder} placeholderTextColor={palette.muted} className="h-14 rounded-[18px] border border-line bg-card px-4 text-[15px] text-ink"/>)}
           </View>))}
 
         <AnimatedPressable className="mt-3 items-center rounded-[18px] bg-brand py-4" onPress={() => router.push('/otp-verify')}>

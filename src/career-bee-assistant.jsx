@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useRef, useState } from 'react';
-import { Animated, Easing, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, DeviceEventEmitter, Easing, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppState } from './app-state';
 import { BeeMascot } from './bee-mascot';
@@ -40,7 +40,9 @@ function getAssistantReply(message) {
 export function CareerBeeAssistant({ hidden = false }) {
     const { preferences } = useAppState();
     const insets = useSafeAreaInsets();
+    const { width } = useWindowDimensions();
     const [open, setOpen] = useState(false);
+    const [scrollHidden, setScrollHidden] = useState(false);
     const [draft, setDraft] = useState('');
     const [messages, setMessages] = useState([
         {
@@ -125,6 +127,36 @@ export function CareerBeeAssistant({ hidden = false }) {
         setMessages((current) => [...current, userEntry, assistantEntry]);
         setDraft('');
     };
+    const compactLauncher = width < 420;
+    const launcherSize = compactLauncher ? 74 : 100;
+
+    useEffect(() => {
+        if (!compactLauncher) {
+            setScrollHidden(false);
+            return undefined;
+        }
+        let idleTimer;
+        const showLater = () => {
+            if (idleTimer) {
+                clearTimeout(idleTimer);
+            }
+            idleTimer = setTimeout(() => setScrollHidden(false), 180);
+        };
+        const activeSub = DeviceEventEmitter.addListener('careermap:scroll-active', () => {
+            if (idleTimer) {
+                clearTimeout(idleTimer);
+            }
+            setScrollHidden(true);
+        });
+        const idleSub = DeviceEventEmitter.addListener('careermap:scroll-idle', showLater);
+        return () => {
+            if (idleTimer) {
+                clearTimeout(idleTimer);
+            }
+            activeSub.remove();
+            idleSub.remove();
+        };
+    }, [compactLauncher]);
 
     if (hidden) {
         return null;
@@ -159,10 +191,9 @@ export function CareerBeeAssistant({ hidden = false }) {
                                 maxHeight: '72%',
                             }}
                         >
-                            <View style={{ backgroundColor: themed.sheetHeader, paddingHorizontal: 18, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                <View style={{ height: 42, width: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' }}>
-                                    <BeeMascot size={30} draggable={false} />
-                                </View>
+                            <View style={{ backgroundColor: themed.sheetHeader, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                      <BeeMascot size={50} draggable={false} />
+                            
                                 <View style={{ flex: 1 }}>
                                     <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Career Bee</Text>
                                     <Text style={{ color: '#f7c6d5', fontSize: 11, fontWeight: '700' }}>Always here for you</Text>
@@ -250,12 +281,12 @@ export function CareerBeeAssistant({ hidden = false }) {
                 </Animated.View>
             ) : null}
 
-            {!open ? (<Animated.View
+            {!open && !scrollHidden ? (<Animated.View
                     pointerEvents="box-none"
                     style={{
                         position: 'absolute',
-                        right: 18,
-                        bottom: Math.max(insets.bottom + 22, 55),
+                        right: compactLauncher ? 10 : 18,
+                        bottom: compactLauncher ? Math.max(insets.bottom + 4, 30) : Math.max(insets.bottom + 22, 55),
                         transform: [{ scale: bubbleScale }],
                         zIndex: 9999,
                         elevation: 9999,
@@ -267,9 +298,8 @@ export function CareerBeeAssistant({ hidden = false }) {
                         onPressOut={() => animateBubble(1)}
                        
                     >
-                        <View style={{ height: 50, width: 50, borderRadius: 28, backgroundColor: '#b41d36', alignItems: 'center', justifyContent: 'center' }}>
-                            <BeeMascot size={30} draggable={false} />
-                        </View>
+                          <BeeMascot size={launcherSize} draggable={false} />
+                     
                     </Pressable>
                 </Animated.View>) : null}
         </View>

@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../src/app-state';
-import { Pill, Screen, SectionHeader } from '../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen, SectionHeader } from '../src/careermap-ui';
 import { featuredInstitutes, featuredMentors, featuredScholarships, moduleCards, palette, studentProfile } from '../src/careermap-data';
 const personalityQuestions = [
     { q: 'When faced with a problem, I prefer to:', options: ['Analyze data systematically', 'Brainstorm creative solutions', 'Discuss with others', 'Act quickly on instinct'] },
@@ -77,9 +77,9 @@ export default function HomeScreen() {
           <Pressable className="flex-1 items-center rounded-[16px] border border-line bg-card py-[14px]" disabled={currentQuestion === 0} onPress={() => setCurrentQuestion((value) => value - 1)} style={({ pressed }) => ({ opacity: currentQuestion === 0 || pressed ? 0.42 : 1 })}>
             <Text className={`text-[14px] font-extrabold ${currentQuestion === 0 ? 'text-muted' : 'text-ink'}`}>Previous</Text>
           </Pressable>
-          <Pressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={answers[currentQuestion] === null} onPress={() => currentQuestion < personalityQuestions.length - 1 ? setCurrentQuestion((value) => value + 1) : setCompletedPersonality(true)} style={({ pressed }) => ({ opacity: answers[currentQuestion] === null || pressed ? 0.42 : 1 })}>
+          <AnimatedPressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={answers[currentQuestion] === null} onPress={() => currentQuestion < personalityQuestions.length - 1 ? setCurrentQuestion((value) => value + 1) : setCompletedPersonality(true)}>
             <Text className="text-[14px] font-extrabold text-white">{currentQuestion < personalityQuestions.length - 1 ? 'Next' : 'See Results'}</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>);
     }
@@ -103,9 +103,9 @@ export default function HomeScreen() {
           <View className="w-full gap-2.5 rounded-[24px] border border-line bg-card p-[18px]">
             <Text className="text-[16px] font-extrabold text-ink">Get a Full Psychometric Analysis</Text>
             <Text className="text-[13px] leading-5 text-muted">Take the deeper assessment to unlock a richer career report with stronger recommendations.</Text>
-            <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/(drawer)/(tabs)/assessment')}>
+            <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/(drawer)/(tabs)/assessment')}>
               <Text className="text-center text-[14px] font-extrabold text-white">Take Full Psychometric Test</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
 
           <Pressable className="w-full items-center rounded-[16px] border border-line bg-card py-[14px]" onPress={resetPersonality}>

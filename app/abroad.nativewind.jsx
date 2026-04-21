@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useAppState } from '../src/app-state';
 import { palette, studyAbroadCountries } from '../src/careermap-data';
-import { Pill, Screen, SectionHeader } from '../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen, SectionHeader } from '../src/careermap-ui';
 export default function AbroadScreen() {
     const { isUnlocked } = useAppState();
     const unlocked = isUnlocked('abroad-consultancy');
@@ -49,7 +49,7 @@ export default function AbroadScreen() {
           <Text className="text-[14px] leading-[22px] text-muted">
             Your study abroad consultation request has been recorded. We will help you shortlist countries, courses, and scholarship options.
           </Text>
-          <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => {
+          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => {
                 setSubmitted(false);
                 setShowForm(false);
                 setPreferredCountry('');
@@ -58,7 +58,7 @@ export default function AbroadScreen() {
                 setPreferredIntake('');
             }}>
             <Text className="text-center text-[14px] font-extrabold text-white">Done</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>);
     }
@@ -77,9 +77,9 @@ export default function AbroadScreen() {
               <Text className="text-[12px] font-extrabold text-muted">{label}</Text>
               <TextInput value={value} onChangeText={setter} placeholder={placeholder} placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-4 py-[14px] text-[13px] text-ink"/>
             </View>))}
-          <Pressable className="rounded-[16px] py-[14px]" onPress={() => (unlocked ? setSubmitted(true) : router.push('/subscription'))} style={{ backgroundColor: palette.primary }}>
+          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => (unlocked ? setSubmitted(true) : router.push('/subscription'))}>
             <Text className="text-center text-[14px] font-extrabold text-white">{unlocked ? 'Submit Request' : 'Subscribe to Submit'}</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>);
     }
@@ -99,9 +99,9 @@ export default function AbroadScreen() {
         {detailLocked ? (<View className="gap-3 rounded-[26px] border border-line bg-card p-[22px]">
             <Text className="text-[24px] font-black text-ink">Preview Time Expired</Text>
             <Text className="text-[14px] leading-[22px] text-muted">Subscribe to access full country details and guidance.</Text>
-            <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/subscription')}>
+            <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/subscription')}>
               <Text className="text-center text-[14px] font-extrabold text-white">View Plans</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>) : (<>
             <View className="items-center gap-2 py-1.5">
               <View className="h-[72px] w-[72px] items-center justify-center rounded-[24px]" style={{ backgroundColor: `${palette.primary}10` }}>
@@ -149,12 +149,12 @@ export default function AbroadScreen() {
               </View>
             </View>
 
-            <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => {
+            <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => {
                     setPreferredCountry(country.name);
                     setShowForm(true);
                 }}>
               <Text className="text-center text-[14px] font-extrabold text-white">Consult Now</Text>
-            </Pressable>
+            </AnimatedPressable>
           </>)}
       </Screen>);
     }
@@ -186,8 +186,8 @@ export default function AbroadScreen() {
             </View>
           </Pressable>))}
       </View>
-      <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => setShowForm(true)}>
+      <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => setShowForm(true)}>
         <Text className="text-center text-[14px] font-extrabold text-white">Consult Now</Text>
-      </Pressable>
+      </AnimatedPressable>
     </Screen>);
 }

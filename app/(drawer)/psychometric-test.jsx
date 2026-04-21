@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
-import { Screen, SectionHeader } from '../../src/careermap-ui';
+import { AnimatedPressable, Screen, SectionHeader } from '../../src/careermap-ui';
 const questions = [
     { q: 'I enjoy working with numbers and data.', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree'] },
     { q: 'I prefer creative tasks over analytical ones.', options: ['Strongly Agree', 'Agree', 'Neutral', 'Disagree'] },
@@ -22,9 +22,9 @@ export default function PsychometricTestScreen() {
         <View className="items-center gap-3 rounded-[28px] border border-line bg-card p-[22px]">
           <Text className="text-center text-[18px] font-extrabold text-ink">Subscribe to continue with the full psychometric test.</Text>
           <Text className="text-center text-[14px] leading-[22px] text-muted">Choose a plan and complete the mock payment flow to unlock this feature.</Text>
-          <Pressable className="rounded-[16px] bg-brand px-5 py-3" onPress={() => router.push({ pathname: '/checkout', params: { planId: 'psychometric' } })}>
+          <AnimatedPressable className="rounded-[16px] bg-brand px-5 py-3" onPress={() => router.push({ pathname: '/checkout', params: { planId: 'psychometric' } })}>
             <Text className="text-[14px] font-extrabold text-white">Unlock Full Test</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>);
     }
@@ -42,9 +42,9 @@ export default function PsychometricTestScreen() {
           <Text className="text-center text-[14px] leading-[22px] text-muted">
             The full web prototype shows a more detailed report. This mobile version keeps the same core flow.
           </Text>
-          <Pressable className="rounded-[16px] bg-brand px-5 py-3" onPress={() => router.push('/(drawer)/subscription')}>
+          <AnimatedPressable className="rounded-[16px] bg-brand px-5 py-3" onPress={() => router.push('/(drawer)/subscription')}>
             <Text className="text-[14px] font-extrabold text-white">Get Detailed Report</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>);
     }
@@ -68,9 +68,9 @@ export default function PsychometricTestScreen() {
         <Pressable className="flex-1 items-center rounded-[16px] border border-line bg-card py-[14px]" disabled={current === 0} onPress={() => setCurrent((value) => value - 1)} style={({ pressed }) => ({ opacity: current === 0 || pressed ? 0.45 : 1 })}>
           <Text className={`text-[14px] font-extrabold ${current === 0 ? 'text-muted' : 'text-ink'}`}>Previous</Text>
         </Pressable>
-        {current < questions.length - 1 ? (<Pressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={!answers[current]} onPress={() => setCurrent((value) => value + 1)} style={({ pressed }) => ({ opacity: !answers[current] || pressed ? 0.45 : 1 })}>
+        {current < questions.length - 1 ? (<AnimatedPressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={!answers[current]} onPress={() => setCurrent((value) => value + 1)}>
             <Text className="text-[14px] font-extrabold text-white">Next</Text>
-          </Pressable>) : (<Pressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={!answers[current]} onPress={() => {
+          </AnimatedPressable>) : (<AnimatedPressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={!answers[current]} onPress={() => {
                 addTestHistory({
                     id: `psychometric-${Date.now()}`,
                     title: 'Psychometric Test',
@@ -78,9 +78,9 @@ export default function PsychometricTestScreen() {
                     status: 'Completed',
                 });
                 setCompleted(true);
-            }} style={({ pressed }) => ({ opacity: !answers[current] || pressed ? 0.45 : 1 })}>
+            }}>
             <Text className="text-[14px] font-extrabold text-white">Finish Test</Text>
-          </Pressable>)}
+          </AnimatedPressable>)}
       </View>
     </Screen>);
 }
