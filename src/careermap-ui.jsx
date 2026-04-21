@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Children, useRef } from 'react';
-import { Animated, DeviceEventEmitter, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Animated, DeviceEventEmitter, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppState } from './app-state';
 import { AnimatedBackground } from './animated-background';
@@ -103,8 +104,9 @@ export function StatCard({ label, value, tone, }) {
     </View>);
 }
 
-export function AnimatedPressable({ children, onPress, className, disabled, style, }) {
+export function AnimatedPressable({ children, onPress, className, disabled, style, gradient, gradientColors = [palette.primary, palette.primaryDeep], }) {
     const scale = useRef(new Animated.Value(1)).current;
+    const shouldUseGradient = gradient ?? className?.includes('bg-brand');
     const animateTo = (value) => {
         Animated.spring(scale, {
             toValue: value,
@@ -114,7 +116,8 @@ export function AnimatedPressable({ children, onPress, className, disabled, styl
         }).start();
     };
     return (<Animated.View style={[{ transform: [{ scale }] }, style]}>
-      <Pressable className={className} disabled={disabled} onPress={onPress} onPressIn={() => animateTo(0.97)} onPressOut={() => animateTo(1)} style={({ pressed }) => ({ opacity: disabled ? 0.5 : pressed ? 0.96 : 1 })}>
+      <Pressable className={`${className || ''} ${shouldUseGradient ? 'overflow-hidden' : ''}`} disabled={disabled} onPress={onPress} onPressIn={() => animateTo(0.97)} onPressOut={() => animateTo(1)} style={({ pressed }) => ({ opacity: disabled ? 0.5 : pressed ? 0.96 : 1 })}>
+        {shouldUseGradient ? <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFillObject} pointerEvents="none"/> : null}
         {children}
       </Pressable>
     </Animated.View>);

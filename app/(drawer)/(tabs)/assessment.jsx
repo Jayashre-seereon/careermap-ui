@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Text, View, Pressable, } from 'react-native';
+import { Text, View } from 'react-native';
 import { useAppState } from '../../../src/app-state';
 import { assessmentFeatures, assessmentPolicies, palette, subscriptions } from '../../../src/careermap-data';
 import { AnimatedPressable, Screen } from '../../../src/careermap-ui';
@@ -73,11 +73,11 @@ export default function AssessmentScreen() {
               <Text className="text-[14px] leading-6 text-muted">
                 Subscribe to the {psychometricPlan?.name ?? 'Psychometric Test'} plan to take the full assessment and unlock the report flow.
               </Text>
-           <Pressable onPress={() => router.push('/(drawer)/subscription')} className="mt-3 w-full self-center rounded-full bg-brand px-5 py-2.5 items-center justify-center">
+           <AnimatedPressable onPress={() => router.push('/(drawer)/subscription')} className="mt-3 w-full self-center rounded-full bg-brand px-5 py-2.5 items-center justify-center">
   <Text className="text-[13px] font-extrabold text-white text-center">
     View Plans
   </Text>
-        </Pressable>
+        </AnimatedPressable>
             </View>) : null}
 
           <AnimatedPressable onPress={() => (testUnlocked ? router.push('/(drawer)/psychometric-test') : router.push('/(drawer)/subscription'))} className="mt-1 rounded-[18px] px-5 py-4" style={{

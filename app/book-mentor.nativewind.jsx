@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { mentors, palette } from '../src/careermap-data';
-import { Pill, Screen, SectionHeader } from '../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen, SectionHeader } from '../src/careermap-ui';
 export default function BookMentorScreen() {
     const [selectedIndex, setSelectedIndex] = useState(null);
     const [selectedDate, setSelectedDate] = useState('');
@@ -68,7 +68,7 @@ export default function BookMentorScreen() {
             <Text className="text-[13px] text-muted">Time: {selectedSlot}</Text>
             <Text className="text-[13px] text-muted">Price: {mentor.price}</Text>
           </View>
-          <Pressable className="w-full rounded-[16px] bg-brand py-[14px]" onPress={() => {
+          <AnimatedPressable className="w-full rounded-[16px] bg-brand py-[14px]" onPress={() => {
                 setBooked(false);
                 setSelectedIndex(null);
                 setSelectedDate('');
@@ -78,7 +78,7 @@ export default function BookMentorScreen() {
                 setUpiId('');
             }}>
             <Text className="text-center text-[14px] font-extrabold text-white">Back to Mentor List</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>);
     }
@@ -134,9 +134,9 @@ export default function BookMentorScreen() {
           <Text className="flex-1 text-[11px] font-bold text-success">Your payment is secured with 256-bit SSL encryption</Text>
         </View>
 
-        <Pressable className="rounded-[16px] bg-brand py-[14px]" disabled={!canPay} onPress={() => setProcessing(true)} style={({ pressed }) => ({ opacity: !canPay || pressed ? 0.45 : 1 })}>
+        <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" disabled={!canPay} onPress={() => setProcessing(true)}>
           <Text className="text-center text-[14px] font-extrabold text-white">Pay & Confirm</Text>
-        </Pressable>
+        </AnimatedPressable>
       </Screen>);
     }
     if (selectedIndex !== null) {
@@ -190,9 +190,9 @@ export default function BookMentorScreen() {
             </View>
           </View>) : null}
 
-        <Pressable className="rounded-[16px] bg-brand py-[14px]" disabled={!selectedDate || !selectedSlot} onPress={() => setShowPayment(true)} style={({ pressed }) => ({ opacity: !selectedDate || !selectedSlot || pressed ? 0.45 : 1 })}>
+        <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" disabled={!selectedDate || !selectedSlot} onPress={() => setShowPayment(true)}>
           <Text className="text-center text-[14px] font-extrabold text-white">Book & Pay</Text>
-        </Pressable>
+        </AnimatedPressable>
       </Screen>);
     }
     return (<Screen>

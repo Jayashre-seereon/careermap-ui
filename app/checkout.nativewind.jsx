@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { palette, subscriptions } from '../src/careermap-data';
+import { AnimatedPressable } from '../src/careermap-ui';
 const paymentMethods = [
     { id: 'upi', label: 'UPI', description: 'Google Pay, PhonePe, Paytm' },
     { id: 'card', label: 'Card', description: 'Visa, Mastercard, RuPay' },
@@ -178,9 +179,9 @@ export default function CheckoutScreen() {
             </ScrollView>
 
             <View className="pb-4 pt-2.5">
-              <Pressable className="items-center rounded-[18px] py-4" disabled={!canPay} onPress={handlePay} style={{ backgroundColor: canPay ? palette.primary : '#d8aab3' }}>
+              <AnimatedPressable className={`items-center rounded-[18px] py-4 ${canPay ? 'bg-brand' : ''}`} disabled={!canPay} onPress={handlePay} style={canPay ? undefined : { backgroundColor: '#d8aab3' }}>
                 <Text className="text-[15px] font-extrabold text-white">Pay {plan.price}</Text>
-              </Pressable>
+              </AnimatedPressable>
             </View>
           </>)}
       </View>

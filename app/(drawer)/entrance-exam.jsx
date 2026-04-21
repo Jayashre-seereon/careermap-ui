@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { entranceExams, palette } from '../../src/careermap-data';
 import { AnimatedPressable, Screen, SectionHeader } from '../../src/careermap-ui';
 const typeFilters = ['All', 'Central', 'State', 'Private'];
@@ -12,30 +12,27 @@ export default function EntranceExamScreen() {
     const [showFilters, setShowFilters] = useState(false);
     let filtered = entranceExams;
     if (typeFilter !== 'All')
-        filtered = filtered.filter(e => e.type === typeFilter);
+        filtered = filtered.filter((e) => e.type === typeFilter);
     if (catFilter !== 'All')
-        filtered = filtered.filter(e => e.category === catFilter);
+        filtered = filtered.filter((e) => e.category === catFilter);
     return (<Screen>
-            <SectionHeader title="Entrance Exams" subtitle="Practice tests and exam preparation guides." action={<AnimatedPressable className={`self-start rounded-full border px-3 py-1.5 ${showFilters ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setShowFilters(!showFilters)}>
-                    <View className="flex-row items-center">
-                        <Ionicons name="filter" size={16} color={showFilters ? palette.surface : palette.text}/>
-                        <Text className={`ml-1.5 text-[12px] font-semibold ${showFilters ? 'text-surface' : 'text-ink'}`}>Filters</Text>
-                    </View>
+            <SectionHeader title="Entrance Exams" subtitle="Practice tests and exam preparation guides." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+                    <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : palette.text}/>
                 </AnimatedPressable>}/>
 
             {showFilters && (<View className="gap-3">
                     <Text className="mb-2 mt-2 text-[12px] font-bold uppercase text-muted">Exam Type</Text>
-                    <View className="flex-row flex-wrap gap-2">
-                        {typeFilters.map(f => (<AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${typeFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setTypeFilter(f)}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
+                        {typeFilters.map((f) => (<AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${typeFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setTypeFilter(f)}>
                                 <Text className={`text-[11px] font-semibold ${typeFilter === f ? 'text-surface' : 'text-ink'}`}>{f}</Text>
                             </AnimatedPressable>))}
-                    </View>
+                    </ScrollView>
                     <Text className="mb-2 mt-2 text-[12px] font-bold uppercase text-muted">Category</Text>
-                    <View className="flex-row flex-wrap gap-2">
-                        {categoryFilters.map(f => (<AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${catFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setCatFilter(f)}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
+                        {categoryFilters.map((f) => (<AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${catFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setCatFilter(f)}>
                                 <Text className={`text-[11px] font-semibold ${catFilter === f ? 'text-surface' : 'text-ink'}`}>{f}</Text>
                             </AnimatedPressable>))}
-                    </View>
+                    </ScrollView>
                 </View>)}
 
             <View className="gap-3">

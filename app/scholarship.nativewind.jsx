@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../src/app-state';
 import { palette, scholarships } from '../src/careermap-data';
 import { Pill, Screen, SectionHeader } from '../src/careermap-ui';
@@ -106,8 +106,8 @@ export default function ScholarshipScreen() {
       </Screen>);
     }
     return (<Screen>
-      <SectionHeader title="Scholarships" subtitle="Scholarship directory with filters and drill-down cards adapted from the prototype." action={<Pressable className={`rounded-[12px] px-3 py-2 ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
-            <Text className={`text-[12px] font-extrabold ${showFilters ? 'text-white' : 'text-ink'}`}>Filter</Text>
+      <SectionHeader title="Scholarships" subtitle="Scholarship directory with filters and drill-down cards adapted from the prototype." action={<Pressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+            <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : palette.text}/>
           </Pressable>}/>
 
       <View className="flex-row gap-3 rounded-[22px] border border-line bg-card p-4">
@@ -121,16 +121,16 @@ export default function ScholarshipScreen() {
       </View>
 
       {showFilters ? (<View className="gap-2.5">
-          <View className="flex-row flex-wrap gap-2">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
             {['All', 'Active', 'Expired', 'Due Date Expired', 'Closed'].map((label) => (<Pressable key={label} className={`rounded-full px-3 py-2 ${activeStatus === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveStatus(label)}>
                 <Text className={`text-[11px] font-extrabold ${activeStatus === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
               </Pressable>))}
-          </View>
-          <View className="flex-row flex-wrap gap-2">
+          </ScrollView>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
             {['Default', 'A-Z', 'Z-A'].map((label) => (<Pressable key={label} className={`rounded-full px-3 py-2 ${sortBy === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setSortBy(label)}>
                 <Text className={`text-[11px] font-extrabold ${sortBy === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
               </Pressable>))}
-          </View>
+          </ScrollView>
         </View>) : null}
 
       <View className="gap-3">

@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BeeMascot } from '../src/bee-mascot';
 import { useAppState } from '../src/app-state';
 import { AnimatedBackground } from '../src/animated-background';
+import { AnimatedPressable } from '../src/careermap-ui';
 import { StaggerFadeUpItem, ZoomInPage } from '../src/page-transition';
 const features = [
     { title: 'Psychometric Tests ⭐', desc: 'Discover strengths and ideal fit ' },
@@ -88,9 +89,9 @@ export default function PromoScreen() {
           <View className="h-2 w-2 rounded-full bg-black/20"/>
           <View className="h-2 w-7 rounded-full bg-brand"/>
         </View>
-        <Pressable className="rounded-[18px] bg-brand py-4" onPress={() => router.replace('/(drawer)')}>
+        <AnimatedPressable className="rounded-[18px] bg-brand py-4" onPress={() => router.replace('/(drawer)')}>
           <Text className="text-center text-[15px] font-extrabold text-white">Next</Text>
-        </Pressable>
+        </AnimatedPressable>
       </View>
       </ZoomInPage>
     </SafeAreaView>);

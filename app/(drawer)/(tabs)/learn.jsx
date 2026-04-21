@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Linking, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppState } from '../../../src/app-state';
 import { masterClasses, palette } from '../../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet, mobileAssistantScrollProps } from '../../../src/careermap-ui';
@@ -10,10 +11,19 @@ export default function LearnScreen() {
     const { canAccessFreeDetail, isUnlocked, registerFreeDetailAccess } = useAppState();
     const masterClassUnlocked = isUnlocked('master-class');
     const [showFilters, setShowFilters] = useState(false);
-    const [activeFilter, setActiveFilter] = useState('All');
+    const [activeVideoType, setActiveVideoType] = useState('All');
+    const [activeCareer, setActiveCareer] = useState('All');
     const [sortBy, setSortBy] = useState('popular');
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
-    let filtered = activeFilter === 'All' ? [...masterClasses] : masterClasses.filter((item) => item.career === activeFilter);
+    const careerOptions = useMemo(() => ['All', ...Array.from(new Set(masterClasses.map((item) => item.career)))], []);
+    const videoTypeOptions = useMemo(() => ['All', 'Expert Videos', 'Career Videos'], []);
+    let filtered = [...masterClasses];
+    if (activeVideoType !== 'All') {
+        filtered = filtered.filter((item) => item.videoType === activeVideoType);
+    }
+    if (activeCareer !== 'All') {
+        filtered = filtered.filter((item) => item.career === activeCareer);
+    }
     if (sortBy === 'popular' || sortBy === 'views')
         filtered.sort((a, b) => b.views - a.views);
     else if (sortBy === 'az')
@@ -26,12 +36,13 @@ export default function LearnScreen() {
     return (<Screen scroll={true}>
       <View className="flex-1">
       <ScrollView className="flex-1" contentContainerClassName="gap-[18px]  pt-2 " contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
-      <SectionHeader title="Master Class" subtitle="Learning videos and sorting adapted closely from the prototype master class screen." action={<AnimatedPressable className={`rounded-[12px] px-3 py-2 ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
-            <Text className={`text-[12px] font-extrabold ${showFilters ? 'text-white' : 'text-ink'}`}>Filter</Text>
+      <SectionHeader title="Master Class" subtitle="Learning videos and sorting adapted closely from the prototype master class screen." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+            <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : palette.text}/>
           </AnimatedPressable>}/>
 
-      {showFilters ? (<View className="flex-row flex-wrap gap-2">
-          {[
+      {showFilters ? (<View className="gap-3">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
+            {[
                 { id: 'popular', label: 'Most Popular' },
                 { id: 'views', label: 'Most Viewed' },
                 { id: 'az', label: 'A-Z' },
@@ -39,13 +50,18 @@ export default function LearnScreen() {
             ].map((item) => (<AnimatedPressable key={item.id} className={`rounded-full px-3 py-2 ${sortBy === item.id ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setSortBy(item.id)}>
               <Text className={`text-[11px] font-extrabold ${sortBy === item.id ? 'text-white' : 'text-ink'}`}>{item.label}</Text>
             </AnimatedPressable>))}
+          </ScrollView>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
+            {videoTypeOptions.map((label) => (<AnimatedPressable key={label} className={`rounded-full px-[13px] py-2 ${activeVideoType === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveVideoType(label)}>
+                <Text className={`text-[12px] font-extrabold ${activeVideoType === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
+              </AnimatedPressable>))}
+          </ScrollView>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
+            {careerOptions.map((label) => (<AnimatedPressable key={label} className={`rounded-full px-[13px] py-2 ${activeCareer === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveCareer(label)}>
+                <Text className={`text-[12px] font-extrabold ${activeCareer === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
+              </AnimatedPressable>))}
+          </ScrollView>
         </View>) : null}
-
-      <View className="flex-row flex-wrap gap-2.5">
-        {['All', 'Engineering', 'Medical', 'Business', 'Technology', 'Design'].map((label) => (<AnimatedPressable key={label} className={`rounded-full px-[13px] py-2 ${activeFilter === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveFilter(label)}>
-            <Text className={`text-[12px] font-extrabold ${activeFilter === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
-          </AnimatedPressable>))}
-      </View>
 
       <View className="gap-3">
         {filtered.map((item) => {
@@ -84,8 +100,8 @@ export default function LearnScreen() {
                     if (item.url !== '#') {
                         Linking.openURL(item.url);
                     }
-                }} className="rounded-[14px] py-[11px]" style={{ backgroundColor: item.locked && !masterClassUnlocked ? `${palette.primary}12` : '#fff8f1' }}>
-              <Text className="text-center text-[13px] font-extrabold" style={{ color: item.locked && !masterClassUnlocked ? palette.primary : palette.primaryDeep }}>
+                }} className={`rounded-[14px] py-[11px] ${item.locked && !masterClassUnlocked ? '' : 'bg-brand'}`} gradient={!(item.locked && !masterClassUnlocked)} style={item.locked && !masterClassUnlocked ? { backgroundColor: `${palette.primary}12` } : undefined}>
+              <Text className="text-center text-[13px] font-extrabold" style={{ color: item.locked && !masterClassUnlocked ? palette.primary : '#ffffff' }}>
                 {item.locked && !masterClassUnlocked ? detailUnlocked ? 'Watch 1 Free Class' : 'Unlock More Classes' : 'Watch Video'}
               </Text>
             </AnimatedPressable>

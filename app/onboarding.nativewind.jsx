@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppState } from '../src/app-state';
 import { BeeMascot } from '../src/bee-mascot';
 import { palette } from '../src/careermap-data';
+import { AnimatedPressable } from '../src/careermap-ui';
 const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate'];
 const streamOptions = ['Science', 'Commerce', 'Arts & Humanities', 'Vocational', 'Not Sure Yet'];
 const interestOptions = ['Technology & Computers', 'Problem Solving', 'Creativity & Design', 'Helping People', 'Business'];
@@ -149,11 +150,11 @@ export default function OnboardingScreen() {
             </Text>
           </View>) : null}
 
-        <Pressable className="mt-auto items-center rounded-[18px] bg-brand py-4" disabled={!canProceed()} onPress={next} style={({ pressed }) => ({ opacity: !canProceed() || pressed ? 0.42 : 1 })}>
+        <AnimatedPressable className="mt-auto items-center rounded-[18px] bg-brand py-4" disabled={!canProceed()} onPress={next}>
           <Text className="text-[16px] font-extrabold text-white">
             {step === 0 ? 'Continue' : step === 1 ? 'Start Journey' : step === 9 ? 'Finish' : step === 10 ? 'Continue' : 'Next'}
           </Text>
-        </Pressable>
+        </AnimatedPressable>
       </ScrollView>
     </SafeAreaView>);
 }
@@ -194,7 +195,7 @@ function MultiChoice({ title, subtitle, icon, options, selected, onToggle, }) {
     </View>);
 }
 function Chip({ label, active, onPress }) {
-    return (<Pressable onPress={onPress} className={`min-w-[47%] rounded-[18px] border px-4 py-[14px] ${active ? 'border-brand bg-brand' : 'border-line bg-card'}`}>
+    return (<AnimatedPressable onPress={onPress} className={`min-w-[47%] rounded-[18px] border px-4 py-[14px] ${active ? 'border-brand bg-brand' : 'border-line bg-card'}`} gradient={active}>
       <Text className={`text-center text-[13px] font-bold ${active ? 'text-white' : 'text-ink'}`}>{label}</Text>
-    </Pressable>);
+    </AnimatedPressable>);
 }

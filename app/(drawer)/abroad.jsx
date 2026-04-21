@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette, studyAbroadCountries } from '../../src/careermap-data';
-import { Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
 export default function AbroadScreen() {
     const params = useLocalSearchParams();
@@ -57,7 +57,7 @@ export default function AbroadScreen() {
           <Text className="text-[14px] leading-[22px] text-muted">
             Your study abroad consultation request has been recorded. We will help you shortlist countries, courses, and scholarship options.
           </Text>
-          <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => {
+          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => {
                 setSubmitted(false);
                 setShowForm(false);
                 setPreferredCountry('');
@@ -66,7 +66,7 @@ export default function AbroadScreen() {
                 setPreferredIntake('');
             }}>
             <Text className="text-center text-[14px] font-extrabold text-white">Done</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>);
     }
@@ -85,9 +85,9 @@ export default function AbroadScreen() {
               <Text className="text-[12px] font-extrabold text-muted">{label}</Text>
               <TextInput value={value} onChangeText={setter} placeholder={placeholder} placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-4 py-[14px] text-[13px] text-ink"/>
             </View>))}
-          <Pressable className="rounded-[16px] py-[14px]" onPress={() => (unlocked ? setSubmitted(true) : openSubscriptionPrompt(formReturnTarget))} style={{ backgroundColor: palette.primary }}>
+          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => (unlocked ? setSubmitted(true) : openSubscriptionPrompt(formReturnTarget))}>
             <Text className="text-center text-[14px] font-extrabold text-white">{unlocked ? 'Submit Request' : 'Subscribe to Submit'}</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </Screen>);
     }
@@ -151,12 +151,12 @@ export default function AbroadScreen() {
               </View>
             </View>
 
-            <Pressable className="rounded-[16px] bg-brand py-[14px] mt-3" onPress={() => {
+            <AnimatedPressable className="rounded-[16px] bg-brand py-[14px] mt-3" onPress={() => {
                     setPreferredCountry(country.name);
                     setShowForm(true);
                 }}>
               <Text className="text-center text-[14px]  font-extrabold text-white">Consult Now</Text>
-            </Pressable>
+            </AnimatedPressable>
           </>
         </View>
       </Screen>);
@@ -192,9 +192,9 @@ export default function AbroadScreen() {
             </View>
           </Pressable>))}
       </View>
-      <Pressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => (unlocked ? setShowForm(true) : setShowUnlockSheet(true))}>
+      <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => (unlocked ? setShowForm(true) : setShowUnlockSheet(true))}>
         <Text className="text-center text-[14px] font-extrabold text-white">Consult Now</Text>
-      </Pressable>
+      </AnimatedPressable>
       {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Study Abroad" subtitle="Subscribe to more country details, scholarships, visa guidance, and counselling access." onClose={() => setShowUnlockSheet(false)} onPress={() => {
                 setShowUnlockSheet(false);
                 openSubscriptionPrompt(showForm ? formReturnTarget : { pathname: '/(drawer)/abroad' });

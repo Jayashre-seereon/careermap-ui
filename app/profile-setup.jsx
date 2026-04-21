@@ -28,6 +28,7 @@ export default function ProfileSetupScreen() {
         city: userProfile.city,
         stateName: userProfile.stateName,
     });
+    const [showPassword, setShowPassword] = useState(false);
     const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
     const isValid = form.name && form.email && form.mobile && form.password;
     const onboardingChips = useMemo(() => [
@@ -105,7 +106,10 @@ export default function ProfileSetupScreen() {
             <Text className="text-[12px] font-extrabold text-muted">{label}</Text>
             <View className="h-14 flex-row items-center gap-2.5 rounded-[18px] border border-line bg-card px-4">
               <Ionicons name={icon} size={18} color={palette.muted}/>
-              <TextInput value={form[key]} onChangeText={(value) => update(key, value)} placeholder={placeholder} placeholderTextColor={palette.muted} secureTextEntry={key === 'password'} className="flex-1 text-[15px] text-ink"/>
+              <TextInput value={form[key]} onChangeText={(value) => update(key, value)} placeholder={placeholder} placeholderTextColor={palette.muted} secureTextEntry={key === 'password' ? !showPassword : false} className="flex-1 text-[15px] text-ink"/>
+              {key === 'password' ? (<AnimatedPressable onPress={() => setShowPassword((value) => !value)}>
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={palette.muted}/>
+                </AnimatedPressable>) : null}
             </View>
           </View>))}
 
