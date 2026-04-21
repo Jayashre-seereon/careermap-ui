@@ -25,7 +25,7 @@ export default function LearnScreen() {
     }), []);
     return (<Screen scroll={false}>
       <View className="flex-1">
-      <ScrollView className="flex-1" contentContainerClassName="gap-[18px] px-5 py-5" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 160, 190) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
+      <ScrollView className="flex-1" contentContainerClassName="gap-[18px] px-5 pt-2 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
       <SectionHeader title="Master Class" subtitle="Learning videos and sorting adapted closely from the prototype master class screen." action={<AnimatedPressable className={`rounded-[12px] px-3 py-2 ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
             <Text className={`text-[12px] font-extrabold ${showFilters ? 'text-white' : 'text-ink'}`}>Filter</Text>
           </AnimatedPressable>}/>

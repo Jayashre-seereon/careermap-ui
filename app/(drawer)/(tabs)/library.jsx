@@ -472,8 +472,8 @@ export default function CareerLibraryScreen() {
     const renderDetails = () => {
         const detail = careerDetails[selectedSpecialization] || defaultDetail(selectedSpecialization);
         const isSaved = savedCareers.includes(detail.title);
-        return (<View className="flex-1">
-        <ScrollView className="flex-1" contentContainerClassName="px-4 pb-4" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 160, 190) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
+        return (<View className="flex-1 ">
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
         {!isUnlocked('career-library') ? (<View className="mb-4 flex-row items-center gap-2 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${detailUnlocked ? palette.green : palette.orange}14` }}>
             <Ionicons name={detailUnlocked ? 'sparkles-outline' : 'lock-closed'} size={18} color={detailUnlocked ? palette.green : palette.orange}/>
             <Text className="flex-1 text-[12px] font-semibold" style={{ color: detailUnlocked ? palette.green : palette.orange }}>
@@ -551,14 +551,14 @@ export default function CareerLibraryScreen() {
         return 'Career Library';
     };
     return (<Screen scroll={false} animationKey={animationKey}>
-      <View className="flex-row items-center px-6 py-4">
+      <View className="flex-row items-center px-5 py-2">
         {currentLevel !== 'streams' && (<Pressable onPress={handleBack} className="mr-3 h-10 w-10 items-center justify-center rounded-full">
             <Ionicons name="chevron-back" size={24} color={palette.text}/>
           </Pressable>)}
         <Text className="text-[18px] font-extrabold text-ink">{getTitle()}</Text>
       </View>
 
-      {currentLevel === 'details' ? (renderDetails()) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-4 pb-4" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 160, 190) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
+      {currentLevel === 'details' ? (renderDetails()) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
           {currentLevel === 'streams' && renderStreams()}
           {currentLevel === 'categories' && renderCategories()}
           {currentLevel === 'programs' && renderPrograms()}
