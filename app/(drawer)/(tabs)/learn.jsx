@@ -39,8 +39,14 @@ export default function LearnScreen() {
       <SectionHeader title="Master Class" subtitle="Learning videos and sorting adapted closely from the prototype master class screen." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
             <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : palette.text}/>
           </AnimatedPressable>}/>
-
+ <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
+            {videoTypeOptions.map((label) => (<AnimatedPressable key={label} className={`rounded-full px-[13px] py-2 ${activeVideoType === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveVideoType(label)}>
+                <Text className={`text-[12px] font-extrabold ${activeVideoType === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
+              </AnimatedPressable>))}
+          </ScrollView>
       {showFilters ? (<View className="gap-3">
+         <Text className=" text-[12px] font-bold uppercase text-muted">short</Text>
+                  
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
             {[
                 { id: 'popular', label: 'Most Popular' },
@@ -51,11 +57,8 @@ export default function LearnScreen() {
               <Text className={`text-[11px] font-extrabold ${sortBy === item.id ? 'text-white' : 'text-ink'}`}>{item.label}</Text>
             </AnimatedPressable>))}
           </ScrollView>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
-            {videoTypeOptions.map((label) => (<AnimatedPressable key={label} className={`rounded-full px-[13px] py-2 ${activeVideoType === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveVideoType(label)}>
-                <Text className={`text-[12px] font-extrabold ${activeVideoType === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
-              </AnimatedPressable>))}
-          </ScrollView>
+         
+           <Text className="text-[12px] font-bold uppercase text-muted">Career</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
             {careerOptions.map((label) => (<AnimatedPressable key={label} className={`rounded-full px-[13px] py-2 ${activeCareer === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveCareer(label)}>
                 <Text className={`text-[12px] font-extrabold ${activeCareer === label ? 'text-white' : 'text-ink'}`}>{label}</Text>

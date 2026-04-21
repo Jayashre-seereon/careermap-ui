@@ -21,13 +21,13 @@ export default function EntranceExamScreen() {
                 </AnimatedPressable>}/>
 
             {showFilters && (<View className="gap-3">
-                    <Text className="mb-2 mt-2 text-[12px] font-bold uppercase text-muted">Exam Type</Text>
+                    <Text className=" text-[12px] font-bold uppercase text-muted">Exam Type</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
                         {typeFilters.map((f) => (<AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${typeFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setTypeFilter(f)}>
                                 <Text className={`text-[11px] font-semibold ${typeFilter === f ? 'text-surface' : 'text-ink'}`}>{f}</Text>
                             </AnimatedPressable>))}
                     </ScrollView>
-                    <Text className="mb-2 mt-2 text-[12px] font-bold uppercase text-muted">Category</Text>
+                    <Text className="text-[12px] font-bold uppercase text-muted">Category</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
                         {categoryFilters.map((f) => (<AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${catFilter === f ? 'border-brand bg-brand' : 'border-line bg-surface'}`} onPress={() => setCatFilter(f)}>
                                 <Text className={`text-[11px] font-semibold ${catFilter === f ? 'text-surface' : 'text-ink'}`}>{f}</Text>

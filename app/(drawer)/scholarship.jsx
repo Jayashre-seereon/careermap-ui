@@ -97,22 +97,18 @@ export default function ScholarshipScreen() {
             <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : palette.text}/>
           </AnimatedPressable>}/>
 
-      <View className="flex-row gap-3 rounded-[22px] border border-line bg-card p-4">
-        <View className="h-12 w-12 items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.green}14` }}>
-          <Ionicons name="ribbon-outline" size={24} color={palette.green}/>
-        </View>
-        <View className="flex-1 gap-1">
-          <Text className="text-[16px] font-extrabold text-ink">Scholarships & Funding</Text>
-          <Text className="text-[13px] leading-5 text-muted">Explore active opportunities, compare deadlines, and unlock full details like the reference prototype.</Text>
-        </View>
-      </View>
+      
 
-      {showFilters ? (<View className="gap-2.5">
+      {showFilters ? (<View className="gap-2">
+         <Text className="text-[12px] font-bold uppercase text-muted">Status</Text>
+                  
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
             {['All', 'Active', 'Expired',].map((label) => (<AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${activeStatus === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveStatus(label)}>
                 <Text className={`text-[11px] font-extrabold ${activeStatus === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
               </AnimatedPressable>))}
           </ScrollView>
+           <Text className=" text-[12px] font-bold uppercase text-muted">Short</Text>
+                  
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
             {['Default', 'A-Z', 'Z-A'].map((label) => (<AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${sortBy === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setSortBy(label)}>
                 <Text className={`text-[11px] font-extrabold ${sortBy === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
