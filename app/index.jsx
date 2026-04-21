@@ -340,6 +340,8 @@ export default function SplashRoute() {
             clearTimeout(exitTimer);
             clearTimeout(navTimer);
         };
+        // This splash sequence is intentionally initialized once on mount with stable Animated refs.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // ── interpolations ────────────────────────────────────────────────────

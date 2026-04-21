@@ -17,13 +17,14 @@ export default function DrawerRoot() {
         return DrawerIcon;
     };
     return (<GestureHandlerRootView style={{ flex: 1 }}>
-      <Drawer screenOptions={{
+        <Drawer screenOptions={{
             headerStyle: { backgroundColor: preferences.darkMode ? '#1b151f' : palette.surface },
             headerTintColor: preferences.darkMode ? '#ffffff' : palette.text,
             headerTitleStyle: { fontWeight: '800' },
             drawerActiveTintColor: palette.primary,
             drawerInactiveTintColor: preferences.darkMode ? '#b7aeb9' : palette.muted,
             drawerStyle: { backgroundColor: preferences.darkMode ? '#140f17' : palette.surface, width: 280 },
+            drawerContentStyle: { paddingBottom: 120 },
             sceneStyle: { backgroundColor: preferences.darkMode ? '#140f17' : palette.background },
         }}>
         <Drawer.Screen name="(tabs)" options={{
@@ -51,6 +52,14 @@ export default function DrawerRoot() {
         <Drawer.Screen name="subscription" options={{
             title: 'Subscription',
             drawerIcon: renderDrawerIcon('card-outline'),
+        }}/>
+        <Drawer.Screen name="(tabs)/library" options={{
+            title: 'Library',
+            drawerIcon: renderDrawerIcon('book-outline'),
+        }}/>
+        <Drawer.Screen name="(tabs)/learn" options={{
+            title: 'Master Class',
+            drawerIcon: renderDrawerIcon('school-outline'),
         }}/>
         <Drawer.Screen name="settings" options={{
             title: 'Settings',

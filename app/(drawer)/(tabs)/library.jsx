@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppState } from '../../../src/app-state';
 import { Screen, UnlockBottomSheet } from '../../../src/careermap-ui';
 import { palette } from '../../../src/careermap-data';
@@ -331,6 +332,7 @@ const defaultDetail = (name) => ({
 });
 export default function CareerLibraryScreen() {
     const params = useLocalSearchParams();
+    const insets = useSafeAreaInsets();
     const { canAccessFreeDetail, isUnlocked, registerFreeDetailAccess, savedCareers, toggleSavedCareer } = useAppState();
     const [currentLevel, setCurrentLevel] = useState('streams');
     const [selectedStream, setSelectedStream] = useState(null);
@@ -471,7 +473,7 @@ export default function CareerLibraryScreen() {
         const detail = careerDetails[selectedSpecialization] || defaultDetail(selectedSpecialization);
         const isSaved = savedCareers.includes(detail.title);
         return (<View className="flex-1">
-        <ScrollView className="flex-1" contentContainerClassName="px-4 pb-4" showsVerticalScrollIndicator={false}>
+        <ScrollView className="flex-1" contentContainerClassName="px-4 pb-4" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 160, 190) }} showsVerticalScrollIndicator={false}>
         {!isUnlocked('career-library') ? (<View className="mb-4 flex-row items-center gap-2 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${detailUnlocked ? palette.green : palette.orange}14` }}>
             <Ionicons name={detailUnlocked ? 'sparkles-outline' : 'lock-closed'} size={18} color={detailUnlocked ? palette.green : palette.orange}/>
             <Text className="flex-1 text-[12px] font-semibold" style={{ color: detailUnlocked ? palette.green : palette.orange }}>
@@ -501,17 +503,23 @@ export default function CareerLibraryScreen() {
 
         <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
           <Text className="mb-2 text-[14px] font-bold text-ink">Education</Text>
-          <Text className="text-[13px] leading-5 text-muted">{detail.education}</Text>
+          <Text className="pt-1 text-[13px] leading-5 text-muted">{detail.education}</Text>
         </View>
 
         <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
           <Text className="mb-2 text-[14px] font-bold text-ink">Entrance Exams</Text>
-          {detail.exams.map(exam => (<Text key={exam} className="mb-1.5 text-[13px] text-muted">• {exam}</Text>))}
+          {detail.exams.map(exam => (<View key={exam} className="mb-2 flex-row items-start">
+              <View className="mr-2 mt-1.5 h-1.5 w-1.5 rounded-full bg-[#b9b2b8]"/>
+              <Text className="flex-1 text-[13px] leading-5 text-muted">{exam}</Text>
+            </View>))}
         </View>
 
         <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
           <Text className="mb-2 text-[14px] font-bold text-ink">Job Opportunities</Text>
-          {detail.jobs.map(job => (<Text key={job} className="mb-1.5 text-[13px] text-muted">• {job}</Text>))}
+          {detail.jobs.map(job => (<View key={job} className="mb-2 flex-row items-start">
+              <View className="mr-2 mt-1.5 h-1.5 w-1.5 rounded-full bg-[#b9b2b8]"/>
+              <Text className="flex-1 text-[13px] leading-5 text-muted">{job}</Text>
+            </View>))}
         </View>
 
         <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
@@ -521,7 +529,10 @@ export default function CareerLibraryScreen() {
 
         <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
           <Text className="mb-2 text-[14px] font-bold text-ink">Top Institutes</Text>
-          {detail.institutes.map(institute => (<Text key={institute} className="mb-1.5 text-[13px] text-muted">★ {institute}</Text>))}
+          {detail.institutes.map(institute => (<View key={institute} className="mb-2 flex-row items-start">
+              <Ionicons name="star" size={12} color={palette.secondary} style={{ marginRight: 8, marginTop: 3 }}/>
+              <Text className="flex-1 text-[13px] leading-5 text-muted">{institute}</Text>
+            </View>))}
         </View>
       </ScrollView>
       </View>);
@@ -547,7 +558,7 @@ export default function CareerLibraryScreen() {
         <Text className="text-[18px] font-extrabold text-ink">{getTitle()}</Text>
       </View>
 
-      {currentLevel === 'details' ? (renderDetails()) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-4 pb-4" showsVerticalScrollIndicator={false}>
+      {currentLevel === 'details' ? (renderDetails()) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-4 pb-4" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 160, 190) }} showsVerticalScrollIndicator={false}>
           {currentLevel === 'streams' && renderStreams()}
           {currentLevel === 'categories' && renderCategories()}
           {currentLevel === 'programs' && renderPrograms()}

@@ -27,32 +27,6 @@ const BOOKS = [
     { x: 0.30, y: 0.88, size: 20, opacity: 0.1, duration: 3200, delay: 400 },
     { x: 0.3, y: 0.10, size: 20, opacity: 0.1, duration: 2400, delay: 800 },
 ];
-function AmbientOrb({ x, y, size, color, duration, delay, travel }) {
-    const anim = useRef(new Animated.Value(0)).current;
-    useEffect(() => {
-        const loop = Animated.loop(Animated.sequence([
-            Animated.delay(delay),
-            Animated.timing(anim, { toValue: 1, duration, useNativeDriver: true }),
-            Animated.timing(anim, { toValue: 0, duration, useNativeDriver: true }),
-        ]));
-        loop.start();
-        return () => loop.stop();
-    }, [anim, delay, duration]);
-    const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [0, -travel] });
-    const scale = anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.12, 1] });
-    const opacity = anim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.78, 1, 0.82] });
-    return (<Animated.View style={{
-            position: 'absolute',
-            left: x * width,
-            top: y * height,
-            width: size,
-            height: size,
-            borderRadius: size / 2,
-            backgroundColor: color,
-            opacity,
-            transform: [{ translateY }, { scale }],
-        }}/>);
-}
 function Particle({ x, y, size, opacity, duration, delay, color }) {
     const anim = useRef(new Animated.Value(0)).current;
     useEffect(() => {
@@ -178,12 +152,6 @@ export function AnimatedBackground() {
             eraser: '#de8ea9',
             band: '#732239',
             tip: '#a01944',
-            orbs: [
-                { x: 0.78, y: -0.02, size: 250, color: 'rgba(126,20,55,0.28)', duration: 3200, delay: 0, travel: 20 },
-                { x: 0.58, y: 0.08, size: 180, color: 'rgba(255,255,255,0.05)', duration: 2600, delay: 250, travel: 14 },
-                { x: -0.12, y: 0.70, size: 290, color: 'rgba(85,5,24,0.42)', duration: 3500, delay: 600, travel: 24 },
-                { x: 0.06, y: 0.02, size: 210, color: 'rgba(255,255,255,0.03)', duration: 2800, delay: 150, travel: 12 },
-            ],
         }
         : {
             particle: '#c0392b',
@@ -193,12 +161,6 @@ export function AnimatedBackground() {
             eraser: '#e8a0a0',
             band: '#b07070',
             tip: '#c0392b',
-            orbs: [
-                { x: 0.80, y: 0.00, size: 250, color: 'rgba(255,255,255,0.18)', duration: 3000, delay: 0, travel: 22 },
-                { x: 0.68, y: 0.08, size: 140, color: 'rgba(255,255,255,0.12)', duration: 2400, delay: 300, travel: 16 },
-                { x: -0.10, y: 0.72, size: 270, color: 'rgba(255,255,255,0.10)', duration: 3400, delay: 700, travel: 26 },
-                { x: 0.00, y: 0.03, size: 190, color: 'rgba(192,57,43,0.16)', duration: 3200, delay: 200, travel: 18 },
-            ],
         }, [preferences.darkMode]);
     return (<View style={StyleSheet.absoluteFill} pointerEvents="none">
       {preferences.darkMode ? <View style={[StyleSheet.absoluteFill, { backgroundColor: '#050505' }]} /> : null}

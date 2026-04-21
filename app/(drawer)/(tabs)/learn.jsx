@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Linking, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppState } from '../../../src/app-state';
 import { masterClasses, palette } from '../../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../../src/subscription-flow';
 export default function LearnScreen() {
+    const insets = useSafeAreaInsets();
     const { canAccessFreeDetail, isUnlocked, registerFreeDetailAccess } = useAppState();
     const masterClassUnlocked = isUnlocked('master-class');
     const [showFilters, setShowFilters] = useState(false);
@@ -23,7 +25,7 @@ export default function LearnScreen() {
     }), []);
     return (<Screen scroll={false}>
       <View className="flex-1">
-      <ScrollView className="flex-1" contentContainerClassName="gap-[18px] px-5 py-5" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1" contentContainerClassName="gap-[18px] px-5 py-5" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 160, 190) }} showsVerticalScrollIndicator={false}>
       <SectionHeader title="Master Class" subtitle="Learning videos and sorting adapted closely from the prototype master class screen." action={<AnimatedPressable className={`rounded-[12px] px-3 py-2 ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
             <Text className={`text-[12px] font-extrabold ${showFilters ? 'text-white' : 'text-ink'}`}>Filter</Text>
           </AnimatedPressable>}/>
