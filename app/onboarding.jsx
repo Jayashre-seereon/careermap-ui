@@ -202,9 +202,7 @@ export default function OnboardingScreen() {
         </Animated.View>
 
         <AnimatedPressable className="mt-auto items-center rounded-[18px] bg-brand py-4" disabled={!canProceed()} onPress={next}>
-          <Text className="text-[16px] font-extrabold text-white">
-            {step === 0 ? 'Continue' : step === 1 ? 'Start Journey' : step === 8 ? 'Finish' : step === 9 ? 'Continue' : 'Next'}
-          </Text>
+          <ButtonLabel label={step === 0 ? 'Continue' : step === 1 ? 'Start Journey' : step === 8 ? 'Finish' : step === 9 ? 'Continue' : 'Next'} showArrow={step === 0 || step === 9 || (step > 1 && step < 8)}/>
         </AnimatedPressable>
       </ScrollView>
     </SafeAreaView>);
@@ -255,8 +253,8 @@ function Chip({ label, active, onPress }) {
     </AnimatedPressable>);
 }
 function SuccessStep() {
-    return (<View className="flex-grow items-center justify-center gap-5 py-5">
-      <CelebrationBurst/>
+    return (<View className="flex-grow items-center justify-end gap-4 pt-8 pb-2">
+      <BeeArrivalAnimation/>
       <View className="items-center gap-3">
         <Text className="text-center text-[28px] font-black leading-9 text-ink">Great! We&apos;ve personalized your experience</Text>
         <Text className="max-w-[310px] text-center text-[15px] leading-6 text-muted">
@@ -265,61 +263,101 @@ function SuccessStep() {
       </View>
     </View>);
 }
-function CelebrationBurst() {
-    const burst = useRef(new Animated.Value(0)).current;
+function BeeArrivalAnimation() {
+    const boxScale = useRef(new Animated.Value(0)).current;
+    const boxRotate = useRef(new Animated.Value(-180)).current;
+    const beeOpacity = useRef(new Animated.Value(0)).current;
+    const beeTranslate = useRef(new Animated.Value(18)).current;
+    const beeEntranceScale = useRef(new Animated.Value(0.72)).current;
+    const beeFloat = useRef(new Animated.Value(0)).current;
+    const beeRotate = useRef(new Animated.Value(0)).current;
+    const beeScale = useRef(new Animated.Value(1)).current;
+    const ringPulse = useRef(new Animated.Value(0)).current;
     useEffect(() => {
-        burst.setValue(0);
-        Animated.loop(Animated.sequence([
-            Animated.timing(burst, {
-                toValue: 1,
-                duration: 1500,
-                easing: Easing.out(Easing.cubic),
-                useNativeDriver: true,
-            }),
-            Animated.timing(burst, {
-                toValue: 0,
-                duration: 0,
-                useNativeDriver: true,
-            }),
-        ])).start();
-    }, [burst]);
-    const pieces = [
-        { color: '#ff6b6b', x: -86, y: -72, rotate: '-20deg', delay: 0 },
-        { color: '#ffd166', x: -58, y: -104, rotate: '18deg', delay: 0.08 },
-        { color: '#06d6a0', x: 0, y: -118, rotate: '-10deg', delay: 0.15 },
-        { color: '#118ab2', x: 58, y: -104, rotate: '22deg', delay: 0.23 },
-        { color: '#f78c6b', x: 86, y: -72, rotate: '-16deg', delay: 0.3 },
-        { color: '#ef476f', x: -104, y: -16, rotate: '28deg', delay: 0.18 },
-        { color: '#8338ec', x: 102, y: -18, rotate: '-26deg', delay: 0.12 },
-    ];
-    return (<View className="items-center justify-center pb-6 pt-12">
-      <View className="relative h-[220px] w-[220px] items-center justify-center">
-        {pieces.map((piece, index) => {
-            const translateY = burst.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, piece.y],
-            });
-            const translateX = burst.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, piece.x],
-            });
-            const scale = burst.interpolate({
-                inputRange: [0, 0.2, 1],
-                outputRange: [0.4, 1, 0.92],
-            });
-            const opacity = burst.interpolate({
-                inputRange: [0, piece.delay, 1],
-                outputRange: [0, 1, 0],
-            });
-            return (<Animated.View key={`${piece.color}-${index}`} style={{
-                    opacity,
-                    transform: [{ translateX }, { translateY }, { scale }, { rotate: piece.rotate }],
-                }} className="absolute left-1/2 top-1/2 h-4 w-2 rounded-full" >
-                <View style={{ backgroundColor: piece.color }} className="h-4 w-2 rounded-full"/>
-              </Animated.View>);
-        })}
-        <BeeMascot size={112}/>
+        boxScale.setValue(0);
+        boxRotate.setValue(-180);
+        beeOpacity.setValue(0);
+        beeTranslate.setValue(18);
+        beeEntranceScale.setValue(0.72);
+        beeFloat.setValue(0);
+        beeRotate.setValue(0);
+        beeScale.setValue(1);
+        ringPulse.setValue(0);
+        const loops = [];
+        const entrance = Animated.parallel([
+            Animated.spring(boxScale, { toValue: 1, stiffness: 140, damping: 11, mass: 0.85, useNativeDriver: true }),
+            Animated.timing(boxRotate, { toValue: 0, duration: 720, easing: Easing.out(Easing.back(1.1)), useNativeDriver: true }),
+            Animated.sequence([
+                Animated.delay(180),
+                Animated.parallel([
+                    Animated.timing(beeOpacity, { toValue: 1, duration: 280, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+                    Animated.spring(beeTranslate, { toValue: 0, stiffness: 170, damping: 16, mass: 0.8, useNativeDriver: true }),
+                    Animated.spring(beeEntranceScale, { toValue: 1, stiffness: 180, damping: 15, mass: 0.82, useNativeDriver: true }),
+                ]),
+            ]),
+        ]);
+        entrance.start();
+        const floatLoop = Animated.loop(Animated.parallel([
+            Animated.sequence([
+                Animated.timing(beeFloat, { toValue: -8, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+                Animated.timing(beeFloat, { toValue: 0, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+            ]),
+            Animated.sequence([
+                Animated.timing(beeRotate, { toValue: 8, duration: 375, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+                Animated.timing(beeRotate, { toValue: -8, duration: 375, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+                Animated.timing(beeRotate, { toValue: 0, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+            ]),
+            Animated.sequence([
+                Animated.timing(beeScale, { toValue: 1.05, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+                Animated.timing(beeScale, { toValue: 1, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+            ]),
+        ]));
+        const ringLoop = Animated.loop(Animated.sequence([
+            Animated.timing(ringPulse, { toValue: 1, duration: 1450, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+            Animated.timing(ringPulse, { toValue: 0, duration: 0, useNativeDriver: true }),
+            Animated.delay(250),
+        ]));
+        loops.push(floatLoop, ringLoop);
+        const startTimer = setTimeout(() => {
+            floatLoop.start();
+            ringLoop.start();
+        }, 520);
+        return () => {
+            clearTimeout(startTimer);
+            loops.forEach((loop) => loop.stop());
+        };
+    }, [beeEntranceScale, beeFloat, beeOpacity, beeRotate, beeScale, beeTranslate, boxRotate, boxScale, ringPulse]);
+    const boxSpin = boxRotate.interpolate({ inputRange: [-180, 0], outputRange: ['-180deg', '0deg'] });
+    const beeTilt = beeRotate.interpolate({ inputRange: [-8, 8], outputRange: ['-8deg', '8deg'] });
+    const ringScale = ringPulse.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 1.75],
+    });
+    const ringOpacity = ringPulse.interpolate({
+        inputRange: [0, 0.72, 1],
+        outputRange: [0.22, 0, 0],
+    });
+    return (<View className="items-center justify-center pb-2 pt-3">
+      <View className="relative h-[170px] w-full items-center justify-center overflow-hidden">
+        <Animated.View style={{
+                opacity: ringOpacity,
+                transform: [{ scale: ringScale }],
+            }} className="absolute h-36 w-36 rounded-full border border-brand/25 bg-[#fff1f4]"/>
+        <Animated.View className="h-[108px] w-[108px] items-center justify-center rounded-[32px] bg-white" style={{ transform: [{ scale: boxScale }, { rotate: boxSpin }] }}>
+          <Animated.View style={{
+                    opacity: beeOpacity,
+                    transform: [{ translateY: beeTranslate }, { scale: beeEntranceScale }, { translateY: beeFloat }, { rotate: beeTilt }, { scale: beeScale }],
+                }}>
+            <BeeMascot size={76}/>
+          </Animated.View>
+        </Animated.View>
       </View>
+    </View>);
+}
+function ButtonLabel({ label, showArrow = false }) {
+    return (<View className="flex-row items-center justify-center gap-2">
+      <Text className="text-[16px] font-extrabold text-white">{label}</Text>
+      {showArrow ? <Ionicons name="arrow-forward" size={18} color="#ffffff"/> : null}
     </View>);
 }
 function chunkOptions(options) {
