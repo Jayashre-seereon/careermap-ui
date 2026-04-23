@@ -353,7 +353,7 @@ function PromoSplashIntro() {
 }
 
 export default function PromoScreen() {
-    const { clearPromoMessage, promoMessage } = useAppState();
+    const { clearPromoMessage, preferences, promoMessage } = useAppState();
     const [page, setPage] = useState(0);
 
     useEffect(() => {
@@ -395,18 +395,18 @@ export default function PromoScreen() {
             <AnimatedBackground /> 
          <ZoomInPage style={{ flex: 1 }}>
          <View className="flex-1 justify-center gap-[18px] px-6">
-        <Text className="text-center text-[30px] font-black text-ink">What You Can Explore</Text>
-        <Text className="mb-1.5 text-center text-[14px] text-muted">Everything you need for career guidance</Text>
+        <Text className={`text-center text-[30px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>What You Can Explore</Text>
+        <Text className={`mb-1.5 text-center text-[14px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Everything you need for career guidance</Text>
         <View className="gap-3">
           {features.map((feature, index) => (<StaggerFadeUpItem key={feature.title} index={index}>
-            <View className="gap-1 rounded-[20px] border border-line bg-card p-4">
-              <Text className="text-[15px] font-extrabold text-ink">{feature.title}</Text>
-              <Text className="text-[12px] leading-[18px] text-muted">{feature.desc}</Text>
+            <View className={`gap-1 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+              <Text className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{feature.title}</Text>
+              <Text className={`text-[12px] leading-[18px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{feature.desc}</Text>
             </View>
           </StaggerFadeUpItem>))}
         </View>
         <View className="mt-1 flex-row gap-2 self-center">
-          <View className="h-2 w-2 rounded-full bg-black/20"/>
+          <View className={`h-2 w-2 rounded-full ${preferences.darkMode ? 'bg-white/20' : 'bg-black/20'}`}/>
           <View className="h-2 w-7 rounded-full bg-brand"/>
         </View>
         <AnimatedPressable className="rounded-[18px] bg-brand py-4" onPress={() => router.replace('/(drawer)')}>

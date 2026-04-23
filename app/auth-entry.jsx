@@ -82,7 +82,7 @@ export default function AuthEntryScreen() {
           </Animated.View>
           <Animated.View className="w-full gap-4 self-center" style={{ opacity: cardsOpacity, transform: [{ translateY: cardsTranslate }] }}>
           <View className="w-full gap-4 self-center">
-            <AnimatedPressable className={`rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={() => router.push('/onboarding')}>
+            <AnimatedPressable className={`rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/onboarding')}>
               <View className="flex-row items-center gap-4">
                 <View className="h-14 w-14 items-center justify-center rounded-[18px] bg-brand">
                   <Ionicons name="person-add-outline" size={26} color="#fff"/>
@@ -93,9 +93,9 @@ export default function AuthEntryScreen() {
                 </View>
               </View>
             </AnimatedPressable>
-            <AnimatedPressable className={`rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={() => router.push({ pathname: '/login', params: { userType: 'existing' } })}>
+            <AnimatedPressable className={`rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push({ pathname: '/login', params: { userType: 'existing' } })}>
               <View className="flex-row items-center gap-4">
-                <View className={`h-14 w-14 items-center justify-center rounded-[18px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}>
+                <View className={`h-14 w-14 items-center justify-center rounded-[18px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`}>
                   <Ionicons name="log-in-outline" size={26} color="#c11e38"/>
                 </View>
                 <View className="flex-1">

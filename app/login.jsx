@@ -66,7 +66,7 @@ export default function LoginScreen() {
       <AnimatedBackground />
       <ZoomInPage style={{ flex: 1 }}>
       <ScrollView className="flex-1" contentContainerClassName="flex-grow gap-6 px-6 py-6" keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => router.back()}>
+        <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
         </AnimatedPressable>
 
@@ -82,7 +82,7 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        {isExistingUser ? (<View className={`gap-1 rounded-[18px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+        {isExistingUser ? (<View className={`gap-1 rounded-[18px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
             <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Example existing users</Text>
             <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Mobile: 9876543210</Text>
             <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Email: jaya@email.com</Text>
@@ -90,7 +90,7 @@ export default function LoginScreen() {
             <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Coupon: CAREER2026</Text>
           </View>) : null}
 
-        <View className={`flex-row rounded-[18px] p-1 ${preferences.darkMode ? 'bg-[#211927]' : 'bg-[#e8e2de]'}`}>
+        <View className={`flex-row rounded-[18px] p-1 ${preferences.darkMode ? 'bg-[#080808]' : 'bg-[#e8e2de]'}`}>
           <View className="flex-1 px-[2px]">
             <AnimatedPressable className={`items-center rounded-[14px] px-2 py-3 ${loginMode === 'mobile' ? 'bg-brand' : ''}`} onPress={() => setLoginMode('mobile')}>
                 <Text className={`text-center text-[12px] font-extrabold ${loginMode === 'mobile' ? 'text-white' : preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
@@ -116,7 +116,7 @@ export default function LoginScreen() {
 
         {loginMode === 'mobile' ? (<View className="gap-[14px]">
             <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Mobile Number</Text>
-            <View className={`h-14 flex-row items-center gap-2.5 rounded-[18px] border px-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+            <View className={`h-14 flex-row items-center gap-2.5 rounded-[18px] border px-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <Text className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>+91</Text>
               <TextInput value={mobile} onChangeText={(value) => {
                 setMobile(value.replace(/\D/g, '').slice(0, 10));
@@ -133,7 +133,7 @@ export default function LoginScreen() {
             <TextInput value={coupon} onChangeText={(value) => {
                 setCoupon(value.toUpperCase());
                 setStatus({ type: 'idle', message: '' });
-            }} autoCapitalize="characters" placeholder="Enter coupon code" placeholderTextColor={palette.muted} className={`h-14 rounded-[18px] border px-4 text-[15px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927] text-white' : 'border-line bg-card text-ink'}`}/>
+            }} autoCapitalize="characters" placeholder="Enter coupon code" placeholderTextColor={palette.muted} className={`h-14 rounded-[18px] border px-4 text-[15px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808] text-white' : 'border-line bg-card text-ink'}`}/>
             <AnimatedPressable className="mt-1.5 items-center rounded-[18px] bg-brand py-4" disabled={coupon.length < 3} onPress={handleCouponLogin}>
               <Text className="text-[15px] font-extrabold text-white">
                 {isExistingUser ? 'Login with Coupon' : 'Continue with Coupon'}
@@ -146,9 +146,9 @@ export default function LoginScreen() {
             <TextInput value={email} onChangeText={(value) => {
                 setEmail(value);
                 setStatus({ type: 'idle', message: '' });
-            }} autoCapitalize="none" keyboardType="email-address" placeholder="Enter email" placeholderTextColor={palette.muted} className={`h-14 rounded-[18px] border px-4 text-[15px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927] text-white' : 'border-line bg-card text-ink'}`}/>
+            }} autoCapitalize="none" keyboardType="email-address" placeholder="Enter email" placeholderTextColor={palette.muted} className={`h-14 rounded-[18px] border px-4 text-[15px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808] text-white' : 'border-line bg-card text-ink'}`}/>
             <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Password</Text>
-            <View className={`h-14 flex-row items-center gap-2.5 rounded-[18px] border px-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+            <View className={`h-14 flex-row items-center gap-2.5 rounded-[18px] border px-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <TextInput value={password} onChangeText={(value) => {
                     setPassword(value);
                     setStatus({ type: 'idle', message: '' });

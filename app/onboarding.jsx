@@ -111,7 +111,7 @@ export default function OnboardingScreen() {
     return (<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
          <AnimatedBackground /> 
           <ScrollView className="flex-1" contentContainerClassName="flex-grow gap-5 px-6 py-6" showsVerticalScrollIndicator={false}>
-        <Pressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => {
+        <Pressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => {
             if (step > 0) {
                 setStep((value) => value - 1);
                 return;
@@ -121,7 +121,7 @@ export default function OnboardingScreen() {
           <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
         </Pressable>
         {step > 0 && step < totalSteps - 1 ? (<View className="flex-row gap-1.5">
-            {Array.from({ length: progressCount }).map((_, index) => (<View key={index} className={`h-1.5 flex-1 rounded-full ${index < step ? 'bg-brand' : preferences.darkMode ? 'bg-[#312636]' : 'bg-[#e6e0dc]'}`}/>))}
+            {Array.from({ length: progressCount }).map((_, index) => (<View key={index} className={`h-1.5 flex-1 rounded-full ${index < step ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#e6e0dc]'}`}/>))}
           </View>) : null}
 
         <Animated.View style={{ opacity: stepOpacity, transform: [{ translateX: stepTranslate }] }}>
@@ -130,8 +130,8 @@ export default function OnboardingScreen() {
             <Text className={`text-center text-[28px] font-black leading-9 ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Choose Your Roadmap</Text>
             <Text className={`max-w-[300px] text-center text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Tell us who you are so we can personalize your experience</Text>
             <View className="w-full gap-4">
-              <Pressable onPress={() => setUserType('student')} className={`flex-row items-center gap-4 rounded-[24px] border-2 p-[18px] ${userType === 'student' ? 'border-brand bg-[#fff1f4]' : preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
-                <View className={`h-14 w-14 items-center justify-center rounded-[18px] ${userType === 'student' ? 'bg-brand' : preferences.darkMode ? 'bg-[#312636]' : 'bg-[#eee8e5]'}`}>
+              <Pressable onPress={() => setUserType('student')} className={`flex-row items-center gap-4 rounded-[24px] border-2 p-[18px] ${userType === 'student' ? 'border-brand bg-[#fff1f4]' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+                <View className={`h-14 w-14 items-center justify-center rounded-[18px] ${userType === 'student' ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#eee8e5]'}`}>
                   <Text className={`text-[22px] font-black ${userType === 'student' ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-muted'}`}>S</Text>
                 </View>
                 <View className="flex-1 gap-0.5">
@@ -139,8 +139,8 @@ export default function OnboardingScreen() {
                   <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Explore career paths for myself</Text>
                 </View>
               </Pressable>
-              <Pressable onPress={() => setUserType('parent')} className={`flex-row items-center gap-4 rounded-[24px] border-2 p-[18px] ${userType === 'parent' ? 'border-brand bg-[#fff1f4]' : preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
-                <View className={`h-14 w-14 items-center justify-center rounded-[18px] ${userType === 'parent' ? 'bg-brand' : preferences.darkMode ? 'bg-[#312636]' : 'bg-[#eee8e5]'}`}>
+              <Pressable onPress={() => setUserType('parent')} className={`flex-row items-center gap-4 rounded-[24px] border-2 p-[18px] ${userType === 'parent' ? 'border-brand bg-[#fff1f4]' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+                <View className={`h-14 w-14 items-center justify-center rounded-[18px] ${userType === 'parent' ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#eee8e5]'}`}>
                   <Text className={`text-[22px] font-black ${userType === 'parent' ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-muted'}`}>P</Text>
                 </View>
                 <View className="flex-1 gap-0.5">
@@ -211,7 +211,7 @@ function StepInput({ title, icon, value, setValue, placeholder, darkMode, }) {
     return (<View className="gap-[14px] pt-2">
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
       <Text className={`text-center text-[24px] font-black leading-8 ${darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
-      <TextInput value={value} onChangeText={setValue} placeholder={placeholder} placeholderTextColor={palette.muted} className={`h-14 rounded-[18px] border px-4 text-[16px] ${darkMode ? 'border-[#2d2430] bg-[#211927] text-white' : 'border-line bg-card text-ink'}`}/>
+      <TextInput value={value} onChangeText={setValue} placeholder={placeholder} placeholderTextColor={palette.muted} className={`h-14 rounded-[18px] border px-4 text-[16px] ${darkMode ? 'border-[#1a1a1a] bg-[#080808] text-white' : 'border-line bg-card text-ink'}`}/>
     </View>);
 }
 function ChoiceGrid({ title, icon, options, selected, onSelect, otherValue, setOtherValue, darkMode, }) {
@@ -219,7 +219,7 @@ function ChoiceGrid({ title, icon, options, selected, onSelect, otherValue, setO
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
       <Text className={`text-center text-[24px] font-black leading-8 ${darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
       <ChoiceRows options={options} renderOption={(option) => <Chip darkMode={darkMode} key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>}/>
-      {selected === 'Other' ? (<TextInput value={otherValue} onChangeText={setOtherValue} placeholder="Please write here" placeholderTextColor={palette.muted} className={`h-14 rounded-[18px] border px-4 text-[16px] ${darkMode ? 'border-[#2d2430] bg-[#211927] text-white' : 'border-line bg-card text-ink'}`}/>) : null}
+      {selected === 'Other' ? (<TextInput value={otherValue} onChangeText={setOtherValue} placeholder="Please write here" placeholderTextColor={palette.muted} className={`h-14 rounded-[18px] border px-4 text-[16px] ${darkMode ? 'border-[#1a1a1a] bg-[#080808] text-white' : 'border-line bg-card text-ink'}`}/>) : null}
     </View>);
 }
 function ChoiceList({ title, subtitle, icon, options, selected, onSelect, darkMode, }) {
@@ -248,7 +248,7 @@ function ChoiceRows({ options, renderOption }) {
     </View>);
 }
 function Chip({ label, active, onPress, darkMode }) {
-    return (<AnimatedPressable onPress={onPress} className={`min-h-[64px] w-full items-center justify-center rounded-[18px] border px-3 py-[14px] ${active ? 'border-brand bg-brand' : darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} gradient={active}>
+    return (<AnimatedPressable onPress={onPress} className={`min-h-[64px] w-full items-center justify-center rounded-[18px] border px-3 py-[14px] ${active ? 'border-brand bg-brand' : darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} gradient={active}>
       <Text className={`text-center text-[13px] font-bold leading-[18px] ${active ? 'text-white' : darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
     </AnimatedPressable>);
 }
@@ -342,8 +342,8 @@ function BeeArrivalAnimation({ darkMode }) {
         <Animated.View style={{
                 opacity: ringOpacity,
                 transform: [{ scale: ringScale }],
-            }} className={`absolute h-36 w-36 rounded-full border border-brand/25 ${darkMode ? 'bg-[#211927]' : 'bg-[#fff1f4]'}`}/>
-        <Animated.View className={`h-[108px] w-[108px] items-center justify-center rounded-[32px] ${darkMode ? 'bg-[#211927]' : 'bg-white'}`} style={{ transform: [{ scale: boxScale }, { rotate: boxSpin }] }}>
+            }} className={`absolute h-36 w-36 rounded-full border border-brand/25 ${darkMode ? 'bg-[#080808]' : 'bg-[#fff1f4]'}`}/>
+        <Animated.View className={`h-[108px] w-[108px] items-center justify-center rounded-[32px] ${darkMode ? 'bg-[#080808]' : 'bg-white'}`} style={{ transform: [{ scale: boxScale }, { rotate: boxSpin }] }}>
           <Animated.View style={{
                     opacity: beeOpacity,
                     transform: [{ translateY: beeTranslate }, { scale: beeEntranceScale }, { translateY: beeFloat }, { rotate: beeTilt }, { scale: beeScale }],
