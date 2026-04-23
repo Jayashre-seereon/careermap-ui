@@ -5,19 +5,23 @@ import { useAppState } from '../../src/app-state';
 import { palette, subscriptions } from '../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
 export default function SubscriptionScreen() {
-    const { activePlanId } = useAppState();
+    const { activePlanId, preferences } = useAppState();
     const { returnTo } = useLocalSearchParams();
     return (<Screen>
       <SectionHeader title="Subscription Plans" subtitle="Key plans from the Vercel prototype, adapted here as mobile cards."/>
 
       <View className="gap-[14px] ">
-        {subscriptions.map((plan) => (<View key={plan.id} className={`gap-3 p-4 rounded-[24px]  bg-card p-[18px]${plan.recommended || plan.highestseller
-  ? 'border-[#dcb3a3] shadow-card'
-  : 'border-line'}`}>
+        {subscriptions.map((plan) => (<View key={plan.id} className={`gap-3 rounded-[24px] border p-[18px] ${plan.recommended || plan.highestseller
+  ? preferences.darkMode
+      ? 'border-[#5b3341] bg-[#211927]'
+      : 'border-[#dcb3a3] bg-card shadow-card'
+  : preferences.darkMode
+      ? 'border-[#2d2430] bg-[#211927]'
+      : 'border-line bg-card'}`}>
             <View className="flex-row items-start justify-between gap-3 ">
               <View className="flex-1 gap-1.5">
-                <Text className="text-[18px] font-black text-ink">{plan.name}</Text>
-                <Text className="text-[13px] leading-5 text-muted">{plan.description}</Text>
+                <Text className={`text-[18px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{plan.name}</Text>
+                <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{plan.description}</Text>
               </View>
              <View className="flex-row gap-2 ">
   {plan.recommended ? (
@@ -32,7 +36,7 @@ export default function SubscriptionScreen() {
             <View className="gap-2.5 ">
               {plan.features.map((feature) => (<View key={feature} className="flex-row items-center gap-2.5">
                   <Ionicons name="checkmark-circle" size={18} color={palette.green}/>
-                  <Text className="text-[14px] font-semibold text-ink">{feature}</Text>
+                  <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{feature}</Text>
                 </View>))}
             </View>
             <AnimatedPressable className="mt-1 rounded-[14px] py-3" onPress={() => router.push({

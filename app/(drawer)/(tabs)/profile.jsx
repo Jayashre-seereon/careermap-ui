@@ -109,13 +109,13 @@ export default function ProfileScreen() {
     if (editMode) {
         return (<Screen>
         <View className="flex-row items-center gap-3">
-          <AnimatedPressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => setEditMode(false)}>
-            <Ionicons name="arrow-back" size={18} color={palette.text}/>
+          <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => setEditMode(false)}>
+            <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
           </AnimatedPressable>
-          <Text className="text-[20px] font-black text-ink">Edit Profile</Text>
+          <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Edit Profile</Text>
         </View>
 
-        <View className="gap-3 rounded-[24px] border border-line bg-card p-5">
+        <View className={`gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
           {[
                 { key: 'name', label: onboarding.userType === 'parent' ? 'Parent Name' : 'Full Name', placeholder: 'Enter full name', keyboardType: 'default' },
                 { key: 'email', label: 'Email Address', placeholder: 'Enter email address', keyboardType: 'email-address' },
@@ -126,34 +126,34 @@ export default function ProfileScreen() {
                 { key: 'stateName', label: 'State', placeholder: 'Enter state', keyboardType: 'default' },
                 { key: 'dob', label: 'Date of Birth', placeholder: 'YYYY-MM-DD', keyboardType: 'numbers-and-punctuation' },
             ].map((field) => (<View key={field.key} className="gap-1.5">
-              <Text className="text-[12px] font-extrabold text-muted">{field.label}</Text>
-              {field.key === 'password' ? (<View className="flex-row items-center gap-3 rounded-[18px] border border-line bg-surface px-4 py-[14px]">
-                  <TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} secureTextEntry={!showPassword} className="flex-1 text-[14px] text-ink"/>
+              <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{field.label}</Text>
+              {field.key === 'password' ? (<View className={`flex-row items-center gap-3 rounded-[18px] border px-4 py-[14px] ${preferences.darkMode ? 'border-[#3a2f40] bg-[#312636]' : 'border-line bg-surface'}`}>
+                  <TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} secureTextEntry={!showPassword} className={`flex-1 text-[14px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}/>
                   <AnimatedPressable onPress={() => setShowPassword((value) => !value)}>
                     <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={palette.muted}/>
                   </AnimatedPressable>
-                </View>) : (<TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} className="rounded-[18px] border border-line bg-surface px-4 py-[14px] text-[14px] text-ink"/>)}
+                </View>) : (<TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#3a2f40] bg-[#312636] text-white' : 'border-line bg-surface text-ink'}`}/>)}
             </View>))}
 
           {onboarding.userType === 'parent' ? (<View className="gap-1.5">
-              <Text className="text-[12px] font-extrabold text-muted">Child&apos;s Name</Text>
-              <TextInput value={form.childName} onChangeText={(value) => updateField('childName', value)} placeholder="Enter child's name" placeholderTextColor={palette.muted} className="rounded-[18px] border border-line bg-surface px-4 py-[14px] text-[14px] text-ink"/>
+              <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Child&apos;s Name</Text>
+              <TextInput value={form.childName} onChangeText={(value) => updateField('childName', value)} placeholder="Enter child's name" placeholderTextColor={palette.muted} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#3a2f40] bg-[#312636] text-white' : 'border-line bg-surface text-ink'}`}/>
             </View>) : null}
 
           <View className="gap-2">
-            <Text className="text-[12px] font-extrabold text-muted">Gender</Text>
+            <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Gender</Text>
             <View className="flex-row gap-2.5">
               {['Male', 'Female', 'Other'].map((option) => {
                 const active = form.gender === option;
-                return (<AnimatedPressable key={option} className={`flex-1 rounded-[16px] border py-2 px-3 ${active ? 'border-brand bg-brand' : 'border-line bg-card'}`} onPress={() => updateField('gender', option)}>
-                    <Text className={`text-center text-[13px] font-extrabold ${active ? 'text-white' : 'text-ink'}`}>{option}</Text>
+                return (<AnimatedPressable key={option} className={`flex-1 rounded-[16px] border py-2 px-3 ${active ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={() => updateField('gender', option)}>
+                    <Text className={`text-center text-[13px] font-extrabold ${active ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{option}</Text>
                   </AnimatedPressable>);
             })}
             </View>
           </View>
         </View>
 
-        <View className="gap-3 rounded-[24px] border border-line bg-card p-5">
+        <View className={`gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
           <Text className="text-[15px] font-black text-brand">Onboarding Details</Text>
           <View className="gap-2">
             {[
@@ -162,9 +162,9 @@ export default function ProfileScreen() {
                 ['Stream', onboarding.selectedStream || 'Not set'],
                 ['Guidance', onboarding.selectedGuidance || 'Not set'],
                 ['Interests', onboarding.selectedInterests.length > 0 ? onboarding.selectedInterests.join(', ') : 'Not set'],
-            ].map(([label, value]) => (<View key={label} className="flex-row items-center justify-between rounded-[16px] bg-surface px-4 py-3">
-                <Text className="text-[12px] font-bold text-muted">{label}</Text>
-                <Text className="text-[12px] font-extrabold text-ink">{value}</Text>
+            ].map(([label, value]) => (<View key={label} className={`flex-row items-center justify-between rounded-[16px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}>
+                <Text className={`text-[12px] font-bold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
+                <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{value}</Text>
               </View>))}
           </View>
 
@@ -218,15 +218,15 @@ export default function ProfileScreen() {
             const isOpen = sectionKey !== null && openSection === sectionKey;
             return (<StaggerFadeUpItem key={item.label} index={index}>
               <View>
-              <AnimatedPressable className={`flex-row items-center justify-between px-4 py-4 ${index < menuItems.length - 1 || isOpen ? 'border-b border-line' : ''}`} onPress={item.action}>
+              <AnimatedPressable className={`flex-row items-center justify-between px-4 py-4 ${index < menuItems.length - 1 || isOpen ? preferences.darkMode ? 'border-b border-[#2d2430]' : 'border-b border-line' : ''}`} onPress={item.action}>
                 <View className="flex-row items-center gap-3">
-                  <View className="h-9 w-9 items-center justify-center rounded-[12px] bg-surface">
+                  <View className={`h-9 w-9 items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#141417]' : 'bg-surface'}`}>
                     <Ionicons name={item.icon} size={18} color={item.tone}/>
                   </View>
-                  <Text className="text-[14px] font-bold text-ink">{item.label}</Text>
+                  <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.label}</Text>
                 </View>
                 <View className="flex-row items-center gap-2">
-                  {item.value ? <Text className="text-[11px] text-muted">{item.value}</Text> : null}
+                  {item.value ? <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.value}</Text> : null}
                   <Ionicons name={isOpen ? 'chevron-up' : 'chevron-forward'} size={18} color={palette.muted}/>
                 </View>
               </AnimatedPressable>
@@ -236,7 +236,7 @@ export default function ProfileScreen() {
         })}
       </View>
 
-      <AnimatedPressable className="flex-row items-center justify-center gap-2 rounded-[18px] border border-[#efc8c0] bg-[#fff4f2] py-4" onPress={() => router.replace('/auth-entry')}>
+      <AnimatedPressable className={`flex-row items-center justify-center gap-2 rounded-[18px] border py-4 ${preferences.darkMode ? 'border-[#5a2630] bg-[#2b151b]' : 'border-[#efc8c0] bg-[#fff4f2]'}`} onPress={() => router.replace('/auth-entry')}>
         <Ionicons name="log-out-outline" size={18} color={palette.danger}/>
         <Text className="text-[14px] font-extrabold text-danger">Logout</Text>
       </AnimatedPressable>

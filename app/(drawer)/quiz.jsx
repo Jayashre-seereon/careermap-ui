@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Text, View, Pressable } from 'react-native';
+import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { Screen, SectionHeader } from '../../src/careermap-ui';
 const quizzes = [
@@ -17,6 +18,7 @@ const sampleQuestions = [
     { q: 'RAM stands for?', options: ['Random Access Memory', 'Read Access Memory', 'Run Access Memory', 'Random Assign Memory'], correct: 0 },
 ];
 export default function QuizScreen() {
+    const { preferences } = useAppState();
     const [activeQuiz, setActiveQuiz] = useState(null);
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState(Array(sampleQuestions.length).fill(null));
@@ -29,12 +31,12 @@ export default function QuizScreen() {
                     setCurrentQuestion(0);
                     setAnswers(Array(sampleQuestions.length).fill(null));
                     setCompleted(false);
-                }} className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]">
-              <Ionicons name="arrow-back" size={18} color={palette.text}/>
+                }} className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#211927]' : 'bg-[#f2ebe6]'}`}>
+              <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
-        <View className="items-center gap-3 rounded-[26px] border border-line bg-card p-[22px]">
+        <View className={`items-center gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
           <Text className="text-[40px] font-black text-brand">{score}/5</Text>
-          <Text className="text-center text-[17px] font-extrabold text-ink">
+          <Text className={`text-center text-[17px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
             {score >= 4 ? 'Excellent work. You are doing great.' : score >= 2 ? 'Good effort. Keep learning.' : 'Keep practicing. You will improve.'}
           </Text>
           <Pressable onPress={() => {
@@ -55,17 +57,17 @@ export default function QuizScreen() {
         <View className="h-2 overflow-hidden rounded-full bg-line">
           <View className="h-full rounded-full bg-success" style={{ width: `${((currentQuestion + 1) / sampleQuestions.length) * 100}%` }}/>
         </View>
-        <View className="gap-2 rounded-[22px] border border-line bg-card p-5">
-          <Text className="text-[10px] font-extrabold uppercase tracking-[1px] text-muted">Question {currentQuestion + 1}</Text>
-          <Text className="text-[18px] font-extrabold leading-[26px] text-ink">{current.q}</Text>
+        <View className={`gap-2 rounded-[22px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+          <Text className={`text-[10px] font-extrabold uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Question {currentQuestion + 1}</Text>
+          <Text className={`text-[18px] font-extrabold leading-[26px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{current.q}</Text>
         </View>
         <View className="gap-3">
           {current.options.map((option, index) => (<Pressable key={option} onPress={() => {
                     const nextAnswers = [...answers];
                     nextAnswers[currentQuestion] = index;
                     setAnswers(nextAnswers);
-                }} className={`rounded-[18px] border p-[15px] ${answers[currentQuestion] === index ? 'border-brand bg-brand' : 'border-line bg-card'}`}>
-              <Text className={`text-[14px] font-bold ${answers[currentQuestion] === index ? 'text-white' : 'text-ink'}`}>
+                }} className={`rounded-[18px] border p-[15px] ${answers[currentQuestion] === index ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+              <Text className={`text-[14px] font-bold ${answers[currentQuestion] === index ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>
                 {String.fromCharCode(65 + index)}. {option}
               </Text>
             </Pressable>))}
@@ -89,12 +91,12 @@ export default function QuizScreen() {
                 setActiveQuiz(index);
                 setCurrentQuestion(0);
                 setAnswers(Array(sampleQuestions.length).fill(null));
-            }} className="gap-1.5 rounded-[22px] border border-line bg-card p-[18px]">
+            }} className={`gap-1.5 rounded-[22px] border p-[18px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
             <View className="mb-1 h-[50px] w-[50px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.blue}12` }}>
               <Text className="text-[12px] font-black" style={{ color: palette.blue }}>{quiz.emoji}</Text>
             </View>
-            <Text className="text-[16px] font-extrabold text-ink">{quiz.title}</Text>
-            <Text className="text-[13px] leading-5 text-muted">{quiz.description}</Text>
+            <Text className={`text-[16px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{quiz.title}</Text>
+            <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{quiz.description}</Text>
             <Text className="text-[12px] font-extrabold text-brand">{quiz.questions} questions</Text>
           </Pressable>))}
       </View>

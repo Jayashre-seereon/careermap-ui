@@ -333,7 +333,7 @@ const defaultDetail = (name) => ({
 export default function CareerLibraryScreen() {
     const params = useLocalSearchParams();
     const insets = useSafeAreaInsets();
-    const { canAccessFreeDetail, isUnlocked, registerFreeDetailAccess, savedCareers, toggleSavedCareer } = useAppState();
+    const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess, savedCareers, toggleSavedCareer } = useAppState();
     const [currentLevel, setCurrentLevel] = useState('streams');
     const [selectedStream, setSelectedStream] = useState(null);
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -403,16 +403,16 @@ export default function CareerLibraryScreen() {
         }
     };
     const renderStreams = () => (<View className="flex-row flex-wrap gap-3">
-      {streams.map((stream) => (<Pressable key={stream.name} onPress={() => handleStreamSelect(stream.name)} className="w-[48%] items-center rounded-[16px] border border-line bg-card p-4">
+      {streams.map((stream) => (<Pressable key={stream.name} onPress={() => handleStreamSelect(stream.name)} className={`w-[48%] items-center rounded-[16px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
           <Text className="mb-2 text-[32px]">{stream.emoji}</Text>
-          <Text className="mb-1 text-center text-[14px] font-bold text-ink">{stream.name}</Text>
-          <Text className="text-center text-[11px] text-muted">{stream.desc}</Text>
+          <Text className={`mb-1 text-center text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{stream.name}</Text>
+          <Text className={`text-center text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{stream.desc}</Text>
         </Pressable>))}
     </View>);
     const renderCategories = () => (<View className="flex-row flex-wrap gap-3">
-      {categories[selectedStream]?.map((category) => (<Pressable key={category.name} onPress={() => handleCategorySelect(category.name)} className="w-[48%] items-center rounded-[16px] border border-line bg-card p-4">
+      {categories[selectedStream]?.map((category) => (<Pressable key={category.name} onPress={() => handleCategorySelect(category.name)} className={`w-[48%] items-center rounded-[16px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
           <Text className="mb-2 text-[32px]">{category.emoji}</Text>
-          <Text className="mb-1 text-center text-[14px] font-bold text-ink">{category.name}</Text>
+          <Text className={`mb-1 text-center text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{category.name}</Text>
         </Pressable>))}
     </View>);
     const renderPrograms = () => {
@@ -423,10 +423,10 @@ export default function CareerLibraryScreen() {
                 return (<StaggerFadeUpItem key={program.name} index={index}>
                   <Pressable onPress={() => {
                         handleProgramSelect(program.name);
-                    }} className="flex-row items-center rounded-[12px] border border-line bg-card p-3">
+                    }} className={`flex-row items-center rounded-[12px] border p-3 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
             <View className="flex-1 flex-row items-center">
               <Text className="mr-3 text-[24px]">{program.emoji}</Text>
-              <Text className="flex-1 text-[14px] font-semibold text-ink">{program.name}</Text>
+              <Text className={`flex-1 text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{program.name}</Text>
             </View>
             {!isUnlocked('career-library') ? (<View className="mr-2 rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
                 <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
@@ -441,9 +441,9 @@ export default function CareerLibraryScreen() {
         const specializationList = specializations[selectedProgram] || [];
         if (specializationList.length === 0) {
             const unlockedItem = canOpenCareerItem(selectedProgram);
-            return (<Pressable onPress={() => handleSpecializationSelect(selectedProgram)} className="items-center rounded-[16px] border border-line bg-card p-6">
-          <Text className="mb-2 text-[18px] font-bold text-ink">{selectedProgram}</Text>
-          <Text className="text-[13px] text-muted">{unlockedItem ? 'View general details' : 'Tap to unlock this career'}</Text>
+            return (<Pressable onPress={() => handleSpecializationSelect(selectedProgram)} className={`items-center rounded-[16px] border p-6 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+          <Text className={`mb-2 text-[18px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{selectedProgram}</Text>
+          <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{unlockedItem ? 'View general details' : 'Tap to unlock this career'}</Text>
           {!isUnlocked('career-library') ? (<View className="mt-3 rounded-full px-3 py-1.5" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
               <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE ACCESS' : 'LOCKED'}</Text>
             </View>) : null}
@@ -455,10 +455,10 @@ export default function CareerLibraryScreen() {
                 return (<StaggerFadeUpItem key={specialization.name} index={index}>
                   <Pressable onPress={() => {
                         handleSpecializationSelect(specialization.name);
-                    }} className="flex-row items-center rounded-[12px] border border-line bg-card p-3">
+                    }} className={`flex-row items-center rounded-[12px] border p-3 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
             <View className="flex-1 flex-row items-center">
               <Text className="mr-3 text-[24px]">{specialization.emoji}</Text>
-              <Text className="flex-1 text-[14px] font-semibold text-ink">{specialization.name}</Text>
+              <Text className={`flex-1 text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{specialization.name}</Text>
             </View>
             {!isUnlocked('career-library') ? (<View className="mr-2 rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
                 <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
@@ -481,57 +481,57 @@ export default function CareerLibraryScreen() {
             </Text>
           </View>) : null}
 
-        <View className="mb-4 items-center rounded-[24px] border border-[#f0e2da] bg-[#fff9f6] px-4 py-6">
-          <View className="mb-3 h-[76px] w-[76px] items-center justify-center rounded-[24px] bg-[#ffecef]">
+        <View className={`mb-4 items-center rounded-[24px] border px-4 py-6 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-[#f0e2da] bg-[#fff9f6]'}`}>
+          <View className={`mb-3 h-[76px] w-[76px] items-center justify-center rounded-[24px] ${preferences.darkMode ? 'bg-[#2a1d26]' : 'bg-[#ffecef]'}`}>
             <Ionicons name="school-outline" size={34} color={palette.primary}/>
           </View>
-          <Text className="text-center text-[24px] font-black text-ink">{detail.title}</Text>
-          <Text className="mt-2 text-center text-[13px] leading-5 text-muted">{detail.overview}</Text>
+          <Text className={`text-center text-[24px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{detail.title}</Text>
+          <Text className={`mt-2 text-center text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{detail.overview}</Text>
         </View>
-        <Pressable onPress={() => toggleSavedCareer(detail.title)} className={`mb-4 flex-row items-center justify-center gap-2 rounded-[14px] border px-4 py-3 ${isSaved ? 'border-brand bg-brand' : 'border-line bg-card'}`}>
+        <Pressable onPress={() => toggleSavedCareer(detail.title)} className={`mb-4 flex-row items-center justify-center gap-2 rounded-[14px] border px-4 py-3 ${isSaved ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
           <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={isSaved ? '#fff' : palette.primary}/>
           <Text className={`text-[13px] font-extrabold ${isSaved ? 'text-white' : 'text-brand'}`}>{isSaved ? 'Saved to Wishlist' : 'Save to Wishlist'}</Text>
         </Pressable>
 
-        <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
-          <Text className="mb-2 text-[14px] font-bold text-ink">Career Path</Text>
+        <View className={`mb-5 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+          <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Career Path</Text>
           {detail.path.map((step, i) => (<View key={i} className="mb-2.5 flex-row items-start">
               <Text className="mr-3 h-7 w-7 rounded-full bg-brand text-center text-[13px] font-bold leading-7 text-white">{i + 1}</Text>
-              <Text className="flex-1 text-[13px] leading-5 text-ink">{step}</Text>
+              <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{step}</Text>
             </View>))}
         </View>
 
-        <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
-          <Text className="mb-2 text-[14px] font-bold text-ink">Education</Text>
-          <Text className="pt-1 text-[13px] leading-5 text-muted">{detail.education}</Text>
+        <View className={`mb-5 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+          <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Education</Text>
+          <Text className={`pt-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{detail.education}</Text>
         </View>
 
-        <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
-          <Text className="mb-2 text-[14px] font-bold text-ink">Entrance Exams</Text>
+        <View className={`mb-5 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+          <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Entrance Exams</Text>
           {detail.exams.map(exam => (<View key={exam} className="mb-2 flex-row items-start">
-              <View className="mr-2 mt-1.5 h-1.5 w-1.5 rounded-full bg-[#b9b2b8]"/>
-              <Text className="flex-1 text-[13px] leading-5 text-muted">{exam}</Text>
+              <View className={`mr-2 mt-1.5 h-1.5 w-1.5 rounded-full ${preferences.darkMode ? 'bg-[#8b7f8f]' : 'bg-[#b9b2b8]'}`}/>
+              <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{exam}</Text>
             </View>))}
         </View>
 
-        <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
-          <Text className="mb-2 text-[14px] font-bold text-ink">Job Opportunities</Text>
+        <View className={`mb-5 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+          <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Job Opportunities</Text>
           {detail.jobs.map(job => (<View key={job} className="mb-2 flex-row items-start">
-              <View className="mr-2 mt-1.5 h-1.5 w-1.5 rounded-full bg-[#b9b2b8]"/>
-              <Text className="flex-1 text-[13px] leading-5 text-muted">{job}</Text>
+              <View className={`mr-2 mt-1.5 h-1.5 w-1.5 rounded-full ${preferences.darkMode ? 'bg-[#8b7f8f]' : 'bg-[#b9b2b8]'}`}/>
+              <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{job}</Text>
             </View>))}
         </View>
 
-        <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
-          <Text className="mb-2 text-[14px] font-bold text-ink">Salary Range</Text>
+        <View className={`mb-5 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+          <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Salary Range</Text>
           <Text className="text-[16px] font-bold text-brand">{detail.salary}</Text>
         </View>
 
-        <View className="mb-5 rounded-[20px] border border-line bg-card p-4">
-          <Text className="mb-2 text-[14px] font-bold text-ink">Top Institutes</Text>
+        <View className={`mb-5 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+          <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Top Institutes</Text>
           {detail.institutes.map(institute => (<View key={institute} className="mb-2 flex-row items-start">
               <Ionicons name="star" size={12} color={palette.secondary} style={{ marginRight: 8, marginTop: 3 }}/>
-              <Text className="flex-1 text-[13px] leading-5 text-muted">{institute}</Text>
+              <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institute}</Text>
             </View>))}
         </View>
       </ScrollView>
@@ -553,9 +553,9 @@ export default function CareerLibraryScreen() {
     return (<Screen scroll={true} animationKey={animationKey}>
       <View className="flex-row items-center">
         {currentLevel !== 'streams' && (<Pressable onPress={handleBack} className="mr-3 h-10 w-10 items-center justify-center rounded-full">
-            <Ionicons name="chevron-back" size={24} color={palette.text}/>
+            <Ionicons name="chevron-back" size={24} color={preferences.darkMode ? '#ffffff' : palette.text}/>
           </Pressable>)}
-        <Text className="text-[18px] font-extrabold text-ink">{getTitle()}</Text>
+        <Text className={`text-[18px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getTitle()}</Text>
       </View>
 
       {currentLevel === 'details' ? (renderDetails()) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>

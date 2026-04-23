@@ -3,10 +3,13 @@ import { router } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAppState } from '../src/app-state';
 import { AnimatedBackground } from '../src/animated-background';
 import { BeeMascot } from '../src/bee-mascot';
+import { palette } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
 export default function AuthEntryScreen() {
+    const { preferences } = useAppState();
     const screenOpacity = useRef(new Animated.Value(0)).current;
     const screenTranslate = useRef(new Animated.Value(24)).current;
     const heroOpacity = useRef(new Animated.Value(0)).current;
@@ -71,33 +74,33 @@ export default function AuthEntryScreen() {
             <BeeMascot size={100} draggable={false}/>
           </View>
           <View className="items-center gap-2">
-            <Text className="text-center text-[30px] font-black text-ink">Welcome to Career Map</Text>
-            <Text className="max-w-[300px] text-center text-[14px] leading-[22px] text-muted">
+            <Text className={`text-center text-[30px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Welcome to Career Map</Text>
+            <Text className={`max-w-[300px] text-center text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
               Choose how you want to continue.
             </Text>
           </View>
           </Animated.View>
           <Animated.View className="w-full gap-4 self-center" style={{ opacity: cardsOpacity, transform: [{ translateY: cardsTranslate }] }}>
           <View className="w-full gap-4 self-center">
-            <AnimatedPressable className="rounded-[24px] border border-line bg-card p-5" onPress={() => router.push('/onboarding')}>
+            <AnimatedPressable className={`rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={() => router.push('/onboarding')}>
               <View className="flex-row items-center gap-4">
                 <View className="h-14 w-14 items-center justify-center rounded-[18px] bg-brand">
                   <Ionicons name="person-add-outline" size={26} color="#fff"/>
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[18px] font-extrabold text-ink">New User</Text>
-                  <Text className="mt-1 text-[12px] leading-5 text-muted">Start onboarding and create your profile.</Text>
+                  <Text className={`text-[18px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>New User</Text>
+                  <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Start onboarding and create your profile.</Text>
                 </View>
               </View>
             </AnimatedPressable>
-            <AnimatedPressable className="rounded-[24px] border border-line bg-card p-5" onPress={() => router.push({ pathname: '/login', params: { userType: 'existing' } })}>
+            <AnimatedPressable className={`rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={() => router.push({ pathname: '/login', params: { userType: 'existing' } })}>
               <View className="flex-row items-center gap-4">
-                <View className="h-14 w-14 items-center justify-center rounded-[18px] bg-surface">
+                <View className={`h-14 w-14 items-center justify-center rounded-[18px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}>
                   <Ionicons name="log-in-outline" size={26} color="#c11e38"/>
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[18px] font-extrabold text-ink">Existing User</Text>
-                  <Text className="mt-1 text-[12px] leading-5 text-muted">Login with OTP, coupon, or email and password.</Text>
+                  <Text className={`text-[18px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Existing User</Text>
+                  <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Login with OTP, coupon, or email and password.</Text>
                 </View>
               </View>
             </AnimatedPressable>
