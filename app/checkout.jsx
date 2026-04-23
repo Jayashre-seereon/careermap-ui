@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
@@ -70,8 +71,7 @@ export default function CheckoutScreen() {
     const renderPaymentDetails = (methodId) => {
         if (methodId === 'upi') {
             return (
-                <View className={`mt-3 gap-2.5 rounded-[18px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-                 
+                <View className={`mt-3 gap-2.5 border-t px-1 pt-4 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
                   <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Add UPI ID</Text>
                   <TextInput value={upiId} onChangeText={setUpiId} autoCapitalize="none" placeholder="yourname@upi" placeholderTextColor={palette.muted} className={`rounded-[16px] border px-[14px] py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
                 </View>
@@ -79,11 +79,8 @@ export default function CheckoutScreen() {
         }
         if (methodId === 'card') {
             return (
-                <View className={`mt-3 gap-2.5 rounded-[18px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-                  <View className="gap-1">
-                    <Text className={`text-[15px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Card Details</Text>
-                    <Text className={`text-[12px] leading-[18px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Use debit or credit card details to complete this payment.</Text>
-                  </View>
+                <View className={`mt-3 gap-2.5 border-t px-1 pt-4 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
+                 
                   <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Cardholder Name</Text>
                   <TextInput value={cardName} onChangeText={(value) => setCardName(normalizeCardName(value))} autoCapitalize="words" placeholder="Name on card" placeholderTextColor={palette.muted} className={`rounded-[16px] border px-[14px] py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
                   <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Card Number</Text>
@@ -102,11 +99,8 @@ export default function CheckoutScreen() {
             );
         }
         return (
-            <View className={`mt-3 gap-2.5 rounded-[18px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-              <View className="gap-1">
-                <Text className={`text-[15px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Net Banking</Text>
-                <Text className={`text-[12px] leading-[18px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Pick your bank and we will take you to the secure login flow.</Text>
-              </View>
+            <View className={`mt-3 gap-2.5 border-t px-1 pt-4 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
+              
               <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Select Bank</Text>
               <View className="flex-row flex-wrap gap-2.5">
                 {popularBanks.map((bank) => {
@@ -127,8 +121,8 @@ export default function CheckoutScreen() {
       <AnimatedBackground />
       <View className="flex-1 px-5 pt-2.5">
         <View className="mb-[14px] flex-row items-start gap-3">
-          <Pressable className={`rounded-[14px] border px-[14px] py-[11px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.back()}>
-            <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Back</Text>
+          <Pressable className={`h-[44px] w-[44px] items-center justify-center rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
           </Pressable>
           <View className="flex-1 gap-1 pt-0.5">
             <Text className={`text-[28px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{isProcessing ? 'Processing' : 'Payment'}</Text>
@@ -190,9 +184,7 @@ export default function CheckoutScreen() {
                             <Text className="text-[14px] font-extrabold" style={{ color: isSelected ? palette.primary : preferences.darkMode ? '#ffffff' : palette.text }}>{method.label}</Text>
                             <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{method.description}</Text>
                           </View>
-                          <View className="h-5 w-5 items-center justify-center rounded-full border-2" style={{ borderColor: isSelected ? palette.primary : preferences.darkMode ? '#2f2f2f' : palette.border }}>
-                            {isSelected ? <View className="h-2 w-2 rounded-full bg-brand"/> : null}
-                          </View>
+                          <Ionicons name={isSelected ? 'chevron-up' : 'chevron-forward'} size={18} color={isSelected ? palette.primary : preferences.darkMode ? '#b7aeb9' : palette.muted}/>
                         </Pressable>
                         {isSelected ? renderPaymentDetails(method.id) : null}
                       </View>

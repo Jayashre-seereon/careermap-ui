@@ -68,9 +68,12 @@ export default function PsychometricTestScreen() {
         <Pressable className="flex-1 items-center rounded-[16px] border border-line bg-card py-[14px]" disabled={current === 0} onPress={() => setCurrent((value) => value - 1)} style={({ pressed }) => ({ opacity: current === 0 || pressed ? 0.45 : 1 })}>
           <Text className={`text-[14px] font-extrabold ${current === 0 ? 'text-muted' : 'text-ink'}`}>Previous</Text>
         </Pressable>
-        {current < questions.length - 1 ? (<AnimatedPressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={!answers[current]} onPress={() => setCurrent((value) => value + 1)}>
-            <Text className="text-[14px] font-extrabold text-white">Next</Text>
-          </AnimatedPressable>) : (<AnimatedPressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={!answers[current]} onPress={() => {
+        {current < questions.length - 1 ? (<View className="flex-1">
+            <AnimatedPressable className="items-center rounded-[16px] bg-brand py-[14px]" disabled={!answers[current]} onPress={() => setCurrent((value) => value + 1)}>
+              <Text className="text-[14px] font-extrabold text-white">Next</Text>
+            </AnimatedPressable>
+          </View>) : (<View className="flex-1">
+            <AnimatedPressable className="items-center rounded-[16px] bg-brand py-[14px]" disabled={!answers[current]} onPress={() => {
                 addTestHistory({
                     id: `psychometric-${Date.now()}`,
                     title: 'Psychometric Test',
@@ -79,8 +82,9 @@ export default function PsychometricTestScreen() {
                 });
                 setCompleted(true);
             }}>
-            <Text className="text-[14px] font-extrabold text-white">Finish Test</Text>
-          </AnimatedPressable>)}
+              <Text className="text-[14px] font-extrabold text-white">Finish Test</Text>
+            </AnimatedPressable>
+          </View>)}
       </View>
     </Screen>);
 }

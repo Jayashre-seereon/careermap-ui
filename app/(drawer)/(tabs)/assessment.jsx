@@ -1,13 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { useAppState } from '../../../src/app-state';
 import { assessmentFeatures, assessmentPolicies, palette, subscriptions } from '../../../src/careermap-data';
 import { AnimatedPressable, Screen } from '../../../src/careermap-ui';
+import { openSubscriptionPrompt } from '../../../src/subscription-flow';
 export default function AssessmentScreen() {
     const { activePlanId, isUnlocked, preferences } = useAppState();
     const testUnlocked = isUnlocked('psychometric-test');
     const psychometricPlan = subscriptions.find((plan) => plan.id === 'psychometric');
+    const returnTarget = useMemo(() => ({
+        pathname: '/(drawer)/(tabs)/assessment',
+    }), []);
     return (<Screen>
       <View className="px-1 pb-8 pt-3">
         <View className="mb-7 flex-row items-center gap-3">
@@ -73,28 +78,19 @@ export default function AssessmentScreen() {
               <Text className={`text-[14px] leading-6 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
                 Subscribe to the {psychometricPlan?.name ?? 'Psychometric Test'} plan to take the full assessment and unlock the report flow.
               </Text>
-           <AnimatedPressable onPress={() => router.push('/(drawer)/subscription')} className="mt-3 w-full self-center rounded-full bg-brand px-5 py-2.5 items-center justify-center">
+           <AnimatedPressable onPress={() => openSubscriptionPrompt(returnTarget)} className="mt-3 w-full self-center rounded-full bg-brand px-5 py-2.5 items-center justify-center">
   <Text className="text-[13px] font-extrabold text-white text-center">
     View Plans
   </Text>
         </AnimatedPressable>
             </View>) : null}
 
-          <AnimatedPressable onPress={() => (testUnlocked ? router.push('/(drawer)/psychometric-test') : router.push('/(drawer)/subscription'))} className="mt-1 rounded-[18px] px-5 py-4" style={{
-            backgroundColor: testUnlocked ? palette.primary : '#d7cbc5',
-            shadowColor: '#711628',
-            shadowOpacity: 0.22,
-            shadowRadius: 16,
-            shadowOffset: { width: 0, height: 8 },
-            elevation: 4,
-        }}>
-            <View className="flex-row items-center justify-center gap-2">
-              <Ionicons name={testUnlocked ? 'play-outline' : 'lock-closed-outline'} size={18} color="#ffffff"/>
-              <Text className="text-[18px] font-extrabold text-white">
-                {testUnlocked ? 'Start Full Test' : 'Subscribe to Take Test'}
-              </Text>
-            </View>
-          </AnimatedPressable>
+          {testUnlocked ? (<AnimatedPressable onPress={() => router.push('/(drawer)/psychometric-test')} className="mt-1 rounded-[16px] bg-brand px-5 py-4">
+              <View className="flex-row items-center justify-center gap-2">
+                <Ionicons name="play-outline" size={18} color="#ffffff"/>
+                <Text className="text-[18px] font-extrabold text-white">Start Full Test</Text>
+              </View>
+            </AnimatedPressable>) : null}
 
           <View className={`rounded-[18px] px-4 py-4 ${preferences.darkMode ? 'bg-[#080808]' : 'bg-[#fff7f3]'}`}>
             <Text className="text-[12px] font-bold uppercase tracking-[0.8px] text-brand">Status</Text>
