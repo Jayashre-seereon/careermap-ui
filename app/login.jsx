@@ -70,7 +70,7 @@ export default function LoginScreen() {
 
         <View className="items-center gap-2.5 pt-2">
           <View className="h-[96px] w-[96px] items-center justify-center ">
-            <BeeMascot size={100}/>
+            <BeeMascot size={100} draggable={false}/>
           </View>
           <Text className="text-center text-[28px] font-black text-ink">
             {isExistingUser ? 'Welcome Back' : 'Continue Your Journey'}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Animated, Dimensions, StyleSheet, View } from 'react-native';
+import { Animated, Dimensions, Platform, StyleSheet, View } from 'react-native';
 import Svg, { Path, Line } from 'react-native-svg';
 import { useAppState } from './app-state';
 const { width, height } = Dimensions.get('window');
@@ -143,6 +143,9 @@ function BookParticle({ x, y, size, opacity, duration, delay, color, lineColor }
 }
 export function AnimatedBackground() {
     const { preferences } = useAppState();
+    const containerProps = Platform.OS === 'web'
+        ? { style: [StyleSheet.absoluteFill, { pointerEvents: 'none' }] }
+        : { style: StyleSheet.absoluteFill, pointerEvents: 'none' };
     const theme = useMemo(() => preferences.darkMode
         ? {
             particle: '#8d1738',
@@ -162,7 +165,7 @@ export function AnimatedBackground() {
             band: '#b07070',
             tip: '#c0392b',
         }, [preferences.darkMode]);
-    return (<View style={StyleSheet.absoluteFill} pointerEvents="none">
+    return (<View {...containerProps}>
       {preferences.darkMode ? <View style={[StyleSheet.absoluteFill, { backgroundColor: '#050505' }]} /> : null}
        {/* Circular particles */}
       {PARTICLES.map((p, i) => (<Particle key={i} {...p} color={theme.particle}/>))}

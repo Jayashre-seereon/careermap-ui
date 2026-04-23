@@ -126,7 +126,7 @@ export default function OnboardingScreen() {
 
         <Animated.View style={{ opacity: stepOpacity, transform: [{ translateX: stepTranslate }] }}>
         {step === 0 ? (<View className="flex-grow items-center justify-center gap-4 py-7">
-            <BeeMascot size={100}/>
+            <BeeMascot size={100} draggable={false}/>
             <Text className="text-center text-[28px] font-black leading-9 text-ink">Choose Your Roadmap</Text>
             <Text className="max-w-[300px] text-center text-[14px] leading-[22px] text-muted">Tell us who you are so we can personalize your experience</Text>
             <View className="w-full gap-4">
@@ -152,7 +152,7 @@ export default function OnboardingScreen() {
           </View>) : null}
 
         {step === 1 ? (<View className="flex-grow items-center justify-center gap-4 py-7">
-            <BeeMascot size={100}/>
+            <BeeMascot size={100} draggable={false}/>
             <Text className="text-center text-[28px] font-black leading-9 text-ink">{userType === 'parent' ? 'Welcome, Parent!' : "Hi! I'm your Career Guide"}</Text>
             <Text className="max-w-[300px] text-center text-[14px] leading-[22px] text-muted">
               {userType === 'parent'
@@ -348,7 +348,7 @@ function BeeArrivalAnimation() {
                     opacity: beeOpacity,
                     transform: [{ translateY: beeTranslate }, { scale: beeEntranceScale }, { translateY: beeFloat }, { rotate: beeTilt }, { scale: beeScale }],
                 }}>
-            <BeeMascot size={76}/>
+            <BeeMascot size={76} draggable={false}/>
           </Animated.View>
         </Animated.View>
       </View>

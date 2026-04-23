@@ -15,8 +15,8 @@ function RippleRing({ progress, endScale, borderWidth, baseOpacity }) {
     });
     return (
         <Animated.View
-            pointerEvents="none"
             style={{
+                pointerEvents: 'none',
                 position: 'absolute',
                 width: 116,
                 height: 116,
@@ -360,8 +360,8 @@ export default function SplashRoute() {
 
             {/* ── Aurora — slides in from top-left then spins ── */}
             <Animated.View
-                pointerEvents="none"
                 style={{
+                    pointerEvents: 'none',
                     position: 'absolute', width: 420, height: 420, borderRadius: 210,
                     backgroundColor: 'rgba(255,255,255,0.05)', top: -140, left: -120,
                     opacity: auroraEnterAlpha,
@@ -375,8 +375,8 @@ export default function SplashRoute() {
 
             {/* ── Orb A — slides in from top-right then floats ── */}
             <Animated.View
-                pointerEvents="none"
                 style={{
+                    pointerEvents: 'none',
                     position: 'absolute', width: 340, height: 340, borderRadius: 160,
                     backgroundColor: 'rgba(255,255,255,0.14)', top: 6, right: -76,
                     opacity: Animated.multiply(orbAEnterAlpha, orbAOpacity),
@@ -389,8 +389,8 @@ export default function SplashRoute() {
 
             {/* ── Orb B — slides in from bottom-left then floats ── */}
             <Animated.View
-                pointerEvents="none"
                 style={{
+                    pointerEvents: 'none',
                     position: 'absolute', width: 300, height: 300, borderRadius: 140,
                     backgroundColor: 'rgba(255,255,255,0.10)', bottom: 8, left: -68,
                     opacity: Animated.multiply(orbBEnterAlpha, orbBOpacity),
@@ -403,8 +403,8 @@ export default function SplashRoute() {
 
             {/* ── Circle Top — slides in from top-right then scale-pulses + floats ── */}
             <Animated.View
-                pointerEvents="none"
                 style={{
+                    pointerEvents: 'none',
                     position: 'absolute', width: 250, height: 250, borderRadius: 110,
                     backgroundColor: 'rgba(255,255,255,0.12)', top: -22, right: -30,
                     opacity: Animated.multiply(circTopEnterAlpha, circleTopOpacity),
@@ -418,8 +418,8 @@ export default function SplashRoute() {
 
             {/* ── Circle Bottom — slides in from bottom-left then scale-pulses + floats ── */}
             <Animated.View
-                pointerEvents="none"
                 style={{
+                    pointerEvents: 'none',
                     position: 'absolute', width: 280, height: 280, borderRadius: 130,
                     backgroundColor: 'rgba(255,255,255,0.11)', bottom: -58, left: -72,
                     opacity: Animated.multiply(circBotEnterAlpha, circleBottomOpacity),
@@ -433,8 +433,8 @@ export default function SplashRoute() {
 
             {/* ── Blob A — enters from left, 3-point float ── */}
             <Animated.View
-                pointerEvents="none"
                 style={{
+                    pointerEvents: 'none',
                     position: 'absolute', width: 200, height: 200, borderRadius: 100,
                     backgroundColor: 'rgba(255,255,255,0.13)',
                     top: '15%', left: -30,
@@ -445,8 +445,8 @@ export default function SplashRoute() {
 
             {/* ── Blob B — enters from right, 3-point float ── */}
             <Animated.View
-                pointerEvents="none"
                 style={{
+                    pointerEvents: 'none',
                     position: 'absolute', width: 170, height: 170, borderRadius: 85,
                     backgroundColor: 'rgba(255,255,255,0.10)',
                     bottom: '18%', right: -30,
@@ -457,8 +457,8 @@ export default function SplashRoute() {
 
             {/* ── Blob C — enters from top, 3-point float ── */}
             <Animated.View
-                pointerEvents="none"
                 style={{
+                    pointerEvents: 'none',
                     position: 'absolute', width: 150, height: 150, borderRadius: 75,
                     backgroundColor: 'rgba(255,255,255,0.09)',
                     top: -20, left: '35%',
@@ -482,7 +482,8 @@ export default function SplashRoute() {
                         <RippleRing progress={ringB} endScale={1.72} borderWidth={2}   baseOpacity={0.15}/>
                         <RippleRing progress={ringC} endScale={1.9}  borderWidth={1.5} baseOpacity={0.1}/>
                     </View>
-                    <Animated.View pointerEvents="none" style={{
+                    <Animated.View style={{
+                        pointerEvents: 'none',
                         position: 'absolute', width: 84, height: 84, borderRadius: 26, backgroundColor: '#ffffff',
                     }}/>
                     <Animated.View style={{
@@ -508,7 +509,8 @@ export default function SplashRoute() {
 
                 <View className="mt-7 h-[6px] w-32 overflow-hidden rounded-full bg-white/20">
                     <Animated.View style={{ height: '100%', width: progressWidth }} className="rounded-full bg-white/70"/>
-                    <Animated.View pointerEvents="none" style={{
+                    <Animated.View style={{
+                        pointerEvents: 'none',
                         position: 'absolute', top: 0, left: 0, width: 44, height: 6,
                         borderRadius: 999, backgroundColor: 'rgb(255, 255, 255)',
                         transform: [{ translateX: shimmerTranslate }],

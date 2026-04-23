@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppState } from '../src/app-state';
+import { AnimatedBackground } from '../src/animated-background';
 import { palette, subscriptions } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
 import { decodeReturnTarget } from '../src/subscription-flow';
@@ -28,12 +29,13 @@ export default function PaymentSuccessScreen() {
   });
 
   const themed = {
-    page: preferences.darkMode ? '#000' : '#ffffff',
-    card: preferences.darkMode ? '#0d1014' : '#ffffff',
-    border: preferences.darkMode ? '#1a1a1a' : '#eee',
+    pageOverlay: preferences.darkMode ? 'rgba(20, 15, 23, 0.82)' : 'rgba(251, 247, 243, 0.82)',
+    card: preferences.darkMode ? 'rgba(16, 13, 18, 0.92)' : 'rgba(255, 255, 255, 0.9)',
+    border: preferences.darkMode ? '#2b1d26' : palette.border,
     text: preferences.darkMode ? '#fff' : palette.text,
     muted: preferences.darkMode ? '#aaa' : palette.muted,
-    successSurface: preferences.darkMode ? '#102217' : '#e9f7ef',
+    successSurface: preferences.darkMode ? 'rgba(47, 147, 103, 0.16)' : `${palette.green}16`,
+    heroSurface: preferences.darkMode ? 'rgba(26, 18, 31, 0.94)' : 'rgba(246, 239, 235, 0.9)',
   };
 
   // activate plan
@@ -73,13 +75,14 @@ export default function PaymentSuccessScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: themed.page }}>
-      <View style={{ flex: 1, paddingHorizontal: 16, paddingVertical: 10, justifyContent: 'space-between' }}>
-
-        {/* TOP */}
-        <View style={{ alignItems: 'center', marginTop: 20 }}>
-
-          {/* Tick */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
+      <AnimatedBackground />
+      <View className="flex-1">
+      <View className="flex-1 justify-center gap-4 px-4 py-4">
+        <View
+          className="items-center justify-center rounded-[28px] px-6 py-8"
+         
+        >
           <Animated.View
             style={{
               transform: [
@@ -94,54 +97,52 @@ export default function PaymentSuccessScreen() {
             }}
           >
             <View
+              className="items-center justify-center"
               style={{
-                height: 80,
-                width: 80,
-                borderRadius: 50,
+                height: 92,
+                width: 92,
+                borderRadius: 46,
                 backgroundColor: themed.successSurface,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Ionicons name="checkmark" size={38} color={palette.green} />
+              <Ionicons name="checkmark" size={42} color={palette.green} />
             </View>
           </Animated.View>
 
-          {/* Title */}
           <Text
+            className="mt-[18px] text-center text-[26px] font-extrabold"
             style={{
-              marginTop: 14,
-              fontSize: 22,
-              fontWeight: '800',
               color: themed.text,
             }}
           >
             Payment Successful!
           </Text>
 
-          {/* Subtitle */}
-          <Text style={{ marginTop: 4, color: themed.muted, fontSize: 13 }}>
-            Your subscription to
+          <Text
+            className="mt-2 text-center text-[14px] leading-[21px]"
+            style={{
+              color: themed.muted,
+            }}
+          >
+            Your subscription is now active and ready to use.
           </Text>
 
           <Text
+            className="mt-[10px] text-center text-[16px] font-bold"
             style={{
-              marginTop: 2,
               color: palette.primary,
-              fontWeight: '700',
             }}
           >
             {plan.name}
           </Text>
         </View>
 
-        {/* CARD */}
         <View
+          className="rounded-[14px] border p-4"
           style={{
-            borderRadius: 14,
-            padding: 14,
             backgroundColor: themed.card,
-            borderWidth: 1,
             borderColor: themed.border,
           }}
         >
@@ -153,27 +154,22 @@ export default function PaymentSuccessScreen() {
           ].map(([label, value], i) => (
             <View
               key={label}
+              className="flex-row justify-between py-[6px]"
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                paddingVertical: 6,
                 borderBottomWidth: i !== 3 ? 1 : 0,
                 borderColor: themed.border,
               }}
             >
-              <Text style={{ color: themed.muted, fontSize: 12 }}>
+              <Text className="text-[12px]" style={{ color: themed.muted }}>
                 {label}
               </Text>
               <Text
+                className="max-w-[60%] text-right text-[12px] font-bold"
                 style={{
                   color:
                     label === 'Validity'
                       ? palette.green
                       : themed.text,
-                  fontWeight: '700',
-                  fontSize: 12,
-                  maxWidth: '60%',
-                  textAlign: 'right',
                 }}
               >
                 {value}
@@ -182,29 +178,20 @@ export default function PaymentSuccessScreen() {
           ))}
         </View>
 
-        {/* BUTTON */}
         <AnimatedPressable onPress={handleContinue}>
           <LinearGradient
             colors={[palette.primary, '#a30f2d']}
+            className="mt-2 rounded-[12px] py-[14px]"
             style={{
-              paddingVertical: 14,
               borderRadius: 12,
-              marginTop: 10,
             }}
           >
-            <Text
-              style={{
-                textAlign: 'center',
-                color: '#fff',
-                fontWeight: '700',
-                fontSize: 15,
-              }}
-            >
+            <Text className="text-center text-[15px] font-bold text-white">
               Continue
             </Text>
           </LinearGradient>
         </AnimatedPressable>
-
+      </View>
       </View>
     </SafeAreaView>
   );

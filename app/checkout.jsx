@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AnimatedBackground } from '../src/animated-background';
 import { palette, subscriptions } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
 const paymentMethods = [
@@ -64,7 +65,64 @@ export default function CheckoutScreen() {
             });
         }, 1800);
     };
+    const renderPaymentDetails = (methodId) => {
+        if (methodId === 'upi') {
+            return (
+                <View className="mt-3 gap-2.5 rounded-[18px] border border-line bg-card p-4">
+                 
+                  <Text className="text-[12px] font-extrabold text-muted">Add UPI ID</Text>
+                  <TextInput value={upiId} onChangeText={setUpiId} autoCapitalize="none" placeholder="yourname@upi" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
+                </View>
+            );
+        }
+        if (methodId === 'card') {
+            return (
+                <View className="mt-3 gap-2.5 rounded-[18px] border border-line bg-card p-4">
+                  <View className="gap-1">
+                    <Text className="text-[15px] font-black text-ink">Card Details</Text>
+                    <Text className="text-[12px] leading-[18px] text-muted">Use debit or credit card details to complete this payment.</Text>
+                  </View>
+                  <Text className="text-[12px] font-extrabold text-muted">Cardholder Name</Text>
+                  <TextInput value={cardName} onChangeText={(value) => setCardName(normalizeCardName(value))} autoCapitalize="words" placeholder="Name on card" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
+                  <Text className="text-[12px] font-extrabold text-muted">Card Number</Text>
+                  <TextInput value={cardNumber} onChangeText={(value) => setCardNumber(formatCardNumber(value))} keyboardType="number-pad" placeholder="1234567890123456" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
+                  <View className="flex-row gap-2.5">
+                    <View className="flex-1 gap-2.5">
+                      <Text className="text-[12px] font-extrabold text-muted">Expiry</Text>
+                      <TextInput value={cardExpiry} onChangeText={(value) => setCardExpiry(formatExpiry(value))} keyboardType="number-pad" placeholder="MM/YY" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
+                    </View>
+                    <View className="flex-1 gap-2.5">
+                      <Text className="text-[12px] font-extrabold text-muted">CVV</Text>
+                      <TextInput value={cardCvv} onChangeText={(value) => setCardCvv(value.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" secureTextEntry placeholder="123" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
+                    </View>
+                  </View>
+                </View>
+            );
+        }
+        return (
+            <View className="mt-3 gap-2.5 rounded-[18px] border border-line bg-card p-4">
+              <View className="gap-1">
+                <Text className="text-[15px] font-black text-ink">Net Banking</Text>
+                <Text className="text-[12px] leading-[18px] text-muted">Pick your bank and we will take you to the secure login flow.</Text>
+              </View>
+              <Text className="text-[12px] font-extrabold text-muted">Select Bank</Text>
+              <View className="flex-row flex-wrap gap-2.5">
+                {popularBanks.map((bank) => {
+                    const isSelected = selectedBank === bank;
+                    return (<Pressable key={bank} className="items-center rounded-[16px] border px-3 py-[14px]" onPress={() => setSelectedBank(bank)} style={{
+                            borderColor: isSelected ? palette.primary : palette.border,
+                            backgroundColor: isSelected ? `${palette.primary}08` : palette.surface,
+                            minWidth: '47%',
+                        }}>
+                            <Text className="text-[13px] font-extrabold" style={{ color: isSelected ? palette.primary : palette.text }}>{bank}</Text>
+                          </Pressable>);
+                })}
+              </View>
+            </View>
+        );
+    };
     return (<SafeAreaView className="flex-1 bg-transparent">
+      <AnimatedBackground />
       <View className="flex-1 px-5 pt-2.5">
         <View className="mb-[14px] flex-row items-start gap-3">
           <Pressable className="rounded-[14px] border border-line bg-card px-[14px] py-[11px]" onPress={() => router.back()}>
@@ -112,59 +170,33 @@ export default function CheckoutScreen() {
                 <Text className="text-[16px] font-black text-ink">Choose Payment Method</Text>
                 <View className="gap-2.5">
                   {paymentMethods.map((method) => {
-                const isSelected = selectedMethod === method.id;
-                return (<Pressable key={method.id} className="flex-row items-center gap-3 rounded-[18px] border p-[14px]" onPress={() => setSelectedMethod(method.id)} style={{
-                        borderColor: isSelected ? palette.primary : palette.border,
-                        backgroundColor: isSelected ? `${palette.primary}08` : palette.surface,
-                    }}>
-                        <View className="flex-1 gap-0.5">
-                          <Text className="text-[14px] font-extrabold" style={{ color: isSelected ? palette.primary : palette.text }}>{method.label}</Text>
-                          <Text className="text-[12px] text-muted">{method.description}</Text>
-                        </View>
-                        <View className="h-5 w-5 items-center justify-center rounded-full border-2" style={{ borderColor: isSelected ? palette.primary : palette.border }}>
-                          {isSelected ? <View className="h-2 w-2 rounded-full bg-brand"/> : null}
-                        </View>
-                      </Pressable>);
-            })}
+                    const isSelected = selectedMethod === method.id;
+                    return (
+                      <View
+                        key={method.id}
+                        className="rounded-[18px] border p-[14px]"
+                        style={{
+                          borderColor: isSelected ? palette.primary : palette.border,
+                          backgroundColor: isSelected ? `${palette.primary}08` : palette.surface,
+                        }}
+                      >
+                        <Pressable
+                          className="flex-row items-center gap-3"
+                          onPress={() => setSelectedMethod(method.id)}
+                        >
+                          <View className="flex-1 gap-0.5">
+                            <Text className="text-[14px] font-extrabold" style={{ color: isSelected ? palette.primary : palette.text }}>{method.label}</Text>
+                            <Text className="text-[12px] text-muted">{method.description}</Text>
+                          </View>
+                          <View className="h-5 w-5 items-center justify-center rounded-full border-2" style={{ borderColor: isSelected ? palette.primary : palette.border }}>
+                            {isSelected ? <View className="h-2 w-2 rounded-full bg-brand"/> : null}
+                          </View>
+                        </Pressable>
+                        {isSelected ? renderPaymentDetails(method.id) : null}
+                      </View>
+                    );
+                  })}
                 </View>
-
-                {selectedMethod === 'upi' ? (<View className="mt-1 gap-2.5">
-                   
-                    <Text className="text-[12px] font-extrabold text-muted">Add UPI ID</Text>
-                    <TextInput value={upiId} onChangeText={setUpiId} autoCapitalize="none" placeholder="yourname@upi" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
-                  </View>) : null}
-
-                {selectedMethod === 'card' ? (<View className="mt-1 gap-2.5">
-                    <Text className="text-[12px] font-extrabold text-muted">Cardholder Name</Text>
-                    <TextInput value={cardName} onChangeText={(value) => setCardName(normalizeCardName(value))} autoCapitalize="words" placeholder="Name on card" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
-                    <Text className="text-[12px] font-extrabold text-muted">Card Number</Text>
-                    <TextInput value={cardNumber} onChangeText={(value) => setCardNumber(formatCardNumber(value))} keyboardType="number-pad" placeholder="1234567890123456" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
-                    <View className="flex-row gap-2.5">
-                      <View className="flex-1 gap-2.5">
-                        <Text className="text-[12px] font-extrabold text-muted">Expiry</Text>
-                        <TextInput value={cardExpiry} onChangeText={(value) => setCardExpiry(formatExpiry(value))} keyboardType="number-pad" placeholder="MM/YY" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
-                      </View>
-                      <View className="flex-1 gap-2.5">
-                        <Text className="text-[12px] font-extrabold text-muted">CVV</Text>
-                        <TextInput value={cardCvv} onChangeText={(value) => setCardCvv(value.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" secureTextEntry placeholder="123" placeholderTextColor={palette.muted} className="rounded-[16px] border border-line bg-surface px-[14px] py-[14px] text-[14px] text-ink"/>
-                      </View>
-                    </View>
-                  </View>) : null}
-
-                {selectedMethod === 'netbanking' ? (<View className="mt-1 gap-2.5">
-                    <Text className="text-[12px] font-extrabold text-muted">Select Bank</Text>
-                    <View className="flex-row flex-wrap gap-2.5">
-                      {popularBanks.map((bank) => {
-                    const isSelected = selectedBank === bank;
-                    return (<Pressable key={bank} className="min-w-[47%] items-center rounded-[16px] border px-3 py-[14px]" onPress={() => setSelectedBank(bank)} style={{
-                            borderColor: isSelected ? palette.primary : palette.border,
-                            backgroundColor: isSelected ? `${palette.primary}08` : palette.surface,
-                        }}>
-                            <Text className="text-[13px] font-extrabold" style={{ color: isSelected ? palette.primary : palette.text }}>{bank}</Text>
-                          </Pressable>);
-                })}
-                    </View>
-                  </View>) : null}
               </View>
 
               <View className="gap-1 rounded-[20px] px-4 py-[14px]" style={{ backgroundColor: `${palette.green}12` }}>

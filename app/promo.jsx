@@ -25,7 +25,8 @@ function RippleRing({ progress, endScale, borderWidth, baseOpacity }) {
         inputRange: [0, 0.7, 1],
         outputRange: [baseOpacity, 0, 0],
     });
-    return (<Animated.View pointerEvents="none" style={{
+    return (<Animated.View style={{
+            pointerEvents: 'none',
             position: 'absolute',
             width: 116,
             height: 116,
@@ -220,7 +221,8 @@ function PromoSplashIntro() {
     });
 
     return (<View className="flex-1 items-center justify-center overflow-hidden bg-brand px-6">
-        <Animated.View pointerEvents="none" style={{
+        <Animated.View style={{
+            pointerEvents: 'none',
             position: 'absolute',
             width: 420,
             height: 420,
@@ -231,7 +233,8 @@ function PromoSplashIntro() {
             opacity: auroraOpacity,
             transform: [{ translateX: auroraX }, { translateY: auroraY }, { rotate: auroraSpin }],
         }}/>
-        <Animated.View pointerEvents="none" style={{
+        <Animated.View style={{
+            pointerEvents: 'none',
             position: 'absolute',
             width: 340,
             height: 340,
@@ -242,7 +245,8 @@ function PromoSplashIntro() {
             opacity: orbAOpacity,
             transform: [{ translateX: orbAX }, { translateY: orbAY }],
         }}/>
-        <Animated.View pointerEvents="none" style={{
+        <Animated.View style={{
+            pointerEvents: 'none',
             position: 'absolute',
             width: 300,
             height: 300,
@@ -253,7 +257,8 @@ function PromoSplashIntro() {
             opacity: orbBOpacity,
             transform: [{ translateX: orbBX }, { translateY: orbBY }],
         }}/>
-        <Animated.View pointerEvents="none" style={{
+        <Animated.View style={{
+            pointerEvents: 'none',
             position: 'absolute',
             width: 200,
             height: 200,
@@ -264,7 +269,8 @@ function PromoSplashIntro() {
             opacity: blobAOpacity,
             transform: [{ translateX: blobAX }, { translateY: blobAY }],
         }}/>
-        <Animated.View pointerEvents="none" style={{
+        <Animated.View style={{
+            pointerEvents: 'none',
             position: 'absolute',
             width: 170,
             height: 170,
@@ -275,7 +281,8 @@ function PromoSplashIntro() {
             opacity: blobBOpacity,
             transform: [{ translateX: blobBX }, { translateY: blobBY }],
         }}/>
-        <Animated.View pointerEvents="none" style={{
+        <Animated.View style={{
+            pointerEvents: 'none',
             position: 'absolute',
             width: 150,
             height: 150,
@@ -324,7 +331,8 @@ function PromoSplashIntro() {
             </Animated.View>
             <View className="mt-7 h-[6px] w-32 overflow-hidden rounded-full bg-white/20">
                 <Animated.View style={{ height: '100%', width: progressWidth }} className="rounded-full bg-white/70"/>
-                <Animated.View pointerEvents="none" style={{
+                <Animated.View style={{
+                    pointerEvents: 'none',
                     position: 'absolute',
                     top: 0,
                     left: 0,
