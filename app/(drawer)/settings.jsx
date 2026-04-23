@@ -45,20 +45,20 @@ export default function SettingsScreen() {
             passwordForm.newPassword === passwordForm.confirmPassword;
         return (<Screen>
         <View className="flex-row items-center gap-3">
-          <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => setView('menu')}>
-            <Ionicons name="arrow-back" size={18} color={palette.text}/>
+          <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => setView('menu')}>
+            <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
           </AnimatedPressable>
           <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Change Password</Text>
         </View>
 
-        <View className={`gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+        <View className={`gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           {[
                 ['currentPassword', 'Current Password'],
                 ['newPassword', 'New Password'],
                 ['confirmPassword', 'Confirm Password'],
             ].map(([key, label]) => (<View key={key} className="gap-1.5">
               <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
-              <View className={`flex-row items-center gap-3 rounded-[18px] border px-4 py-[14px] ${preferences.darkMode ? 'border-[#3a2f40] bg-[#312636]' : 'border-line bg-surface'}`}>
+              <View className={`flex-row items-center gap-3 rounded-[18px] border px-4 py-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-surface'}`}>
                 <Ionicons name="lock-closed-outline" size={18} color={palette.muted}/>
                 <TextInput value={passwordForm[key]} onChangeText={(value) => setPasswordForm((current) => ({ ...current, [key]: value }))} secureTextEntry={!showPassword[key]} placeholder={label} placeholderTextColor={palette.muted} className={`flex-1 text-[14px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}/>
                 <AnimatedPressable onPress={() => setShowPassword((current) => ({ ...current, [key]: !current[key] }))}>
@@ -82,20 +82,20 @@ export default function SettingsScreen() {
     if (view === 'help') {
         return (<Screen>
         <View className="flex-row items-center gap-3">
-          <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => setView('menu')}>
-            <Ionicons name="arrow-back" size={18} color={palette.text}/>
+          <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => setView('menu')}>
+            <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
           </AnimatedPressable>
           <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Help Centre</Text>
         </View>
 
-        <View className={`gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+        <View className={`gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           <View className="gap-1.5">
             <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Your Email</Text>
-            <TextInput value={helpForm.email} onChangeText={(value) => setHelpForm((current) => ({ ...current, email: value }))} keyboardType="email-address" autoCapitalize="none" placeholder="Enter your email" placeholderTextColor={palette.muted} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#3a2f40] bg-[#312636] text-white' : 'border-line bg-surface text-ink'}`}/>
+            <TextInput value={helpForm.email} onChangeText={(value) => setHelpForm((current) => ({ ...current, email: value }))} keyboardType="email-address" autoCapitalize="none" placeholder="Enter your email" placeholderTextColor={palette.muted} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
           </View>
           <View className="gap-1.5">
             <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Message</Text>
-            <TextInput value={helpForm.message} onChangeText={(value) => setHelpForm((current) => ({ ...current, message: value }))} multiline textAlignVertical="top" placeholder="Describe your issue" placeholderTextColor={palette.muted} className={`min-h-[130px] rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#3a2f40] bg-[#312636] text-white' : 'border-line bg-surface text-ink'}`}/>
+            <TextInput value={helpForm.message} onChangeText={(value) => setHelpForm((current) => ({ ...current, message: value }))} multiline textAlignVertical="top" placeholder="Describe your issue" placeholderTextColor={palette.muted} className={`min-h-[130px] rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
           </View>
           <AnimatedPressable className="rounded-[18px] bg-brand py-4" onPress={() => {
                 setHelpForm({ email: '', message: '' });
@@ -111,8 +111,8 @@ export default function SettingsScreen() {
     }
     return (<Screen>
       <View className="flex-row items-center gap-3">
-        <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={18} color={palette.text}/>
+        <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
         </AnimatedPressable>
         <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Settings</Text>
       </View>
@@ -121,11 +121,11 @@ export default function SettingsScreen() {
           <Text className="text-[13px] font-extrabold text-success">{feedbackMessage}</Text>
         </View>) : null}
 
-      <View className={`overflow-hidden rounded-[24px] border ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+      <View className={`overflow-hidden rounded-[24px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
         {settingsItems.map((item, index) => (<StaggerFadeUpItem key={item.label} index={index}>
           <AnimatedPressable className={`flex-row items-center justify-between px-4 py-4 ${index < settingsItems.length - 1 ? 'border-b border-line' : ''}`} onPress={item.action}>
             <View className="flex-row items-center gap-3">
-              <View className={`h-9 w-9 items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}>
+              <View className={`h-9 w-9 items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`}>
                 <Ionicons name={item.icon} size={18} color={item.color}/>
               </View>
               <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.label}</Text>

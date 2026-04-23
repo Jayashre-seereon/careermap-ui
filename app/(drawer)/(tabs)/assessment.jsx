@@ -11,7 +11,7 @@ export default function AssessmentScreen() {
     return (<Screen>
       <View className="px-1 pb-8 pt-3">
         <View className="mb-7 flex-row items-center gap-3">
-          <AnimatedPressable onPress={() => (router.canGoBack() ? router.back() : router.push('/(drawer)/(tabs)/library'))} className={`h-10 w-10 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#211927]' : 'bg-white'}`} style={{
+          <AnimatedPressable onPress={() => (router.canGoBack() ? router.back() : router.push('/(drawer)/(tabs)/library'))} className={`h-10 w-10 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-white'}`} style={{
             shadowColor: '#967c75',
             shadowOpacity: 0.12,
             shadowRadius: 10,
@@ -43,7 +43,7 @@ export default function AssessmentScreen() {
         </View>
 
         <View className="gap-4">
-          <View className={`rounded-[24px] border px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-[#e8dfda] bg-card'}`}>
+          <View className={`rounded-[24px] border px-4 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-[#e8dfda] bg-card'}`}>
             <Text className="mb-3 text-[17px] font-extrabold text-brand">Test Features</Text>
             <View className="gap-2">
               {assessmentFeatures.map((feature) => (<View key={feature} className={`flex-row items-center gap-3 rounded-[16px] px-3 py-3 ${preferences.darkMode ? 'bg-[#141417]' : 'bg-[#fff8f5]'}`}>
@@ -55,7 +55,7 @@ export default function AssessmentScreen() {
             </View>
           </View>
 
-          <View className={`rounded-[24px] border px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-[#e8dfda] bg-card'}`}>
+          <View className={`rounded-[24px] border px-4 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-[#e8dfda] bg-card'}`}>
             <Text className="mb-3 text-[17px] font-extrabold text-brand">Test Policy</Text>
             <View className="gap-3">
               {assessmentPolicies.map((item) => (<View key={item} className="flex-row items-start gap-3">
@@ -65,7 +65,7 @@ export default function AssessmentScreen() {
             </View>
           </View>
 
-          {!testUnlocked ? (<View className={`rounded-[24px] border px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-[#e8dfda] bg-card'}`}>
+          {!testUnlocked ? (<View className={`rounded-[24px] border px-4 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-[#e8dfda] bg-card'}`}>
               <View className="mb-3 flex-row items-center justify-between">
                 <Text className="text-[17px] font-extrabold text-brand">Unlock Test</Text>
                 <Ionicons name="lock-closed" size={18} color={palette.muted}/>
@@ -96,7 +96,7 @@ export default function AssessmentScreen() {
             </View>
           </AnimatedPressable>
 
-          <View className={`rounded-[18px] px-4 py-4 ${preferences.darkMode ? 'bg-[#211927]' : 'bg-[#fff7f3]'}`}>
+          <View className={`rounded-[18px] px-4 py-4 ${preferences.darkMode ? 'bg-[#080808]' : 'bg-[#fff7f3]'}`}>
             <Text className="text-[12px] font-bold uppercase tracking-[0.8px] text-brand">Status</Text>
             <Text className={`mt-1 text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
               {activePlanId ? 'Your subscription is active.' : 'No active test plan yet.'}

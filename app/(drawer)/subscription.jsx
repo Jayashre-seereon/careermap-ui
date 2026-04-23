@@ -13,10 +13,10 @@ export default function SubscriptionScreen() {
       <View className="gap-[14px] ">
         {subscriptions.map((plan) => (<View key={plan.id} className={`gap-3 rounded-[24px] border p-[18px] ${plan.recommended || plan.highestseller
   ? preferences.darkMode
-      ? 'border-[#5b3341] bg-[#211927]'
+      ? 'border-[#3a2028] bg-[#080808]'
       : 'border-[#dcb3a3] bg-card shadow-card'
   : preferences.darkMode
-      ? 'border-[#2d2430] bg-[#211927]'
+      ? 'border-[#1a1a1a] bg-[#080808]'
       : 'border-line bg-card'}`}>
             <View className="flex-row items-start justify-between gap-3 ">
               <View className="flex-1 gap-1.5">

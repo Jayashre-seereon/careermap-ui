@@ -18,27 +18,27 @@ export default function EntranceExamScreen() {
     if (catFilter !== 'All')
         filtered = filtered.filter((e) => e.category === catFilter);
     return (<Screen>
-            <SectionHeader title="Entrance Exams" subtitle="Practice tests and exam preparation guides." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#211927]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+            <SectionHeader title="Entrance Exams" subtitle="Practice tests and exam preparation guides." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
                     <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : preferences.darkMode ? '#ffffff' : palette.text}/>
                 </AnimatedPressable>}/>
 
             {showFilters && (<View className="gap-3">
                     <Text className={` text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Exam Type</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
-                        {typeFilters.map((f) => (<AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${typeFilter === f ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-surface'}`} onPress={() => setTypeFilter(f)}>
+                        {typeFilters.map((f) => (<AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${typeFilter === f ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-surface'}`} onPress={() => setTypeFilter(f)}>
                                 <Text className={`text-[11px] font-semibold ${typeFilter === f ? 'text-surface' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{f}</Text>
                             </AnimatedPressable>))}
                     </ScrollView>
                     <Text className={`text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Category</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
-                        {categoryFilters.map((f) => (<AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${catFilter === f ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-surface'}`} onPress={() => setCatFilter(f)}>
+                        {categoryFilters.map((f) => (<AnimatedPressable key={f} className={`rounded-2xl border px-3 py-1.5 ${catFilter === f ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-surface'}`} onPress={() => setCatFilter(f)}>
                                 <Text className={`text-[11px] font-semibold ${catFilter === f ? 'text-surface' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{f}</Text>
                             </AnimatedPressable>))}
                     </ScrollView>
                 </View>)}
 
             <View className="gap-3">
-                {filtered.map((exam) => (<AnimatedPressable key={exam.name} className={`mb-3 rounded-[12px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card shadow-card'}`} onPress={() => router.push({ pathname: '/(drawer)/entrance-exam-detail', params: { examId: exam.id } })}>
+                {filtered.map((exam) => (<AnimatedPressable key={exam.name} className={`mb-3 rounded-[12px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card shadow-card'}`} onPress={() => router.push({ pathname: '/(drawer)/entrance-exam-detail', params: { examId: exam.id } })}>
                         <View className="flex-row items-start">
                             <View className="mr-3 h-10 w-10 items-center justify-center rounded-[10px]" style={{ backgroundColor: `${palette.primary}15` }}>
                                 <Ionicons name="document-text-outline" size={20} color={palette.primary}/>

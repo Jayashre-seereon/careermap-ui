@@ -29,13 +29,13 @@ export default function PaymentSuccessScreen() {
   });
 
   const themed = {
-    pageOverlay: preferences.darkMode ? 'rgba(20, 15, 23, 0.82)' : 'rgba(251, 247, 243, 0.82)',
-    card: preferences.darkMode ? 'rgba(16, 13, 18, 0.92)' : 'rgba(255, 255, 255, 0.9)',
-    border: preferences.darkMode ? '#2b1d26' : palette.border,
+    pageOverlay: preferences.darkMode ? 'rgba(5, 5, 5, 0.86)' : 'rgba(251, 247, 243, 0.82)',
+    card: preferences.darkMode ? 'rgba(8, 8, 8, 0.94)' : 'rgba(255, 255, 255, 0.9)',
+    border: preferences.darkMode ? '#1a1a1a' : palette.border,
     text: preferences.darkMode ? '#fff' : palette.text,
     muted: preferences.darkMode ? '#aaa' : palette.muted,
     successSurface: preferences.darkMode ? 'rgba(47, 147, 103, 0.16)' : `${palette.green}16`,
-    heroSurface: preferences.darkMode ? 'rgba(26, 18, 31, 0.94)' : 'rgba(246, 239, 235, 0.9)',
+    heroSurface: preferences.darkMode ? 'rgba(8, 8, 8, 0.94)' : 'rgba(246, 239, 235, 0.9)',
   };
 
   // activate plan

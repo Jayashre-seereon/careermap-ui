@@ -31,10 +31,10 @@ export default function QuizScreen() {
                     setCurrentQuestion(0);
                     setAnswers(Array(sampleQuestions.length).fill(null));
                     setCompleted(false);
-                }} className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#211927]' : 'bg-[#f2ebe6]'}`}>
+                }} className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
-        <View className={`items-center gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+        <View className={`items-center gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           <Text className="text-[40px] font-black text-brand">{score}/5</Text>
           <Text className={`text-center text-[17px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
             {score >= 4 ? 'Excellent work. You are doing great.' : score >= 2 ? 'Good effort. Keep learning.' : 'Keep practicing. You will improve.'}
@@ -57,7 +57,7 @@ export default function QuizScreen() {
         <View className="h-2 overflow-hidden rounded-full bg-line">
           <View className="h-full rounded-full bg-success" style={{ width: `${((currentQuestion + 1) / sampleQuestions.length) * 100}%` }}/>
         </View>
-        <View className={`gap-2 rounded-[22px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+        <View className={`gap-2 rounded-[22px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           <Text className={`text-[10px] font-extrabold uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Question {currentQuestion + 1}</Text>
           <Text className={`text-[18px] font-extrabold leading-[26px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{current.q}</Text>
         </View>
@@ -66,7 +66,7 @@ export default function QuizScreen() {
                     const nextAnswers = [...answers];
                     nextAnswers[currentQuestion] = index;
                     setAnswers(nextAnswers);
-                }} className={`rounded-[18px] border p-[15px] ${answers[currentQuestion] === index ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+                }} className={`rounded-[18px] border p-[15px] ${answers[currentQuestion] === index ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <Text className={`text-[14px] font-bold ${answers[currentQuestion] === index ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>
                 {String.fromCharCode(65 + index)}. {option}
               </Text>
@@ -91,7 +91,7 @@ export default function QuizScreen() {
                 setActiveQuiz(index);
                 setCurrentQuestion(0);
                 setAnswers(Array(sampleQuestions.length).fill(null));
-            }} className={`gap-1.5 rounded-[22px] border p-[18px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+            }} className={`gap-1.5 rounded-[22px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
             <View className="mb-1 h-[50px] w-[50px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.blue}12` }}>
               <Text className="text-[12px] font-black" style={{ color: palette.blue }}>{quiz.emoji}</Text>
             </View>

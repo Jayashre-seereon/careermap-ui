@@ -31,7 +31,7 @@ export default function ScholarshipScreen() {
     if (selectedIndex !== null) {
         const item = scholarships[selectedIndex];
         return (<Screen animationKey={animationKey}>
-        <SectionHeader title={item.name} subtitle="Scholarship detail page closely matching the reference structure." action={<AnimatedPressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#211927]' : 'bg-[#f2ebe6]'}`} onPress={() => {
+        <SectionHeader title={item.name} subtitle="Scholarship detail page closely matching the reference structure." action={<AnimatedPressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
                     setSelectedIndex(null);
                 }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
@@ -57,7 +57,7 @@ export default function ScholarshipScreen() {
               </View>
             </View>
 
-            <View className={`gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+            <View className={`gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <View className="flex-row items-center justify-between gap-3">
                 <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Amount</Text>
                 <Text className="text-[20px] font-black text-success">{item.amount}</Text>
@@ -72,12 +72,12 @@ export default function ScholarshipScreen() {
               </View>
             </View>
 
-            <View className={`mt-3 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+            <View className={`mt-3 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <Text className="text-[14px] font-extrabold text-brand">About This Scholarship</Text>
               <Text className={`text-[13px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.description}</Text>
             </View>
 
-            <View className={`mt-3 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+            <View className={`mt-3 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <Text className="text-[14px] font-extrabold text-brand">Requirements</Text>
               {item.requirements.map((requirement) => (<View key={requirement} className="flex-row items-center gap-2.5">
                   <View className="h-2 w-2 rounded-full bg-brand"/>
@@ -93,7 +93,7 @@ export default function ScholarshipScreen() {
       </Screen>);
     }
     return (<Screen animationKey={animationKey}>
-      <SectionHeader title="Scholarships" subtitle="Scholarship directory with filters and drill-down cards adapted from the prototype." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#211927]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+      <SectionHeader title="Scholarships" subtitle="Scholarship directory with filters and drill-down cards adapted from the prototype." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
             <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : preferences.darkMode ? '#ffffff' : palette.text}/>
           </AnimatedPressable>}/>
 
@@ -103,21 +103,21 @@ export default function ScholarshipScreen() {
          <Text className={`text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Status</Text>
                   
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
-            {['All', 'Active', 'Expired',].map((label) => (<AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${activeStatus === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#211927]' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveStatus(label)}>
+            {['All', 'Active', 'Expired',].map((label) => (<AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${activeStatus === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveStatus(label)}>
                 <Text className={`text-[11px] font-extrabold ${activeStatus === label ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
               </AnimatedPressable>))}
           </ScrollView>
            <Text className={` text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Short</Text>
                   
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
-            {['Default', 'A-Z', 'Z-A'].map((label) => (<AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${sortBy === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#211927]' : 'bg-[#f2ebe6]'}`} onPress={() => setSortBy(label)}>
+            {['Default', 'A-Z', 'Z-A'].map((label) => (<AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${sortBy === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setSortBy(label)}>
                 <Text className={`text-[11px] font-extrabold ${sortBy === label ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
               </AnimatedPressable>))}
           </ScrollView>
         </View>) : null}
 
       <View className="gap-3">
-        {filtered.slice(0, scholarshipUnlocked ? filtered.length : 6).map((item) => (<AnimatedPressable key={item.name} className={`gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={() => {
+        {filtered.slice(0, scholarshipUnlocked ? filtered.length : 6).map((item) => (<AnimatedPressable key={item.name} className={`gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => {
                 if (!scholarshipUnlocked && !canAccessFreeDetail('scholarship', item.name)) {
                     setShowUnlockSheet(true);
                     return;

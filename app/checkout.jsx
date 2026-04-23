@@ -70,39 +70,39 @@ export default function CheckoutScreen() {
     const renderPaymentDetails = (methodId) => {
         if (methodId === 'upi') {
             return (
-                <View className={`mt-3 gap-2.5 rounded-[18px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+                <View className={`mt-3 gap-2.5 rounded-[18px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
                  
                   <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Add UPI ID</Text>
-                  <TextInput value={upiId} onChangeText={setUpiId} autoCapitalize="none" placeholder="yourname@upi" placeholderTextColor={palette.muted} className={`rounded-[16px] border px-[14px] py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#312636] text-white' : 'border-line bg-surface text-ink'}`}/>
+                  <TextInput value={upiId} onChangeText={setUpiId} autoCapitalize="none" placeholder="yourname@upi" placeholderTextColor={palette.muted} className={`rounded-[16px] border px-[14px] py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
                 </View>
             );
         }
         if (methodId === 'card') {
             return (
-                <View className={`mt-3 gap-2.5 rounded-[18px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+                <View className={`mt-3 gap-2.5 rounded-[18px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
                   <View className="gap-1">
                     <Text className={`text-[15px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Card Details</Text>
                     <Text className={`text-[12px] leading-[18px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Use debit or credit card details to complete this payment.</Text>
                   </View>
                   <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Cardholder Name</Text>
-                  <TextInput value={cardName} onChangeText={(value) => setCardName(normalizeCardName(value))} autoCapitalize="words" placeholder="Name on card" placeholderTextColor={palette.muted} className={`rounded-[16px] border px-[14px] py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#312636] text-white' : 'border-line bg-surface text-ink'}`}/>
+                  <TextInput value={cardName} onChangeText={(value) => setCardName(normalizeCardName(value))} autoCapitalize="words" placeholder="Name on card" placeholderTextColor={palette.muted} className={`rounded-[16px] border px-[14px] py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
                   <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Card Number</Text>
-                  <TextInput value={cardNumber} onChangeText={(value) => setCardNumber(formatCardNumber(value))} keyboardType="number-pad" placeholder="1234567890123456" placeholderTextColor={palette.muted} className={`rounded-[16px] border px-[14px] py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#312636] text-white' : 'border-line bg-surface text-ink'}`}/>
+                  <TextInput value={cardNumber} onChangeText={(value) => setCardNumber(formatCardNumber(value))} keyboardType="number-pad" placeholder="1234567890123456" placeholderTextColor={palette.muted} className={`rounded-[16px] border px-[14px] py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
                   <View className="flex-row gap-2.5">
                     <View className="flex-1 gap-2.5">
                       <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Expiry</Text>
-                      <TextInput value={cardExpiry} onChangeText={(value) => setCardExpiry(formatExpiry(value))} keyboardType="number-pad" placeholder="MM/YY" placeholderTextColor={palette.muted} className={`rounded-[16px] border px-[14px] py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#312636] text-white' : 'border-line bg-surface text-ink'}`}/>
+                      <TextInput value={cardExpiry} onChangeText={(value) => setCardExpiry(formatExpiry(value))} keyboardType="number-pad" placeholder="MM/YY" placeholderTextColor={palette.muted} className={`rounded-[16px] border px-[14px] py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
                     </View>
                     <View className="flex-1 gap-2.5">
                       <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>CVV</Text>
-                      <TextInput value={cardCvv} onChangeText={(value) => setCardCvv(value.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" secureTextEntry placeholder="123" placeholderTextColor={palette.muted} className={`rounded-[16px] border px-[14px] py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#312636] text-white' : 'border-line bg-surface text-ink'}`}/>
+                      <TextInput value={cardCvv} onChangeText={(value) => setCardCvv(value.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" secureTextEntry placeholder="123" placeholderTextColor={palette.muted} className={`rounded-[16px] border px-[14px] py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
                     </View>
                   </View>
                 </View>
             );
         }
         return (
-            <View className={`mt-3 gap-2.5 rounded-[18px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+            <View className={`mt-3 gap-2.5 rounded-[18px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <View className="gap-1">
                 <Text className={`text-[15px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Net Banking</Text>
                 <Text className={`text-[12px] leading-[18px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Pick your bank and we will take you to the secure login flow.</Text>
@@ -112,11 +112,11 @@ export default function CheckoutScreen() {
                 {popularBanks.map((bank) => {
                     const isSelected = selectedBank === bank;
                     return (<Pressable key={bank} className="items-center rounded-[16px] border px-3 py-[14px]" onPress={() => setSelectedBank(bank)} style={{
-                            borderColor: isSelected ? palette.primary : palette.border,
-                            backgroundColor: isSelected ? `${palette.primary}08` : palette.surface,
+                            borderColor: isSelected ? palette.primary : preferences.darkMode ? '#1a1a1a' : palette.border,
+                            backgroundColor: isSelected ? `${palette.primary}08` : preferences.darkMode ? '#111111' : palette.surface,
                             minWidth: '47%',
                         }}>
-                            <Text className="text-[13px] font-extrabold" style={{ color: isSelected ? palette.primary : palette.text }}>{bank}</Text>
+                            <Text className="text-[13px] font-extrabold" style={{ color: isSelected ? palette.primary : preferences.darkMode ? '#ffffff' : palette.text }}>{bank}</Text>
                           </Pressable>);
                 })}
               </View>
@@ -127,7 +127,7 @@ export default function CheckoutScreen() {
       <AnimatedBackground />
       <View className="flex-1 px-5 pt-2.5">
         <View className="mb-[14px] flex-row items-start gap-3">
-          <Pressable className={`rounded-[14px] border px-[14px] py-[11px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={() => router.back()}>
+          <Pressable className={`rounded-[14px] border px-[14px] py-[11px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.back()}>
             <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Back</Text>
           </Pressable>
           <View className="flex-1 gap-1 pt-0.5">
@@ -139,7 +139,7 @@ export default function CheckoutScreen() {
         </View>
 
         {isProcessing ? (<View className="flex-1 items-center justify-center gap-3 px-8">
-            <View className={`h-[88px] w-[88px] items-center justify-center rounded-[28px] border ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+            <View className={`h-[88px] w-[88px] items-center justify-center rounded-[28px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <ActivityIndicator size="large" color={palette.primary}/>
             </View>
             <Text className={`text-[24px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Processing payment</Text>
@@ -148,7 +148,7 @@ export default function CheckoutScreen() {
             </Text>
           </View>) : (<>
             <ScrollView className="flex-1" contentContainerClassName="gap-4 pb-7" showsVerticalScrollIndicator={false}>
-              <View className={`gap-[14px] rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+              <View className={`gap-[14px] rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
                 <Text className={`text-[16px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Order Summary</Text>
                 <View className="flex-row items-center justify-between">
                   <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{plan.name}</Text>
@@ -162,13 +162,13 @@ export default function CheckoutScreen() {
                   <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Validity</Text>
                   <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>1 Year</Text>
                 </View>
-                <View className={`mt-0.5 flex-row items-center justify-between border-t pt-3 ${preferences.darkMode ? 'border-[#2d2430]' : 'border-line'}`}>
+                <View className={`mt-0.5 flex-row items-center justify-between border-t pt-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
                   <Text className={`text-[15px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Total Payable</Text>
                   <Text className="text-[22px] font-black text-brand">{plan.price}</Text>
                 </View>
               </View>
 
-              <View className={`gap-[14px] rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+              <View className={`gap-[14px] rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
                 <Text className={`text-[16px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Choose Payment Method</Text>
                 <View className="gap-2.5">
                   {paymentMethods.map((method) => {
@@ -178,8 +178,8 @@ export default function CheckoutScreen() {
                         key={method.id}
                         className="rounded-[18px] border p-[14px]"
                         style={{
-                          borderColor: isSelected ? palette.primary : palette.border,
-                          backgroundColor: isSelected ? `${palette.primary}08` : palette.surface,
+                          borderColor: isSelected ? palette.primary : preferences.darkMode ? '#1a1a1a' : palette.border,
+                          backgroundColor: isSelected ? `${palette.primary}08` : preferences.darkMode ? '#111111' : palette.surface,
                         }}
                       >
                         <Pressable
@@ -187,10 +187,10 @@ export default function CheckoutScreen() {
                           onPress={() => setSelectedMethod(method.id)}
                         >
                           <View className="flex-1 gap-0.5">
-                            <Text className="text-[14px] font-extrabold" style={{ color: isSelected ? palette.primary : palette.text }}>{method.label}</Text>
+                            <Text className="text-[14px] font-extrabold" style={{ color: isSelected ? palette.primary : preferences.darkMode ? '#ffffff' : palette.text }}>{method.label}</Text>
                             <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{method.description}</Text>
                           </View>
-                          <View className="h-5 w-5 items-center justify-center rounded-full border-2" style={{ borderColor: isSelected ? palette.primary : palette.border }}>
+                          <View className="h-5 w-5 items-center justify-center rounded-full border-2" style={{ borderColor: isSelected ? palette.primary : preferences.darkMode ? '#2f2f2f' : palette.border }}>
                             {isSelected ? <View className="h-2 w-2 rounded-full bg-brand"/> : null}
                           </View>
                         </Pressable>

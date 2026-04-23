@@ -18,14 +18,14 @@ export default function DrawerRoot() {
     };
     return (<GestureHandlerRootView style={{ flex: 1 }}>
         <Drawer screenOptions={{
-            headerStyle: { backgroundColor: preferences.darkMode ? '#1b151f' : palette.surface },
+            headerStyle: { backgroundColor: preferences.darkMode ? '#050505' : palette.surface },
             headerTintColor: preferences.darkMode ? '#ffffff' : palette.text,
             headerTitleStyle: { fontWeight: '800' },
             drawerActiveTintColor: palette.primary,
             drawerInactiveTintColor: preferences.darkMode ? '#b7aeb9' : palette.muted,
-            drawerStyle: { backgroundColor: preferences.darkMode ? '#140f17' : palette.surface, width: 280 },
+            drawerStyle: { backgroundColor: preferences.darkMode ? '#050505' : palette.surface, width: 280 },
             drawerContentStyle: { paddingBottom: 120 },
-            sceneStyle: { backgroundColor: preferences.darkMode ? '#140f17' : palette.background },
+            sceneStyle: { backgroundColor: preferences.darkMode ? '#050505' : palette.background },
         }}>
         <Drawer.Screen name="(tabs)" options={{
             title: 'CareerMap',

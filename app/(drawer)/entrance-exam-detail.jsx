@@ -7,8 +7,8 @@ import { entranceExams, palette } from '../../src/careermap-data';
 import { AnimatedPressable, Screen } from '../../src/careermap-ui';
 function DetailCard({ title, children, }) {
     const { preferences } = useAppState();
-    return (<View className={`rounded-[24px] border px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'bg-card'}`} style={{
-            borderColor: preferences.darkMode ? '#2d2430' : '#e8dfda',
+    return (<View className={`rounded-[24px] border px-4 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'bg-card'}`} style={{
+            borderColor: preferences.darkMode ? '#1a1a1a' : '#e8dfda',
             shadowColor: '#7c5f54',
             shadowOpacity: preferences.darkMode ? 0 : 0.08,
             shadowRadius: 12,
@@ -34,7 +34,7 @@ export default function EntranceExamDetailScreen() {
     ];
     return (<Screen contentContainerClassName="gap-[18px] px-5 py-5 pb-8">
         <View className="mb-7 flex-row items-center gap-3">
-          <AnimatedPressable onPress={() => (router.canGoBack() ? router.back() : router.push('/(drawer)/entrance-exam'))} className={`h-10 w-10 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#211927]' : 'bg-white'}`} style={{
+          <AnimatedPressable onPress={() => (router.canGoBack() ? router.back() : router.push('/(drawer)/entrance-exam'))} className={`h-10 w-10 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-white'}`} style={{
             shadowColor: '#967c75',
             shadowOpacity: preferences.darkMode ? 0 : 0.12,
             shadowRadius: 10,
@@ -47,7 +47,7 @@ export default function EntranceExamDetailScreen() {
         </View>
 
         <View className="items-center pb-4">
-          <View className={`mb-4 h-[84px] w-[84px] items-center justify-center rounded-[26px] ${preferences.darkMode ? 'bg-[#2a1d26]' : 'bg-[#ffecef]'}`}>
+          <View className={`mb-4 h-[84px] w-[84px] items-center justify-center rounded-[26px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#ffecef]'}`}>
             <Ionicons name="document-text-outline" size={34} color={palette.primary}/>
           </View>
           <Text className={`text-center text-[32px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam.name}</Text>
@@ -75,7 +75,7 @@ export default function EntranceExamDetailScreen() {
                     <Text className={`flex-1 text-[14px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.label}</Text>
                     <Text className={`max-w-[58%] text-right text-[14px] font-bold leading-5 ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.value}</Text>
                   </View>
-                  {index < examDetails.length - 1 ? <View className={`h-px ${preferences.darkMode ? 'bg-[#2d2430]' : 'bg-[#f0e8e2]'}`}/> : null}
+                  {index < examDetails.length - 1 ? <View className={`h-px ${preferences.darkMode ? 'bg-[#1a1a1a]' : 'bg-[#f0e8e2]'}`}/> : null}
                 </View>))}
             </View>
           </DetailCard>

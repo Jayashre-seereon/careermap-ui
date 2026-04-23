@@ -36,11 +36,11 @@ export default function LearnScreen() {
     return (<Screen scroll={true}>
       <View className="flex-1">
       <ScrollView className="flex-1" contentContainerClassName="gap-[18px]  pt-2 " contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
-      <SectionHeader title="Master Class" subtitle="Learning videos and sorting adapted closely from the prototype master class screen." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#312636]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+      <SectionHeader title="Master Class" subtitle="Learning videos and sorting adapted closely from the prototype master class screen." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
             <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : preferences.darkMode ? '#ffffff' : palette.text}/>
           </AnimatedPressable>}/>
  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
-            {videoTypeOptions.map((label) => (<AnimatedPressable key={label} className={`rounded-full px-[13px] py-2 ${activeVideoType === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#312636]' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveVideoType(label)}>
+            {videoTypeOptions.map((label) => (<AnimatedPressable key={label} className={`rounded-full px-[13px] py-2 ${activeVideoType === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveVideoType(label)}>
                 <Text className={`text-[12px] font-extrabold ${activeVideoType === label ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
               </AnimatedPressable>))}
           </ScrollView>
@@ -53,14 +53,14 @@ export default function LearnScreen() {
                 { id: 'views', label: 'Most Viewed' },
                 { id: 'az', label: 'A-Z' },
                 { id: 'za', label: 'Z-A' },
-            ].map((item) => (<AnimatedPressable key={item.id} className={`rounded-full px-3 py-2 ${sortBy === item.id ? 'bg-brand' : preferences.darkMode ? 'bg-[#312636]' : 'bg-[#f2ebe6]'}`} onPress={() => setSortBy(item.id)}>
+            ].map((item) => (<AnimatedPressable key={item.id} className={`rounded-full px-3 py-2 ${sortBy === item.id ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setSortBy(item.id)}>
               <Text className={`text-[11px] font-extrabold ${sortBy === item.id ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.label}</Text>
             </AnimatedPressable>))}
           </ScrollView>
          
            <Text className={`text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Career</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
-            {careerOptions.map((label) => (<AnimatedPressable key={label} className={`rounded-full px-[13px] py-2 ${activeCareer === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#312636]' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveCareer(label)}>
+            {careerOptions.map((label) => (<AnimatedPressable key={label} className={`rounded-full px-[13px] py-2 ${activeCareer === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveCareer(label)}>
                 <Text className={`text-[12px] font-extrabold ${activeCareer === label ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
               </AnimatedPressable>))}
           </ScrollView>
@@ -69,12 +69,12 @@ export default function LearnScreen() {
       <View className="gap-3">
         {filtered.map((item) => {
                 const detailUnlocked = !item.locked || masterClassUnlocked || canAccessFreeDetail('master-class', item.title);
-                return (<View key={item.title} className={`relative gap-[14px] rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} style={{ opacity: item.locked && !detailUnlocked ? 0.96 : 1 }}>
-            {item.locked && !masterClassUnlocked ? (<View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#2a1d26]' : 'bg-[#f8e8d8]'}`}>
+                return (<View key={item.title} className={`relative gap-[14px] rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} style={{ opacity: item.locked && !detailUnlocked ? 0.96 : 1 }}>
+            {item.locked && !masterClassUnlocked ? (<View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
                 <Text className="text-[12px] font-black text-brand">{detailUnlocked ? '1' : 'L'}</Text>
               </View>) : null}
             <View className="flex-row items-start gap-3">
-              <View className={`h-[58px] w-[58px] items-center justify-center rounded-[18px] ${item.locked ? preferences.darkMode ? 'bg-[#312636]' : 'bg-[#f2eff2]' : ''}`} style={item.locked ? undefined : { backgroundColor: `${palette.primary}12` }}>
+              <View className={`h-[58px] w-[58px] items-center justify-center rounded-[18px] ${item.locked ? preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2eff2]' : ''}`} style={item.locked ? undefined : { backgroundColor: `${palette.primary}12` }}>
                 <Text className="text-[11px] font-extrabold text-brand-deep">{item.locked ? 'LOCK' : 'PLAY'}</Text>
               </View>
               <View className="flex-1 gap-1">

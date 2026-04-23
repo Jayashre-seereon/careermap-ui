@@ -42,7 +42,7 @@ export default function AbroadScreen() {
     }, [params.preferredCountry, params.selected, params.showForm]);
     if (submitted) {
         return (<Screen animationKey={animationKey}>
-        <SectionHeader title="Request Sent" subtitle="Consultation request state added to match the prototype flow." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#211927]' : 'bg-[#f2ebe6]'}`} onPress={() => {
+        <SectionHeader title="Request Sent" subtitle="Consultation request state added to match the prototype flow." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
                     setSubmitted(false);
                     setShowForm(false);
                     setPreferredCountry('');
@@ -52,7 +52,7 @@ export default function AbroadScreen() {
                 }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
-        <View className={`gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+        <View className={`gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           <Text className={`text-[24px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Our team will contact you shortly</Text>
           <Text className={`text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
             Your study abroad consultation request has been recorded. We will help you shortlist countries, courses, and scholarship options.
@@ -72,10 +72,10 @@ export default function AbroadScreen() {
     }
     if (showForm) {
         return (<Screen animationKey={animationKey}>
-        <SectionHeader title="Consultation Form" subtitle="A lightweight consultancy form matching the prototype structure." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#211927]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowForm(false)}>
+        <SectionHeader title="Consultation Form" subtitle="A lightweight consultancy form matching the prototype structure." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowForm(false)}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
-        <View className={`gap-[14px] rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+        <View className={`gap-[14px] rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           {[
                 ['Preferred Country', preferredCountry, setPreferredCountry, 'e.g. USA, UK, Canada'],
                 ['Course Interest', courseInterest, setCourseInterest, 'e.g. MS in Computer Science'],
@@ -83,7 +83,7 @@ export default function AbroadScreen() {
                 ['Preferred Intake', preferredIntake, setPreferredIntake, 'e.g. Fall 2025'],
             ].map(([label, value, setter, placeholder]) => (<View key={label} className="gap-1.5">
               <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
-              <TextInput value={value} onChangeText={setter} placeholder={placeholder} placeholderTextColor={preferences.darkMode ? '#7f7481' : palette.muted} className={`rounded-[16px] border px-4 py-[14px] text-[13px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#1b141f] text-white' : 'border-line bg-surface text-ink'}`}/>
+              <TextInput value={value} onChangeText={setter} placeholder={placeholder} placeholderTextColor={preferences.darkMode ? '#7f7481' : palette.muted} className={`rounded-[16px] border px-4 py-[14px] text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
             </View>))}
           <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => (unlocked ? setSubmitted(true) : openSubscriptionPrompt(formReturnTarget))}>
             <Text className="text-center text-[14px] font-extrabold text-white">{unlocked ? 'Submit Request' : 'Subscribe to Submit'}</Text>
@@ -94,7 +94,7 @@ export default function AbroadScreen() {
     if (selected !== null) {
         const country = studyAbroadCountries[selected];
         return (<Screen animationKey={animationKey}>
-        <SectionHeader title={country.name} subtitle="Expanded country detail page adapted from the reference prototype." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#211927]' : 'bg-[#f2ebe6]'}`} onPress={() => {
+        <SectionHeader title={country.name} subtitle="Expanded country detail page adapted from the reference prototype." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
                     setSelected(null);
                 }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
@@ -113,16 +113,16 @@ export default function AbroadScreen() {
                <Text className={`text-center text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.description}</Text>
             </View>
 
-            <View className={`gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+            <View className={`gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <Text className="text-[15px] font-extrabold text-brand">Overview</Text>
               <Text className={`text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.detail}</Text>
               <View className="flex-row gap-2.5">
-                <View className={`flex-1 gap-1 rounded-[18px] p-4 ${preferences.darkMode ? 'bg-[#1b141f]' : 'bg-[#f8f4ff]'}`}>
+                <View className={`flex-1 gap-1 rounded-[18px] p-4 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8f4ff]'}`}>
                   <Ionicons name="cash-outline" size={18} color={palette.green}/>
                   <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Tuition</Text>
                   <Text className="text-[16px] font-extrabold" style={{ color: palette.purple }}>{country.tuition}</Text>
                 </View>
-                <View className={`flex-1 gap-1 rounded-[18px] p-4 ${preferences.darkMode ? 'bg-[#1b141f]' : 'bg-[#f8f4ff]'}`}>
+                <View className={`flex-1 gap-1 rounded-[18px] p-4 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8f4ff]'}`}>
                   <Ionicons name="school-outline" size={18} color={palette.blue}/>
                   <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Living Cost</Text>
                   <Text className="text-[16px] font-extrabold" style={{ color: palette.purple }}>{country.living}</Text>
@@ -139,12 +139,12 @@ export default function AbroadScreen() {
                     ['Top Universities', country.topUniversities.map((item) => `- ${item}`)],
                     ['Scholarships', country.scholarships.map((item) => `- ${item}`)],
                     ['Requirements', country.requirements.map((item) => `- ${item}`)],
-                ].map(([title, lines]) => (<View key={title} className={`mt-3 gap-2.5 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+                ].map(([title, lines]) => (<View key={title} className={`mt-3 gap-2.5 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
                 <Text className="text-[15px] font-extrabold text-brand">{title}</Text>
                 {lines.map((line) => (<Text key={line} className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{line}</Text>))}
               </View>))}
 
-            <View className={`mt-3 gap-2.5 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+            <View className={`mt-3 gap-2.5 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <Text className="text-[15px] font-extrabold text-brand">Popular Courses</Text>
               <View className="flex-row flex-wrap gap-2">
                 {country.popularCourses.map((course) => (<Pill key={course} label={course} tone={palette.primary}/>))}
@@ -163,7 +163,7 @@ export default function AbroadScreen() {
     }
     return (<Screen animationKey={animationKey}>
       <SectionHeader title="Study Abroad" subtitle="Country list and consultancy flow adapted from the prototype."/>
-      <View className={`items-center gap-2 rounded-[26px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+      <View className={`items-center gap-2 rounded-[26px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
         <View className="h-[60px] w-[60px] items-center justify-center rounded-[20px]" style={{ backgroundColor: `${palette.teal}12` }}>
           <Ionicons name="globe-outline" size={28} color={palette.teal}/>
         </View>
@@ -171,7 +171,7 @@ export default function AbroadScreen() {
         <Text className={`text-center text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Explore top destinations, compare tuition and living cost, and request counselling from the same flow as the git prototype.</Text>
       </View>
       <View className="gap-3">
-        {studyAbroadCountries.map((country, index) => (<Pressable key={country.name} className={`gap-1.5 rounded-[22px] border p-[18px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={() => {
+        {studyAbroadCountries.map((country, index) => (<Pressable key={country.name} className={`gap-1.5 rounded-[22px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => {
                 if (!unlocked && !canAccessFreeDetail('abroad-consultancy', country.name)) {
                     setShowUnlockSheet(true);
                     return;

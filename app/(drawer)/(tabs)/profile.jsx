@@ -59,9 +59,9 @@ export default function ProfileScreen() {
     };
     const renderInlineSection = (section) => {
         if (section === 'saved' && savedCareers.length > 0) {
-            return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#1a141f]' : 'border-line bg-[#fcf8f5]'}`}>
+            return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-[#fcf8f5]'}`}>
           {savedCareers.map((career, index) => (<StaggerFadeUpItem key={career} index={index}>
-              <AnimatedPressable className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/(tabs)/library')}>
+              <AnimatedPressable className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/(tabs)/library')}>
                 <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{career}</Text>
                 <Ionicons name="chevron-forward" size={16} color={palette.muted}/>
               </AnimatedPressable>
@@ -69,8 +69,8 @@ export default function ProfileScreen() {
         </View>);
         }
         if (section === 'tests' && testHistory.length > 0) {
-            return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#1a141f]' : 'border-line bg-[#fcf8f5]'}`}>
-          {testHistory.map((item) => (<AnimatedPressable key={item.id} className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/(tabs)/assessment')}>
+            return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-[#fcf8f5]'}`}>
+          {testHistory.map((item) => (<AnimatedPressable key={item.id} className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/(tabs)/assessment')}>
               <View className="flex-1 pr-3">
                 <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.title}</Text>
                 <Text className={`mt-1 text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.subtitle}</Text>
@@ -80,9 +80,9 @@ export default function ProfileScreen() {
         </View>);
         }
         if (section === 'bookings' && bookings.length > 0) {
-            return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#1a141f]' : 'border-line bg-[#fcf8f5]'}`}>
-          {bookings.map((booking) => (<AnimatedPressable key={booking.id} className={`gap-1 rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/book-mentor')}>
-            <View key={booking.id} className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}>
+            return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-[#fcf8f5]'}`}>
+          {bookings.map((booking) => (<AnimatedPressable key={booking.id} className={`gap-1 rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/book-mentor')}>
+            <View key={booking.id} className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`}>
               <View>
                 <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{booking.mentorName}</Text>
                 <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{booking.date} | {booking.time}</Text>
@@ -93,8 +93,8 @@ export default function ProfileScreen() {
         </View>);
         }
         if (section === 'subscription' && subscriptionRecords.length > 0) {
-            return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#1a141f]' : 'border-line bg-[#fcf8f5]'}`}>
-          {subscriptionRecords.map((record) => (<AnimatedPressable key={record.id} className={`gap-1 rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/subscription')}>
+            return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-[#fcf8f5]'}`}>
+          {subscriptionRecords.map((record) => (<AnimatedPressable key={record.id} className={`gap-1 rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/subscription')}>
               <View className="flex-row items-center justify-between">
                 <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{record.planName}</Text>
                 <Text className="text-[13px] font-extrabold text-brand">{record.price}</Text>
@@ -109,13 +109,13 @@ export default function ProfileScreen() {
     if (editMode) {
         return (<Screen>
         <View className="flex-row items-center gap-3">
-          <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={() => setEditMode(false)}>
+          <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => setEditMode(false)}>
             <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
           </AnimatedPressable>
           <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Edit Profile</Text>
         </View>
 
-        <View className={`gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+        <View className={`gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           {[
                 { key: 'name', label: onboarding.userType === 'parent' ? 'Parent Name' : 'Full Name', placeholder: 'Enter full name', keyboardType: 'default' },
                 { key: 'email', label: 'Email Address', placeholder: 'Enter email address', keyboardType: 'email-address' },
@@ -127,17 +127,17 @@ export default function ProfileScreen() {
                 { key: 'dob', label: 'Date of Birth', placeholder: 'YYYY-MM-DD', keyboardType: 'numbers-and-punctuation' },
             ].map((field) => (<View key={field.key} className="gap-1.5">
               <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{field.label}</Text>
-              {field.key === 'password' ? (<View className={`flex-row items-center gap-3 rounded-[18px] border px-4 py-[14px] ${preferences.darkMode ? 'border-[#3a2f40] bg-[#312636]' : 'border-line bg-surface'}`}>
+              {field.key === 'password' ? (<View className={`flex-row items-center gap-3 rounded-[18px] border px-4 py-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-surface'}`}>
                   <TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} secureTextEntry={!showPassword} className={`flex-1 text-[14px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}/>
                   <AnimatedPressable onPress={() => setShowPassword((value) => !value)}>
                     <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={palette.muted}/>
                   </AnimatedPressable>
-                </View>) : (<TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#3a2f40] bg-[#312636] text-white' : 'border-line bg-surface text-ink'}`}/>)}
+                </View>) : (<TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>)}
             </View>))}
 
           {onboarding.userType === 'parent' ? (<View className="gap-1.5">
               <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Child&apos;s Name</Text>
-              <TextInput value={form.childName} onChangeText={(value) => updateField('childName', value)} placeholder="Enter child's name" placeholderTextColor={palette.muted} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#3a2f40] bg-[#312636] text-white' : 'border-line bg-surface text-ink'}`}/>
+              <TextInput value={form.childName} onChangeText={(value) => updateField('childName', value)} placeholder="Enter child's name" placeholderTextColor={palette.muted} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
             </View>) : null}
 
           <View className="gap-2">
@@ -145,7 +145,7 @@ export default function ProfileScreen() {
             <View className="flex-row gap-2.5">
               {['Male', 'Female', 'Other'].map((option) => {
                 const active = form.gender === option;
-                return (<AnimatedPressable key={option} className={`flex-1 rounded-[16px] border py-2 px-3 ${active ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={() => updateField('gender', option)}>
+                return (<AnimatedPressable key={option} className={`flex-1 rounded-[16px] border py-2 px-3 ${active ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => updateField('gender', option)}>
                     <Text className={`text-center text-[13px] font-extrabold ${active ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{option}</Text>
                   </AnimatedPressable>);
             })}
@@ -153,7 +153,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View className={`gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+        <View className={`gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           <Text className="text-[15px] font-black text-brand">Onboarding Details</Text>
           <View className="gap-2">
             {[
@@ -162,7 +162,7 @@ export default function ProfileScreen() {
                 ['Stream', onboarding.selectedStream || 'Not set'],
                 ['Guidance', onboarding.selectedGuidance || 'Not set'],
                 ['Interests', onboarding.selectedInterests.length > 0 ? onboarding.selectedInterests.join(', ') : 'Not set'],
-            ].map(([label, value]) => (<View key={label} className={`flex-row items-center justify-between rounded-[16px] px-4 py-3 ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`}>
+            ].map(([label, value]) => (<View key={label} className={`flex-row items-center justify-between rounded-[16px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`}>
                 <Text className={`text-[12px] font-bold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
                 <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{value}</Text>
               </View>))}
@@ -181,12 +181,12 @@ export default function ProfileScreen() {
     return (<Screen>
       <View className="flex-row items-center justify-between">
         <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>My Profile</Text>
-        <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#312636]' : 'bg-surface'}`} onPress={toggleDarkMode}>
+        <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={toggleDarkMode}>
           <Ionicons name={preferences.darkMode ? 'sunny-outline' : 'moon-outline'} size={18} color={preferences.darkMode ? palette.secondary : palette.muted}/>
         </AnimatedPressable>
       </View>
 
-      <View className={`items-center rounded-[28px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+      <View className={`items-center rounded-[28px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
         <View className="h-20 w-20 items-center justify-center rounded-full" style={{ backgroundColor: `${palette.primary}12` }}>
           <Text className="text-[30px] font-black text-brand">{displayName.charAt(0).toUpperCase()}</Text>
         </View>
@@ -204,7 +204,7 @@ export default function ProfileScreen() {
         </AnimatedPressable>
       </View>
 
-      <View className={`overflow-hidden rounded-[24px] border ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+      <View className={`overflow-hidden rounded-[24px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
         {menuItems.map((item, index) => {
             const sectionKey = item.label === 'Saved Careers'
                 ? 'saved'
@@ -218,9 +218,9 @@ export default function ProfileScreen() {
             const isOpen = sectionKey !== null && openSection === sectionKey;
             return (<StaggerFadeUpItem key={item.label} index={index}>
               <View>
-              <AnimatedPressable className={`flex-row items-center justify-between px-4 py-4 ${index < menuItems.length - 1 || isOpen ? preferences.darkMode ? 'border-b border-[#2d2430]' : 'border-b border-line' : ''}`} onPress={item.action}>
+              <AnimatedPressable className={`flex-row items-center justify-between px-4 py-4 ${index < menuItems.length - 1 || isOpen ? preferences.darkMode ? 'border-b border-[#1a1a1a]' : 'border-b border-line' : ''}`} onPress={item.action}>
                 <View className="flex-row items-center gap-3">
-                  <View className={`h-9 w-9 items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#141417]' : 'bg-surface'}`}>
+                  <View className={`h-9 w-9 items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`}>
                     <Ionicons name={item.icon} size={18} color={item.tone}/>
                   </View>
                   <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.label}</Text>

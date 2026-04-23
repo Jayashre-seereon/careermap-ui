@@ -46,20 +46,20 @@ export default function HomeScreen() {
         const current = personalityQuestions[currentQuestion];
         return (<Screen>
         <View className="flex-row items-center gap-3">
-          <AnimatedPressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] border ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={resetPersonality}>
+          <AnimatedPressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={resetPersonality}>
             <Ionicons name="chevron-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
           </AnimatedPressable>
           <Text className={`text-[18px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Know Your Personality</Text>
         </View>
 
         <View className="flex-row items-center gap-3">
-          <View className={`h-2 flex-1 overflow-hidden rounded-full ${preferences.darkMode ? 'bg-[#312636]' : 'bg-[#e8e2de]'}`}>
+          <View className={`h-2 flex-1 overflow-hidden rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#e8e2de]'}`}>
             <View className="h-full rounded-full bg-brand" style={{ width: `${((currentQuestion + 1) / personalityQuestions.length) * 100}%` }}/>
           </View>
           <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{currentQuestion + 1}/{personalityQuestions.length}</Text>
         </View>
 
-        <View className={`gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+        <View className={`gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           <Text className={`text-[11px] font-extrabold uppercase tracking-[0.8px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Question {currentQuestion + 1}</Text>
           <Text className={`text-[18px] font-extrabold leading-[26px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{current.q}</Text>
         </View>
@@ -67,7 +67,7 @@ export default function HomeScreen() {
         <View className="gap-3">
           {current.options.map((option, index) => {
                 const active = answers[currentQuestion] === index;
-                return (<AnimatedPressable key={option} className={`rounded-[18px] border p-4 ${active ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={() => {
+                return (<AnimatedPressable key={option} className={`rounded-[18px] border p-4 ${active ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => {
                         const next = [...answers];
                         next[currentQuestion] = index;
                         setAnswers(next);
@@ -78,7 +78,7 @@ export default function HomeScreen() {
         </View>
 
         <View className="flex-row gap-3">
-          <AnimatedPressable className={`flex-1 items-center rounded-[16px] border py-[14px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} disabled={currentQuestion === 0} onPress={() => setCurrentQuestion((value) => value - 1)}>
+          <AnimatedPressable className={`flex-1 items-center rounded-[16px] border py-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} disabled={currentQuestion === 0} onPress={() => setCurrentQuestion((value) => value - 1)}>
             <Text className={`text-[14px] font-extrabold ${currentQuestion === 0 ? preferences.darkMode ? 'text-[#6d6270]' : 'text-muted' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>Previous</Text>
           </AnimatedPressable>
           <AnimatedPressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={answers[currentQuestion] === null} onPress={() => currentQuestion < personalityQuestions.length - 1 ? setCurrentQuestion((value) => value + 1) : setCompletedPersonality(true)}>
@@ -97,14 +97,14 @@ export default function HomeScreen() {
           </View>
           <Text className={`text-center text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{personalityResult.desc}</Text>
 
-          <View className={`w-full gap-2.5 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+          <View className={`w-full gap-2.5 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
             <Text className={`text-[16px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Recommended Careers</Text>
             <View className="flex-row flex-wrap gap-2">
               {personalityResult.careers.map((career) => (<Pill key={career} label={career} tone={palette.primary}/>))}
             </View>
           </View>
 
-          <View className={`w-full gap-2.5 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`}>
+          <View className={`w-full gap-2.5 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
             <Text className={`text-[16px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Get a Full Psychometric Analysis</Text>
             <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Take the deeper assessment to unlock a richer career report with stronger recommendations.</Text>
             <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/(drawer)/(tabs)/assessment')}>
@@ -112,7 +112,7 @@ export default function HomeScreen() {
             </AnimatedPressable>
           </View>
 
-          <AnimatedPressable className={`w-full items-center rounded-[16px] border py-[14px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={resetPersonality}>
+          <AnimatedPressable className={`w-full items-center rounded-[16px] border py-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={resetPersonality}>
             <Text className={`text-[14px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Back to Dashboard</Text>
           </AnimatedPressable>
         </View>
@@ -129,7 +129,7 @@ export default function HomeScreen() {
             <Text className={`text-[18px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{userProfile.name || onboarding.name || studentProfile.name}</Text>
           </View>
         </View>
-        <AnimatedPressable className={`h-[42px] w-[42px] items-center justify-center rounded-[16px] border ${preferences.darkMode ? 'border-[#2d2430] bg-[#211927]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/notifications')}>
+        <AnimatedPressable className={`h-[42px] w-[42px] items-center justify-center rounded-[16px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/notifications')}>
           <View className="items-center justify-center">
             <Ionicons name="notifications-outline" size={20} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             {unreadNotificationsCount > 0 ? (<View className="absolute -right-2 -top-2 min-w-[18px] rounded-full bg-brand px-1 py-[1px]">
@@ -168,8 +168,8 @@ export default function HomeScreen() {
                     || (card.title === 'Scholarships' && isUnlocked('scholarship'))
                     || (card.title === 'Study Abroad' && isUnlocked('abroad-consultancy')));
                 return (<AnimatedPressable key={card.title} style={{ width: moduleCardWidth }} onPress={() => router.push(card.route)}>
-        <View className={`relative aspect-square items-center justify-center gap-2 rounded-[22px] border p-[14px] ${preferences.darkMode ? 'bg-[#141417]' : 'bg-card'}`} style={{ borderColor: preferences.darkMode ? '#2d2430' : `${card.tone}30` }}>
-              {showLock ? (<View className={`absolute right-3 top-3 h-7 w-7 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#2a1d26]' : 'bg-[#f8e8d8]'}`}>
+        <View className={`relative aspect-square items-center justify-center gap-2 rounded-[22px] border p-[14px] ${preferences.darkMode ? 'bg-[#080808]' : 'bg-card'}`} style={{ borderColor: preferences.darkMode ? '#1a1a1a' : `${card.tone}30` }}>
+              {showLock ? (<View className={`absolute right-3 top-3 h-7 w-7 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
                   <Ionicons name="lock-closed" size={13} color={palette.primary}/>
                 </View>) : null}
               <View className="h-[42px] w-[42px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${card.tone}14` }}>
@@ -183,7 +183,7 @@ export default function HomeScreen() {
 
       <SectionHeader title="Explore Your Mentors" action={<AnimatedPressable onPress={() => router.push('/(drawer)/book-mentor')}><Text className="text-[12px] font-extrabold text-brand mt-4 ">See all</Text></AnimatedPressable>}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
-        {featuredMentors.map((mentor) => (<AnimatedPressable key={mentor.name} className={`w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#141417]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/book-mentor')}>
+        {featuredMentors.map((mentor) => (<AnimatedPressable key={mentor.name} className={`w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/book-mentor')}>
             <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px] " style={{ backgroundColor: `${mentor.accent}15` }}>
               <Ionicons name="person" size={22} color={mentor.accent}/>
             </View>
@@ -195,7 +195,7 @@ export default function HomeScreen() {
 
       <SectionHeader title="Explore Scholarships" action={<AnimatedPressable onPress={() => router.push('/(drawer)/scholarship')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>}/>
       <View className="gap-3 mb-4 mt-4">
-        {featuredScholarships.map((item) => (<AnimatedPressable key={item.name} className={`flex-row items-center gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#141417]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/scholarship')}>
+        {featuredScholarships.map((item) => (<AnimatedPressable key={item.name} className={`flex-row items-center gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/scholarship')}>
             <View className={`h-[42px] w-[42px] items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#163126]' : 'bg-[#edf9f1]'}`}>
               <Ionicons name="ribbon-outline" size={20} color={palette.green}/>
             </View>
@@ -212,7 +212,7 @@ export default function HomeScreen() {
 
       <SectionHeader title="Explore Institutes" action={<AnimatedPressable onPress={() => router.push('/(drawer)/institute')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
-        {featuredInstitutes.map((item) => (<AnimatedPressable key={item.name} className={`w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#2d2430] bg-[#141417]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/institute')}>
+        {featuredInstitutes.map((item) => (<AnimatedPressable key={item.name} className={`w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/institute')}>
             <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${palette.blue}14` }}>
               <Ionicons name="business-outline" size={22} color={palette.blue}/>
             </View>
@@ -222,14 +222,14 @@ export default function HomeScreen() {
           </AnimatedPressable>))}
       </ScrollView>
 
-      <View className={`gap-2 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#2d2430] bg-[#141417]' : 'border-line bg-card'}`}>
+      <View className={`gap-2 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
         <Text className={`text-[14px] font-black uppercase tracking-[0.5px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Quick Actions</Text>
         {[
             { label: 'View Subscription Plans', path: '/(drawer)/subscription', icon: 'sparkles-outline', iconTone: palette.secondary },
             { label: 'Your Test History', path: '/(drawer)/(tabs)/profile', icon: 'time-outline', iconTone: palette.blue },
         ].map((item) => (<AnimatedPressable key={item.label} className="flex-row items-center justify-between py-2" onPress={() => router.push(item.path)}>
             <View className="flex-1 flex-row items-center gap-3">
-              <View className={`h-[34px] w-[34px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#211927]' : 'bg-[#f4eeea]'}`}>
+              <View className={`h-[34px] w-[34px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f4eeea]'}`}>
                 <Ionicons name={item.icon} size={17} color={item.iconTone}/>
               </View>
               <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.label}</Text>

@@ -49,7 +49,7 @@ export function SectionHeader({ title, subtitle, action }) {
 
 export function HeroCard({ eyebrow, title, description, }) {
     const { preferences } = useAppState();
-    return (<View className={`gap-2.5 rounded-[28px] border p-[22px] shadow-card ${preferences.darkMode ? 'border-[#35101b] bg-[#0f0f10]' : 'border-line bg-card'}`}>
+    return (<View className={`gap-2.5 rounded-[28px] border p-[22px] shadow-card ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
       <Text className="text-[12px] font-bold uppercase tracking-[1px] text-brand">{eyebrow}</Text>
       <Text className={`text-[28px] font-black leading-[34px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
       <Text className={`text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{description}</Text>
@@ -66,8 +66,8 @@ export function Pill({ label, tone = palette.primary }) {
 
 export function InfoCard({ icon, title, subtitle, onPress, }) {
     const { preferences } = useAppState();
-    const content = (<View className={`min-h-[140px] min-w-[47%] flex-1 gap-2.5 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#35101b] bg-[#0f0f10]' : 'border-line bg-card'}`}>
-      <View className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#1b1014]' : 'bg-[#f8ece7]'}`}>
+    const content = (<View className={`min-h-[140px] min-w-[47%] flex-1 gap-2.5 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+      <View className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#121212]' : 'bg-[#f8ece7]'}`}>
         <Ionicons name={icon} size={20} color={palette.primary}/>
       </View>
       <Text className={`text-[16px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
@@ -81,9 +81,9 @@ export function InfoCard({ icon, title, subtitle, onPress, }) {
 
 export function ListRow({ icon, title, value, onPress, }) {
     const { preferences } = useAppState();
-    return (<AnimatedPressable className={`flex-row items-center justify-between gap-3 rounded-[20px] border px-4 py-[15px] ${preferences.darkMode ? 'border-[#35101b] bg-[#0f0f10]' : 'border-line bg-card'}`} onPress={onPress}>
+    return (<AnimatedPressable className={`flex-row items-center justify-between gap-3 rounded-[20px] border px-4 py-[15px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={onPress}>
       <View className="flex-1 flex-row items-center gap-3">
-        <View className={`h-[34px] w-[34px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#1b1014]' : 'bg-[#f8ece7]'}`}>
+        <View className={`h-[34px] w-[34px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#121212]' : 'bg-[#f8ece7]'}`}>
           <Ionicons name={icon} size={18} color={palette.primary}/>
         </View>
         <Text className={`flex-1 text-[15px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
@@ -97,7 +97,7 @@ export function ListRow({ icon, title, value, onPress, }) {
 
 export function StatCard({ label, value, tone, }) {
     const { preferences } = useAppState();
-    return (<View className={`flex-1 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#35101b] bg-[#0f0f10]' : 'border-line bg-card'}`}>
+    return (<View className={`flex-1 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
       <View className="h-[10px] w-[10px] rounded-full" style={{ backgroundColor: tone }}/>
       <Text className={`text-[24px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{value}</Text>
       <Text className={`text-[12px] font-semibold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
@@ -127,16 +127,17 @@ export function AnimatedPressable({ children, onPress, className, disabled, styl
 }
 
 export function LockedDetailOverlay({ title = 'Unlock', subtitle = 'Subscribe to more', onPress }) {
-    return (<View className="absolute inset-0 items-center justify-center px-5" style={{ backgroundColor: 'rgba(34, 11, 52, 0.28)' }}>
-      <View className="w-full max-w-[340px] items-center rounded-[28px] border border-white/55 bg-white/94 px-6 py-7 shadow-card">
-        <View className="absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full bg-[#f8e8d8]">
+    const { preferences } = useAppState();
+    return (<View className="absolute inset-0 items-center justify-center px-5" style={{ backgroundColor: preferences.darkMode ? 'rgba(0, 0, 0, 0.72)' : 'rgba(34, 11, 52, 0.28)' }}>
+      <View className={`w-full max-w-[340px] items-center rounded-[28px] border px-6 py-7 shadow-card ${preferences.darkMode ? 'border-[#1f1f1f] bg-[#080808]' : 'border-white/55 bg-white/94'}`}>
+        <View className={`absolute right-4 top-4 h-10 w-10 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#121212]' : 'bg-[#f8e8d8]'}`}>
           <Ionicons name="lock-closed" size={18} color={palette.primary}/>
         </View>
         <View className="h-[68px] w-[68px] items-center justify-center rounded-[22px]" style={{ backgroundColor: `${palette.primary}14` }}>
           <Ionicons name="lock-closed" size={30} color={palette.primary}/>
         </View>
-        <Text className="mt-4 text-[24px] font-black text-ink">{title}</Text>
-        <Text className="mt-1 text-center text-[13px] leading-5 text-muted">{subtitle}</Text>
+        <Text className={`mt-4 text-[24px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
+        <Text className={`mt-1 text-center text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{subtitle}</Text>
         <AnimatedPressable className="mt-5 w-full rounded-[18px] bg-brand py-3.5" onPress={onPress}>
           <Text className="text-center text-[14px] font-extrabold text-white">Unlock Now</Text>
         </AnimatedPressable>
@@ -145,33 +146,40 @@ export function LockedDetailOverlay({ title = 'Unlock', subtitle = 'Subscribe to
 }
 
 export function UnlockBottomSheet({ title = 'Unlock More', subtitle = 'Subscribe to more', onClose, onPress }) {
+    const { preferences } = useAppState();
     return (<Modal animationType="fade" transparent visible onRequestClose={onClose}>
       <View className="flex-1 justify-end">
         <Pressable className="absolute inset-0" onPress={onClose}>
-          <View className="absolute inset-0 bg-[#140b18]/45"/>
-          <View className="absolute inset-0 bg-white/10"/>
+          <View className={`absolute inset-0 ${preferences.darkMode ? 'bg-black/75' : 'bg-[#140b18]/45'}`}/>
+          <View className={`absolute inset-0 ${preferences.darkMode ? 'bg-black/10' : 'bg-white/10'}`}/>
         </Pressable>
 
         <View className="absolute inset-x-0 bottom-0 px-4 pb-4">
-          <View className="overflow-hidden rounded-[34px] border border-white/70 bg-white shadow-card">
+          <View className={`overflow-hidden rounded-[34px] border shadow-card ${preferences.darkMode ? 'border-[#1f1f1f] bg-[#080808]' : 'border-white/70 bg-white'}`} style={{
+            shadowColor: '#ffffff',
+            shadowOpacity: 0.28,
+            shadowRadius: 18,
+            shadowOffset: { width: 0, height: 0 },
+            elevation: 18,
+          }}>
             <View className="absolute inset-x-0 top-0 h-20 bg-brand"/>
             <View className="px-6 pb-8 pt-4">
               <View className="mb-8 items-center">
-                <View className="h-1 w-16 rounded-full bg-[#e8d7d3]"/>
+                <View className={`h-1 w-16 rounded-full ${preferences.darkMode ? 'bg-[#2b2b2b]' : 'bg-[#e8d7d3]'}`}/>
               </View>
 
               <View className="mb-4 flex-row justify-end">
-                <Pressable className="h-10 w-10 items-center justify-center  rounded-full bg-[#f9f1ee]" onPress={onClose}>
-                  <Ionicons name="close" size={18} color={palette.text}/>
+                <Pressable className={`h-10 w-10 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#121212]' : 'bg-[#f9f1ee]'}`} onPress={onClose}>
+                  <Ionicons name="close" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
                 </Pressable>
               </View>
 
               <View className="items-center">
-                <View className="h-[76px] w-[76px] items-center justify-center rounded-[24px] border border-[#ffd8df] bg-[#fff5f7]">
+                <View className={`h-[76px] w-[76px] items-center justify-center rounded-[24px] border ${preferences.darkMode ? 'border-[#1f1f1f] bg-[#121212]' : 'border-[#ffd8df] bg-[#fff5f7]'}`}>
                   <Ionicons name="lock-closed" size={34} color={palette.primary}/>
                 </View>
-                <Text className="mt-5 text-center text-[26px] font-black text-ink">{title}</Text>
-                <Text className="mt-2 px-3 text-center text-[14px] leading-6 text-muted">{subtitle}</Text>
+                <Text className={`mt-5 text-center text-[26px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
+                <Text className={`mt-2 px-3 text-center text-[14px] leading-6 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{subtitle}</Text>
                 <AnimatedPressable className="mt-7 w-full rounded-[20px] bg-brand py-4" onPress={onPress}>
                   <Text className="text-center px-2 text-[15px] font-extrabold text-white">View Plans & Unlock</Text>
                 </AnimatedPressable>
