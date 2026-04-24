@@ -53,11 +53,11 @@ export default function DrawerRoot() {
             title: 'Subscription',
             drawerIcon: renderDrawerIcon('card-outline'),
         }}/>
-        <Drawer.Screen name="(tabs)/library" options={{
+        <Drawer.Screen name="library" options={{
             title: 'Library',
             drawerIcon: renderDrawerIcon('book-outline'),
         }}/>
-        <Drawer.Screen name="(tabs)/learn" options={{
+        <Drawer.Screen name="learn" options={{
             title: 'Master Class',
             drawerIcon: renderDrawerIcon('school-outline'),
         }}/>
