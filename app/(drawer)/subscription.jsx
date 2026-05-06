@@ -23,15 +23,11 @@ export default function SubscriptionScreen() {
                 <Text className={`text-[18px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{plan.name}</Text>
                 <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{plan.description}</Text>
               </View>
-             <View className="flex-row gap-2 ">
-  {plan.recommended ? (
-    <Pill label="Recommended" tone={palette.primary} />
-  ) : null}
-
-  {plan.highestseller ? (
-    <Pill label="Highest Seller" tone="#f59e0b" />
-  ) : null}
-</View>  </View>
+              <View className="flex-row gap-2 ">
+                {plan.recommended ? <Pill label="Recommended" tone={palette.primary} /> : null}
+                {plan.highestseller ? <Pill label="Highest Seller" tone="#f59e0b" /> : null}
+              </View>
+            </View>
             <Text className="text-[28px] font-black text-brand">{plan.price}</Text>
             <View className="gap-2.5 ">
               {plan.features.map((feature) => (<View key={feature} className="flex-row items-center gap-2.5">
