@@ -37,10 +37,10 @@ export default function AssessmentScreen() {
             A comprehensive assessment to understand aptitude, personality traits, and the right-fit career direction.
           </Text>
 
-          <View className="mt-4 flex-row gap-2">
-            <View className="rounded-full bg-[#e8f2ff] px-3 py-1.5">
-              <Text className="text-[11px] font-bold text-[#3774d8]">50 Questions</Text>
-            </View>
+            <View className="mt-4 flex-row gap-2">
+              <View className="rounded-full bg-[#e8f2ff] px-3 py-1.5">
+              <Text className="text-[11px] font-bold text-[#3774d8]">30 Questions</Text>
+              </View>
             <View className="rounded-full bg-[#e4f7ed] px-3 py-1.5">
               <Text className="text-[11px] font-bold text-[#2f9367]">1 Year Validity</Text>
             </View>

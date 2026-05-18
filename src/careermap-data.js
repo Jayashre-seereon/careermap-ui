@@ -544,10 +544,10 @@ export const institutes = [
     },
 ];
 export const assessmentFeatures = [
-    '50 MCQ questions',
-    'Aptitude and personality analysis',
-    'AI-powered career matching',
-    'Detailed report summary',
+    '30 module-wise questions',
+    'Interest, personality, aptitude, and values analysis',
+    'Guided step-by-step assessment flow',
+    'Downloadable report summary',
     'One-year validity per plan',
 ];
 export const assessmentPolicies = [
