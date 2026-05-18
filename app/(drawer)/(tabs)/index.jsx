@@ -78,10 +78,10 @@ export default function HomeScreen() {
         </View>
 
         <View className="flex-row gap-3">
-          <AnimatedPressable className={`flex-1 items-center rounded-[16px] border py-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} disabled={currentQuestion === 0} onPress={() => setCurrentQuestion((value) => value - 1)}>
+          <AnimatedPressable className={`min-w-[112px] flex-1 items-center rounded-[16px] border px-5 py-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} disabled={currentQuestion === 0} onPress={() => setCurrentQuestion((value) => value - 1)}>
             <Text className={`text-[14px] font-extrabold ${currentQuestion === 0 ? preferences.darkMode ? 'text-[#6d6270]' : 'text-muted' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>Previous</Text>
           </AnimatedPressable>
-          <AnimatedPressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={answers[currentQuestion] === null} onPress={() => currentQuestion < personalityQuestions.length - 1 ? setCurrentQuestion((value) => value + 1) : setCompletedPersonality(true)}>
+          <AnimatedPressable className="min-w-[112px] flex-1 items-center rounded-[16px] bg-brand px-5 py-[14px]" disabled={answers[currentQuestion] === null} onPress={() => currentQuestion < personalityQuestions.length - 1 ? setCurrentQuestion((value) => value + 1) : setCompletedPersonality(true)}>
             <Text className="text-[14px] font-extrabold text-white">{currentQuestion < personalityQuestions.length - 1 ? 'Next' : 'See Results'}</Text>
           </AnimatedPressable>
         </View>
@@ -112,7 +112,7 @@ export default function HomeScreen() {
             </AnimatedPressable>
           </View>
 
-          <AnimatedPressable className={`w-full items-center rounded-[16px] border py-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={resetPersonality}>
+          <AnimatedPressable className={`w-full items-center rounded-[16px] border px-[14px] py-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={resetPersonality}>
             <Text className={`text-[14px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Back to Dashboard</Text>
           </AnimatedPressable>
         </View>

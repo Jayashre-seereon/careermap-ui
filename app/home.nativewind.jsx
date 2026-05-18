@@ -74,10 +74,10 @@ export default function HomeScreen() {
         </View>
 
         <View className="flex-row gap-3">
-          <Pressable className="flex-1 items-center rounded-[16px] border border-line bg-card py-[14px]" disabled={currentQuestion === 0} onPress={() => setCurrentQuestion((value) => value - 1)} style={({ pressed }) => ({ opacity: currentQuestion === 0 || pressed ? 0.42 : 1 })}>
+          <Pressable className="min-w-[112px] flex-1 items-center rounded-[16px] border border-line bg-card px-5 py-[14px]" disabled={currentQuestion === 0} onPress={() => setCurrentQuestion((value) => value - 1)} style={({ pressed }) => ({ opacity: currentQuestion === 0 || pressed ? 0.42 : 1 })}>
             <Text className={`text-[14px] font-extrabold ${currentQuestion === 0 ? 'text-muted' : 'text-ink'}`}>Previous</Text>
           </Pressable>
-          <AnimatedPressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={answers[currentQuestion] === null} onPress={() => currentQuestion < personalityQuestions.length - 1 ? setCurrentQuestion((value) => value + 1) : setCompletedPersonality(true)}>
+          <AnimatedPressable className="min-w-[112px] flex-1 items-center rounded-[16px] bg-brand px-5 py-[14px]" disabled={answers[currentQuestion] === null} onPress={() => currentQuestion < personalityQuestions.length - 1 ? setCurrentQuestion((value) => value + 1) : setCompletedPersonality(true)}>
             <Text className="text-[14px] font-extrabold text-white">{currentQuestion < personalityQuestions.length - 1 ? 'Next' : 'See Results'}</Text>
           </AnimatedPressable>
         </View>
