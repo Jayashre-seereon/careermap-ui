@@ -39,6 +39,7 @@ export default function HomeScreen() {
     }, [answers]);
     const resetPersonality = () => {
         setShowPersonalityTest(false);
+        
         setCompletedPersonality(false);
         setCurrentQuestion(0);
     };
