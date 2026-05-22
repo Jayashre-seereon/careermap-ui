@@ -35,6 +35,7 @@ export default function HomeScreen() {
             if (answer !== null)
                 counts[answer] += 1;
         });
+        
         return personalityTypes[counts.indexOf(Math.max(...counts))];
     }, [answers]);
     const resetPersonality = () => {
