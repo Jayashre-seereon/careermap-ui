@@ -3,15 +3,20 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getApiErrorMessage, sendSignupOtp } from '../src/api/authApi';
 import { useAppState } from '../src/app-state';
 import { BeeMascot } from '../src/bee-mascot';
 import { existingUsers, palette } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
 import { AnimatedBackground } from '../src/animated-background';
 import { ZoomInPage } from '../src/page-transition';
+import { useAuthStore } from '../src/store/auth-store';
+import { formatOtpMobile } from '../src/utils/auth';
 export default function LoginScreen() {
-    const { preferences } = useAppState();
+    const { onboarding, preferences } = useAppState();
     const { userType } = useLocalSearchParams();
+    const setSignupForm = useAuthStore((state) => state.setSignupForm);
+    const setOnboardingData = useAuthStore((state) => state.setOnboardingData);
     const isExistingUser = userType === 'existing';
     const [loginMode, setLoginMode] = useState('mobile');
     const [mobile, setMobile] = useState('');
@@ -23,21 +28,49 @@ export default function LoginScreen() {
         type: 'idle',
         message: '',
     });
+    const [isSendingOtp, setIsSendingOtp] = useState(false);
     const knownMobileUser = useMemo(() => existingUsers.find((item) => item.mobile === mobile), [mobile]);
     const knownCouponUser = useMemo(() => existingUsers.find((item) => item.coupon === coupon.trim().toUpperCase()), [coupon]);
     const knownEmailUser = useMemo(() => existingUsers.find((item) => item.email.toLowerCase() === email.trim().toLowerCase()), [email]);
-    const handleSendOtp = () => {
+    const handleSendOtp = async () => {
+        const formattedMobile = formatOtpMobile(mobile);
         if (isExistingUser && !knownMobileUser) {
             setStatus({ type: 'error', message: 'User not exist with this mobile number.' });
             return;
         }
-        router.push({
-            pathname: '/otp-verify',
-            params: {
-                next: isExistingUser ? '/(drawer)/(tabs)' : '/profile-setup',
-                identifier: mobile,
-            },
-        });
+        if (isExistingUser) {
+            router.push({
+                pathname: '/otp-verify',
+                params: {
+                    next: '/(drawer)/(tabs)',
+                    identifier: formattedMobile,
+                },
+            });
+            return;
+        }
+        try {
+            setIsSendingOtp(true);
+            setStatus({ type: 'idle', message: '' });
+            await sendSignupOtp(formattedMobile);
+            setOnboardingData(onboarding);
+            setSignupForm({ mobile });
+            router.push({
+                pathname: '/otp-verify',
+                params: {
+                    next: '/profile-setup',
+                    identifier: formattedMobile,
+                },
+            });
+        }
+        catch (error) {
+            setStatus({
+                type: 'error',
+                message: getApiErrorMessage(error, 'Failed to send OTP.'),
+            });
+        }
+        finally {
+            setIsSendingOtp(false);
+        }
     };
     const handleCouponLogin = () => {
         const normalized = coupon.trim().toUpperCase();
@@ -123,8 +156,8 @@ export default function LoginScreen() {
                 setStatus({ type: 'idle', message: '' });
             }} keyboardType="number-pad" placeholder="Enter mobile number" placeholderTextColor={palette.muted} className={`flex-1 text-[15px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}/>
             </View>
-            <AnimatedPressable className="mt-1.5 items-center rounded-[18px] bg-brand py-4" disabled={mobile.length !== 10} onPress={handleSendOtp}>
-              <Text className="text-[15px] font-extrabold text-white">Send OTP</Text>
+            <AnimatedPressable className="mt-1.5 items-center rounded-[18px] bg-brand py-4" disabled={mobile.length !== 10 || isSendingOtp} onPress={handleSendOtp}>
+              <Text className="text-[15px] font-extrabold text-white">{isSendingOtp ? 'Sending OTP...' : 'Send OTP'}</Text>
             </AnimatedPressable>
           </View>) : null}
 

@@ -19,15 +19,17 @@ const initialOnboardingState = {
     selectedGuidance: '',
 };
 const initialUserProfile = {
-    name: 'Aarav Sharma',
-    email: 'aarav.sharma@email.com',
-    mobile: '+91 98765 43210',
-    password: 'Aarav@123',
-    address: '24 Palm Residency',
-    city: 'Bengaluru',
-    stateName: 'Karnataka',
-    gender: 'Male',
-    dob: '2007-09-14',
+    name: '',
+    email: '',
+    mobile: '',
+    password: '',
+    address: '',
+    city: '',
+    stateName: '',
+    district: '',
+    country: 'India',
+    gender: '',
+    dob: '',
     childName: '',
 };
 const initialPreferences = {

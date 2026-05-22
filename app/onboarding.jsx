@@ -8,6 +8,7 @@ import { BeeMascot } from '../src/bee-mascot';
 import { palette } from '../src/careermap-data';
 import { AnimatedBackground } from '../src/animated-background';
 import { AnimatedPressable } from '../src/careermap-ui';
+import { useAuthStore } from '../src/store/auth-store';
 const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate', 'Post Graduate', 'Working Professional', 'Other'];
 const streamOptions = ['Science', 'Commerce', 'Arts', 'Other'];
 const interestOptions = ['Science & Tech', 'Problem Solving','Research & Discovery','Art & Literature','Business ','Sports','Creativity & Design','Dance & Music','Helping People','Public Speaking' ];
@@ -23,6 +24,7 @@ const strengthOptions = ['Analytical Thinking', 'Communication', 'Creativity', '
 const priorityOptions = ['High Earning Potential ', 'Passion and Interest', 'Work-Life Balance', 'Job Security', 'Making a Positive Impact', 'Creative Freedom','Intellectual Growth & Advancement'];
 export default function OnboardingScreen() {
     const { preferences, saveOnboarding } = useAppState();
+    const setOnboardingData = useAuthStore((state) => state.setOnboardingData);
     const [userType, setUserType] = useState('');
     const [step, setStep] = useState(0);
     const [name, setName] = useState('');
@@ -86,7 +88,7 @@ export default function OnboardingScreen() {
     };
     const next = () => {
         if (step === 8 && !isOnboardingSaved) {
-            saveOnboarding({
+            const onboardingData = {
                 userType,
                 name,
                 childName,
@@ -97,7 +99,9 @@ export default function OnboardingScreen() {
                 selectedStrengths,
                 selectedPriorities,
                 selectedGuidance: '',
-            });
+            };
+            saveOnboarding(onboardingData);
+            setOnboardingData(onboardingData);
             setIsOnboardingSaved(true);
             setStep(step + 1);
             return;
