@@ -10,7 +10,6 @@ export function normalizeMobile(value = '') {
 
 export function formatOtpMobile(value = '') {
   const mobile = normalizeMobile(value);
-
   return mobile ? `+91${mobile}` : '';
 }
 

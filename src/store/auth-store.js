@@ -29,6 +29,7 @@ export const useAuthStore = create((set) => ({
   tempToken: '',
   accessToken: '',
   user: null,
+
   setSignupForm: (data) =>
     set((state) => ({
       signupForm: {
@@ -36,27 +37,27 @@ export const useAuthStore = create((set) => ({
         ...data,
       },
     })),
+
   setOnboardingData: (data) =>
     set(() => ({
       onboardingData: data,
     })),
+
   setTempToken: (tempToken) =>
-    set(() => ({
-      tempToken,
-    })),
+    set(() => ({ tempToken })),
+
   setAccessToken: (accessToken) =>
-    set(() => ({
-      accessToken,
-    })),
+    set(() => ({ accessToken })),
+
   setUser: (user) =>
-    set(() => ({
-      user,
-    })),
+    set(() => ({ user })),
+
   clearAuthFlow: () =>
     set(() => ({
       signupForm: initialSignupForm,
       tempToken: '',
     })),
+
   logout: () =>
     set(() => ({
       tempToken: '',
