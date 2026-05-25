@@ -50,3 +50,26 @@ export function isValidDateInput(value = '') {
 
   return !Number.isNaN(new Date(value).getTime());
 }
+
+export function mapApiUserToProfile(user) {
+  if (!user) {
+    return null;
+  }
+
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+
+  return {
+    name: fullName,
+    email: user.email || '',
+    mobile: user.mobile || '',
+    password: '',
+    address: user.address || '',
+    city: user.city || '',
+    stateName: user.state || '',
+    district: user.district || '',
+    country: user.country || 'India',
+    gender: user.gender || '',
+    dob: user.dataOfBirth ? String(user.dataOfBirth).slice(0, 10) : '',
+    childName: '',
+  };
+}

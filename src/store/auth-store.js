@@ -28,6 +28,7 @@ export const useAuthStore = create((set) => ({
   onboardingData: initialOnboardingData,
   tempToken: '',
   accessToken: '',
+  refreshToken: '',
   user: null,
 
   setSignupForm: (data) =>
@@ -49,6 +50,9 @@ export const useAuthStore = create((set) => ({
   setAccessToken: (accessToken) =>
     set(() => ({ accessToken })),
 
+  setRefreshToken: (refreshToken) =>
+    set(() => ({ refreshToken })),
+
   setUser: (user) =>
     set(() => ({ user })),
 
@@ -62,6 +66,7 @@ export const useAuthStore = create((set) => ({
     set(() => ({
       tempToken: '',
       accessToken: '',
+      refreshToken: '',
       user: null,
     })),
 }));

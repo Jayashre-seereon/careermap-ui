@@ -6,7 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppState } from '../src/app-state';
 import { AnimatedBackground } from '../src/animated-background';
 import { BeeMascot } from '../src/bee-mascot';
-import { palette } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
 export default function AuthEntryScreen() {
     const { preferences } = useAppState();
@@ -100,7 +99,7 @@ export default function AuthEntryScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className={`text-[18px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Existing User</Text>
-                  <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Login with OTP, coupon, or email and password.</Text>
+                  <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Login with mobile OTP or email and password.</Text>
                 </View>
               </View>
             </AnimatedPressable>

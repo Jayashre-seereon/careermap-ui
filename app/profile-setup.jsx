@@ -23,6 +23,7 @@ export default function ProfileSetupScreen() {
     const onboardingData = useAuthStore((state) => state.onboardingData);
     const tempToken = useAuthStore((state) => state.tempToken);
     const setAccessToken = useAuthStore((state) => state.setAccessToken);
+    const setRefreshToken = useAuthStore((state) => state.setRefreshToken);
     const setUser = useAuthStore((state) => state.setUser);
     const clearAuthFlow = useAuthStore((state) => state.clearAuthFlow);
     const setOnboardingData = useAuthStore((state) => state.setOnboardingData);
@@ -261,6 +262,7 @@ export default function ProfileSetupScreen() {
                 setStatus({ type: 'idle', message: '' });
                 const response = await signupUser(payload, tempToken);
                 setAccessToken(response.accessToken || '');
+                setRefreshToken(response.refreshToken || '');
                 setUser(response.user || null);
                 clearAuthFlow();
                 saveOnboarding({ ...mergedOnboarding, name: form.name });
