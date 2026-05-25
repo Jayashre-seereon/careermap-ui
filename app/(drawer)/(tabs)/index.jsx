@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import api from '../../../src/api/axios';
 import { useAppState } from '../../../src/app-state';
 import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../../src/careermap-ui';
 import { featuredInstitutes, featuredMentors, featuredScholarships, moduleCards, palette, studentProfile } from '../../../src/careermap-data';
@@ -25,10 +27,110 @@ export default function HomeScreen() {
     const [completedPersonality, setCompletedPersonality] = useState(false);
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState(Array(personalityQuestions.length).fill(null));
+    const [dashboardData, setDashboardData] = useState(null);
     const { isUnlocked, onboarding, unreadNotificationsCount, userProfile } = useAppState();
     const { width } = useWindowDimensions();
     const moduleCardWidth = width < 390 ? '48%' : '31%';
     const lockableModuleTitles = ['Career Library', 'Master Class', 'Book Mentor', 'Scholarships', 'Study Abroad'];
+    const normalizeModuleTitle = (value) => value?.trim().toLowerCase().replace(/\s+/g, ' ');
+    const resolveModuleLookupKey = (value) => {
+        const normalized = normalizeModuleTitle(value);
+        if (normalized === 'scholarship') {
+            return 'scholarships';
+        }
+        return normalized;
+    };
+    const loadDashboard = async (isMountedRef) => {
+        try {
+            const response = await api.get('/user/dashboard');
+            if ((!isMountedRef || isMountedRef.current) && response?.data?.success) {
+                setDashboardData(response.data.data);
+            }
+        }
+        catch (error) {
+            console.log('Dashboard fetch failed', error?.response?.data || error?.message || error);
+        }
+    };
+    useEffect(() => {
+        const isMountedRef = { current: true };
+        loadDashboard(isMountedRef);
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
+    useFocusEffect(useCallback(() => {
+        loadDashboard();
+    }, []));
+    const dashboardUserName = useMemo(() => {
+        const firstName = dashboardData?.user?.firstName?.trim();
+        const lastName = dashboardData?.user?.lastName?.trim();
+        const fullName = [firstName, lastName].filter(Boolean).join(' ').trim();
+        return fullName || userProfile.name || onboarding.name || studentProfile.name;
+    }, [dashboardData?.user?.firstName, dashboardData?.user?.lastName, onboarding.name, userProfile.name]);
+    const dashboardModules = useMemo(() => {
+        if (!dashboardData?.modules?.length) {
+            return moduleCards.map((card) => ({
+                ...card,
+                id: card.title,
+                lockTitle: card.title,
+            }));
+        }
+        const moduleCardMap = new Map(moduleCards.map((card) => [resolveModuleLookupKey(card.title), card]));
+        return dashboardData.modules
+            .map((module) => {
+            const matchedCard = moduleCardMap.get(resolveModuleLookupKey(module.title));
+            if (!matchedCard) {
+                return null;
+            }
+            return {
+                ...matchedCard,
+                id: module.id,
+                lockTitle: matchedCard.title,
+                title: module.title || matchedCard.title,
+            };
+        })
+            .filter(Boolean);
+    }, [dashboardData?.modules]);
+    const dashboardMentors = useMemo(() => {
+        if (!dashboardData?.mentors?.length) {
+            return featuredMentors;
+        }
+        return dashboardData.mentors.map((mentor, index) => ({
+            ...featuredMentors[index % featuredMentors.length],
+            id: mentor.id,
+            name: mentor.name || featuredMentors[index % featuredMentors.length].name,
+            specialty: mentor.designation || featuredMentors[index % featuredMentors.length].specialty,
+            rating: mentor.rank || featuredMentors[index % featuredMentors.length].rating,
+            experience: mentor.experience ? `${mentor.experience} yrs` : featuredMentors[index % featuredMentors.length].experience,
+        }));
+    }, [dashboardData?.mentors]);
+    const dashboardScholarships = useMemo(() => {
+        if (!dashboardData?.scholarships?.length) {
+            return featuredScholarships;
+        }
+        return dashboardData.scholarships.map((item) => ({
+            id: item.id,
+            name: item.name || '',
+            amount: item.price ? `Rs ${item.price} / year` : '',
+            deadline: item.deadline ? new Date(item.deadline).toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+            }) : '',
+            tag: item.type || '',
+        }));
+    }, [dashboardData?.scholarships]);
+    const dashboardInstitutes = useMemo(() => {
+        if (!dashboardData?.institutions?.length) {
+            return featuredInstitutes;
+        }
+        return dashboardData.institutions.map((item) => ({
+            id: item.id,
+            name: item.name || '',
+            location: item.state || '',
+            type: item.institute_type || '',
+        }));
+    }, [dashboardData?.institutions]);
     const personalityResult = useMemo(() => {
         const counts = [0, 0, 0, 0];
         answers.forEach((answer) => {
@@ -123,11 +225,10 @@ export default function HomeScreen() {
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-3">
           <View className="h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: `${palette.primary}12` }}>
-            <Text className="text-[20px] font-black text-brand">{(userProfile.name || onboarding.name || studentProfile.name).charAt(0).toUpperCase()}</Text>
+            <Text className="text-[20px] font-black text-brand">{dashboardUserName.charAt(0).toUpperCase()}</Text>
           </View>
           <View>
-            <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Good morning</Text>
-            <Text className={`text-[18px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{userProfile.name || onboarding.name || studentProfile.name}</Text>
+              <Text className={`text-[18px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{dashboardUserName}</Text>
           </View>
         </View>
         <AnimatedPressable className={`h-[42px] w-[42px] items-center justify-center rounded-[16px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/notifications')}>
@@ -162,13 +263,14 @@ export default function HomeScreen() {
 
       <SectionHeader title="Explore Modules" />
       <View className="flex-row flex-wrap gap-3 mt-4 mb-2">
-        {moduleCards.map((card) => {
-                const showLock = lockableModuleTitles.includes(card.title) && !((card.title === 'Career Library' && isUnlocked('career-library'))
-                    || (card.title === 'Master Class' && isUnlocked('master-class'))
-                    || (card.title === 'Book Mentor' && isUnlocked('book-mentor'))
-                    || (card.title === 'Scholarships' && isUnlocked('scholarship'))
-                    || (card.title === 'Study Abroad' && isUnlocked('abroad-consultancy')));
-                return (<AnimatedPressable key={card.title} style={{ width: moduleCardWidth }} onPress={() => router.push(card.route)}>
+        {dashboardModules.map((card) => {
+                const lockTitle = card.lockTitle || card.title;
+                const showLock = lockableModuleTitles.includes(lockTitle) && !((lockTitle === 'Career Library' && isUnlocked('career-library'))
+                    || (lockTitle === 'Master Class' && isUnlocked('master-class'))
+                    || (lockTitle === 'Book Mentor' && isUnlocked('book-mentor'))
+                    || (lockTitle === 'Scholarships' && isUnlocked('scholarship'))
+                    || (lockTitle === 'Study Abroad' && isUnlocked('abroad-consultancy')));
+                return (<AnimatedPressable key={card.id || card.title} style={{ width: moduleCardWidth }} onPress={() => router.push(card.route)}>
         <View className={`relative aspect-square items-center justify-center gap-2 rounded-[22px] border p-[14px] ${preferences.darkMode ? 'bg-[#080808]' : 'bg-card'}`} style={{ borderColor: preferences.darkMode ? '#1a1a1a' : `${card.tone}30` }}>
               {showLock ? (<View className={`absolute right-3 top-3 h-7 w-7 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
                   <Ionicons name="lock-closed" size={13} color={palette.primary}/>
@@ -176,7 +278,9 @@ export default function HomeScreen() {
               <View className="h-[42px] w-[42px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${card.tone}14` }}>
                 <Ionicons name={card.icon} size={21} color={card.tone}/>
               </View>
-              <Text className={`text-center text-[14px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{card.title}</Text>
+              <View className="min-h-[34px] w-full items-center justify-center">
+                <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={2} className={`w-full text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{card.title}</Text>
+              </View>
             </View>
           </AnimatedPressable>);
             })}
@@ -184,42 +288,46 @@ export default function HomeScreen() {
 
       <SectionHeader title="Explore Your Mentors" action={<AnimatedPressable onPress={() => router.push('/(drawer)/book-mentor')}><Text className="text-[12px] font-extrabold text-brand mt-4 ">See all</Text></AnimatedPressable>}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
-        {featuredMentors.map((mentor) => (<AnimatedPressable key={mentor.name} className={`w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/book-mentor')}>
+        {dashboardMentors.map((mentor) => (<AnimatedPressable key={mentor.id || mentor.name} className={`h-[168px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/book-mentor')}>
             <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px] " style={{ backgroundColor: `${mentor.accent}15` }}>
               <Ionicons name="person" size={22} color={mentor.accent}/>
             </View>
-            <Text className={`text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
-            <Text className="text-center text-[11px] font-bold text-brand">{mentor.specialty}</Text>
-            <Text className={`text-center text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{mentor.rating} rating | {mentor.experience}</Text>
+            <View className="h-[34px] justify-center">
+              <Text numberOfLines={2} ellipsizeMode="tail" className={`text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
+            </View>
+            <Text numberOfLines={1} ellipsizeMode="tail" className="w-full text-center text-[11px] font-bold text-brand">{mentor.specialty}</Text>
+            <Text numberOfLines={1} ellipsizeMode="tail" className={`w-full text-center text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{mentor.rating} rank | {mentor.experience}</Text>
           </AnimatedPressable>))}
       </ScrollView>
 
       <SectionHeader title="Explore Scholarships" action={<AnimatedPressable onPress={() => router.push('/(drawer)/scholarship')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>}/>
       <View className="gap-3 mb-4 mt-4">
-        {featuredScholarships.map((item) => (<AnimatedPressable key={item.name} className={`flex-row items-center gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/scholarship')}>
+        {dashboardScholarships.map((item) => (<AnimatedPressable key={item.id || item.name} className={`flex-row items-center gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/scholarship')}>
             <View className={`h-[42px] w-[42px] items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#163126]' : 'bg-[#edf9f1]'}`}>
               <Ionicons name="ribbon-outline" size={20} color={palette.green}/>
             </View>
             <View className="flex-1 gap-0.5">
-              <Text className={`text-[14px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
-              <Text className="text-[12px] font-bold text-success">{item.amount}</Text>
+              <Text numberOfLines={1} ellipsizeMode="tail" className={`text-[14px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
+              <Text numberOfLines={1} ellipsizeMode="tail" className="text-[12px] font-bold text-success">{item.amount}</Text>
             </View>
             <View className="items-end gap-1">
               <Pill label={item.tag} tone={palette.primary}/>
-              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.deadline}</Text>
+              <Text numberOfLines={1} ellipsizeMode="tail" className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.deadline}</Text>
             </View>
           </AnimatedPressable>))}
       </View>
 
       <SectionHeader title="Explore Institutes" action={<AnimatedPressable onPress={() => router.push('/(drawer)/institute')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
-        {featuredInstitutes.map((item) => (<AnimatedPressable key={item.name} className={`w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/institute')}>
+        {dashboardInstitutes.map((item) => (<AnimatedPressable key={item.id || item.name} className={`h-[180px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/institute')}>
             <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${palette.blue}14` }}>
               <Ionicons name="business-outline" size={22} color={palette.blue}/>
             </View>
-            <Text className={`text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
-            <Text className="text-center text-[11px] font-bold text-brand">{item.location}</Text>
-            <Text className={`text-center text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.type}</Text>
+            <View className="h-[34px] justify-center">
+              <Text numberOfLines={2} ellipsizeMode="tail" className={`text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
+            </View>
+            <Text numberOfLines={1} ellipsizeMode="tail" className="w-full text-center text-[11px] font-bold text-brand">{item.location}</Text>
+            <Text numberOfLines={1} ellipsizeMode="tail" className={`w-full text-center text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.type}</Text>
           </AnimatedPressable>))}
       </ScrollView>
 
