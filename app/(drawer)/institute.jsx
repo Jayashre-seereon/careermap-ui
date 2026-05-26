@@ -201,8 +201,8 @@ export default function InstituteScreen() {
                             <View className="h-[50px] w-[50px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
                                 <Ionicons name={item.icon} size={20} color={palette.primary}/>
                             </View>
-                            <View className="flex-1 gap-1">
-                                <Text className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
+                            <View className="flex-1 gap-1 pr-[96px]">
+                                <Text numberOfLines={2} className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
                                 <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.location}</Text>
                             </View>
                         </View>
