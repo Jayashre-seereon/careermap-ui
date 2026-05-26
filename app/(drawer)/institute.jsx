@@ -174,14 +174,7 @@ export default function InstituteScreen() {
                         ))}
                     </ScrollView>
 
-                    <Text className={`text-[11px] font-extrabold uppercase tracking-[0.7px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>State</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2.5 pr-1">
-                        {stateOptions.map((label) => (
-                            <AnimatedPressable key={`state-${label}`} onPress={() => setStateFilter(label)} className={`rounded-full px-3 py-2 ${stateFilter === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`}>
-                                <Text className={`text-[11px] font-extrabold ${stateFilter === label ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
-                            </AnimatedPressable>
-                        ))}
-                    </ScrollView>
+                   
                 </View>
             ) : null}
 

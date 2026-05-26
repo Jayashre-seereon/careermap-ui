@@ -87,7 +87,7 @@ export default function LearnScreen() {
                   
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
             {[
-                { id: 'popular', label: 'Most Popular' },
+                
                 { id: 'views', label: 'Most Viewed' },
                 { id: 'az', label: 'A-Z' },
                 { id: 'za', label: 'Z-A' },
@@ -96,12 +96,7 @@ export default function LearnScreen() {
             </AnimatedPressable>))}
           </ScrollView>
          
-           <Text className={`text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Career</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
-            {careerOptions.map((label) => (<AnimatedPressable key={label} className={`rounded-full px-[13px] py-2 ${activeCareer === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveCareer(label)}>
-                <Text className={`text-[12px] font-extrabold ${activeCareer === label ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
-              </AnimatedPressable>))}
-          </ScrollView>
+         
         </View>) : null}
 
       <View className="gap-3">
