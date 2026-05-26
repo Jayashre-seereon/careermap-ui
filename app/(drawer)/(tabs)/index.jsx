@@ -319,11 +319,11 @@ export default function HomeScreen() {
 
       <SectionHeader title="Explore Institutes" action={<AnimatedPressable onPress={() => router.push('/(drawer)/institute')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
-        {dashboardInstitutes.map((item) => (<AnimatedPressable key={item.id || item.name} className={`h-[180px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/institute')}>
+        {dashboardInstitutes.map((item) => (<AnimatedPressable key={item.id || item.name} className={`h-[196px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/institute')}>
             <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${palette.blue}14` }}>
               <Ionicons name="business-outline" size={22} color={palette.blue}/>
             </View>
-            <View className="h-[34px] justify-center">
+            <View className="min-h-[58px] justify-center">
               <Text numberOfLines={2} ellipsizeMode="tail" className={`text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
             </View>
             <Text numberOfLines={1} ellipsizeMode="tail" className="w-full text-center text-[11px] font-bold text-brand">{item.location}</Text>
