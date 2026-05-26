@@ -4,6 +4,14 @@ function buildLocation(city, state) {
   return [city, state].filter(Boolean).join(', ') || 'Location not available';
 }
 
+function stripHtml(value) {
+  if (!value) {
+    return '';
+  }
+
+  return String(value).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 function getInstituteIcon(instituteType) {
   const normalizedType = String(instituteType || '').toLowerCase();
 
@@ -37,12 +45,11 @@ function mapInstituteItem(item, index) {
     name: item?.name || 'Unnamed Institute',
     location: buildLocation(city, state),
     courses,
-    rank: city || state || 'India',
     type: instituteType,
     state,
     city,
     icon: getInstituteIcon(instituteType),
-    about: item?.about || 'About information is not available right now.',
+    about: stripHtml(item?.about) || 'About information is not available right now.',
     website: item?.url || '#',
   };
 }

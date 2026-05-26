@@ -100,7 +100,7 @@ export default function InstituteScreen() {
                     <Text className={`text-center text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
                     <Text className={`text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.location}</Text>
                     <View className="flex-row justify-center">
-                        <Pill label={`${item.rank} ${item.type}`} tone={palette.primary}/>
+                        <Pill label={item.type} tone={palette.blue}/>
                     </View>
                 </View>
 
@@ -193,7 +193,10 @@ export default function InstituteScreen() {
                 ) : null}
 
                 {filtered.map((item, index) => (
-                    <AnimatedPressable key={item.id} className={`gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => setSelectedIndex(index)}>
+                    <AnimatedPressable key={item.id} className={`relative gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => setSelectedIndex(index)}>
+                        <View className="absolute right-4 top-4">
+                            <Pill label={item.type} tone={palette.blue}/>
+                        </View>
                         <View className="flex-row gap-3">
                             <View className="h-[50px] w-[50px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
                                 <Ionicons name={item.icon} size={20} color={palette.primary}/>
@@ -201,10 +204,6 @@ export default function InstituteScreen() {
                             <View className="flex-1 gap-1">
                                 <Text className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
                                 <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.location}</Text>
-                                <View className="flex-row gap-2">
-                                    <Pill label={item.type} tone={palette.blue}/>
-                                    <Pill label={item.rank} tone={palette.primary}/>
-                                </View>
                             </View>
                         </View>
                     </AnimatedPressable>
