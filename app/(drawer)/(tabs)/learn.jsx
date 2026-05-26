@@ -1,22 +1,60 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Linking, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppState } from '../../../src/app-state';
-import { masterClasses, palette } from '../../../src/careermap-data';
+import { palette } from '../../../src/careermap-data';
+import { getMasterClasses } from '../../../src/api/masterclassApi';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet, mobileAssistantScrollProps } from '../../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../../src/subscription-flow';
+
+function formatViews(views) {
+    if (views < 1000) {
+        return `${views} views`;
+    }
+    return `${(views / 1000).toFixed(1)}k views`;
+}
+
 export default function LearnScreen() {
     const insets = useSafeAreaInsets();
     const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
     const masterClassUnlocked = isUnlocked('master-class');
+    const [masterClasses, setMasterClasses] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [activeVideoType, setActiveVideoType] = useState('All');
     const [activeCareer, setActiveCareer] = useState('All');
     const [sortBy, setSortBy] = useState('popular');
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
-    const careerOptions = useMemo(() => ['All', ...Array.from(new Set(masterClasses.map((item) => item.career)))], []);
-    const videoTypeOptions = useMemo(() => ['All', 'Expert Videos', 'Career Videos'], []);
+    useEffect(() => {
+        let isMounted = true;
+        async function loadMasterClasses() {
+            try {
+                setIsLoading(true);
+                setLoadError('');
+                const items = await getMasterClasses();
+                if (isMounted) {
+                    setMasterClasses(items);
+                }
+            } catch (_error) {
+                if (isMounted) {
+                    setMasterClasses([]);
+                    setLoadError('Failed to load master classes.');
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+        }
+        loadMasterClasses();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+    const careerOptions = useMemo(() => ['All', ...Array.from(new Set(masterClasses.map((item) => item.career)))], [masterClasses]);
+    const videoTypeOptions = useMemo(() => ['All', ...Array.from(new Set(masterClasses.map((item) => item.videoType)))], [masterClasses]);
     let filtered = [...masterClasses];
     if (activeVideoType !== 'All') {
         filtered = filtered.filter((item) => item.videoType === activeVideoType);
@@ -67,11 +105,14 @@ export default function LearnScreen() {
         </View>) : null}
 
       <View className="gap-3">
+        {isLoading ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading master classes...</Text>) : null}
+        {!isLoading && loadError ? (<Text className="text-[13px] text-brand">{loadError}</Text>) : null}
+        {!isLoading && !loadError && filtered.length === 0 ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No master classes available right now.</Text>) : null}
         {filtered.map((item) => {
                 const detailUnlocked = !item.locked || masterClassUnlocked || canAccessFreeDetail('master-class', item.title);
-                return (<View key={item.title} className={`relative gap-[14px] rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} style={{ opacity: item.locked && !detailUnlocked ? 0.96 : 1 }}>
+                return (<View key={item.id} className={`relative gap-[14px] rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} style={{ opacity: item.locked && !detailUnlocked ? 0.96 : 1 }}>
             {item.locked && !masterClassUnlocked ? (<View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
-                <Text className="text-[12px] font-black text-brand">{detailUnlocked ? '1' : 'L'}</Text>
+                <Ionicons name={detailUnlocked ? 'lock-open-outline' : 'lock-closed'} size={15} color={palette.primary}/>
               </View>) : null}
             <View className="flex-row items-start gap-3">
               <View className={`h-[58px] w-[58px] items-center justify-center rounded-[18px] ${item.locked ? preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2eff2]' : ''}`} style={item.locked ? undefined : { backgroundColor: `${palette.primary}12` }}>
@@ -83,7 +124,7 @@ export default function LearnScreen() {
                 <View className="flex-row items-center justify-between gap-2.5">
                   <View className="gap-0.5">
                     <Text className={`text-[12px] font-bold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.duration}</Text>
-                    <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{(item.views / 1000).toFixed(1)}k views</Text>
+                    <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{formatViews(item.views)}</Text>
                   </View>
                   <Pill label={item.career} tone={palette.primary}/>
                 </View>
