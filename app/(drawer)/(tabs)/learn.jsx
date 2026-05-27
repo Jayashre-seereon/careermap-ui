@@ -9,6 +9,9 @@ import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet, mobi
 import { openSubscriptionPrompt } from '../../../src/subscription-flow';
 
 function formatViews(views) {
+    if (!views) {
+        return 'New class';
+    }
     if (views < 1000) {
         return `${views} views`;
     }
@@ -71,6 +74,7 @@ export default function LearnScreen() {
     const subscriptionTarget = useMemo(() => ({
         pathname: '/(drawer)/(tabs)/learn',
     }), []);
+    const hasSeparateCareerOptions = careerOptions.length > 2 && careerOptions.some((option) => !videoTypeOptions.includes(option));
     return (<Screen scroll={true}>
       <View className="flex-1">
       <ScrollView className="flex-1" contentContainerClassName="gap-[18px]  pt-2 " contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
@@ -83,11 +87,20 @@ export default function LearnScreen() {
               </AnimatedPressable>))}
           </ScrollView>
       {showFilters ? (<View className="gap-3">
-         <Text className={` text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>short</Text>
-                  
+         {hasSeparateCareerOptions ? (<>
+            <Text className={` text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>career</Text>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
+              {careerOptions.map((label) => (<AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${activeCareer === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setActiveCareer(label)}>
+                  <Text className={`text-[11px] font-extrabold ${activeCareer === label ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
+                </AnimatedPressable>))}
+            </ScrollView>
+          </>) : null}
+
+         <Text className={` text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>sort</Text>
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
             {[
-                
                 { id: 'views', label: 'Most Viewed' },
                 { id: 'az', label: 'A-Z' },
                 { id: 'za', label: 'Z-A' },
@@ -95,8 +108,6 @@ export default function LearnScreen() {
               <Text className={`text-[11px] font-extrabold ${sortBy === item.id ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.label}</Text>
             </AnimatedPressable>))}
           </ScrollView>
-         
-         
         </View>) : null}
 
       <View className="gap-3">

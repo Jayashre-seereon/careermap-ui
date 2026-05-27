@@ -38,6 +38,9 @@ export default function HomeScreen() {
         if (normalized === 'scholarship') {
             return 'scholarships';
         }
+        if (normalized === 'masterclass' || normalized === 'masterclasses') {
+            return 'master class';
+        }
         return normalized;
     };
     const loadDashboard = async (isMountedRef) => {
