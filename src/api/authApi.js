@@ -37,6 +37,10 @@ export async function verifySignupOtp(mobile, code) {
 }
 
 export async function signupUser(payload, tempToken) {
+  if (!tempToken) {
+    throw new Error('Missing signup temp token. Please verify OTP again before creating your account.');
+  }
+
   const response = await api.post('/user/signup', payload, {
     headers: {
       Authorization: `Bearer ${tempToken}`,

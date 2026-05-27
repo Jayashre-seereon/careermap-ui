@@ -78,11 +78,19 @@ api.interceptors.request.use(
       requestUrl.includes('/auth/login/password') ||
       requestUrl.includes('/auth/send-otp') ||
       requestUrl.includes('/auth/verify-otp');
+    const explicitAuthorization =
+      config.headers?.Authorization || config.headers?.authorization;
+
+    if (explicitAuthorization) {
+      return config;
+    }
 
     if (token && !isPublicAuthRoute) {
       config.headers.Authorization = `Bearer ${token}`;
     } else if (config.headers?.Authorization) {
       delete config.headers.Authorization;
+    } else if (config.headers?.authorization) {
+      delete config.headers.authorization;
     }
 
     return config;

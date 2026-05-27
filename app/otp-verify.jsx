@@ -60,7 +60,11 @@ export default function OtpVerifyScreen() {
         return;
       }
 
-      setTempToken(response.tempToken || '');
+      if (!response.tempToken) {
+        throw new Error('OTP verified, but no signup token was returned. Please request a new OTP and try again.');
+      }
+
+      setTempToken(response.tempToken);
       setStatus({ type: 'success', message: response.message });
       router.replace(next || '/profile-setup');
     } catch (error) {
