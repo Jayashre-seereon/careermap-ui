@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useAppState } from '../../src/app-state';
-import { getStudyAbroadCountries } from '../../src/api/studyabroadApi';
+import { createStudyAbroadConsultation, getStudyAbroadCountries } from '../../src/api/studyabroadApi';
 import { palette } from '../../src/careermap-data';
 import { AnimatedPressable, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
@@ -23,6 +23,9 @@ export default function AbroadScreen() {
     const [courseInterest, setCourseInterest] = useState('');
     const [budgetRange, setBudgetRange] = useState('');
     const [preferredIntake, setPreferredIntake] = useState('');
+    const [message, setMessage] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
     const animationKey = submitted
         ? 'submitted'
         : showForm
@@ -32,10 +35,43 @@ export default function AbroadScreen() {
                 : 'country-list';
     const selectedCountry = selected !== null ? countries[selected] : null;
     const detailUnlocked = selectedCountry ? canAccessFreeDetail('abroad-consultancy', selectedCountry.countryName) : true;
+    const selectedStudyAbroadId = selectedCountry?.id ? Number(selectedCountry.id) : null;
     const formReturnTarget = useMemo(() => ({
         pathname: '/(drawer)/abroad',
         params: { selected: selected !== null ? String(selected) : undefined, showForm: 'true', preferredCountry: preferredCountry || undefined },
     }), [preferredCountry, selected]);
+    const handleSubmitConsultation = async () => {
+        if (!selectedStudyAbroadId || !preferredCountry.trim() || !courseInterest.trim() || !budgetRange.trim() || !preferredIntake.trim()) {
+            setSubmitError('Please complete all fields before submitting.');
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+            setSubmitError('');
+            const createdConsultation = await createStudyAbroadConsultation({
+                studyAbroadId: selectedStudyAbroadId,
+                preferredCountry: preferredCountry.trim(),
+                courseInterest: courseInterest.trim(),
+                budgetRange: budgetRange.trim(),
+                preferredIntake: preferredIntake.trim(),
+                message: message.trim() || 'I want guidance for scholarship and visa process',
+            });
+
+            if (createdConsultation) {
+                setSubmitted(true);
+            }
+            else {
+                setSubmitError('Unable to submit consultation right now. Please try again.');
+            }
+        }
+        catch (_error) {
+            setSubmitError('Unable to submit consultation right now. Please try again.');
+        }
+        finally {
+            setIsSubmitting(false);
+        }
+    };
     useEffect(() => {
         let isMounted = true;
 
@@ -99,6 +135,8 @@ export default function AbroadScreen() {
                     setCourseInterest('');
                     setBudgetRange('');
                     setPreferredIntake('');
+                    setMessage('');
+                    setSubmitError('');
                 }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
@@ -114,6 +152,8 @@ export default function AbroadScreen() {
                 setCourseInterest('');
                 setBudgetRange('');
                 setPreferredIntake('');
+                setMessage('');
+                setSubmitError('');
             }}>
             <Text className="text-center text-[14px] font-extrabold text-white">Done</Text>
           </AnimatedPressable>
@@ -131,12 +171,14 @@ export default function AbroadScreen() {
                 ['Course Interest', courseInterest, setCourseInterest, 'e.g. MS in Computer Science'],
                 ['Budget Range', budgetRange, setBudgetRange, 'e.g. 20-30 LPA'],
                 ['Preferred Intake', preferredIntake, setPreferredIntake, 'e.g. Fall 2025'],
+                ['Message', message, setMessage, 'I want guidance for scholarship and visa process'],
             ].map(([label, value, setter, placeholder]) => (<View key={label} className="gap-1.5">
               <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
               <TextInput value={value} onChangeText={setter} placeholder={placeholder} placeholderTextColor={preferences.darkMode ? '#7f7481' : palette.muted} className={`rounded-[16px] border px-4 py-[14px] text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
             </View>))}
-          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => (unlocked ? setSubmitted(true) : openSubscriptionPrompt(formReturnTarget))}>
-            <Text className="text-center text-[14px] font-extrabold text-white">{unlocked ? 'Submit Request' : 'Subscribe to Submit'}</Text>
+          {submitError ? (<Text className="text-[13px] font-semibold text-brand">{submitError}</Text>) : null}
+          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => (unlocked ? handleSubmitConsultation() : openSubscriptionPrompt(formReturnTarget))} disabled={isSubmitting}>
+            <Text className="text-center text-[14px] font-extrabold text-white">{isSubmitting ? 'Submitting...' : unlocked ? 'Submit Request' : 'Subscribe to Submit'}</Text>
           </AnimatedPressable>
         </View>
       </Screen>);
@@ -226,7 +268,7 @@ export default function AbroadScreen() {
                 setSelected(index);
             }}>
             {width < 520 ? (<View className="gap-3 pt-1">
-                <View className="flex-row items-start gap-3">
+                <View className="flex-row items-start gap-3 pr-10">
                   <View className="h-11 w-11 items-center justify-center rounded-[14px]" style={{ backgroundColor: `${palette.primary}10` }}>
                     <Text className="text-[11px] font-black text-brand">{country.countryName.slice(0, 3).toUpperCase()}</Text>
                   </View>
@@ -234,11 +276,11 @@ export default function AbroadScreen() {
                     <Text numberOfLines={2} className={`text-[15px] font-extrabold leading-5 ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.title}</Text>
                     <Text numberOfLines={2} className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.description}</Text>
                   </View>
-                  {!unlocked ? (<View className={`h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
-                    <Ionicons name={detailOpen ? 'lock-open-outline' : 'lock-closed'} size={15} color={palette.primary}/>
-                  </View>) : null}
                 </View>
-                <View className="flex-row flex-wrap justify-end gap-2 pl-[52px]">
+                {!unlocked ? (<View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
+                  <Ionicons name={detailOpen ? 'lock-open-outline' : 'lock-closed'} size={15} color={palette.primary}/>
+                </View>) : null}
+                <View className="flex-row flex-wrap justify-start gap-2 pl-[52px]">
                   <View className="flex-row items-center gap-2 rounded-full px-2.5 py-1.5" style={{ backgroundColor: `${palette.blue}10` }}>
                     <Ionicons name="school-outline" size={14} color={palette.blue}/>
                     <Text className="text-[10px] font-extrabold" style={{ color: palette.blue }}>Tuition</Text>

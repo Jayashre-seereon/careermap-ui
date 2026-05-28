@@ -1,4 +1,5 @@
 import api from './axios';
+import { useAuthStore } from '../store/auth-store';
 
 function stripHtml(value) {
   if (!value) {
@@ -58,4 +59,13 @@ export async function getStudyAbroadCountries() {
   const items = Array.isArray(response?.data?.data) ? response.data.data : [];
 
   return items.map((item, index) => mapStudyAbroadItem(item, index));
+}
+
+export async function createStudyAbroadConsultation(payload) {
+  const token = useAuthStore.getState().accessToken;
+
+  const response = await api.post('/studyabroad/consult/create', payload, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  return response?.data?.data ?? null;
 }
