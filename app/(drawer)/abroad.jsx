@@ -1,14 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { getStudyAbroadCountries } from '../../src/api/studyabroadApi';
 import { palette } from '../../src/careermap-data';
-import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
+import { AnimatedPressable, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
 export default function AbroadScreen() {
     const params = useLocalSearchParams();
+    const { width } = useWindowDimensions();
     const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
     const unlocked = isUnlocked('abroad-consultancy');
     const [countries, setCountries] = useState([]);
@@ -215,7 +216,8 @@ export default function AbroadScreen() {
       <View className="gap-3">
         {countries.map((country, index) => {
             const detailOpen = unlocked || canAccessFreeDetail('abroad-consultancy', country.countryName);
-            return (<Pressable key={country.id} className={`relative gap-1.5 rounded-[22px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => {
+            const cardPadding = width < 420 ? 'p-[16px]' : 'p-[18px]';
+            return (<Pressable key={country.id} className={`relative gap-1.5 rounded-[22px] border ${cardPadding} ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => {
                 if (!unlocked && !detailOpen) {
                     setShowUnlockSheet(true);
                     return;
@@ -226,32 +228,51 @@ export default function AbroadScreen() {
             {!unlocked ? (<View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
                 <Ionicons name={detailOpen ? 'lock-open-outline' : 'lock-closed'} size={15} color={palette.primary}/>
               </View>) : null}
-            <View className="flex-row items-center gap-3">
-              <View className="h-11 w-11 items-center justify-center rounded-[14px]" style={{ backgroundColor: `${palette.primary}10` }}>
-                <Text className="text-[11px] font-black text-brand">{country.countryName.slice(0, 3).toUpperCase()}</Text>
-              </View>
-              <View className={`flex-1 gap-1 ${!unlocked ? 'pr-10' : ''}`}>
-                <Text className={`text-[16px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.title}</Text>
-                <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.description}</Text>
-              </View>
-              <View className="items-end gap-2">
-                {!unlocked ? (<View className={`h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
-                  <Ionicons name={detailOpen ? 'lock-open-outline' : 'lock-closed'} size={15} color={palette.primary}/>
-                </View>) : null}
-                <View className="flex-row items-center gap-2">
+            {width < 520 ? (<View className="gap-3 pt-1">
+                <View className="flex-row items-start gap-3 pr-10">
+                  <View className="h-11 w-11 items-center justify-center rounded-[14px]" style={{ backgroundColor: `${palette.primary}10` }}>
+                    <Text className="text-[11px] font-black text-brand">{country.countryName.slice(0, 3).toUpperCase()}</Text>
+                  </View>
+                  <View className="flex-1 gap-1">
+                    <Text className={`text-[15px] font-extrabold leading-5 ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.title}</Text>
+                    <Text className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.description}</Text>
+                  </View>
+                </View>
+                <View className="flex-row flex-wrap gap-2 pl-[52px]">
                   <View className="flex-row items-center gap-2 rounded-full px-3 py-2" style={{ backgroundColor: `${palette.blue}10` }}>
                     <Ionicons name="school-outline" size={14} color={palette.blue}/>
-                    <Text className="text-[11px] font-extrabold" style={{ color: palette.blue }}>Tuition</Text>
-                    <Text className={`text-[11px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.tuitionCost}</Text>
+                    <Text className="text-[10px] font-extrabold" style={{ color: palette.blue }}>Tuition</Text>
+                    <Text className={`text-[10px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.tuitionCost}</Text>
                   </View>
                   <View className="flex-row items-center gap-2 rounded-full px-3 py-2" style={{ backgroundColor: `${palette.green}10` }}>
                     <Ionicons name="home-outline" size={14} color={palette.green}/>
-                    <Text className="text-[11px] font-extrabold" style={{ color: palette.green }}>Living</Text>
-                    <Text className={`text-[11px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.livingCost}</Text>
+                    <Text className="text-[10px] font-extrabold" style={{ color: palette.green }}>Living</Text>
+                    <Text className={`text-[10px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.livingCost}</Text>
                   </View>
                 </View>
-              </View>
-            </View>
+              </View>) : (<View className="flex-row items-center gap-3">
+                <View className="h-11 w-11 items-center justify-center rounded-[14px]" style={{ backgroundColor: `${palette.primary}10` }}>
+                  <Text className="text-[11px] font-black text-brand">{country.countryName.slice(0, 3).toUpperCase()}</Text>
+                </View>
+                <View className={`flex-1 gap-1 ${!unlocked ? 'pr-10' : ''}`}>
+                  <Text className={`text-[16px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.title}</Text>
+                  <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.description}</Text>
+                </View>
+                <View className="items-end gap-2 max-w-[62%]">
+                  <View className="flex-row items-center gap-2">
+                    <View className="flex-row items-center gap-2 rounded-full px-3 py-2" style={{ backgroundColor: `${palette.blue}10` }}>
+                      <Ionicons name="school-outline" size={14} color={palette.blue}/>
+                      <Text className="text-[11px] font-extrabold" style={{ color: palette.blue }}>Tuition</Text>
+                      <Text className={`text-[11px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.tuitionCost}</Text>
+                    </View>
+                    <View className="flex-row items-center gap-2 rounded-full px-3 py-2" style={{ backgroundColor: `${palette.green}10` }}>
+                      <Ionicons name="home-outline" size={14} color={palette.green}/>
+                      <Text className="text-[11px] font-extrabold" style={{ color: palette.green }}>Living</Text>
+                      <Text className={`text-[11px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.livingCost}</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>)}
           </Pressable>);
         })}
       </View>
