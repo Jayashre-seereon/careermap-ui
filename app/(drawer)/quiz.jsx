@@ -1,5 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, ActivityIndicator, Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
@@ -120,25 +118,6 @@ export default function QuizScreen() {
     setIsSubmitting(false);
   }
 
-  function handleBackArrow() {
-    if (selectedQuizId !== null) {
-      if (router.canGoBack()) {
-        router.back();
-        return;
-      }
-
-      resetQuizFlow();
-      return;
-    }
-
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-
-    router.push('/(drawer)/(tabs)');
-  }
-
   function handleSelectAnswer(optionId) {
     setAnswers((current) => {
       const next = [...current];
@@ -204,17 +183,9 @@ export default function QuizScreen() {
     return (
       <Screen animationKey={`quiz-result-${selectedQuiz.id}`}>
         <View className="px-1 pb-8 pt-3">
-          <View className="mb-6 flex-row items-center gap-3">
-            <AnimatedPressable
-              onPress={handleBackArrow}
-              className={`h-10 w-10 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-white'}`}
-            >
-              <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text} />
-            </AnimatedPressable>
-            <View className="flex-1">
-              <Text className="text-[12px] font-bold uppercase tracking-[1px] text-brand">Quiz Result</Text>
-              <Text className={`text-[22px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{selectedQuiz.title}</Text>
-            </View>
+          <View className="mb-6">
+            <Text className="text-[12px] font-bold uppercase tracking-[1px] text-brand">Quiz Result</Text>
+            <Text className={`mt-1 text-[22px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{selectedQuiz.title}</Text>
           </View>
 
           <View className={`items-center gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
@@ -266,19 +237,11 @@ export default function QuizScreen() {
   if (selectedQuiz) {
     if (isLoadingQuiz) {
       return (
-        <Screen animationKey="quiz-loading">
+      <Screen animationKey="quiz-loading">
           <View className="px-1 pb-8 pt-3">
-            <View className="mb-6 flex-row items-center gap-3">
-              <AnimatedPressable
-                onPress={handleBackArrow}
-                className={`h-10 w-10 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-white'}`}
-              >
-                <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text} />
-              </AnimatedPressable>
-              <View className="flex-1">
-                <Text className="text-[12px] font-bold uppercase tracking-[1px] text-brand">Loading Quiz</Text>
-                <Text className={`text-[22px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{selectedQuiz.title}</Text>
-              </View>
+            <View className="mb-6">
+              <Text className="text-[12px] font-bold uppercase tracking-[1px] text-brand">Loading Quiz</Text>
+              <Text className={`mt-1 text-[22px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{selectedQuiz.title}</Text>
             </View>
 
             <View className={`items-center gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
@@ -292,19 +255,11 @@ export default function QuizScreen() {
 
     if (quizError) {
       return (
-        <Screen animationKey="quiz-error">
+      <Screen animationKey="quiz-error">
           <View className="px-1 pb-8 pt-3">
-            <View className="mb-6 flex-row items-center gap-3">
-              <AnimatedPressable
-                onPress={resetQuizFlow}
-                className={`h-10 w-10 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-white'}`}
-              >
-                <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text} />
-              </AnimatedPressable>
-              <View className="flex-1">
-                <Text className="text-[12px] font-bold uppercase tracking-[1px] text-brand">Quiz Error</Text>
-                <Text className={`text-[22px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Unable to Continue</Text>
-              </View>
+            <View className="mb-6">
+              <Text className="text-[12px] font-bold uppercase tracking-[1px] text-brand">Quiz Error</Text>
+              <Text className={`mt-1 text-[22px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Unable to Continue</Text>
             </View>
 
             <View className={`items-center gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
@@ -325,20 +280,14 @@ export default function QuizScreen() {
     return (
       <Screen animationKey={`quiz-${selectedQuiz.id}-${currentQuestion}`}>
         <View className="px-1 pb-8 pt-3">
-          <View className="mb-6 flex-row items-center gap-3">
-            <AnimatedPressable
-              onPress={handleBackArrow}
-              className={`h-10 w-10 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-white'}`}
-            >
-              <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text} />
-            </AnimatedPressable>
-            <View className="flex-1">
-              <Text className="text-[12px] font-bold uppercase tracking-[1px] text-brand">Quiz</Text>
-              <Text className={`text-[22px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{selectedQuiz.title}</Text>
+          <View className="mb-6">
+            <Text className="text-[12px] font-bold uppercase tracking-[1px] text-brand">Quiz</Text>
+            <View className="mt-1 flex-row items-end justify-between gap-3">
+              <Text className={`flex-1 text-[22px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{selectedQuiz.title}</Text>
+              <Text className="text-[12px] font-extrabold text-brand">
+                {currentQuestion + 1}/{totalQuestions}
+              </Text>
             </View>
-            <Text className="text-[12px] font-extrabold text-brand">
-              {currentQuestion + 1}/{totalQuestions}
-            </Text>
           </View>
 
           <View className={`gap-4 rounded-[26px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
@@ -417,14 +366,6 @@ export default function QuizScreen() {
       <SectionHeader
         title="Quizzes"
         subtitle="Choose a quiz, answer each question, and submit to see your score."
-        action={
-          <AnimatedPressable
-            onPress={handleBackArrow}
-            className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`}
-          >
-            <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text} />
-          </AnimatedPressable>
-        }
       />
 
       <View className="gap-3">
