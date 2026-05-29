@@ -3,13 +3,13 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getCareerLibraryCategories, getCareerLibraryNext } from '../../../src/api/careerLibraryApi';
+import { getCareerLibraryCategoriesByStream, getCareerLibraryNext, getCareerLibraryStreams } from '../../../src/api/careerLibraryApi';
 import { useAppState } from '../../../src/app-state';
 import { Screen, UnlockBottomSheet, mobileAssistantScrollProps } from '../../../src/careermap-ui';
 import { palette } from '../../../src/careermap-data';
 import { StaggerFadeUpItem } from '../../../src/page-transition';
 import { openSubscriptionPrompt } from '../../../src/subscription-flow';
-const streams = [
+const fallbackStreams = [
     { name: 'Science', emoji: '🔬', desc: 'Medical, Engineering & Research' },
     { name: 'Commerce', emoji: '📊', desc: 'Business, Finance & Accounting' },
     { name: 'Arts & Humanities', emoji: '🎨', desc: 'Design, Media & Social Work' },
@@ -361,7 +361,6 @@ const formatDate = (value) => {
     });
 };
 const getItemTitle = (item) => item?.title || item?.name || item?.subcategory?.title || item?.secondcategory?.name || item?.category?.title || item?.path || item?.examname || item?.pathName || `Item ${item?.id ?? ''}`.trim();
-const getItemSubtitle = (item) => stripHtml(item?.description || item?.specialization || item?.about || item?.subcategory?.description || item?.secondcategory?.description || item?.category?.description || item?.path || item?.jobScope?.join(', ') || '');
 const getDetailTitle = (detail) => detail?.subcategory?.title || detail?.secondcategory?.name || detail?.category?.title || `Career Detail ${detail?.id ?? ''}`.trim();
 const getDetailDescription = (detail) => stripHtml(detail?.subcategory?.description || detail?.secondcategory?.description || detail?.category?.description || detail?.subcategory?.specialization || detail?.secondcategory?.specialization || detail?.category?.specialization || '');
 const educationIcons = ['school-outline', 'book-outline', 'library-outline', 'document-text-outline', 'ribbon-outline'];
@@ -403,11 +402,67 @@ const getStepIcon = (type, item) => {
     return 'chevron-forward';
 };
 const getCareerAccessKey = (item) => String(item?.id ?? item?.title ?? item?.name ?? item?.path ?? '');
+const getStreamIcon = (streamName) => {
+    const normalized = String(streamName || '').toLowerCase();
+
+    if (normalized.includes('science')) {
+        return 'flask-outline';
+    }
+    if (normalized.includes('commerce')) {
+        return 'calculator-outline';
+    }
+    if (normalized.includes('arts')) {
+        return 'color-palette-outline';
+    }
+    if (normalized.includes('vocational')) {
+        return 'hammer-outline';
+    }
+    return 'layers-outline';
+};
+const getStreamTone = (streamName) => {
+    const normalized = String(streamName || '').toLowerCase();
+
+    if (normalized.includes('science')) {
+        return palette.blue;
+    }
+    if (normalized.includes('commerce')) {
+        return palette.green;
+    }
+    if (normalized.includes('arts')) {
+        return palette.orange;
+    }
+    if (normalized.includes('vocational')) {
+        return palette.pink;
+    }
+    return palette.purple;
+};
+const mapStreamItem = (item, index = 0) => {
+    const fallback = fallbackStreams[index % fallbackStreams.length] || fallbackStreams[0];
+    const title = item?.name || item?.title || item?.streamName || item?.label || fallback?.name || `Stream ${index + 1}`;
+    return {
+        id: item?.id ?? item?.streamId ?? index + 1,
+        name: title,
+        desc: stripHtml(item?.description || item?.desc || item?.about || fallback?.desc || ''),
+        icon: getStreamIcon(title),
+        tone: getStreamTone(title),
+        raw: item,
+    };
+};
+const normalizeStreamItems = (items) => {
+    if (!Array.isArray(items) || items.length === 0) {
+        return fallbackStreams.map((item, index) => mapStreamItem(item, index));
+    }
+    return items.map((item, index) => mapStreamItem(item, index));
+};
+const getCardTitle = (item) => item?.name || item?.title || item?.subcategory?.title || item?.secondcategory?.name || item?.category?.title || item?.path || item?.examname || item?.pathName || `Item ${item?.id ?? ''}`.trim();
+const getCardDescription = (item) => stripHtml(item?.desc || item?.description || item?.about || item?.specialization || item?.subcategory?.description || item?.secondcategory?.description || item?.category?.description || item?.path || '');
 export default function CareerLibraryScreen() {
     const params = useLocalSearchParams();
     const insets = useSafeAreaInsets();
     const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess, savedCareers, toggleSavedCareer } = useAppState();
-    const [currentLevel, setCurrentLevel] = useState('categories');
+    const [currentLevel, setCurrentLevel] = useState('streams');
+    const [selectedStream, setSelectedStream] = useState(null);
+    const [streamItems, setStreamItems] = useState(normalizeStreamItems([]));
     const [categories, setCategories] = useState([]);
     const [secondCategories, setSecondCategories] = useState([]);
     const [subCategories, setSubCategories] = useState([]);
@@ -421,45 +476,70 @@ export default function CareerLibraryScreen() {
     const [error, setError] = useState('');
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
     useEffect(() => {
-        const loadCategories = async () => {
-            setLoading(true);
-            setError('');
+        let isMounted = true;
+
+        const loadStreams = async () => {
             try {
-                const response = await getCareerLibraryCategories();
-                setCategories(Array.isArray(response?.data) ? response.data : []);
+                setLoading(true);
+                setError('');
+                const response = await getCareerLibraryStreams();
+                const items = Array.isArray(response?.data) ? response.data : [];
+
+                if (isMounted) {
+                    setStreamItems(normalizeStreamItems(items));
+                }
             }
             catch (_fetchError) {
-                setError('Unable to load career categories right now.');
+                if (isMounted) {
+                    setError('Unable to load streams right now.');
+                    setStreamItems(normalizeStreamItems([]));
+                }
             }
             finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
-        loadCategories();
+
+        loadStreams();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
     useEffect(() => {
-        if (typeof params.level === 'string' && ['categories', 'secondcategory', 'subcategory', 'details'].includes(params.level)) {
+        if (typeof params.level === 'string' && ['streams', 'categories', 'secondcategory', 'subcategory', 'details'].includes(params.level)) {
             setCurrentLevel(params.level);
         }
     }, [params.level]);
-    const animationKey = `${currentLevel}-${selectedCategory?.id ?? 'none'}-${selectedSecondCategory?.id ?? 'none'}-${selectedSubCategory?.id ?? 'none'}`;
+    const animationKey = `${currentLevel}-${selectedStream?.id ?? 'none'}-${selectedCategory?.id ?? 'none'}-${selectedSecondCategory?.id ?? 'none'}-${selectedSubCategory?.id ?? 'none'}`;
     const detailKey = selectedDetailSource?.id != null ? String(selectedDetailSource.id) : selectedSubCategory?.id != null ? String(selectedSubCategory.id) : null;
     const detailUnlocked = detailKey ? canAccessFreeDetail('career-library', detailKey) : true;
     const returnTarget = useMemo(() => ({
         pathname: '/(drawer)/(tabs)/library',
         params: {
             level: currentLevel,
+            streamId: selectedStream?.id,
             categoryId: selectedCategory?.id,
             secondCategoryId: selectedSecondCategory?.id,
             subCategoryId: selectedSubCategory?.id,
         },
-    }), [currentLevel, selectedCategory, selectedSecondCategory, selectedSubCategory]);
-    const canOpenCareerItem = (itemKey) => isUnlocked('career-library') || canAccessFreeDetail('career-library', String(itemKey));
+    }), [currentLevel, selectedStream, selectedCategory, selectedSecondCategory, selectedSubCategory]);
     const handleClick = async (type, id, item) => {
         setLoading(true);
         setError('');
         setSelectedDetailSource(null);
-        if (type === 'category') {
+        if (type === 'stream') {
+            setSelectedStream(item);
+            setSelectedCategory(null);
+            setSelectedSecondCategory(null);
+            setSelectedSubCategory(null);
+            setDetails([]);
+            setCurrentLevel('categories');
+            setDetailReturnLevel('streams');
+        }
+        else if (type === 'category') {
             setSelectedCategory(item);
             setDetailReturnLevel('categories');
         }
@@ -472,9 +552,19 @@ export default function CareerLibraryScreen() {
             setDetailReturnLevel('subcategory');
         }
         try {
-            const response = await getCareerLibraryNext(type, id);
+            const response = type === 'stream'
+                ? await getCareerLibraryCategoriesByStream(id)
+                : await getCareerLibraryNext(type, id);
             const data = response ?? {};
             const nextItems = Array.isArray(data?.data) ? data.data : [];
+            if (type === 'stream') {
+                setCategories(nextItems);
+                setSecondCategories([]);
+                setSubCategories([]);
+                setDetails([]);
+                setCurrentLevel('categories');
+                return;
+            }
             if (data.type === 'secondcategory') {
                 setSecondCategories(nextItems);
                 setSubCategories([]);
@@ -525,10 +615,59 @@ export default function CareerLibraryScreen() {
         else if (currentLevel === 'subcategory') {
             setCurrentLevel('secondcategory');
         }
+        else if (currentLevel === 'categories') {
+            setCurrentLevel('streams');
+        }
         else {
-            setCurrentLevel('categories');
+            setCurrentLevel('streams');
         }
     };
+    const renderStreamGrid = (items) => (<View className="flex-row flex-wrap gap-3">
+      {items.map((item, index) => (<StaggerFadeUpItem key={`stream-${item?.id ?? index}`} index={index}>
+          <Pressable onPress={() => {
+                handleClick('stream', item?.id, item);
+            }} style={{ flexBasis: '48%' }} className={`gap-3 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+            <View className="flex-row items-start justify-between gap-2">
+              <View className="h-[44px] w-[44px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${(item?.tone || getStreamTone(item?.name))}15` }}>
+                <Ionicons name={item?.icon || getStreamIcon(item?.name)} size={22} color={item?.tone || getStreamTone(item?.name)}/>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={palette.primary}/>
+            </View>
+            <View className="gap-1">
+              <Text className={`text-[15px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item?.name}</Text>
+              <Text className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item?.desc || 'Explore this stream.'}</Text>
+            </View>
+          </Pressable>
+        </StaggerFadeUpItem>))}
+    </View>);
+    const renderCategoryGrid = (items) => (<View className="flex-row flex-wrap gap-3">
+      {items.map((item, index) => {
+            const accessKey = getCareerAccessKey(item);
+            const unlockedItem = isUnlocked('career-library') || canAccessFreeDetail('career-library', accessKey);
+            return (<StaggerFadeUpItem key={`category-${item?.id ?? index}`} index={index}>
+          <Pressable onPress={() => {
+                    if (!unlockedItem) {
+                        setShowUnlockSheet(true);
+                        return;
+                    }
+                    handleClick('category', item?.id, item);
+                }} style={{ flexBasis: '48%' }} className={`gap-3 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+            <View className="flex-row items-start justify-between gap-2">
+              <View className="h-[44px] w-[44px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
+                <Ionicons name={getStepIcon('category', item)} size={22} color={palette.primary}/>
+              </View>
+              {!isUnlocked('career-library') ? (<View className="rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
+                  <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
+                </View>) : null}
+            </View>
+            <View className="gap-1">
+              <Text className={`text-[15px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getCardTitle(item)}</Text>
+              {getCardDescription(item) ? (<Text className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getCardDescription(item)}</Text>) : null}
+            </View>
+          </Pressable>
+        </StaggerFadeUpItem>);
+        })}
+    </View>);
     const renderStepList = (items, type) => (<View className="gap-3">
       {items.map((item, index) => {
             const accessKey = getCareerAccessKey(item);
@@ -545,8 +684,8 @@ export default function CareerLibraryScreen() {
               <Ionicons name={getStepIcon(type, item)} size={18} color={palette.primary}/>
             </View>
             <View className="flex-1">
-              <Text className={`text-[15px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getItemTitle(item)}</Text>
-              {getItemSubtitle(item) ? (<Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getItemSubtitle(item)}</Text>) : null}
+              <Text className={`text-[15px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getCardTitle(item)}</Text>
+              {getCardDescription(item) ? (<Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getCardDescription(item)}</Text>) : null}
             </View>
             {!isUnlocked('career-library') ? (<View className="mr-2 rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
                 <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
@@ -632,8 +771,11 @@ export default function CareerLibraryScreen() {
         </StaggerFadeUpItem>);
     };
     const getTitle = () => {
-        if (currentLevel === 'categories') {
+        if (currentLevel === 'streams') {
             return 'Career Library';
+        }
+        if (currentLevel === 'categories') {
+            return selectedStream?.name || 'Career Library';
         }
         if (currentLevel === 'secondcategory') {
             return getItemTitle(selectedCategory);
@@ -648,13 +790,21 @@ export default function CareerLibraryScreen() {
     };
     return (<Screen scroll={true} animationKey={animationKey}>
       <View className="flex-row items-center">
-        {currentLevel !== 'categories' && (<Pressable onPress={handleBack} className="mr-3 h-10 w-10 items-center justify-center rounded-full">
+        {currentLevel !== 'streams' && (<Pressable onPress={handleBack} className="mr-3 h-10 w-10 items-center justify-center rounded-full">
             <Ionicons name="chevron-back" size={24} color={preferences.darkMode ? '#ffffff' : palette.text}/>
           </Pressable>)}
         <Text className={`text-[18px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getTitle()}</Text>
       </View>
 
-      {currentLevel === 'details' ? (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
+      {currentLevel === 'streams' ? (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
+          {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading streams...</Text>) : null}
+          {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
+          {renderStreamGrid(streamItems)}
+        </ScrollView>) : currentLevel === 'categories' ? (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
+          {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading categories...</Text>) : null}
+          {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
+          {renderCategoryGrid(categories)}
+        </ScrollView>) : currentLevel === 'details' ? (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
           {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading details...</Text>) : null}
           {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
          
@@ -662,7 +812,6 @@ export default function CareerLibraryScreen() {
         </ScrollView>) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
           {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading...</Text>) : null}
           {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
-          {currentLevel === 'categories' && renderStepList(categories, 'category')}
           {currentLevel === 'secondcategory' && renderStepList(secondCategories, 'second')}
           {currentLevel === 'subcategory' && renderStepList(subCategories, 'sub')}
         </ScrollView>)}
