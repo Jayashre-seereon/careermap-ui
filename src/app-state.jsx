@@ -1,5 +1,6 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { notifications as notificationItems } from './careermap-data';
+import { getNotifications } from './api/notificationApi';
 const planFeatures = {
     psychometric: ['psychometric-test'],
     premium: ['psychometric-test', 'book-mentor', 'master-class'],
@@ -69,6 +70,35 @@ export function AppStateProvider({ children }) {
     const [testHistory, setTestHistory] = useState(initialTestHistory);
     const [bookings, setBookings] = useState(initialBookings);
     const [freeAccessUsage, setFreeAccessUsage] = useState(initialFreeAccessUsage);
+    const [notifications, setNotifications] = useState(notificationItems);
+    const [notificationsLoadFailed, setNotificationsLoadFailed] = useState(false);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        async function loadNotifications() {
+            try {
+                const items = await getNotifications();
+
+                if (isMounted) {
+                    setNotifications(items);
+                    setNotificationsLoadFailed(false);
+                }
+            }
+            catch (_error) {
+                if (isMounted) {
+                    setNotificationsLoadFailed(true);
+                }
+            }
+        }
+
+        loadNotifications();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
     const value = useMemo(() => ({
         activePlanId,
         hasActiveSubscription: activePlanId !== null,
@@ -155,9 +185,11 @@ export function AppStateProvider({ children }) {
                 },
             ]
             : [],
-        unreadNotificationsCount: notificationItems.filter((item) => item.unread).length,
+        notifications,
+        unreadNotificationsCount: notifications.filter((item) => item.unread).length,
+        notificationsLoadFailed,
         freeAccessUsage,
-    }), [activePlanId, bookings, freeAccessUsage, onboarding, preferences, profileEditRequestKey, promoMessage, savedCareers, testHistory, userProfile]);
+    }), [activePlanId, bookings, freeAccessUsage, notifications, notificationsLoadFailed, onboarding, preferences, profileEditRequestKey, promoMessage, savedCareers, testHistory, userProfile]);
     return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }
 export function useAppState() {
