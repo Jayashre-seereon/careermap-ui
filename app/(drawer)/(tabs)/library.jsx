@@ -443,6 +443,8 @@ export default function CareerLibraryScreen() {
         }
     }, [params.level]);
     const animationKey = `${currentLevel}-${selectedCategory?.id ?? 'none'}-${selectedSecondCategory?.id ?? 'none'}-${selectedSubCategory?.id ?? 'none'}`;
+    const detailKey = selectedDetailSource?.id != null ? String(selectedDetailSource.id) : selectedSubCategory?.id != null ? String(selectedSubCategory.id) : null;
+    const detailUnlocked = detailKey ? canAccessFreeDetail('career-library', detailKey) : true;
     const returnTarget = useMemo(() => ({
         pathname: '/(drawer)/(tabs)/library',
         params: {
@@ -557,7 +559,6 @@ export default function CareerLibraryScreen() {
     const renderDetailItem = (detail, index) => {
         const title = getDetailTitle(detail);
         const isSaved = savedCareers.includes(title);
-        const unlockedItem = canOpenCareerItem(detail?.subcategoryId ?? detail?.id ?? index);
         return (<StaggerFadeUpItem key={`detail-${detail?.id ?? index}`} index={index}>
           <View className="mb-4">
             <View className="mb-3 flex-row items-start gap-3">
@@ -569,45 +570,59 @@ export default function CareerLibraryScreen() {
                 {getDetailDescription(detail) ? (<Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getDetailDescription(detail)}</Text>) : null}
               </View>
             </View>
-            {!isUnlocked('career-library') ? (<View className="mb-3 flex-row items-center gap-2 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${unlockedItem ? palette.green : palette.orange}14` }}>
-                <Ionicons name={unlockedItem ? 'sparkles-outline' : 'lock-closed'} size={18} color={unlockedItem ? palette.green : palette.orange}/>
-                <Text className="flex-1 text-[12px] font-semibold" style={{ color: unlockedItem ? palette.green : palette.orange }}>
-                  {unlockedItem ? 'Your first career detail is unlocked for free.' : 'You have already used the free career detail. Subscribe to view more.'}
-                </Text>
-              </View>) : null}
             <Pressable onPress={() => toggleSavedCareer(title)} className={`mb-4 flex-row items-center justify-center gap-2 rounded-[14px] border px-4 py-3 ${isSaved ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={isSaved ? '#fff' : palette.primary}/>
               <Text className={`text-[13px] font-extrabold ${isSaved ? 'text-white' : 'text-brand'}`}>{isSaved ? 'Saved to Wishlist' : 'Save to Wishlist'}</Text>
             </Pressable>
+             {detailUnlocked ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.green}14` }}>
+              <Text className="text-[12px] font-semibold" style={{ color: palette.green }}>
+              <Ionicons name="sparkles-outline" size={14} color={palette.green} className="mr-1"/> You have access to view this career detail for free.
+              </Text>
+            </View>) : null}
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-              <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Job Scope</Text>
+              <View className="mb-3 flex-row items-center gap-2">
+                <Ionicons name="briefcase-outline" size={16} color={palette.primary}/>
+                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Job Scope</Text>
+              </View>
               {toList(detail?.jobScope).length > 0 ? toList(detail?.jobScope).map((scope) => (<View key={scope} className="mb-2 flex-row items-start">
-                  <View className={`mr-2 mt-1.5 h-1.5 w-1.5 rounded-full ${preferences.darkMode ? 'bg-[#8b7f8f]' : 'bg-[#b9b2b8]'}`}/>
+                  <Ionicons name="ellipse" size={6} color={palette.secondary} style={{ marginRight: 8, marginTop: 7 }}/>
                   <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{scope}</Text>
                 </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Job scope not available.</Text>)}
             </View>
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-              <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Salary Range</Text>
+              <View className="mb-3 flex-row items-center gap-2">
+                <Ionicons name="cash-outline" size={16} color={palette.primary}/>
+                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Salary Range</Text>
+              </View>
               {toList(detail?.salaryRanges).length > 0 ? toList(detail?.salaryRanges).map((salary, salaryIndex) => (<View key={salary?.id ?? salaryIndex} className="mb-2">
                   <Text className="text-[15px] font-bold text-brand">{salary?.minSalary && salary?.maxSalary ? `${salary.minSalary} - ${salary.maxSalary}` : 'Salary not available'}</Text>
                 </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Salary details not available.</Text>)}
             </View>
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-              <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Institutions</Text>
+              <View className="mb-3 flex-row items-center gap-2">
+                <Ionicons name="school-outline" size={16} color={palette.primary}/>
+                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Institutions</Text>
+              </View>
               {toList(detail?.institutions).length > 0 ? toList(detail?.institutions).map((institution) => (<View key={institution?.id} className="mb-3">
                   <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
                   <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{[institution?.city, institution?.state, institution?.countruy].filter(Boolean).join(', ') || 'Location not available'}</Text>
                 </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Institution details not available.</Text>)}
             </View>
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-              <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Career Paths</Text>
+              <View className="mb-3 flex-row items-center gap-2">
+                <Ionicons name="map-outline" size={16} color={palette.primary}/>
+                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Career Paths</Text>
+              </View>
               {toList(detail?.careerpaths).length > 0 ? toList(detail?.careerpaths).map((pathItem) => (<View key={pathItem?.id} className="mb-2">
                   <Text className={`text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{pathItem?.pathName || 'Path'}</Text>
                   <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{pathItem?.path?.pathtype || pathItem?.graduation || 'Path information not available.'}</Text>
                 </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Career path details not available.</Text>)}
             </View>
             <View className={`rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-              <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Entrance Exams</Text>
+              <View className="mb-3 flex-row items-center gap-2">
+                <Ionicons name="reader-outline" size={16} color={palette.primary}/>
+                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Entrance Exams</Text>
+              </View>
               {toList(detail?.entranceexams).length > 0 ? toList(detail?.entranceexams).map((exam) => (<View key={exam?.id} className="mb-3">
                   <Text className={`text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam?.examname || 'Exam'}</Text>
                   <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{[exam?.mode, exam?.duration, formatDate(exam?.exam_date)].filter(Boolean).join(' • ')}</Text>
@@ -642,6 +657,7 @@ export default function CareerLibraryScreen() {
       {currentLevel === 'details' ? (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
           {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading details...</Text>) : null}
           {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
+         
           {details.length > 0 ? details.map((detail, index) => renderDetailItem(detail, index)) : !loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No details available for this selection.</Text>) : null}
         </ScrollView>) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
           {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading...</Text>) : null}
