@@ -10,7 +10,7 @@ import { AnimatedPressable } from '../src/careermap-ui';
 import { AnimatedBackground } from '../src/animated-background';
 import { ZoomInPage } from '../src/page-transition';
 import { useAuthStore } from '../src/store/auth-store';
-import { buildLandingData, buildUsername, isValidDateInput, normalizeMobile, splitFullName } from '../src/utils/auth';
+import { buildLandingData, buildUsername, formatOtpMobile, isValidDateInput, normalizeMobile, splitFullName } from '../src/utils/auth';
 const selectionMeta = [
     { key: 'selectedClass', label: 'Class', icon: 'school-outline', color: palette.blue },
     { key: 'selectedStream', label: 'Stream', icon: 'layers-outline', color: palette.purple },
@@ -253,7 +253,7 @@ export default function ProfileSetupScreen() {
                 address: form.address.trim(),
                 dataOfBirth: new Date(form.dob).toISOString(),
                 image: 'image_url.png',
-                mobile: normalizeMobile(form.mobile),
+                mobile: formatOtpMobile(form.mobile),
                 status: 'Active',
                 landingData: buildLandingData(mergedOnboarding),
             };
@@ -269,7 +269,7 @@ export default function ProfileSetupScreen() {
                 saveUserProfile({
                     ...userProfile,
                     ...form,
-                    mobile: normalizeMobile(form.mobile),
+                    mobile: formatOtpMobile(form.mobile),
                     childName: mergedOnboarding.childName,
                 });
                 showPromoMessage(response.message || 'Profile created successfully.');
