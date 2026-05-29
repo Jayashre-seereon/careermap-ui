@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getApiErrorMessage, sendOtp, verifyOtp } from '../src/api/authApi';
+import { createUserHistoryEntry, getApiErrorMessage, sendOtp, verifyOtp } from '../src/api/authApi';
 import { useAppState } from '../src/app-state';
 import { AnimatedBackground } from '../src/animated-background';
 import { palette } from '../src/careermap-data';
@@ -49,6 +49,10 @@ export default function OtpVerifyScreen() {
         setAccessToken(response.accessToken || '');
         setRefreshToken(response.refreshToken || '');
         setUser(response.user || null);
+
+        void createUserHistoryEntry().catch((error) => {
+          console.log('User history log failed', error?.response?.data || error?.message || error);
+        });
 
         const profile = mapApiUserToProfile(response.user);
         if (profile) {

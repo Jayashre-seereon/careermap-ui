@@ -1,4 +1,70 @@
 import api, { API_BASE_URL } from './axios';
+import { Platform } from 'react-native';
+
+function getBrowserName() {
+  if (Platform.OS !== 'web') {
+    return 'App';
+  }
+
+  const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
+
+  if (/chrome|crios/i.test(userAgent)) {
+    return 'Chrome';
+  }
+
+  if (/firefox|fxios/i.test(userAgent)) {
+    return 'Firefox';
+  }
+
+  if (/safari/i.test(userAgent) && !/chrome|crios/i.test(userAgent)) {
+    return 'Safari';
+  }
+
+  if (/edg/i.test(userAgent)) {
+    return 'Edge';
+  }
+
+  return 'Browser';
+}
+
+function getOperatingSystem() {
+  if (Platform.OS !== 'web') {
+    return Platform.OS === 'ios' ? 'iOS' : 'Android';
+  }
+
+  const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent || '' : '';
+  const platform = typeof navigator !== 'undefined' ? navigator.platform || '' : '';
+
+  if (/windows/i.test(userAgent) || /win/i.test(platform)) {
+    return 'Windows';
+  }
+
+  if (/mac/i.test(userAgent) || /mac/i.test(platform)) {
+    return 'macOS';
+  }
+
+  if (/android/i.test(userAgent)) {
+    return 'Android';
+  }
+
+  if (/iphone|ipad|ipod/i.test(userAgent)) {
+    return 'iOS';
+  }
+
+  if (/linux/i.test(userAgent) || /linux/i.test(platform)) {
+    return 'Linux';
+  }
+
+  return 'Unknown';
+}
+
+function getDeviceType() {
+  if (Platform.OS === 'web') {
+    return 'Desktop';
+  }
+
+  return 'Mobile';
+}
 
 export async function sendOtp(mobile, type = 'signup') {
   const response = await api.post('/auth/send-otp', {
@@ -25,6 +91,53 @@ export async function loginWithPassword(email, password) {
     password,
   });
 
+  return response.data;
+}
+
+async function fetchPublicIpAddress() {
+  try {
+    const response = await fetch('https://api.ipify.org?format=json');
+
+    if (!response.ok) {
+      return '';
+    }
+
+    const data = await response.json();
+    return data?.ip || '';
+  } catch {
+    return '';
+  }
+}
+
+async function fetchApproxLocation() {
+  try {
+    const response = await fetch('https://ipapi.co/json/');
+
+    if (!response.ok) {
+      return '';
+    }
+
+    const data = await response.json();
+    const parts = [data?.city, data?.country_name].filter(Boolean);
+    return parts.join(', ');
+  } catch {
+    return '';
+  }
+}
+
+export async function createUserHistoryEntry(payload = {}) {
+  const [ipAddress, location] = await Promise.all([
+    payload.ipAddress ? Promise.resolve(payload.ipAddress) : fetchPublicIpAddress(),
+    payload.location ? Promise.resolve(payload.location) : fetchApproxLocation(),
+  ]);
+
+  const response = await api.post('/userhistory/', {
+    device: payload.device || getDeviceType(),
+    browser: payload.browser || getBrowserName(),
+    os: payload.os || getOperatingSystem(),
+    ipAddress,
+    location,
+  });
   return response.data;
 }
 

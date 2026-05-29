@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getApiErrorMessage, loginWithPassword, sendOtp } from '../src/api/authApi';
+import { createUserHistoryEntry, getApiErrorMessage, loginWithPassword, sendOtp } from '../src/api/authApi';
 import { useAppState } from '../src/app-state';
 import { AnimatedBackground } from '../src/animated-background';
 import { BeeMascot } from '../src/bee-mascot';
@@ -40,6 +40,10 @@ export default function LoginScreen() {
     setAccessToken(response.accessToken || '');
     setRefreshToken(response.refreshToken || '');
     setUser(response.user || null);
+
+    void createUserHistoryEntry().catch((error) => {
+      console.log('User history log failed', error?.response?.data || error?.message || error);
+    });
 
     const profile = mapApiUserToProfile(response.user);
     if (profile) {
