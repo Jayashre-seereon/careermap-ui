@@ -640,7 +640,7 @@ export default function CareerLibraryScreen() {
           </Pressable>
         </StaggerFadeUpItem>))}
     </View>);
-    const renderCategoryGrid = (items) => (<View className="flex-row flex-wrap gap-3">
+    const renderCategoryGrid = (items) => (<View className="gap-3">
       {items.map((item, index) => {
             const accessKey = getCareerAccessKey(item);
             const unlockedItem = isUnlocked('career-library') || canAccessFreeDetail('career-library', accessKey);
@@ -651,18 +651,19 @@ export default function CareerLibraryScreen() {
                         return;
                     }
                     handleClick('category', item?.id, item);
-                }} style={{ flexBasis: '48%' }} className={`gap-3 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-            <View className="flex-row items-start justify-between gap-2">
-              <View className="h-[44px] w-[44px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
-                <Ionicons name={getStepIcon('category', item)} size={22} color={palette.primary}/>
-              </View>
+                }} className={`w-full flex-row items-center gap-3 rounded-[18px] border px-3 py-3.5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+            <View className="h-[40px] w-[40px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${palette.primary}12` }}>
+              <Ionicons name={getStepIcon('category', item)} size={20} color={palette.primary}/>
+            </View>
+            <View className="flex-1">
+              <Text className={`text-[14px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getCardTitle(item)}</Text>
+              {getCardDescription(item) ? (<Text numberOfLines={1} className={`mt-0.5 text-[12px] leading-4 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getCardDescription(item)}</Text>) : null}
+            </View>
+            <View className="items-end gap-2">
               {!isUnlocked('career-library') ? (<View className="rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
                   <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
                 </View>) : null}
-            </View>
-            <View className="gap-1">
-              <Text className={`text-[15px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getCardTitle(item)}</Text>
-              {getCardDescription(item) ? (<Text className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getCardDescription(item)}</Text>) : null}
+              <Ionicons name="chevron-forward" size={18} color={palette.primary}/>
             </View>
           </Pressable>
         </StaggerFadeUpItem>);
