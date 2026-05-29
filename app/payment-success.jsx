@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getPlans } from '../src/api/planApi';
 import { useAppState } from '../src/app-state';
 import { AnimatedBackground } from '../src/animated-background';
-import { palette, subscriptions } from '../src/careermap-data';
+import { palette, subscriptions as fallbackSubscriptions } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
 import { decodeReturnTarget } from '../src/subscription-flow';
 
@@ -14,10 +15,11 @@ export default function PaymentSuccessScreen() {
   const { planId, transactionId, returnTo } = useLocalSearchParams();
   const { activatePlan, preferences } = useAppState();
   const celebration = useRef(new Animated.Value(0)).current;
+  const [plans, setPlans] = useState(fallbackSubscriptions);
 
   const plan =
-    subscriptions.find((item) => item.id === planId) ??
-    subscriptions[0];
+    plans.find((item) => String(item.id) === String(planId)) ??
+    plans[0];
 
   const returnTarget = decodeReturnTarget(returnTo);
 
@@ -44,6 +46,28 @@ export default function PaymentSuccessScreen() {
       activatePlan(plan.id);
     }
   }, [activatePlan, plan.id]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPlans = async () => {
+      try {
+        const response = await getPlans();
+        if (isMounted && response.length > 0) {
+          setPlans(response);
+        }
+      }
+      catch (error) {
+        console.log('Plans fetch failed', error?.response?.data || error?.message || error);
+      }
+    };
+
+    loadPlans();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // animation
   useEffect(() => {

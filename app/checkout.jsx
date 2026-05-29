@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getPlans } from '../src/api/planApi';
 import { useAppState } from '../src/app-state';
 import { AnimatedBackground } from '../src/animated-background';
-import { palette, subscriptions } from '../src/careermap-data';
+import { palette, subscriptions as fallbackSubscriptions } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
 const paymentMethods = [
     { id: 'upi', label: 'UPI', description: 'Google Pay, PhonePe, Paytm' },
@@ -34,7 +35,32 @@ function normalizeCardName(value) {
 export default function CheckoutScreen() {
     const { preferences } = useAppState();
     const { planId, returnTo } = useLocalSearchParams();
-    const plan = subscriptions.find((item) => item.id === planId) ?? subscriptions[0];
+    const [plans, setPlans] = useState(fallbackSubscriptions);
+    const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+    useEffect(() => {
+        let isMounted = true;
+        const loadPlans = async () => {
+            try {
+                const response = await getPlans();
+                if (isMounted && response.length > 0) {
+                    setPlans(response);
+                }
+            }
+            catch (error) {
+                console.log('Plans fetch failed', error?.response?.data || error?.message || error);
+            }
+            finally {
+                if (isMounted) {
+                    setIsLoadingPlans(false);
+                }
+            }
+        };
+        loadPlans();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+    const plan = plans.find((item) => String(item.id) === String(planId)) ?? plans[0];
     const [selectedMethod, setSelectedMethod] = useState('upi');
     const [upiId, setUpiId] = useState('');
     const [cardName, setCardName] = useState('');
@@ -132,7 +158,10 @@ export default function CheckoutScreen() {
           </View>
         </View>
 
-        {isProcessing ? (<View className="flex-1 items-center justify-center gap-3 px-8">
+        {isLoadingPlans ? (<View className="flex-1 items-center justify-center gap-3 px-8">
+            <ActivityIndicator size="large" color={palette.primary}/>
+            <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading plan details...</Text>
+          </View>) : isProcessing ? (<View className="flex-1 items-center justify-center gap-3 px-8">
             <View className={`h-[88px] w-[88px] items-center justify-center rounded-[28px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <ActivityIndicator size="large" color={palette.primary}/>
             </View>
