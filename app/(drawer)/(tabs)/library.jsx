@@ -626,7 +626,7 @@ export default function CareerLibraryScreen() {
       {items.map((item, index) => (<StaggerFadeUpItem key={`stream-${item?.id ?? index}`} index={index}>
           <Pressable onPress={() => {
                 handleClick('stream', item?.id, item);
-            }} style={{ flexBasis: '48%' }} className={`gap-3 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+            }} style={{ width: '48%' }} className={`shrink-0 gap-3 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
             <View className="flex-row items-start justify-between gap-2">
               <View className="h-[44px] w-[44px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${(item?.tone || getStreamTone(item?.name))}15` }}>
                 <Ionicons name={item?.icon || getStreamIcon(item?.name)} size={22} color={item?.tone || getStreamTone(item?.name)}/>
@@ -634,8 +634,8 @@ export default function CareerLibraryScreen() {
               <Ionicons name="chevron-forward" size={18} color={palette.primary}/>
             </View>
             <View className="gap-1">
-              <Text className={`text-[15px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item?.name}</Text>
-              <Text className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item?.desc || 'Explore this stream.'}</Text>
+              <Text numberOfLines={1} className={`text-[15px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item?.name}</Text>
+              <Text numberOfLines={2} className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item?.desc || 'Explore this stream.'}</Text>
             </View>
           </Pressable>
         </StaggerFadeUpItem>))}
