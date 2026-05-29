@@ -4,12 +4,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { mentors, palette } from '../../src/careermap-data';
+import { getMentorById, getMentors } from '../../src/api/mentorApi';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
 export default function BookMentorScreen() {
     const params = useLocalSearchParams();
     const { addBooking, canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
-    const [selectedIndex, setSelectedIndex] = useState(null);
+    const [mentorList, setMentorList] = useState(mentors);
+    const [selectedMentorId, setSelectedMentorId] = useState(null);
+    const [selectedMentor, setSelectedMentor] = useState(null);
+    const [isMentorLoading, setIsMentorLoading] = useState(false);
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedSlot, setSelectedSlot] = useState('');
     const [showPayment, setShowPayment] = useState(false);
@@ -24,8 +28,9 @@ export default function BookMentorScreen() {
     const [processing, setProcessing] = useState(false);
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
     const celebration = useRef(new Animated.Value(0)).current;
-    const selectedMentor = selectedIndex !== null ? mentors[selectedIndex] : null;
-    const detailUnlocked = selectedMentor ? canAccessFreeDetail('book-mentor', selectedMentor.name) : true;
+    const fallbackMentor = selectedMentorId ? mentorList.find((item) => String(item.id) === String(selectedMentorId)) || null : null;
+    const activeMentor = selectedMentor || fallbackMentor;
+    const detailUnlocked = activeMentor ? canAccessFreeDetail('book-mentor', activeMentor.name) : true;
     const formatCardNumber = (value) => value.replace(/\D/g, '').slice(0, 16);
     const formatExpiry = (value) => {
         const digits = value.replace(/\D/g, '').slice(0, 4);
@@ -41,32 +46,93 @@ export default function BookMentorScreen() {
     };
     const animationKey = processing
         ? 'processing'
-        : booked && selectedIndex !== null
-            ? `booked-${selectedIndex}`
-            : selectedIndex !== null && showPayment
-                ? `payment-${selectedIndex}-${selectedDate || 'date'}-${selectedSlot || 'slot'}`
-                : selectedIndex !== null
-                    ? `mentor-${selectedIndex}`
+        : booked && activeMentor
+            ? `booked-${selectedMentorId || activeMentor.id || activeMentor.name}`
+            : activeMentor && showPayment
+                ? `payment-${selectedMentorId || activeMentor.id || activeMentor.name}-${selectedDate || 'date'}-${selectedSlot || 'slot'}`
+                : activeMentor
+                    ? `mentor-${selectedMentorId || activeMentor.id || activeMentor.name}`
                     : 'mentor-list';
-    const dates = useMemo(() => Array.from({ length: 14 }, (_, index) => {
-        const current = new Date();
-        current.setDate(current.getDate() + index);
-        return {
-            key: current.toISOString().split('T')[0],
-            day: current.toLocaleDateString('en-IN', { weekday: 'short' }),
-            date: current.getDate().toString(),
-            month: current.toLocaleDateString('en-IN', { month: 'short' }),
-            available: index % 4 !== 1,
+    const dates = useMemo(() => {
+        if (activeMentor?.availability?.length) {
+            return activeMentor.availability.map((item) => ({
+                key: item.key,
+                day: item.day,
+                date: item.date,
+                month: item.month,
+                available: item.slots.length > 0,
+            }));
+        }
+
+        return Array.from({ length: 14 }, (_, index) => {
+            const current = new Date();
+            current.setDate(current.getDate() + index);
+            return {
+                key: current.toISOString().split('T')[0],
+                day: current.toLocaleDateString('en-IN', { weekday: 'short' }),
+                date: current.getDate().toString(),
+                month: current.toLocaleDateString('en-IN', { month: 'short' }),
+                available: index % 4 !== 1,
+            };
+        });
+    }, [activeMentor]);
+    const slots = useMemo(() => {
+        if (!activeMentor?.availability?.length) {
+            return ['9:00 AM', '10:00 AM', '11:30 AM', '2:00 PM', '3:30 PM', '5:00 PM', '6:30 PM'];
+        }
+
+        const availabilityForSelectedDate = activeMentor.availability.find((item) => item.key === selectedDate);
+        const availabilityForFirstDate = activeMentor.availability[0];
+        return (availabilityForSelectedDate?.slots?.length ? availabilityForSelectedDate.slots : availabilityForFirstDate?.slots) || [];
+    }, [activeMentor, selectedDate]);
+    useEffect(() => {
+        if (mentorList.length === 0) {
+            setMentorList(mentors);
+        }
+    }, [mentorList.length]);
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadMentors = async () => {
+            try {
+                const response = await getMentors();
+                if (isMounted && response.length > 0) {
+                    setMentorList(response);
+                }
+            }
+            catch (error) {
+                console.log('Mentor fetch failed', error?.response?.data || error?.message || error);
+            }
         };
-    }), []);
-    const slots = ['9:00 AM', '10:00 AM', '11:30 AM', '2:00 PM', '3:30 PM', '5:00 PM', '6:30 PM'];
+
+        loadMentors();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+    useEffect(() => {
+        if (!activeMentor) {
+            return;
+        }
+
+        if (activeMentor.availability?.length && !activeMentor.availability.some((item) => item.key === selectedDate)) {
+            setSelectedDate(activeMentor.availability[0]?.key || '');
+            setSelectedSlot('');
+            return;
+        }
+
+        if (!selectedDate && activeMentor.availability?.length) {
+            setSelectedDate(activeMentor.availability[0]?.key || '');
+        }
+    }, [activeMentor, selectedDate]);
     useEffect(() => {
         if (!processing)
             return;
         const timer = setTimeout(() => {
             setProcessing(false);
-            if (selectedIndex !== null) {
-                const mentor = mentors[selectedIndex];
+            if (activeMentor) {
+                const mentor = activeMentor;
                 addBooking({
                     id: `booking-${mentor.name}-${selectedDate}-${selectedSlot}`,
                     mentorName: mentor.name,
@@ -78,12 +144,49 @@ export default function BookMentorScreen() {
             setBooked(true);
         }, 1600);
         return () => clearTimeout(timer);
-    }, [addBooking, processing, selectedDate, selectedIndex, selectedSlot]);
+    }, [activeMentor, addBooking, processing, selectedDate, selectedSlot]);
     useEffect(() => {
-        if (typeof params.selected === 'string') {
-            setSelectedIndex(Number(params.selected));
+        if (typeof params.selected === 'string' || typeof params.id === 'string') {
+            setSelectedMentorId(String(params.selected || params.id));
         }
-    }, [params.selected]);
+    }, [params.id, params.selected]);
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadMentorDetail = async () => {
+            if (!selectedMentorId) {
+                setSelectedMentor(null);
+                setIsMentorLoading(false);
+                return;
+            }
+
+            setIsMentorLoading(true);
+            try {
+                const mentor = await getMentorById(selectedMentorId);
+                if (isMounted && mentor) {
+                    setSelectedMentor(mentor);
+                }
+            }
+            catch (error) {
+                console.log('Mentor detail fetch failed', error?.response?.data || error?.message || error);
+                if (isMounted) {
+                    const fallbackMentor = mentorList.find((item) => String(item.id) === String(selectedMentorId)) || null;
+                    setSelectedMentor(fallbackMentor);
+                }
+            }
+            finally {
+                if (isMounted) {
+                    setIsMentorLoading(false);
+                }
+            }
+        };
+
+        loadMentorDetail();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [mentorList, selectedMentorId]);
     useEffect(() => {
         if (!booked) {
             celebration.setValue(0);
@@ -108,8 +211,8 @@ export default function BookMentorScreen() {
         </View>
       </Screen>);
     }
-    if (booked && selectedIndex !== null) {
-        const mentor = mentors[selectedIndex];
+    if (booked && activeMentor) {
+        const mentor = activeMentor;
         const confetti = [
             { top: 16, left: 22, color: palette.secondary, rotate: '-20deg' },
             { top: 34, right: 24, color: palette.orange, rotate: '24deg' },
@@ -121,7 +224,9 @@ export default function BookMentorScreen() {
         return (<Screen animationKey={animationKey}>
         <SectionHeader title="Booking Confirmed" subtitle="The mentor booking flow now mirrors the prototype much more closely." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
                     setBooked(false);
-                    setSelectedIndex(null);
+                    setSelectedMentorId(null);
+                    setSelectedMentor(null);
+                    setIsMentorLoading(false);
                     setSelectedDate('');
                     setSelectedSlot('');
                     setShowPayment(false);
@@ -168,7 +273,9 @@ export default function BookMentorScreen() {
           </View>
           <AnimatedPressable className="w-full rounded-[16px] bg-brand py-[14px]" onPress={() => {
                 setBooked(false);
-                setSelectedIndex(null);
+                setSelectedMentorId(null);
+                setSelectedMentor(null);
+                setIsMentorLoading(false);
                 setSelectedDate('');
                 setSelectedSlot('');
                 setShowPayment(false);
@@ -186,8 +293,8 @@ export default function BookMentorScreen() {
         </View>
       </Screen>);
     }
-    if (selectedIndex !== null && showPayment) {
-        const mentor = mentors[selectedIndex];
+    if (activeMentor && showPayment) {
+        const mentor = activeMentor;
         const canPay = selectedPayment === 'upi'
             ? upiId.includes('@')
             : selectedPayment === 'card'
@@ -264,10 +371,38 @@ export default function BookMentorScreen() {
         </AnimatedPressable>
       </Screen>);
     }
-    if (selectedIndex !== null) {
-        const mentor = mentors[selectedIndex];
+    if (isMentorLoading && selectedMentorId) {
         return (<Screen animationKey={animationKey}>
-        <SectionHeader title="Mentor Profile" subtitle="Profile, schedule selection, and booking flow aligned with the reference prototype." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setSelectedIndex(null)}>
+        <SectionHeader title="Mentor Profile" subtitle="Loading mentor details from the server." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
+                    setSelectedMentorId(null);
+                    setSelectedMentor(null);
+                    setIsMentorLoading(false);
+                    setSelectedDate('');
+                    setSelectedSlot('');
+                    setShowPayment(false);
+                }}>
+              <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
+            </Pressable>}/>
+        <View className={`items-center gap-3 rounded-[24px] border p-6 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+          <Text className={`text-[16px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Loading mentor details...</Text>
+          <Text className={`text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Please wait while we fetch the selected mentor from the backend.</Text>
+        </View>
+      </Screen>);
+    }
+    if (selectedMentorId !== null && activeMentor) {
+        const mentor = activeMentor;
+        const experienceMatch = String(mentor.experience || '').match(/^(\d+)\s*(.*)$/);
+        const experienceValue = experienceMatch?.[1] || mentor.experience || '0';
+        const experienceSuffix = experienceMatch?.[2] || 'yrs';
+        return (<Screen animationKey={animationKey}>
+        <SectionHeader title="Mentor Profile" subtitle="Profile, schedule selection, and booking flow aligned with the reference prototype." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
+                    setSelectedMentorId(null);
+                    setSelectedMentor(null);
+                    setIsMentorLoading(false);
+                    setSelectedDate('');
+                    setSelectedSlot('');
+                    setShowPayment(false);
+                }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
         {!isUnlocked('book-mentor') ? (<View className="self-start rounded-full px-3 py-2" style={{ backgroundColor: `${detailUnlocked ? palette.green : palette.orange}14` }}>
@@ -285,8 +420,15 @@ export default function BookMentorScreen() {
           <Text className={`text-center text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
           <Text className="text-[12px] font-bold text-brand">{mentor.specialty}</Text>
           <View className="flex-row flex-wrap justify-center gap-2.5">
-            <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{mentor.rating} rating</Text>
-            <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{mentor.experience}</Text>
+            <View className="flex-row items-center gap-1">
+              <Ionicons name="star" size={12} color={palette.secondary}/>
+              <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
+              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>rating</Text>
+            </View>
+            <Text className="text-[11px]">
+              <Text className={`font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{experienceValue}</Text>
+              <Text className={`font-bold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}> {experienceSuffix}</Text>
+            </Text>
             <Text className="text-[11px] font-extrabold text-brand">{mentor.price}</Text>
           </View>
           <View className="flex-row flex-wrap justify-center gap-2">
@@ -294,12 +436,12 @@ export default function BookMentorScreen() {
           </View>
         </View>
 
-        <View className={`gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+        <View className={`mt-4 gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>About</Text>
           <Text className={`text-[14px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{mentor.bio}</Text>
         </View>
 
-        <View className={`gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+        <View className={`mt-4 gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Select Date</Text>
           <View className="flex-row flex-wrap gap-2.5">
             {dates.map((date) => (<Pressable key={date.key} disabled={!date.available} onPress={() => setSelectedDate(date.key)} className="w-[62px] items-center gap-0.5 rounded-[16px] py-2.5" style={{
@@ -313,7 +455,7 @@ export default function BookMentorScreen() {
           </View>
         </View>
 
-        {selectedDate ? (<View className={`gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+        {selectedDate ? (<View className={`mt-4 gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
             <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Select Time</Text>
             <View className="flex-row flex-wrap gap-2.5">
               {slots.map((slot) => (<Pressable key={slot} className="rounded-[12px] px-[14px] py-2.5" onPress={() => setSelectedSlot(slot)} style={{ backgroundColor: selectedSlot === slot ? palette.primary : preferences.darkMode ? '#111111' : '#f2ebe6' }}>
@@ -322,7 +464,7 @@ export default function BookMentorScreen() {
             </View>
           </View>) : null}
 
-        <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" disabled={!selectedDate || !selectedSlot} onPress={() => setShowPayment(true)}>
+        <AnimatedPressable className="mt-4 rounded-[16px] bg-brand py-[14px]" disabled={!selectedDate || !selectedSlot} onPress={() => setShowPayment(true)}>
           <Text className="text-center text-[14px] font-extrabold text-white">Book & Pay</Text>
         </AnimatedPressable>
           </>
@@ -336,13 +478,13 @@ export default function BookMentorScreen() {
         <Text className={`text-[14px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Explore counsellors across engineering, design, and career planning, then reserve a 1-on-1 slot.</Text>
       </View>
       <View className="gap-3">
-        {mentors.map((mentor, index) => (<Pressable key={mentor.name} className={`flex-row items-center gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => {
+        {mentorList.map((mentor, index) => (<Pressable key={mentor.id || mentor.name} className={`flex-row items-center gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => {
                 if (!isUnlocked('book-mentor') && !canAccessFreeDetail('book-mentor', mentor.name)) {
                     setShowUnlockSheet(true);
                     return;
                 }
                 registerFreeDetailAccess('book-mentor', mentor.name);
-                setSelectedIndex(index);
+                setSelectedMentorId(String(mentor.id || index));
             }}>
             <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
               <Text className="text-[20px] font-black" style={{ color: mentor.accent }}>{mentor.avatar}</Text>
