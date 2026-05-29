@@ -402,6 +402,7 @@ const getStepIcon = (type, item) => {
     }
     return 'chevron-forward';
 };
+const getCareerAccessKey = (item) => String(item?.id ?? item?.title ?? item?.name ?? item?.path ?? '');
 export default function CareerLibraryScreen() {
     const params = useLocalSearchParams();
     const insets = useSafeAreaInsets();
@@ -442,8 +443,6 @@ export default function CareerLibraryScreen() {
         }
     }, [params.level]);
     const animationKey = `${currentLevel}-${selectedCategory?.id ?? 'none'}-${selectedSecondCategory?.id ?? 'none'}-${selectedSubCategory?.id ?? 'none'}`;
-    const detailKey = selectedDetailSource?.id != null ? String(selectedDetailSource.id) : selectedSubCategory?.id != null ? String(selectedSubCategory.id) : null;
-    const detailUnlocked = detailKey ? canAccessFreeDetail('career-library', detailKey) : true;
     const returnTarget = useMemo(() => ({
         pathname: '/(drawer)/(tabs)/library',
         params: {
@@ -529,10 +528,17 @@ export default function CareerLibraryScreen() {
         }
     };
     const renderStepList = (items, type) => (<View className="gap-3">
-      {items.map((item, index) => (<StaggerFadeUpItem key={`${type}-${item?.id ?? index}`} index={index}>
+      {items.map((item, index) => {
+            const accessKey = getCareerAccessKey(item);
+            const unlockedItem = isUnlocked('career-library') || canAccessFreeDetail('career-library', accessKey);
+            return (<StaggerFadeUpItem key={`${type}-${item?.id ?? index}`} index={index}>
           <Pressable onPress={() => {
-                handleClick(type, item?.id, item);
-            }} className={`flex-row items-center rounded-[14px] border p-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+                    if (!unlockedItem) {
+                        setShowUnlockSheet(true);
+                        return;
+                    }
+                    handleClick(type, item?.id, item);
+                }} className={`flex-row items-center rounded-[14px] border p-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
             <View className={`mr-3 h-10 w-10 items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#fff0e8]'}`}>
               <Ionicons name={getStepIcon(type, item)} size={18} color={palette.primary}/>
             </View>
@@ -540,9 +546,13 @@ export default function CareerLibraryScreen() {
               <Text className={`text-[15px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getItemTitle(item)}</Text>
               {getItemSubtitle(item) ? (<Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getItemSubtitle(item)}</Text>) : null}
             </View>
+            {!isUnlocked('career-library') ? (<View className="mr-2 rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
+                <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
+              </View>) : null}
             <Ionicons name="chevron-forward" size={18} color={palette.primary}/>
           </Pressable>
-        </StaggerFadeUpItem>))}
+        </StaggerFadeUpItem>);
+        })}
     </View>);
     const renderDetailItem = (detail, index) => {
         const title = getDetailTitle(detail);
@@ -632,11 +642,6 @@ export default function CareerLibraryScreen() {
       {currentLevel === 'details' ? (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
           {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading details...</Text>) : null}
           {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
-          {!isUnlocked('career-library') ? (<View className="mt-2 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${detailUnlocked ? palette.green : palette.orange}14` }}>
-              <Text className="text-[12px] font-semibold" style={{ color: detailUnlocked ? palette.green : palette.orange }}>
-                {detailUnlocked ? 'Your first career detail is unlocked for free.' : 'You have already used the free career detail. Subscribe to view more.'}
-              </Text>
-            </View>) : null}
           {details.length > 0 ? details.map((detail, index) => renderDetailItem(detail, index)) : !loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No details available for this selection.</Text>) : null}
         </ScrollView>) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
           {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading...</Text>) : null}
