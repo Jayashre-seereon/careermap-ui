@@ -59,8 +59,50 @@ const initialFreeAccessUsage = {
     'abroad-consultancy': null,
 };
 const AppStateContext = createContext(null);
+
+const APP_STATE_STORAGE_KEY = 'careermap-app-state';
+
+function readPersistedAppState() {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return {};
+    }
+
+    try {
+        const raw = window.localStorage.getItem(APP_STATE_STORAGE_KEY);
+        if (!raw) {
+            return {};
+        }
+
+        const parsed = JSON.parse(raw);
+        return {
+            activePlanId: parsed?.activePlanId ?? null,
+            freeAccessUsage: parsed?.freeAccessUsage ?? initialFreeAccessUsage,
+        };
+    }
+    catch {
+        return {};
+    }
+}
+
+function persistAppState(nextState) {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return;
+    }
+
+    try {
+        window.localStorage.setItem(APP_STATE_STORAGE_KEY, JSON.stringify({
+            activePlanId: nextState.activePlanId ?? null,
+            freeAccessUsage: nextState.freeAccessUsage ?? initialFreeAccessUsage,
+        }));
+    }
+    catch {
+        // Ignore storage failures in restricted browser modes.
+    }
+}
+
 export function AppStateProvider({ children }) {
-    const [activePlanId, setActivePlanId] = useState(null);
+    const persistedAppState = readPersistedAppState();
+    const [activePlanId, setActivePlanIdState] = useState(persistedAppState.activePlanId ?? null);
     const [profileEditRequestKey, setProfileEditRequestKey] = useState(0);
     const [promoMessage, setPromoMessage] = useState('');
     const [onboarding, setOnboarding] = useState(initialOnboardingState);
@@ -69,7 +111,7 @@ export function AppStateProvider({ children }) {
     const [savedCareers, setSavedCareers] = useState(initialSavedCareers);
     const [testHistory, setTestHistory] = useState(initialTestHistory);
     const [bookings, setBookings] = useState(initialBookings);
-    const [freeAccessUsage, setFreeAccessUsage] = useState(initialFreeAccessUsage);
+    const [freeAccessUsage, setFreeAccessUsageState] = useState(persistedAppState.freeAccessUsage ?? initialFreeAccessUsage);
     const [notifications, setNotifications] = useState(notificationItems);
     const [notificationsLoadFailed, setNotificationsLoadFailed] = useState(false);
 
@@ -108,7 +150,13 @@ export function AppStateProvider({ children }) {
                 return false;
             return planFeatures[activePlanId].includes(feature);
         },
-        activatePlan: (planId) => setActivePlanId(planId),
+        activatePlan: (planId) => {
+            setActivePlanIdState(planId);
+            persistAppState({
+                activePlanId: planId,
+                freeAccessUsage,
+            });
+        },
         canAccessFreeDetail: (feature, itemKey) => {
             if (activePlanId && planFeatures[activePlanId]?.includes(feature)) {
                 return true;
@@ -116,22 +164,34 @@ export function AppStateProvider({ children }) {
             const firstViewedItem = freeAccessUsage[feature];
             return firstViewedItem === null || firstViewedItem === itemKey;
         },
-        registerFreeDetailAccess: (feature, itemKey) => setFreeAccessUsage((current) => {
+        registerFreeDetailAccess: (feature, itemKey) => setFreeAccessUsageState((current) => {
             if (activePlanId && planFeatures[activePlanId]?.includes(feature)) {
                 return current;
             }
             if (current[feature] !== null) {
                 return current;
             }
-            return {
+            const nextState = {
                 ...current,
                 [feature]: itemKey,
             };
+            persistAppState({
+                activePlanId,
+                freeAccessUsage: nextState,
+            });
+            return nextState;
         }),
-        resetFreeDetailAccess: (feature) => setFreeAccessUsage((current) => ({
-            ...current,
-            [feature]: null,
-        })),
+        resetFreeDetailAccess: (feature) => setFreeAccessUsageState((current) => {
+            const nextState = {
+                ...current,
+                [feature]: null,
+            };
+            persistAppState({
+                activePlanId,
+                freeAccessUsage: nextState,
+            });
+            return nextState;
+        }),
         profileEditRequestKey,
         requestProfileEdit: () => setProfileEditRequestKey((current) => current + 1),
         promoMessage,

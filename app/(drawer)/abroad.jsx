@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { createStudyAbroadConsultation, getStudyAbroadCountries } from '../../src/api/studyabroadApi';
@@ -12,6 +12,7 @@ export default function AbroadScreen() {
     const { width } = useWindowDimensions();
     const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
     const unlocked = isUnlocked('abroad-consultancy');
+    const autoSubmitHandledRef = useRef('');
     const [countries, setCountries] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
@@ -26,6 +27,32 @@ export default function AbroadScreen() {
     const [message, setMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
+    const selectedCountry = selected !== null ? countries[selected] : null;
+    const detailUnlocked = selectedCountry ? canAccessFreeDetail('abroad-consultancy', selectedCountry.countryName) : true;
+    const selectedStudyAbroadId = selectedCountry?.id ? Number(selectedCountry.id) : null;
+    const consultationPayload = useMemo(() => {
+        if (!selectedStudyAbroadId) {
+            return null;
+        }
+
+        return {
+            studyAbroadId: selectedStudyAbroadId,
+            preferredCountry: preferredCountry.trim(),
+            courseInterest: courseInterest.trim(),
+            budgetRange: budgetRange.trim(),
+            preferredIntake: preferredIntake.trim(),
+            message: message.trim() || 'I want guidance for scholarship and visa process',
+        };
+    }, [budgetRange, courseInterest, message, preferredCountry, preferredIntake, selectedStudyAbroadId]);
+
+    const encodedConsultationPayload = useMemo(() => {
+        if (!consultationPayload) {
+            return undefined;
+        }
+
+        return encodeURIComponent(JSON.stringify(consultationPayload));
+    }, [consultationPayload]);
+
     const animationKey = submitted
         ? 'submitted'
         : showForm
@@ -33,15 +60,19 @@ export default function AbroadScreen() {
             : selected !== null
                 ? `country-${selected}`
                 : 'country-list';
-    const selectedCountry = selected !== null ? countries[selected] : null;
-    const detailUnlocked = selectedCountry ? canAccessFreeDetail('abroad-consultancy', selectedCountry.countryName) : true;
-    const selectedStudyAbroadId = selectedCountry?.id ? Number(selectedCountry.id) : null;
     const formReturnTarget = useMemo(() => ({
         pathname: '/(drawer)/abroad',
-        params: { selected: selected !== null ? String(selected) : undefined, showForm: 'true', preferredCountry: preferredCountry || undefined },
-    }), [preferredCountry, selected]);
-    const handleSubmitConsultation = async () => {
-        if (!selectedStudyAbroadId || !preferredCountry.trim() || !courseInterest.trim() || !budgetRange.trim() || !preferredIntake.trim()) {
+        params: {
+            selected: selected !== null ? String(selected) : undefined,
+            showForm: 'true',
+            preferredCountry: preferredCountry || undefined,
+            autoSubmitAfterReturn: 'true',
+            consultationPayload: encodedConsultationPayload,
+        },
+    }), [encodedConsultationPayload, preferredCountry, selected]);
+
+    const handleSubmitConsultation = useCallback(async () => {
+        if (!consultationPayload || !consultationPayload.preferredCountry || !consultationPayload.courseInterest || !consultationPayload.budgetRange || !consultationPayload.preferredIntake) {
             setSubmitError('Please complete all fields before submitting.');
             return;
         }
@@ -49,14 +80,7 @@ export default function AbroadScreen() {
         try {
             setIsSubmitting(true);
             setSubmitError('');
-            const createdConsultation = await createStudyAbroadConsultation({
-                studyAbroadId: selectedStudyAbroadId,
-                preferredCountry: preferredCountry.trim(),
-                courseInterest: courseInterest.trim(),
-                budgetRange: budgetRange.trim(),
-                preferredIntake: preferredIntake.trim(),
-                message: message.trim() || 'I want guidance for scholarship and visa process',
-            });
+            const createdConsultation = await createStudyAbroadConsultation(consultationPayload);
 
             if (createdConsultation) {
                 setSubmitted(true);
@@ -71,7 +95,7 @@ export default function AbroadScreen() {
         finally {
             setIsSubmitting(false);
         }
-    };
+    }, [consultationPayload]);
     useEffect(() => {
         let isMounted = true;
 
@@ -112,7 +136,53 @@ export default function AbroadScreen() {
         if (typeof params.preferredCountry === 'string') {
             setPreferredCountry(params.preferredCountry);
         }
-    }, [params.preferredCountry, params.selected, params.showForm]);
+
+        if (typeof params.consultationPayload === 'string') {
+            try {
+                const decodedPayload = JSON.parse(decodeURIComponent(params.consultationPayload));
+
+                if (decodedPayload?.courseInterest) {
+                    setCourseInterest(String(decodedPayload.courseInterest));
+                }
+
+                if (decodedPayload?.budgetRange) {
+                    setBudgetRange(String(decodedPayload.budgetRange));
+                }
+
+                if (decodedPayload?.preferredIntake) {
+                    setPreferredIntake(String(decodedPayload.preferredIntake));
+                }
+
+                if (decodedPayload?.message) {
+                    setMessage(String(decodedPayload.message));
+                }
+
+                if (decodedPayload?.preferredCountry) {
+                    setPreferredCountry(String(decodedPayload.preferredCountry));
+                }
+            }
+            catch {
+                // Ignore malformed return payloads and keep the user's current inputs.
+            }
+        }
+    }, [params.consultationPayload, params.preferredCountry, params.selected, params.showForm]);
+
+    useEffect(() => {
+        const shouldAutoSubmit = params.autoSubmitAfterReturn === 'true' && params.consultationPayload;
+
+        if (!shouldAutoSubmit || !unlocked || submitted || isSubmitting || !consultationPayload) {
+            return;
+        }
+
+        const autoSubmitKey = `${params.autoSubmitAfterReturn}:${params.consultationPayload}`;
+        if (autoSubmitHandledRef.current === autoSubmitKey) {
+            return;
+        }
+
+        autoSubmitHandledRef.current = autoSubmitKey;
+        void handleSubmitConsultation();
+    }, [consultationPayload, handleSubmitConsultation, isSubmitting, params.autoSubmitAfterReturn, params.consultationPayload, submitted, unlocked]);
+
     if (selected !== null && !selectedCountry) {
         return (<Screen animationKey={animationKey}>
         <SectionHeader title="Study Abroad" subtitle="Loading destination details..." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
@@ -128,7 +198,7 @@ export default function AbroadScreen() {
     }
     if (submitted) {
         return (<Screen animationKey={animationKey}>
-        <SectionHeader title="Request Sent" subtitle="Consultation request state added to match the prototype flow." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
+        <SectionHeader title="Submitted Successfully" subtitle="Your study abroad consultation request has been completed." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
                     setSubmitted(false);
                     setShowForm(false);
                     setPreferredCountry('');
@@ -140,12 +210,20 @@ export default function AbroadScreen() {
                 }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
-        <View className={`gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <Text className={`text-[24px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Our team will contact you shortly</Text>
-          <Text className={`text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-            Your study abroad consultation request has been recorded. We will help you shortlist countries, courses, and scholarship options.
-          </Text>
-          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => {
+        <View className={`items-center gap-4 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+          <View
+            className="h-[92px] w-[92px] items-center justify-center rounded-full"
+            style={{ backgroundColor: `${palette.green}14` }}
+          >
+            <Ionicons name="checkmark" size={44} color={palette.green} />
+          </View>
+          <View className="items-center gap-2">
+            <Text className={`text-center text-[24px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Submitted successfully</Text>
+            <Text className={`text-center text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+              Your study abroad consultation request has been recorded. We will help you shortlist countries, courses, and scholarship options.
+            </Text>
+          </View>
+          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px] px-[16px]" onPress={() => {
                 setSubmitted(false);
                 setShowForm(false);
                 setPreferredCountry('');
@@ -158,7 +236,7 @@ export default function AbroadScreen() {
             <Text className="text-center text-[14px] font-extrabold text-white">Done</Text>
           </AnimatedPressable>
         </View>
-      </Screen>);
+        </Screen>);
     }
     if (showForm) {
         return (<Screen animationKey={animationKey}>
