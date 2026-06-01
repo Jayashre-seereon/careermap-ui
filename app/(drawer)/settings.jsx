@@ -3,11 +3,16 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
+import { changePassword, createHelpCenterRequest, getApiErrorMessage, logoutUser } from '../../src/api/authApi';
 import { palette } from '../../src/careermap-data';
 import { AnimatedPressable, Screen } from '../../src/careermap-ui';
 import { StaggerFadeUpItem } from '../../src/page-transition';
+import { useAuthStore } from '../../src/store/auth-store';
 export default function SettingsScreen() {
-    const { preferences, requestProfileEdit, toggleDarkMode } = useAppState();
+    const { preferences, requestProfileEdit, toggleDarkMode, userProfile } = useAppState();
+    const authUser = useAuthStore((state) => state.user);
+    const clearAuthFlow = useAuthStore((state) => state.clearAuthFlow);
+    const logout = useAuthStore((state) => state.logout);
     const [view, setView] = useState('menu');
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
@@ -21,15 +26,22 @@ export default function SettingsScreen() {
     });
     const [helpForm, setHelpForm] = useState({
         email: '',
+        subject: '',
         message: '',
     });
-    const [feedbackMessage, setFeedbackMessage] = useState('');
+    const [feedback, setFeedback] = useState({ type: 'idle', message: '' });
     useEffect(() => {
-        if (!feedbackMessage)
+        if (!feedback.message)
             return;
-        const timer = setTimeout(() => setFeedbackMessage(''), 2600);
+        const timer = setTimeout(() => setFeedback({ type: 'idle', message: '' }), 2600);
         return () => clearTimeout(timer);
-    }, [feedbackMessage]);
+    }, [feedback]);
+    useEffect(() => {
+        setHelpForm((current) => ({
+            ...current,
+            email: current.email || authUser?.email || userProfile.email || '',
+        }));
+    }, [authUser?.email, userProfile.email]);
     const settingsItems = useMemo(() => [
         { label: 'Edit Profile', icon: 'person-outline', color: palette.blue, action: () => {
                 requestProfileEdit();
@@ -66,15 +78,35 @@ export default function SettingsScreen() {
                 </AnimatedPressable>
               </View>
             </View>))}
-          <AnimatedPressable className="rounded-[18px] bg-brand py-4" disabled={!canSave} onPress={() => {
-                setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-                setShowPassword({ currentPassword: false, newPassword: false, confirmPassword: false });
-                setFeedbackMessage('Password changed successfully.');
+              <AnimatedPressable className="rounded-[18px] bg-brand py-4" disabled={!canSave} onPress={() => {
+                void (async () => {
+                    try {
+                        const response = await changePassword(passwordForm);
+                        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                        setShowPassword({ currentPassword: false, newPassword: false, confirmPassword: false });
+                        setFeedback({
+                            type: 'success',
+                            message: response?.message || 'Password changed successfully.',
+                        });
+                    }
+                    catch (error) {
+                        setFeedback({
+                            type: 'error',
+                            message: getApiErrorMessage(error, 'Failed to change password.'),
+                        });
+                    }
+                })();
             }}>
             <Text className="text-center text-[15px] font-extrabold text-white">Save Password</Text>
           </AnimatedPressable>
-          {feedbackMessage ? (<View className={`rounded-[18px] border px-4 py-3 ${preferences.darkMode ? 'border-[#22462f] bg-[#102016]' : 'border-[#cde7d4] bg-[#edf8f0]'}`}>
-              <Text className="text-[13px] font-extrabold text-success">{feedbackMessage}</Text>
+          {feedback.message ? (<View className={`rounded-[18px] border px-4 py-3 ${feedback.type === 'error'
+                ? preferences.darkMode
+                    ? 'border-[#5a2630] bg-[#2b151b]'
+                    : 'border-[#efc8c0] bg-[#fff4f2]'
+                : preferences.darkMode
+                    ? 'border-[#22462f] bg-[#102016]'
+                    : 'border-[#cde7d4] bg-[#edf8f0]'}`}>
+              <Text className={`text-[13px] font-extrabold ${feedback.type === 'error' ? 'text-danger' : 'text-success'}`}>{feedback.message}</Text>
             </View>) : null}
         </View>
       </Screen>);
@@ -94,17 +126,49 @@ export default function SettingsScreen() {
             <TextInput value={helpForm.email} onChangeText={(value) => setHelpForm((current) => ({ ...current, email: value }))} keyboardType="email-address" autoCapitalize="none" placeholder="Enter your email" placeholderTextColor={palette.muted} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
           </View>
           <View className="gap-1.5">
+            <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Subject</Text>
+            <TextInput value={helpForm.subject} onChangeText={(value) => setHelpForm((current) => ({ ...current, subject: value }))} placeholder="Enter subject" placeholderTextColor={palette.muted} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
+          </View>
+          <View className="gap-1.5">
             <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Message</Text>
             <TextInput value={helpForm.message} onChangeText={(value) => setHelpForm((current) => ({ ...current, message: value }))} multiline textAlignVertical="top" placeholder="Describe your issue" placeholderTextColor={palette.muted} className={`min-h-[130px] rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
           </View>
           <AnimatedPressable className="rounded-[18px] bg-brand py-4" onPress={() => {
-                setHelpForm({ email: '', message: '' });
-                setFeedbackMessage('Help request sent successfully.');
+                void (async () => {
+                    try {
+                        const response = await createHelpCenterRequest({
+                            email: helpForm.email.trim(),
+                            subject: helpForm.subject.trim(),
+                            message: helpForm.message.trim(),
+                        });
+                        setHelpForm({
+                            email: authUser?.email || userProfile.email || '',
+                            subject: '',
+                            message: '',
+                        });
+                        setFeedback({
+                            type: 'success',
+                            message: response?.message || 'Help request sent successfully.',
+                        });
+                    }
+                    catch (error) {
+                        setFeedback({
+                            type: 'error',
+                            message: getApiErrorMessage(error, 'Failed to send help request.'),
+                        });
+                    }
+                })();
             }}>
             <Text className="text-center text-[15px] font-extrabold text-white">Send to Email Support</Text>
           </AnimatedPressable>
-          {feedbackMessage ? (<View className={`rounded-[18px] border px-4 py-3 ${preferences.darkMode ? 'border-[#22462f] bg-[#102016]' : 'border-[#cde7d4] bg-[#edf8f0]'}`}>
-              <Text className="text-[13px] font-extrabold text-success">{feedbackMessage}</Text>
+          {feedback.message ? (<View className={`rounded-[18px] border px-4 py-3 ${feedback.type === 'error'
+                ? preferences.darkMode
+                    ? 'border-[#5a2630] bg-[#2b151b]'
+                    : 'border-[#efc8c0] bg-[#fff4f2]'
+                : preferences.darkMode
+                    ? 'border-[#22462f] bg-[#102016]'
+                    : 'border-[#cde7d4] bg-[#edf8f0]'}`}>
+              <Text className={`text-[13px] font-extrabold ${feedback.type === 'error' ? 'text-danger' : 'text-success'}`}>{feedback.message}</Text>
             </View>) : null}
         </View>
       </Screen>);
@@ -117,8 +181,14 @@ export default function SettingsScreen() {
         <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Settings</Text>
       </View>
 
-      {feedbackMessage && view === 'menu' ? (<View className={`rounded-[18px] border px-4 py-3 ${preferences.darkMode ? 'border-[#22462f] bg-[#102016]' : 'border-[#cde7d4] bg-[#edf8f0]'}`}>
-          <Text className="text-[13px] font-extrabold text-success">{feedbackMessage}</Text>
+      {feedback.message && view === 'menu' ? (<View className={`rounded-[18px] border px-4 py-3 ${feedback.type === 'error'
+                ? preferences.darkMode
+                    ? 'border-[#5a2630] bg-[#2b151b]'
+                    : 'border-[#efc8c0] bg-[#fff4f2]'
+                : preferences.darkMode
+                    ? 'border-[#22462f] bg-[#102016]'
+                    : 'border-[#cde7d4] bg-[#edf8f0]'}`}>
+          <Text className={`text-[13px] font-extrabold ${feedback.type === 'error' ? 'text-danger' : 'text-success'}`}>{feedback.message}</Text>
         </View>) : null}
 
       <View className={`overflow-hidden rounded-[24px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
@@ -135,7 +205,21 @@ export default function SettingsScreen() {
           </StaggerFadeUpItem>))}
       </View>
 
-      <AnimatedPressable className="flex-row items-center justify-center gap-2 rounded-[18px] border border-[#efc8c0] bg-[#fff4f2] py-4" onPress={() => router.replace('/auth-entry')}>
+      <AnimatedPressable className="flex-row items-center justify-center gap-2 rounded-[18px] border border-[#efc8c0] bg-[#fff4f2] py-4" onPress={() => {
+            void (async () => {
+                try {
+                    await logoutUser();
+                }
+                catch (_error) {
+                    // Continue with local sign-out even if the server logout call fails.
+                }
+                finally {
+                    clearAuthFlow();
+                    logout();
+                    router.replace('/auth-entry');
+                }
+            })();
+        }}>
         <Ionicons name="log-out-outline" size={18} color={palette.danger}/>
         <Text className="text-[14px] font-extrabold text-danger">Logout</Text>
       </AnimatedPressable>

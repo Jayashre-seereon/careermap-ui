@@ -163,6 +163,48 @@ export async function signupUser(payload, tempToken) {
   return response.data;
 }
 
+export async function getUserDashboard() {
+  const response = await api.get('/user/dashboard');
+  return response.data;
+}
+
+export function getProfileUpdatePayload(payload = {}, currentUser = {}) {
+  return {
+    firstName: payload.firstName ?? currentUser.firstName ?? '',
+    lastName: payload.lastName ?? currentUser.lastName ?? '',
+    username: payload.username ?? currentUser.username ?? '',
+    country: payload.country ?? currentUser.country ?? 'India',
+    state: payload.state ?? currentUser.state ?? '',
+    city: payload.city ?? currentUser.city ?? '',
+    district: payload.district ?? currentUser.district ?? '',
+    gender: payload.gender ?? currentUser.gender ?? '',
+    address: payload.address ?? currentUser.address ?? '',
+    dataOfBirth: payload.dataOfBirth ?? currentUser.dataOfBirth ?? null,
+    image: payload.image ?? currentUser.image ?? '',
+    status: payload.status ?? currentUser.status ?? 'Active',
+  };
+}
+
+export async function updateUserProfile(payload = {}) {
+  const response = await api.put('/user/profile', payload);
+  return response.data;
+}
+
+export async function changePassword(payload = {}) {
+  const response = await api.put('/user/change-password', payload);
+  return response.data;
+}
+
+export async function createHelpCenterRequest(payload = {}) {
+  const response = await api.post('/helpandsupport/', payload);
+  return response.data;
+}
+
+export async function logoutUser() {
+  const response = await api.post('/auth/logout');
+  return response.data;
+}
+
 export function getApiErrorMessage(error, fallbackMessage = 'Something went wrong') {
   if (error?.message === 'Network Error') {
     if (__DEV__) {
