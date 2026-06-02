@@ -11,7 +11,7 @@ import { palette } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
 import { ZoomInPage } from '../src/page-transition';
 import { useAuthStore } from '../src/store/auth-store';
-import { formatOtpMobile, mapApiUserToProfile, normalizeMobile } from '../src/utils/auth';
+import { formatOtpMobile, getEmailError, getPasswordError, isValidEmail, isValidPassword, mapApiUserToProfile, normalizeMobile } from '../src/utils/auth';
 
 export default function LoginScreen() {
   const { onboarding, preferences, saveUserProfile } = useAppState();
@@ -29,12 +29,19 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({
+    email: '',
+    password: '',
+  });
   const [status, setStatus] = useState({
     type: 'idle',
     message: '',
   });
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isSubmittingEmail, setIsSubmittingEmail] = useState(false);
+  const canSubmitEmail = isValidEmail(email) && isValidPassword(password);
+  const validateEmailField = (value) => getEmailError(value);
+  const validatePasswordField = (value) => getPasswordError(value);
 
   const completeLogin = (response) => {
     setAccessToken(response.accessToken || '');
@@ -103,8 +110,19 @@ export default function LoginScreen() {
   };
 
   const handleEmailLogin = async () => {
-    if (!email.trim() || !password) {
-      setStatus({ type: 'error', message: 'Enter email and password.' });
+    const nextErrors = {
+      email: validateEmailField(email),
+      password: validatePasswordField(password),
+    };
+    setFieldErrors(nextErrors);
+
+    if (nextErrors.email) {
+      setStatus({ type: 'error', message: 'Enter a valid email address.' });
+      return;
+    }
+
+    if (nextErrors.password) {
+      setStatus({ type: 'error', message: 'Password must be at least 6 characters.' });
       return;
     }
 
@@ -217,22 +235,31 @@ export default function LoginScreen() {
                 value={email}
                 onChangeText={(value) => {
                   setEmail(value);
+                  setFieldErrors((current) => ({
+                    ...current,
+                    email: validateEmailField(value),
+                  }));
                   setStatus({ type: 'idle', message: '' });
                 }}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 placeholder="Enter email"
                 placeholderTextColor={palette.muted}
-                className={`h-14 rounded-[18px] border px-4 text-[15px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808] text-white' : 'border-line bg-card text-ink'}`}
+                className={`h-14 rounded-[18px] border px-4 text-[15px] ${fieldErrors.email ? 'border-danger' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808] text-white' : 'border-line bg-card text-ink'}`}
               />
+              {fieldErrors.email ? (<Text className="text-[11px] font-semibold text-danger">{fieldErrors.email}</Text>) : null}
               <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Password</Text>
               <View
-                className={`h-14 flex-row items-center gap-2.5 rounded-[18px] border px-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
+                className={`h-14 flex-row items-center gap-2.5 rounded-[18px] border px-4 ${fieldErrors.password ? 'border-danger' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
               >
                 <TextInput
                   value={password}
                   onChangeText={(value) => {
                     setPassword(value);
+                    setFieldErrors((current) => ({
+                      ...current,
+                      password: validatePasswordField(value),
+                    }));
                     setStatus({ type: 'idle', message: '' });
                   }}
                   secureTextEntry={!showPassword}
@@ -244,9 +271,10 @@ export default function LoginScreen() {
                   <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={palette.muted} />
                 </AnimatedPressable>
               </View>
+              {fieldErrors.password ? (<Text className="text-[11px] font-semibold text-danger">{fieldErrors.password}</Text>) : null}
               <AnimatedPressable
                 className="mt-1.5 items-center rounded-[18px] bg-brand py-4"
-                disabled={!email.trim() || !password || isSubmittingEmail}
+                disabled={!canSubmitEmail || isSubmittingEmail}
                 onPress={handleEmailLogin}
               >
                 <Text className="text-[15px] font-extrabold text-white">

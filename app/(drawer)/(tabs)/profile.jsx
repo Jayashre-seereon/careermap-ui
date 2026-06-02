@@ -7,7 +7,7 @@ import { getApiErrorMessage, getProfileUpdatePayload, getUserDashboard, updateUs
 import { palette } from '../../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen } from '../../../src/careermap-ui';
 import { StaggerFadeUpItem } from '../../../src/page-transition';
-import { mapApiUserToProfile, splitFullName } from '../../../src/utils/auth';
+import { getDateError, mapApiUserToProfile, splitFullName } from '../../../src/utils/auth';
 import { useAuthStore } from '../../../src/store/auth-store';
 export default function ProfileScreen() {
     const { activePlanId, bookings, hasActiveSubscription, onboarding, preferences, profileEditRequestKey, requestProfileEdit, savedCareers, saveUserProfile, subscriptionRecords, testHistory, toggleDarkMode, userProfile, } = useAppState();
@@ -17,6 +17,7 @@ export default function ProfileScreen() {
     const [form, setForm] = useState(userProfile);
     const [openSection, setOpenSection] = useState(null);
     const [saveStatus, setSaveStatus] = useState({ type: 'idle', message: '' });
+    const [fieldErrors, setFieldErrors] = useState({ dob: '' });
     const [isSaving, setIsSaving] = useState(false);
     const [isDashboardLoading, setIsDashboardLoading] = useState(false);
     const hasLoadedDashboardRef = useRef(false);
@@ -118,17 +119,22 @@ export default function ProfileScreen() {
     ], [bookings.length, hasActiveSubscription, savedCareers.length, testHistory.length]);
     const updateField = (key, value) => {
         setForm((current) => ({ ...current, [key]: value }));
+        if (key === 'dob') {
+            setFieldErrors((current) => ({ ...current, dob: getDateError(value) }));
+        }
         if (saveStatus.type !== 'idle') {
             setSaveStatus({ type: 'idle', message: '' });
         }
     };
     const handleSaveProfile = async () => {
         const name = form.name.trim();
+        const nextDobError = form.dob ? getDateError(form.dob) : '';
+        setFieldErrors({ dob: nextDobError });
         if (!name) {
             setSaveStatus({ type: 'error', message: 'Please enter your full name.' });
             return;
         }
-        if (form.dob && Number.isNaN(new Date(form.dob).getTime())) {
+        if (nextDobError) {
             setSaveStatus({ type: 'error', message: 'Please enter a valid date of birth.' });
             return;
         }
@@ -143,7 +149,7 @@ export default function ProfileScreen() {
             district: form.district.trim(),
             gender: form.gender,
             address: form.address.trim(),
-            dataOfBirth: form.dob ? new Date(form.dob).toISOString() : null,
+            dataOfBirth: form.dob ? new Date(form.dob.trim()).toISOString() : null,
             image: authUser?.image || 'image_url.png',
             status: authUser?.status || 'Active',
         }, authUser || {});
@@ -287,7 +293,8 @@ export default function ProfileScreen() {
                 { key: 'dob', label: 'Date of Birth', placeholder: 'YYYY-MM-DD', keyboardType: 'numbers-and-punctuation' },
             ].map((field) => (<View key={field.key} className="gap-1.5">
               <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{field.label}</Text>
-              <TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
+              <TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${field.key === 'dob' && fieldErrors.dob ? 'border-danger' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
+              {field.key === 'dob' && fieldErrors.dob ? (<Text className="text-[11px] font-semibold text-danger">{fieldErrors.dob}</Text>) : null}
             </View>))}
 
           {onboarding.userType === 'parent' ? (<View className="gap-1.5">

@@ -10,7 +10,7 @@ import { AnimatedPressable } from '../src/careermap-ui';
 import { AnimatedBackground } from '../src/animated-background';
 import { ZoomInPage } from '../src/page-transition';
 import { useAuthStore } from '../src/store/auth-store';
-import { buildLandingData, buildUsername, formatOtpMobile, isValidDateInput, normalizeMobile, splitFullName } from '../src/utils/auth';
+import { buildLandingData, buildUsername, formatOtpMobile, getDateError, getEmailError, getPasswordError, isValidDateInput, isValidEmail, isValidPassword, normalizeMobile, splitFullName } from '../src/utils/auth';
 const selectionMeta = [
     { key: 'selectedClass', label: 'Class', icon: 'school-outline', color: palette.blue },
     { key: 'selectedStream', label: 'Stream', icon: 'layers-outline', color: palette.purple },
@@ -50,6 +50,12 @@ export default function ProfileSetupScreen() {
         country: userProfile.country || 'India',
     });
     const [showPassword, setShowPassword] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({
+        email: '',
+        mobile: '',
+        password: '',
+        dob: '',
+    });
     const [status, setStatus] = useState({
         type: 'idle',
         message: '',
@@ -91,8 +97,38 @@ export default function ProfileSetupScreen() {
             stateName: current.stateName || signupForm.state || '',
         }));
     }, [mergedOnboarding.name, signupForm, userProfile.email]);
-    const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
-    const isValid = form.name && form.username && form.email && form.mobile && form.password && form.gender && form.dob;
+    const validateField = (key, value) => {
+        switch (key) {
+            case 'email':
+                return getEmailError(value);
+            case 'mobile':
+                return value && normalizeMobile(value).length !== 10 ? 'Enter a valid 10 digit mobile number.' : '';
+            case 'password':
+                return getPasswordError(value);
+            case 'dob':
+                return getDateError(value);
+            default:
+                return '';
+        }
+    };
+    const update = (key, value) => {
+        setStatus({ type: 'idle', message: '' });
+        setForm((current) => ({ ...current, [key]: value }));
+        if (['email', 'mobile', 'password', 'dob'].includes(key)) {
+            setFieldErrors((current) => ({
+                ...current,
+                [key]: validateField(key, value),
+            }));
+        }
+    };
+    const isValid = form.name &&
+        form.username &&
+        isValidEmail(form.email) &&
+        normalizeMobile(form.mobile).length === 10 &&
+        isValidPassword(form.password) &&
+        form.gender &&
+        form.dob &&
+        isValidDateInput(form.dob);
     const onboardingChips = useMemo(() => [
         ...selectionMeta
             .map((item) => ({
@@ -111,6 +147,83 @@ export default function ProfileSetupScreen() {
         mergedOnboarding.selectedInterests.length > 0 ||
         mergedOnboarding.selectedStrengths.length > 0 ||
         mergedOnboarding.selectedPriorities.length > 0;
+    const handleSubmit = async () => {
+        const nextErrors = {
+            email: getEmailError(form.email),
+            mobile: form.mobile && normalizeMobile(form.mobile).length !== 10 ? 'Enter a valid 10 digit mobile number.' : '',
+            password: getPasswordError(form.password),
+            dob: getDateError(form.dob),
+        };
+        setFieldErrors(nextErrors);
+
+        if (!tempToken) {
+            setStatus({ type: 'error', message: 'Please verify OTP first.' });
+            return;
+        }
+        if (normalizeMobile(form.mobile).length !== 10) {
+            setStatus({ type: 'error', message: 'Enter a valid 10 digit mobile number.' });
+            return;
+        }
+        if (nextErrors.email) {
+            setStatus({ type: 'error', message: 'Enter a valid email address.' });
+            return;
+        }
+        if (nextErrors.password) {
+            setStatus({ type: 'error', message: 'Password must be at least 6 characters.' });
+            return;
+        }
+        if (nextErrors.dob) {
+            setStatus({ type: 'error', message: 'Date of birth must be in YYYY-MM-DD format.' });
+            return;
+        }
+
+        const { firstName, lastName } = splitFullName(form.name);
+        const payload = {
+            firstName,
+            lastName,
+            username: form.username.trim(),
+            email: form.email.trim(),
+            password: form.password,
+            country: form.country.trim() || 'India',
+            state: form.stateName.trim(),
+            city: form.city.trim(),
+            district: form.district.trim(),
+            gender: form.gender,
+            address: form.address.trim(),
+            dataOfBirth: new Date(form.dob).toISOString(),
+            image: 'image_url.png',
+            mobile: formatOtpMobile(form.mobile),
+            status: 'Active',
+            landingData: buildLandingData(mergedOnboarding),
+        };
+        try {
+            setIsSubmitting(true);
+            setStatus({ type: 'idle', message: '' });
+            const response = await signupUser(payload, tempToken);
+            setAccessToken(response.accessToken || '');
+            setRefreshToken(response.refreshToken || '');
+            setUser(response.user || null);
+            clearAuthFlow();
+            saveOnboarding({ ...mergedOnboarding, name: form.name });
+            saveUserProfile({
+                ...userProfile,
+                ...form,
+                mobile: formatOtpMobile(form.mobile),
+                childName: mergedOnboarding.childName,
+            });
+            showPromoMessage(response.message || 'Profile created successfully.');
+            router.replace('/promo');
+        }
+        catch (error) {
+            setStatus({
+                type: 'error',
+                message: getApiErrorMessage(error, 'Failed to create profile.'),
+            });
+        }
+        finally {
+            setIsSubmitting(false);
+        }
+    };
     return (<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
           <AnimatedBackground />  
             <ZoomInPage style={{ flex: 1 }}>
@@ -183,7 +296,7 @@ export default function ProfileSetupScreen() {
             ['country', 'Country', 'Enter country', 'flag-outline'],
         ].map(([key, label, placeholder, icon]) => (<View key={key} className="gap-1.5">
             <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
-            <View className={`h-14 flex-row items-center gap-2.5 rounded-[18px] border px-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+            <View className={`h-14 flex-row items-center gap-2.5 rounded-[18px] border px-4 ${fieldErrors[key] ? 'border-danger' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <Ionicons name={icon} size={18} color={palette.muted}/>
               <TextInput value={form[key]} onChangeText={(value) => {
                 if (key === 'mobile') {
@@ -192,12 +305,12 @@ export default function ProfileSetupScreen() {
                 else {
                     update(key, value);
                 }
-                setStatus({ type: 'idle', message: '' });
             }} placeholder={placeholder} placeholderTextColor={palette.muted} secureTextEntry={key === 'password' ? !showPassword : false} autoCapitalize={key === 'email' ? 'none' : 'sentences'} className={`flex-1 text-[15px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}/>
               {key === 'password' ? (<AnimatedPressable onPress={() => setShowPassword((value) => !value)}>
                   <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={palette.muted}/>
                 </AnimatedPressable>) : null}
             </View>
+            {fieldErrors[key] ? (<Text className="mt-0.5 text-[11px] font-semibold text-danger">{fieldErrors[key]}</Text>) : null}
           </View>))}
 
         <View className="gap-1.5">
@@ -216,75 +329,16 @@ export default function ProfileSetupScreen() {
 
         <View className="gap-1.5">
           <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Date of Birth</Text>
-          <View className={`h-14 flex-row items-center gap-2.5 rounded-[18px] border px-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+          <View className={`h-14 flex-row items-center gap-2.5 rounded-[18px] border px-4 ${fieldErrors.dob ? 'border-danger' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
             <Ionicons name="calendar-outline" size={18} color={palette.muted}/>
             <TextInput value={form.dob} onChangeText={(value) => {
             update('dob', value);
-            setStatus({ type: 'idle', message: '' });
         }} placeholder="YYYY-MM-DD" placeholderTextColor={palette.muted} className={`flex-1 text-[15px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}/>
           </View>
+          {fieldErrors.dob ? (<Text className="mt-0.5 text-[11px] font-semibold text-danger">{fieldErrors.dob}</Text>) : null}
         </View>
 
-        <AnimatedPressable className="mt-3 items-center rounded-[18px] bg-brand py-4" disabled={!isValid || isSubmitting} onPress={async () => {
-            if (!tempToken) {
-                setStatus({ type: 'error', message: 'Please verify OTP first.' });
-                return;
-            }
-            if (normalizeMobile(form.mobile).length !== 10) {
-                setStatus({ type: 'error', message: 'Enter a valid 10 digit mobile number.' });
-                return;
-            }
-            if (!isValidDateInput(form.dob)) {
-                setStatus({ type: 'error', message: 'Date of birth must be in YYYY-MM-DD format.' });
-                return;
-            }
-            const { firstName, lastName } = splitFullName(form.name);
-            const payload = {
-                firstName,
-                lastName,
-                username: form.username.trim(),
-                email: form.email.trim(),
-                password: form.password,
-                country: form.country.trim() || 'India',
-                state: form.stateName.trim(),
-                city: form.city.trim(),
-                district: form.district.trim(),
-                gender: form.gender,
-                address: form.address.trim(),
-                dataOfBirth: new Date(form.dob).toISOString(),
-                image: 'image_url.png',
-                mobile: formatOtpMobile(form.mobile),
-                status: 'Active',
-                landingData: buildLandingData(mergedOnboarding),
-            };
-            try {
-                setIsSubmitting(true);
-                setStatus({ type: 'idle', message: '' });
-                const response = await signupUser(payload, tempToken);
-                setAccessToken(response.accessToken || '');
-                setRefreshToken(response.refreshToken || '');
-                setUser(response.user || null);
-                clearAuthFlow();
-                saveOnboarding({ ...mergedOnboarding, name: form.name });
-                saveUserProfile({
-                    ...userProfile,
-                    ...form,
-                    mobile: formatOtpMobile(form.mobile),
-                    childName: mergedOnboarding.childName,
-                });
-                showPromoMessage(response.message || 'Profile created successfully.');
-                router.replace('/promo');
-            }
-            catch (error) {
-                setStatus({
-                    type: 'error',
-                    message: getApiErrorMessage(error, 'Failed to create profile.'),
-                });
-            }
-            finally {
-                setIsSubmitting(false);
-            }
-        }}>
+        <AnimatedPressable className="mt-3 items-center rounded-[18px] bg-brand py-4" disabled={!isValid || isSubmitting} onPress={handleSubmit}>
           <Text className="text-[15px] font-extrabold text-white">{isSubmitting ? 'Creating Profile...' : 'Complete Profile'}</Text>
         </AnimatedPressable>
       </ScrollView>

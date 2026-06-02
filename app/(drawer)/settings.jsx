@@ -24,6 +24,11 @@ export default function SettingsScreen() {
         newPassword: false,
         confirmPassword: false,
     });
+    const [passwordErrors, setPasswordErrors] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+    });
     const [helpForm, setHelpForm] = useState({
         email: '',
         subject: '',
@@ -42,6 +47,30 @@ export default function SettingsScreen() {
             email: current.email || authUser?.email || userProfile.email || '',
         }));
     }, [authUser?.email, userProfile.email]);
+    const validatePasswordField = (key, value, nextForm = passwordForm) => {
+        switch (key) {
+            case 'currentPassword':
+                return value ? '' : 'Current password is required.';
+            case 'newPassword':
+                if (!value) {
+                    return 'New password is required.';
+                }
+                if (value.length < 6) {
+                    return 'New password must be at least 6 characters.';
+                }
+                return '';
+            case 'confirmPassword':
+                if (!value) {
+                    return 'Please confirm your new password.';
+                }
+                if (value !== nextForm.newPassword) {
+                    return 'Confirm password must match new password.';
+                }
+                return '';
+            default:
+                return '';
+        }
+    };
     const settingsItems = useMemo(() => [
         { label: 'Edit Profile', icon: 'person-outline', color: palette.blue, action: () => {
                 requestProfileEdit();
@@ -55,6 +84,50 @@ export default function SettingsScreen() {
         const canSave = passwordForm.currentPassword.length > 0 &&
             passwordForm.newPassword.length >= 6 &&
             passwordForm.newPassword === passwordForm.confirmPassword;
+        const handlePasswordChange = (key, value) => {
+            setPasswordForm((current) => {
+                const nextForm = { ...current, [key]: value };
+                setPasswordErrors((currentErrors) => ({
+                    ...currentErrors,
+                    [key]: validatePasswordField(key, value, nextForm),
+                    ...(key === 'newPassword' ? { confirmPassword: validatePasswordField('confirmPassword', nextForm.confirmPassword, nextForm) } : {}),
+                }));
+                return nextForm;
+            });
+        };
+        const handleSavePassword = async () => {
+            const nextErrors = {
+                currentPassword: validatePasswordField('currentPassword', passwordForm.currentPassword),
+                newPassword: validatePasswordField('newPassword', passwordForm.newPassword),
+                confirmPassword: validatePasswordField('confirmPassword', passwordForm.confirmPassword, passwordForm),
+            };
+            setPasswordErrors(nextErrors);
+
+            if (nextErrors.currentPassword || nextErrors.newPassword || nextErrors.confirmPassword) {
+                setFeedback({
+                    type: 'error',
+                    message: 'Please fix the password errors before saving.',
+                });
+                return;
+            }
+
+            try {
+                const response = await changePassword(passwordForm);
+                setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setPasswordErrors({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                setShowPassword({ currentPassword: false, newPassword: false, confirmPassword: false });
+                setFeedback({
+                    type: 'success',
+                    message: response?.message || 'Password changed successfully.',
+                });
+            }
+            catch (error) {
+                setFeedback({
+                    type: 'error',
+                    message: getApiErrorMessage(error, 'Failed to change password.'),
+                });
+            }
+        };
         return (<Screen>
         <View className="flex-row items-center gap-3">
           <AnimatedPressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => setView('menu')}>
@@ -70,33 +143,16 @@ export default function SettingsScreen() {
                 ['confirmPassword', 'Confirm Password'],
             ].map(([key, label]) => (<View key={key} className="gap-1.5">
               <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
-              <View className={`flex-row items-center gap-3 rounded-[18px] border px-4 py-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-surface'}`}>
+              <View className={`flex-row items-center gap-3 rounded-[18px] border px-4 py-[14px] ${passwordErrors[key] ? 'border-danger' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-surface'}`}>
                 <Ionicons name="lock-closed-outline" size={18} color={palette.muted}/>
-                <TextInput value={passwordForm[key]} onChangeText={(value) => setPasswordForm((current) => ({ ...current, [key]: value }))} secureTextEntry={!showPassword[key]} placeholder={label} placeholderTextColor={palette.muted} className={`flex-1 text-[14px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}/>
+                <TextInput value={passwordForm[key]} onChangeText={(value) => handlePasswordChange(key, value)} secureTextEntry={!showPassword[key]} placeholder={label} placeholderTextColor={palette.muted} className={`flex-1 text-[14px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}/>
                 <AnimatedPressable onPress={() => setShowPassword((current) => ({ ...current, [key]: !current[key] }))}>
                   <Ionicons name={showPassword[key] ? 'eye-off-outline' : 'eye-outline'} size={18} color={palette.muted}/>
                 </AnimatedPressable>
               </View>
+              {passwordErrors[key] ? (<Text className="text-[11px] font-semibold text-danger">{passwordErrors[key]}</Text>) : null}
             </View>))}
-              <AnimatedPressable className="rounded-[18px] bg-brand py-4" disabled={!canSave} onPress={() => {
-                void (async () => {
-                    try {
-                        const response = await changePassword(passwordForm);
-                        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-                        setShowPassword({ currentPassword: false, newPassword: false, confirmPassword: false });
-                        setFeedback({
-                            type: 'success',
-                            message: response?.message || 'Password changed successfully.',
-                        });
-                    }
-                    catch (error) {
-                        setFeedback({
-                            type: 'error',
-                            message: getApiErrorMessage(error, 'Failed to change password.'),
-                        });
-                    }
-                })();
-            }}>
+              <AnimatedPressable className="rounded-[18px] bg-brand py-4" disabled={!canSave} onPress={() => { void handleSavePassword(); }}>
             <Text className="text-center text-[15px] font-extrabold text-white">Save Password</Text>
           </AnimatedPressable>
           {feedback.message ? (<View className={`rounded-[18px] border px-4 py-3 ${feedback.type === 'error'

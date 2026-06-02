@@ -43,12 +43,69 @@ export function buildLandingData(onboarding) {
   };
 }
 
-export function isValidDateInput(value = '') {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+export function isValidEmail(value = '') {
+  const email = value.trim();
+  if (!email) {
     return false;
   }
 
-  return !Number.isNaN(new Date(value).getTime());
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+export function getEmailError(value = '') {
+  const email = value.trim();
+  if (!email) {
+    return 'Email address is required.';
+  }
+
+  if (!isValidEmail(email)) {
+    return 'Enter a valid email address.';
+  }
+
+  return '';
+}
+
+export function isValidPassword(value = '') {
+  return value.length >= 6;
+}
+
+export function getPasswordError(value = '') {
+  if (!value) {
+    return 'Password is required.';
+  }
+
+  if (!isValidPassword(value)) {
+    return 'Password must be at least 6 characters.';
+  }
+
+  return '';
+}
+
+export function isValidDateInput(value = '') {
+  const dateValue = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return false;
+  }
+
+  const [year, month, day] = dateValue.split('-').map(Number);
+  const parsedDate = new Date(Date.UTC(year, month - 1, day));
+
+  return parsedDate.getUTCFullYear() === year &&
+    parsedDate.getUTCMonth() === month - 1 &&
+    parsedDate.getUTCDate() === day;
+}
+
+export function getDateError(value = '') {
+  const dateValue = value.trim();
+  if (!dateValue) {
+    return 'Date of birth is required.';
+  }
+
+  if (!isValidDateInput(dateValue)) {
+    return 'Use YYYY-MM-DD format with a real date.';
+  }
+
+  return '';
 }
 
 export function mapApiUserToProfile(user) {
