@@ -72,6 +72,7 @@ export const useAuthStore = create((set) => ({
   signupForm: initialSignupForm,
   onboardingData: initialOnboardingData,
   tempToken: '',
+  hasAuthenticatedSession: false,
   ...(() => {
     const persistedAuth = readPersistedAuth();
 
@@ -97,6 +98,9 @@ export const useAuthStore = create((set) => ({
 
   setTempToken: (tempToken) =>
     set(() => ({ tempToken })),
+
+  markAuthenticatedSession: () =>
+    set(() => ({ hasAuthenticatedSession: true })),
 
   setAccessToken: (accessToken) =>
     set((state) => {
@@ -136,6 +140,7 @@ export const useAuthStore = create((set) => ({
         accessToken: '',
         refreshToken: '',
         user: null,
+        hasAuthenticatedSession: false,
       };
     }),
 }));

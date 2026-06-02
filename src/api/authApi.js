@@ -200,8 +200,18 @@ export async function createHelpCenterRequest(payload = {}) {
   return response.data;
 }
 
-export async function logoutUser() {
-  const response = await api.post('/auth/logout');
+export async function logoutUser(accessToken = '') {
+  const response = await api.post(
+    '/auth/logout',
+    {},
+    accessToken
+      ? {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      : undefined
+  );
   return response.data;
 }
 

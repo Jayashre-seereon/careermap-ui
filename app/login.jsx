@@ -21,6 +21,7 @@ export default function LoginScreen() {
   const setAccessToken = useAuthStore((state) => state.setAccessToken);
   const setRefreshToken = useAuthStore((state) => state.setRefreshToken);
   const setUser = useAuthStore((state) => state.setUser);
+  const markAuthenticatedSession = useAuthStore((state) => state.markAuthenticatedSession);
   const clearAuthFlow = useAuthStore((state) => state.clearAuthFlow);
 
   const isExistingUser = userType === 'existing';
@@ -47,6 +48,7 @@ export default function LoginScreen() {
     setAccessToken(response.accessToken || '');
     setRefreshToken(response.refreshToken || '');
     setUser(response.user || null);
+    markAuthenticatedSession();
 
     void createUserHistoryEntry().catch((error) => {
       console.log('User history log failed', error?.response?.data || error?.message || error);

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { notifications as notificationItems } from './careermap-data';
 import { getNotifications } from './api/notificationApi';
+import { useAuthStore } from './store/auth-store';
 const planFeatures = {
     psychometric: ['psychometric-test'],
     premium: ['psychometric-test', 'book-mentor', 'master-class'],
@@ -112,10 +113,18 @@ export function AppStateProvider({ children }) {
     const [testHistory, setTestHistory] = useState(initialTestHistory);
     const [bookings, setBookings] = useState(initialBookings);
     const [freeAccessUsage, setFreeAccessUsageState] = useState(persistedAppState.freeAccessUsage ?? initialFreeAccessUsage);
+    const accessToken = useAuthStore((state) => state.accessToken);
+    const hasAuthenticatedSession = useAuthStore((state) => state.hasAuthenticatedSession);
     const [notifications, setNotifications] = useState(notificationItems);
     const [notificationsLoadFailed, setNotificationsLoadFailed] = useState(false);
 
     useEffect(() => {
+        if (!accessToken || !hasAuthenticatedSession) {
+            setNotifications(notificationItems);
+            setNotificationsLoadFailed(false);
+            return undefined;
+        }
+
         let isMounted = true;
 
         async function loadNotifications() {
@@ -139,7 +148,7 @@ export function AppStateProvider({ children }) {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [accessToken, hasAuthenticatedSession]);
 
     const value = useMemo(() => ({
         activePlanId,

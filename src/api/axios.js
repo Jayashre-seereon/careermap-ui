@@ -85,6 +85,26 @@ const refreshClient = axios.create({
 
 let refreshPromise = null;
 
+async function revokeServerSession(token) {
+  if (!token) {
+    return;
+  }
+
+  try {
+    await refreshClient.post(
+      '/auth/logout',
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch {
+    // Ignore logout failures and continue clearing the local session.
+  }
+}
+
 function extractAuthPayload(data) {
   const payload = data?.data ?? data ?? {};
 
@@ -198,6 +218,8 @@ api.interceptors.response.use(
 
       return api.request(originalRequest);
     } catch (refreshError) {
+      const currentToken = useAuthStore.getState().accessToken;
+      await revokeServerSession(currentToken);
       useAuthStore.getState().logout();
       return Promise.reject(refreshError);
     }

@@ -25,6 +25,7 @@ export default function ProfileSetupScreen() {
     const setAccessToken = useAuthStore((state) => state.setAccessToken);
     const setRefreshToken = useAuthStore((state) => state.setRefreshToken);
     const setUser = useAuthStore((state) => state.setUser);
+    const markAuthenticatedSession = useAuthStore((state) => state.markAuthenticatedSession);
     const clearAuthFlow = useAuthStore((state) => state.clearAuthFlow);
     const setOnboardingData = useAuthStore((state) => state.setOnboardingData);
     const mergedOnboarding = useMemo(() => ({
@@ -203,6 +204,7 @@ export default function ProfileSetupScreen() {
             setAccessToken(response.accessToken || '');
             setRefreshToken(response.refreshToken || '');
             setUser(response.user || null);
+            markAuthenticatedSession();
             clearAuthFlow();
             saveOnboarding({ ...mergedOnboarding, name: form.name });
             saveUserProfile({

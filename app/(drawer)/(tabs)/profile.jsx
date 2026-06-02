@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../../src/app-state';
-import { getApiErrorMessage, getProfileUpdatePayload, getUserDashboard, updateUserProfile } from '../../../src/api/authApi';
+import { getApiErrorMessage, getProfileUpdatePayload, getUserDashboard, logoutUser, updateUserProfile } from '../../../src/api/authApi';
 import { palette } from '../../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen } from '../../../src/careermap-ui';
 import { StaggerFadeUpItem } from '../../../src/page-transition';
@@ -12,7 +12,10 @@ import { useAuthStore } from '../../../src/store/auth-store';
 export default function ProfileScreen() {
     const { activePlanId, bookings, hasActiveSubscription, onboarding, preferences, profileEditRequestKey, requestProfileEdit, savedCareers, saveUserProfile, subscriptionRecords, testHistory, toggleDarkMode, userProfile, } = useAppState();
     const authUser = useAuthStore((state) => state.user);
+    const accessToken = useAuthStore((state) => state.accessToken);
     const setAuthUser = useAuthStore((state) => state.setUser);
+    const clearAuthFlow = useAuthStore((state) => state.clearAuthFlow);
+    const logout = useAuthStore((state) => state.logout);
     const [editMode, setEditMode] = useState(false);
     const [form, setForm] = useState(userProfile);
     const [openSection, setOpenSection] = useState(null);
@@ -20,6 +23,7 @@ export default function ProfileScreen() {
     const [fieldErrors, setFieldErrors] = useState({ dob: '' });
     const [isSaving, setIsSaving] = useState(false);
     const [isDashboardLoading, setIsDashboardLoading] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const hasLoadedDashboardRef = useRef(false);
     useEffect(() => {
         const combinedName = userProfile.name || [authUser?.firstName, authUser?.lastName].filter(Boolean).join(' ').trim();
@@ -380,9 +384,28 @@ export default function ProfileScreen() {
         })}
       </View>
 
-      <AnimatedPressable className={`flex-row items-center justify-center gap-2 rounded-[18px] border py-4 ${preferences.darkMode ? 'border-[#5a2630] bg-[#2b151b]' : 'border-[#efc8c0] bg-[#fff4f2]'}`} onPress={() => router.replace('/auth-entry')}>
+      <AnimatedPressable className={`flex-row items-center justify-center gap-2 rounded-[18px] border py-4 ${preferences.darkMode ? 'border-[#5a2630] bg-[#2b151b]' : 'border-[#efc8c0] bg-[#fff4f2]'}`} disabled={isLoggingOut} onPress={() => {
+            void (async () => {
+                if (isLoggingOut) {
+                    return;
+                }
+                try {
+                    setIsLoggingOut(true);
+                    await logoutUser(accessToken);
+                }
+                catch (_error) {
+                    // Continue with local sign-out even if the server logout call fails.
+                }
+                finally {
+                    clearAuthFlow();
+                    logout();
+                    setIsLoggingOut(false);
+                    router.replace('/auth-entry');
+                }
+            })();
+        }}>
         <Ionicons name="log-out-outline" size={18} color={palette.danger}/>
-        <Text className="text-[14px] font-extrabold text-danger">Logout</Text>
+        <Text className="text-[14px] font-extrabold text-danger">{isLoggingOut ? 'Logging out...' : 'Logout'}</Text>
       </AnimatedPressable>
 
       <Text className={`text-center text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>

@@ -5,19 +5,36 @@ import { useAppState } from '../../src/app-state';
 import { getNotifications } from '../../src/api/notificationApi';
 import { palette } from '../../src/careermap-data';
 import { AnimatedPressable, Screen, SectionHeader } from '../../src/careermap-ui';
+import { useAuthStore } from '../../src/store/auth-store';
 
 export default function NotificationsScreen() {
     const { preferences, notifications: appNotifications } = useAppState();
+    const accessToken = useAuthStore((state) => state.accessToken);
+    const hasAuthenticatedSession = useAuthStore((state) => state.hasAuthenticatedSession);
     const [notifications, setNotifications] = useState(appNotifications);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState('');
 
     useEffect(() => {
+        if (!accessToken || !hasAuthenticatedSession) {
+            setNotifications([]);
+            setLoadError('');
+            setIsLoading(false);
+            return;
+        }
+
         setNotifications(appNotifications);
-    }, [appNotifications]);
+    }, [accessToken, hasAuthenticatedSession, appNotifications]);
 
     return (<Screen>
       <SectionHeader title="Notifications" subtitle="Recent updates from mentors, scholarships, and learning content."/>
+
+      {!accessToken || !hasAuthenticatedSession ? (
+        <View className={`gap-2 rounded-[22px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+          <Text className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Login required</Text>
+          <Text className={`text-[13px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Notifications will load only after you log in.</Text>
+        </View>
+      ) : null}
 
       {isLoading ? (
         <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading notifications...</Text>
@@ -73,7 +90,11 @@ export default function NotificationsScreen() {
         })}
       </View>
 
-      <AnimatedPressable className="mt-2 flex-row items-center justify-center gap-2 rounded-[16px] bg-brand py-[14px]" onPress={async () => {
+      <AnimatedPressable className="mt-2 flex-row items-center justify-center gap-2 rounded-[16px] bg-brand py-[14px]" disabled={!accessToken || !hasAuthenticatedSession || isLoading} onPress={async () => {
+        if (!accessToken || !hasAuthenticatedSession) {
+          setLoadError('Please log in to refresh notifications.');
+          return;
+        }
         setIsLoading(true);
         try {
           const items = await getNotifications();

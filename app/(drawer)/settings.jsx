@@ -11,6 +11,7 @@ import { useAuthStore } from '../../src/store/auth-store';
 export default function SettingsScreen() {
     const { preferences, requestProfileEdit, toggleDarkMode, userProfile } = useAppState();
     const authUser = useAuthStore((state) => state.user);
+    const accessToken = useAuthStore((state) => state.accessToken);
     const clearAuthFlow = useAuthStore((state) => state.clearAuthFlow);
     const logout = useAuthStore((state) => state.logout);
     const [view, setView] = useState('menu');
@@ -34,6 +35,7 @@ export default function SettingsScreen() {
         subject: '',
         message: '',
     });
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [feedback, setFeedback] = useState({ type: 'idle', message: '' });
     useEffect(() => {
         if (!feedback.message)
@@ -263,21 +265,29 @@ export default function SettingsScreen() {
 
       <AnimatedPressable className="flex-row items-center justify-center gap-2 rounded-[18px] border border-[#efc8c0] bg-[#fff4f2] py-4" onPress={() => {
             void (async () => {
+                if (isLoggingOut) {
+                    return;
+                }
                 try {
-                    await logoutUser();
+                    setIsLoggingOut(true);
+                    await logoutUser(accessToken);
                 }
                 catch (_error) {
-                    // Continue with local sign-out even if the server logout call fails.
+                    setFeedback({
+                        type: 'error',
+                        message: 'Logout API did not respond. Signed out locally.',
+                    });
                 }
                 finally {
                     clearAuthFlow();
                     logout();
+                    setIsLoggingOut(false);
                     router.replace('/auth-entry');
                 }
             })();
         }}>
         <Ionicons name="log-out-outline" size={18} color={palette.danger}/>
-        <Text className="text-[14px] font-extrabold text-danger">Logout</Text>
+        <Text className="text-[14px] font-extrabold text-danger">{isLoggingOut ? 'Logging out...' : 'Logout'}</Text>
       </AnimatedPressable>
     </Screen>);
 }
