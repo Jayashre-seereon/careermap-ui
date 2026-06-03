@@ -1,12 +1,45 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, Text, TextInput, View } from 'react-native';
+import { Animated, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { mentors, palette } from '../../src/careermap-data';
 import { getMentorById, getMentors } from '../../src/api/mentorApi';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
+const getMentorInitials = (mentor) => {
+    const source = String(mentor?.name || mentor?.avatar || 'M').trim();
+    const initials = source
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join('');
+
+    return initials || 'M';
+};
+const renderMentorAvatar = (mentor, size = 52) => {
+    if (mentor?.image) {
+        return (<Image source={{ uri: mentor.image }} resizeMode="cover" style={{
+                width: size,
+                height: size,
+                borderRadius: 18,
+            }}/>);
+    }
+
+    return (<View className="items-center justify-center" style={{
+            width: size,
+            height: size,
+            borderRadius: 18,
+            backgroundColor: `${mentor?.accent || palette.primary}14`,
+            borderWidth: 1,
+            borderColor: `${mentor?.accent || palette.primary}18`,
+        }}>
+      <Text className="text-[18px] font-black" style={{ color: mentor?.accent || palette.primary, lineHeight: 22 }}>
+        {getMentorInitials(mentor)}
+      </Text>
+    </View>);
+};
 export default function BookMentorScreen() {
     const params = useLocalSearchParams();
     const { addBooking, canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
@@ -414,8 +447,8 @@ export default function BookMentorScreen() {
         <View className="relative">
           <>
         <View className="items-center gap-2">
-          <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
-            <Text className="text-[20px] font-black" style={{ color: mentor.accent }}>{mentor.avatar}</Text>
+          <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
+            {renderMentorAvatar(mentor)}
           </View>
           <Text className={`text-center text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
           <Text className="text-[12px] font-bold text-brand">{mentor.specialty}</Text>
@@ -486,8 +519,8 @@ export default function BookMentorScreen() {
                 registerFreeDetailAccess('book-mentor', mentor.name);
                 setSelectedMentorId(String(mentor.id || index));
             }}>
-            <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
-              <Text className="text-[20px] font-black" style={{ color: mentor.accent }}>{mentor.avatar}</Text>
+            <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
+              {renderMentorAvatar(mentor)}
             </View>
             <View className="flex-1 gap-0.5">
               <Text className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>

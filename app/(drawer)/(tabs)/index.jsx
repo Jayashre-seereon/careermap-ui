@@ -1,12 +1,45 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Image, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../../../src/api/axios';
 import { useAppState } from '../../../src/app-state';
 import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../../src/careermap-ui';
 import { featuredInstitutes, featuredMentors, featuredScholarships, moduleCards, palette, studentProfile } from '../../../src/careermap-data';
+const getMentorInitials = (mentor) => {
+    const source = String(mentor?.name || 'M').trim();
+    const initials = source
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join('');
+
+    return initials || 'M';
+};
+const renderMentorAvatar = (mentor, size = 52) => {
+    if (mentor?.image) {
+        return (<Image source={{ uri: mentor.image }} resizeMode="cover" style={{
+                width: size,
+                height: size,
+                borderRadius: 18,
+            }}/>);
+    }
+
+    return (<View className="items-center justify-center" style={{
+            width: size,
+            height: size,
+            borderRadius: 18,
+            backgroundColor: `${mentor?.accent || palette.primary}14`,
+            borderWidth: 1,
+            borderColor: `${mentor?.accent || palette.primary}18`,
+        }}>
+      <Text className="text-[18px] font-black" style={{ color: mentor?.accent || palette.primary, lineHeight: 22 }}>
+        {getMentorInitials(mentor)}
+      </Text>
+    </View>);
+};
 const personalityQuestions = [
     { q: 'When faced with a problem, I prefer to:', options: ['Analyze data systematically', 'Brainstorm creative solutions', 'Discuss with others', 'Act quickly on instinct'] },
     { q: 'In my free time, I enjoy:', options: ['Reading or researching', 'Creating art or music', 'Socializing with friends', 'Physical activities or sports'] },
@@ -105,6 +138,7 @@ export default function HomeScreen() {
             specialty: mentor.designation || featuredMentors[index % featuredMentors.length].specialty,
             rating: mentor.rank || featuredMentors[index % featuredMentors.length].rating,
             experience: mentor.experience ? `${mentor.experience} yrs` : featuredMentors[index % featuredMentors.length].experience,
+            image: mentor.image || featuredMentors[index % featuredMentors.length].image || null,
         }));
     }, [dashboardData?.mentors]);
     const dashboardScholarships = useMemo(() => {
@@ -292,8 +326,8 @@ export default function HomeScreen() {
       <SectionHeader title="Explore Your Mentors" action={<AnimatedPressable onPress={() => router.push('/(drawer)/book-mentor')}><Text className="text-[12px] font-extrabold text-brand mt-4 ">See all</Text></AnimatedPressable>}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
         {dashboardMentors.map((mentor) => (<AnimatedPressable key={mentor.id || mentor.name} className={`h-[168px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/book-mentor')}>
-            <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px] " style={{ backgroundColor: `${mentor.accent}15` }}>
-              <Ionicons name="person" size={22} color={mentor.accent}/>
+            <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px] " style={{ backgroundColor: `${mentor.accent}15` }}>
+              {renderMentorAvatar(mentor)}
             </View>
             <View className="h-[34px] justify-center">
               <Text numberOfLines={2} ellipsizeMode="tail" className={`text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
