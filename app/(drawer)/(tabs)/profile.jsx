@@ -7,7 +7,7 @@ import { getApiErrorMessage, getProfileUpdatePayload, getUserDashboard, logoutUs
 import { palette } from '../../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen } from '../../../src/careermap-ui';
 import { StaggerFadeUpItem } from '../../../src/page-transition';
-import { getDateError, mapApiUserToProfile, splitFullName } from '../../../src/utils/auth';
+import { formatDateForApi, formatDateForDisplay, getDateError, mapApiUserToProfile, splitFullName } from '../../../src/utils/auth';
 import { useAuthStore } from '../../../src/store/auth-store';
 export default function ProfileScreen() {
     const { activePlanId, bookings, hasActiveSubscription, onboarding, preferences, profileEditRequestKey, requestProfileEdit, savedCareers, saveUserProfile, subscriptionRecords, testHistory, toggleDarkMode, userProfile, } = useAppState();
@@ -17,7 +17,10 @@ export default function ProfileScreen() {
     const clearAuthFlow = useAuthStore((state) => state.clearAuthFlow);
     const logout = useAuthStore((state) => state.logout);
     const [editMode, setEditMode] = useState(false);
-    const [form, setForm] = useState(userProfile);
+    const [form, setForm] = useState({
+        ...userProfile,
+        dob: formatDateForDisplay(userProfile.dob),
+    });
     const [openSection, setOpenSection] = useState(null);
     const [saveStatus, setSaveStatus] = useState({ type: 'idle', message: '' });
     const [fieldErrors, setFieldErrors] = useState({ dob: '' });
@@ -29,6 +32,7 @@ export default function ProfileScreen() {
         const combinedName = userProfile.name || [authUser?.firstName, authUser?.lastName].filter(Boolean).join(' ').trim();
         setForm({
             ...userProfile,
+            dob: formatDateForDisplay(userProfile.dob),
             name: combinedName || userProfile.name || '',
             email: userProfile.email || authUser?.email || '',
             mobile: userProfile.mobile || authUser?.mobile || '',
@@ -55,6 +59,7 @@ export default function ProfileScreen() {
                     const mergedProfile = {
                         ...userProfile,
                         ...mappedProfile,
+                        dob: formatDateForDisplay(mappedProfile.dob),
                         name: fullName || mappedProfile.name || userProfile.name || '',
                         email: dashboardUser?.email || mappedProfile.email || userProfile.email || '',
                         mobile: dashboardUser?.mobile || mappedProfile.mobile || userProfile.mobile || '',
@@ -153,7 +158,7 @@ export default function ProfileScreen() {
             district: form.district.trim(),
             gender: form.gender,
             address: form.address.trim(),
-            dataOfBirth: form.dob ? new Date(form.dob.trim()).toISOString() : null,
+            dataOfBirth: form.dob ? formatDateForApi(form.dob.trim()) : null,
             image: authUser?.image || 'image_url.png',
             status: authUser?.status || 'Active',
         }, authUser || {});
@@ -294,7 +299,7 @@ export default function ProfileScreen() {
                 { key: 'city', label: 'City', placeholder: 'Enter city', keyboardType: 'default' },
                 { key: 'stateName', label: 'State', placeholder: 'Enter state', keyboardType: 'default' },
                 { key: 'country', label: 'Country', placeholder: 'Enter country', keyboardType: 'default' },
-                { key: 'dob', label: 'Date of Birth', placeholder: 'YYYY-MM-DD', keyboardType: 'numbers-and-punctuation' },
+                { key: 'dob', label: 'Date of Birth', placeholder: 'DD-MM-YYYY', keyboardType: 'numbers-and-punctuation' },
             ].map((field) => (<View key={field.key} className="gap-1.5">
               <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{field.label}</Text>
               <TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${field.key === 'dob' && fieldErrors.dob ? 'border-danger' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>

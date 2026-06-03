@@ -81,18 +81,73 @@ export function getPasswordError(value = '') {
   return '';
 }
 
-export function isValidDateInput(value = '') {
+export function parseDateInput(value = '') {
   const dateValue = value.trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-    return false;
+
+  if (!dateValue) {
+    return null;
   }
 
-  const [year, month, day] = dateValue.split('-').map(Number);
-  const parsedDate = new Date(Date.UTC(year, month - 1, day));
+  const ddmmyyyyMatch = dateValue.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (ddmmyyyyMatch) {
+    const [, day, month, year] = ddmmyyyyMatch;
+    const parsedDate = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
 
-  return parsedDate.getUTCFullYear() === year &&
-    parsedDate.getUTCMonth() === month - 1 &&
-    parsedDate.getUTCDate() === day;
+    if (
+      parsedDate.getUTCFullYear() === Number(year) &&
+      parsedDate.getUTCMonth() === Number(month) - 1 &&
+      parsedDate.getUTCDate() === Number(day)
+    ) {
+      return parsedDate;
+    }
+
+    return null;
+  }
+
+  const yyyymmddMatch = dateValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (yyyymmddMatch) {
+    const [, year, month, day] = yyyymmddMatch;
+    const parsedDate = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+
+    if (
+      parsedDate.getUTCFullYear() === Number(year) &&
+      parsedDate.getUTCMonth() === Number(month) - 1 &&
+      parsedDate.getUTCDate() === Number(day)
+    ) {
+      return parsedDate;
+    }
+  }
+
+  return null;
+}
+
+export function formatDateForDisplay(value = '') {
+  const parsedDate = parseDateInput(value);
+
+  if (!parsedDate) {
+    return value ? String(value).slice(0, 10) : '';
+  }
+
+  const day = String(parsedDate.getUTCDate()).padStart(2, '0');
+  const month = String(parsedDate.getUTCMonth() + 1).padStart(2, '0');
+  const year = parsedDate.getUTCFullYear();
+
+  return `${day}-${month}-${year}`;
+}
+
+export function formatDateForApi(value = '') {
+  const parsedDate = parseDateInput(value);
+
+  if (!parsedDate) {
+    return null;
+  }
+
+  return parsedDate.toISOString();
+}
+
+export function isValidDateInput(value = '') {
+  const dateValue = value.trim();
+  return Boolean(parseDateInput(dateValue));
 }
 
 export function getDateError(value = '') {
@@ -102,7 +157,7 @@ export function getDateError(value = '') {
   }
 
   if (!isValidDateInput(dateValue)) {
-    return 'Use YYYY-MM-DD format with a real date.';
+    return 'Use DD-MM-YYYY format with a real date.';
   }
 
   return '';
@@ -126,7 +181,7 @@ export function mapApiUserToProfile(user) {
     district: user.district || '',
     country: user.country || 'India',
     gender: user.gender || '',
-    dob: user.dataOfBirth ? String(user.dataOfBirth).slice(0, 10) : '',
+    dob: user.dataOfBirth ? formatDateForDisplay(String(user.dataOfBirth)) : '',
     childName: '',
   };
 }

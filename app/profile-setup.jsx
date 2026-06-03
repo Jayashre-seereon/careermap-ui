@@ -10,7 +10,7 @@ import { AnimatedPressable } from '../src/careermap-ui';
 import { AnimatedBackground } from '../src/animated-background';
 import { ZoomInPage } from '../src/page-transition';
 import { useAuthStore } from '../src/store/auth-store';
-import { buildLandingData, buildUsername, formatOtpMobile, getDateError, getEmailError, getPasswordError, isValidDateInput, isValidEmail, isValidPassword, normalizeMobile, splitFullName } from '../src/utils/auth';
+import { buildLandingData, buildUsername, formatDateForApi, formatDateForDisplay, formatOtpMobile, getDateError, getEmailError, getPasswordError, isValidDateInput, isValidEmail, isValidPassword, normalizeMobile, splitFullName } from '../src/utils/auth';
 const selectionMeta = [
     { key: 'selectedClass', label: 'Class', icon: 'school-outline', color: palette.blue },
     { key: 'selectedStream', label: 'Stream', icon: 'layers-outline', color: palette.purple },
@@ -44,7 +44,7 @@ export default function ProfileSetupScreen() {
         password: signupForm.password || userProfile.password || '',
         address: userProfile.address,
         gender: userProfile.gender,
-        dob: userProfile.dob,
+        dob: formatDateForDisplay(userProfile.dob),
         city: signupForm.city || userProfile.city || '',
         stateName: signupForm.state || userProfile.stateName || '',
         district: userProfile.district || '',
@@ -174,7 +174,7 @@ export default function ProfileSetupScreen() {
             return;
         }
         if (nextErrors.dob) {
-            setStatus({ type: 'error', message: 'Date of birth must be in YYYY-MM-DD format.' });
+            setStatus({ type: 'error', message: 'Date of birth must be in DD-MM-YYYY format.' });
             return;
         }
 
@@ -191,7 +191,7 @@ export default function ProfileSetupScreen() {
             district: form.district.trim(),
             gender: form.gender,
             address: form.address.trim(),
-            dataOfBirth: new Date(form.dob).toISOString(),
+            dataOfBirth: formatDateForApi(form.dob),
             image: 'image_url.png',
             mobile: formatOtpMobile(form.mobile),
             status: 'Active',
@@ -335,7 +335,7 @@ export default function ProfileSetupScreen() {
             <Ionicons name="calendar-outline" size={18} color={palette.muted}/>
             <TextInput value={form.dob} onChangeText={(value) => {
             update('dob', value);
-        }} placeholder="YYYY-MM-DD" placeholderTextColor={palette.muted} className={`flex-1 text-[15px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}/>
+        }} placeholder="DD-MM-YYYY" placeholderTextColor={palette.muted} className={`flex-1 text-[15px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}/>
           </View>
           {fieldErrors.dob ? (<Text className="mt-0.5 text-[11px] font-semibold text-danger">{fieldErrors.dob}</Text>) : null}
         </View>
