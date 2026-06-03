@@ -346,6 +346,38 @@ const toList = (value) => {
     }
     return [value];
 };
+const formatCurrencyAmount = (value, currency = 'INR') => {
+    if (value === null || value === undefined || value === '') {
+        return '';
+    }
+
+    const amount = Number(value);
+    if (Number.isNaN(amount)) {
+        return String(value);
+    }
+
+    try {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency,
+            maximumFractionDigits: 0,
+        }).format(amount);
+    }
+    catch {
+        return `${currency} ${amount.toLocaleString('en-IN')}`;
+    }
+};
+const formatSalaryRange = (salary) => {
+    const currency = salary?.currency || 'INR';
+    const minSalary = formatCurrencyAmount(salary?.minSalary, currency);
+    const maxSalary = formatCurrencyAmount(salary?.maxSalary, currency);
+
+    if (minSalary && maxSalary) {
+        return `${minSalary} - ${maxSalary}`;
+    }
+
+    return minSalary || maxSalary || 'Salary not available';
+};
 const formatDate = (value) => {
     if (!value) {
         return 'Not available';
@@ -735,7 +767,7 @@ export default function CareerLibraryScreen() {
                 <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Salary Range</Text>
               </View>
               {toList(detail?.salaryRanges).length > 0 ? toList(detail?.salaryRanges).map((salary, salaryIndex) => (<View key={salary?.id ?? salaryIndex} className="mb-2">
-                  <Text className="text-[15px] font-bold text-brand">{salary?.minSalary && salary?.maxSalary ? `${salary.minSalary} - ${salary.maxSalary}` : 'Salary not available'}</Text>
+                  <Text className="text-[15px] font-bold text-brand">{formatSalaryRange(salary)}</Text>
                 </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Salary details not available.</Text>)}
             </View>
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
