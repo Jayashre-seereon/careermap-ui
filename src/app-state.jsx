@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { notifications as notificationItems } from './careermap-data';
+import { ensureAccessToken } from './api/axios';
 import { getNotifications } from './api/notificationApi';
 import { useAuthStore } from './store/auth-store';
 const planFeatures = {
@@ -114,9 +115,23 @@ export function AppStateProvider({ children }) {
     const [bookings, setBookings] = useState(initialBookings);
     const [freeAccessUsage, setFreeAccessUsageState] = useState(persistedAppState.freeAccessUsage ?? initialFreeAccessUsage);
     const accessToken = useAuthStore((state) => state.accessToken);
+    const refreshToken = useAuthStore((state) => state.refreshToken);
     const hasAuthenticatedSession = useAuthStore((state) => state.hasAuthenticatedSession);
+    const markAuthenticatedSession = useAuthStore((state) => state.markAuthenticatedSession);
     const [notifications, setNotifications] = useState(notificationItems);
     const [notificationsLoadFailed, setNotificationsLoadFailed] = useState(false);
+
+    useEffect(() => {
+        if ((accessToken || refreshToken) && !hasAuthenticatedSession) {
+            markAuthenticatedSession();
+        }
+
+        if (!accessToken && refreshToken) {
+            void ensureAccessToken().catch(() => {
+                // The axios layer handles session cleanup on refresh failure.
+            });
+        }
+    }, [accessToken, hasAuthenticatedSession, markAuthenticatedSession, refreshToken]);
 
     useEffect(() => {
         if (!accessToken || !hasAuthenticatedSession) {

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { create as createAxios } from 'axios';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { useAuthStore } from '../store/auth-store';
@@ -67,7 +67,7 @@ const AUTH_REFRESH_ENDPOINT = (() => {
   return endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 })();
 
-const api = axios.create({
+const api = createAxios({
   baseURL: API_BASE_URL,
   timeout: 20000,
   headers: {
@@ -75,7 +75,7 @@ const api = axios.create({
   },
 });
 
-const refreshClient = axios.create({
+const refreshClient = createAxios({
   baseURL: API_BASE_URL,
   timeout: 20000,
   headers: {
@@ -152,8 +152,35 @@ async function refreshAccessToken() {
   return authPayload.accessToken;
 }
 
+export async function ensureAccessToken() {
+  const { accessToken, refreshToken } = useAuthStore.getState();
+
+  if (accessToken) {
+    return accessToken;
+  }
+
+  if (!refreshToken) {
+    return '';
+  }
+
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken().finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  try {
+    return await refreshPromise;
+  } catch (error) {
+    const currentToken = useAuthStore.getState().accessToken;
+    await revokeServerSession(currentToken);
+    useAuthStore.getState().logout();
+    throw error;
+  }
+}
+
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     const token = useAuthStore.getState().accessToken;
     const requestUrl = String(config.url || '');
     const isPublicAuthRoute =
@@ -167,8 +194,25 @@ api.interceptors.request.use(
       return config;
     }
 
-    if (token && !isPublicAuthRoute) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (isPublicAuthRoute) {
+      if (config.headers?.Authorization) {
+        delete config.headers.Authorization;
+      }
+
+      if (config.headers?.authorization) {
+        delete config.headers.authorization;
+      }
+
+      return config;
+    }
+
+    let nextToken = token;
+    if (!nextToken) {
+      nextToken = await ensureAccessToken();
+    }
+
+    if (nextToken) {
+      config.headers.Authorization = `Bearer ${nextToken}`;
     } else if (config.headers?.Authorization) {
       delete config.headers.Authorization;
     } else if (config.headers?.authorization) {

@@ -1,6 +1,8 @@
 import { router } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, Text, View } from 'react-native';
+import { ensureAccessToken } from '../src/api/axios';
+import { useAuthStore } from '../src/store/auth-store';
 
 const beeImage = require('../assets/images/bee.png');
 
@@ -293,7 +295,28 @@ export default function SplashRoute() {
             ]).start();
         }, 2850);
 
-        const navTimer = setTimeout(() => router.replace('/auth-entry'), 3350);
+        const navTimer = setTimeout(() => {
+            const { accessToken: storedAccessToken, refreshToken: storedRefreshToken } = useAuthStore.getState();
+            const hasStoredSession = Boolean(storedAccessToken || storedRefreshToken);
+
+            if (!hasStoredSession) {
+                router.replace('/auth-entry');
+                return;
+            }
+
+            if (storedRefreshToken && !storedAccessToken) {
+                ensureAccessToken()
+                    .then(() => {
+                        router.replace('/(drawer)/(tabs)');
+                    })
+                    .catch(() => {
+                        router.replace('/auth-entry');
+                    });
+                return;
+            }
+
+            router.replace('/(drawer)/(tabs)');
+        }, 3350);
 
         // ── 3 side-entry blobs: enter → 3-point float loop ────────────────
         Animated.parallel([

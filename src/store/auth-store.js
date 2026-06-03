@@ -47,6 +47,9 @@ function readPersistedAuth() {
   }
 }
 
+const persistedAuth = readPersistedAuth();
+const hasPersistedAuthSession = Boolean(persistedAuth.accessToken || persistedAuth.refreshToken);
+
 function persistAuthState(state) {
   if (typeof window === 'undefined' || !window.localStorage) {
     return;
@@ -72,16 +75,10 @@ export const useAuthStore = create((set) => ({
   signupForm: initialSignupForm,
   onboardingData: initialOnboardingData,
   tempToken: '',
-  hasAuthenticatedSession: false,
-  ...(() => {
-    const persistedAuth = readPersistedAuth();
-
-    return {
-      accessToken: persistedAuth.accessToken || '',
-      refreshToken: persistedAuth.refreshToken || '',
-      user: persistedAuth.user || null,
-    };
-  })(),
+  hasAuthenticatedSession: hasPersistedAuthSession,
+  accessToken: persistedAuth.accessToken || '',
+  refreshToken: persistedAuth.refreshToken || '',
+  user: persistedAuth.user || null,
 
   setSignupForm: (data) =>
     set((state) => ({
@@ -106,14 +103,14 @@ export const useAuthStore = create((set) => ({
     set((state) => {
       const nextState = { ...state, accessToken };
       persistAuthState(nextState);
-      return { accessToken };
+      return { accessToken, hasAuthenticatedSession: Boolean(accessToken || state.refreshToken) };
     }),
 
   setRefreshToken: (refreshToken) =>
     set((state) => {
       const nextState = { ...state, refreshToken };
       persistAuthState(nextState);
-      return { refreshToken };
+      return { refreshToken, hasAuthenticatedSession: Boolean(state.accessToken || refreshToken) };
     }),
 
   setUser: (user) =>
