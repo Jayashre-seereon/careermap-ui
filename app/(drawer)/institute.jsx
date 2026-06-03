@@ -1,10 +1,45 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
-import { Linking, ScrollView, Text, View } from 'react-native';
+import { Image, Linking, ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getInstitutes } from '../../src/api/instituteApi';
 import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+
+const getInstituteInitials = (name) => {
+    const source = String(name || 'Institute').trim();
+    const initials = source
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join('');
+
+    return initials || 'I';
+};
+
+const renderInstituteLogo = (item, size = 52) => {
+    if (item?.logo) {
+        return (<Image source={{ uri: item.logo }} resizeMode="cover" style={{
+                width: size,
+                height: size,
+                borderRadius: 16,
+            }}/>);
+    }
+
+    return (<View className="items-center justify-center" style={{
+            width: size,
+            height: size,
+            borderRadius: 16,
+            backgroundColor: `${palette.blue}14`,
+            borderWidth: 1,
+            borderColor: `${palette.blue}18`,
+        }}>
+      <Text className="text-[16px] font-black" style={{ color: palette.blue, lineHeight: 20 }}>
+        {getInstituteInitials(item?.name)}
+      </Text>
+    </View>);
+};
 
 export default function InstituteScreen() {
     const { preferences } = useAppState();
@@ -94,8 +129,8 @@ export default function InstituteScreen() {
                 />
 
                 <View className="items-center gap-2 py-2">
-                    <View className="h-[68px] w-[68px] items-center justify-center rounded-[22px]" style={{ backgroundColor: `${palette.primary}12` }}>
-                        <Ionicons name={item.icon} size={28} color={palette.primary}/>
+                    <View className="h-[68px] w-[68px] overflow-hidden rounded-[22px]" style={{ backgroundColor: `${palette.primary}12` }}>
+                        {renderInstituteLogo(item, 68)}
                     </View>
                     <Text className={`text-center text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
                     <Text className={`text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.location}</Text>
@@ -191,8 +226,8 @@ export default function InstituteScreen() {
                             <Pill label={item.type} tone={palette.blue}/>
                         </View>
                         <View className="flex-row gap-3">
-                            <View className="h-[50px] w-[50px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
-                                <Ionicons name={item.icon} size={20} color={palette.primary}/>
+                            <View className="h-[50px] w-[50px] overflow-hidden rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
+                                {renderInstituteLogo(item, 50)}
                             </View>
                             <View className="flex-1 gap-1 pr-[96px]">
                                 <Text numberOfLines={2} className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>

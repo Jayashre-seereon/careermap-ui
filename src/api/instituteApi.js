@@ -49,6 +49,7 @@ function mapInstituteItem(item, index) {
     state,
     city,
     icon: getInstituteIcon(instituteType),
+    logo: item?.logo || null,
     about: stripHtml(item?.about) || 'About information is not available right now.',
     website: item?.url || '#',
   };

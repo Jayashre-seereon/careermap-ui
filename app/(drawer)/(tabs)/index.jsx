@@ -166,6 +166,7 @@ export default function HomeScreen() {
             name: item.name || '',
             location: item.state || '',
             type: item.institute_type || '',
+            logo: item.logo || null,
         }));
     }, [dashboardData?.institutions]);
     const personalityResult = useMemo(() => {
@@ -357,8 +358,12 @@ export default function HomeScreen() {
       <SectionHeader title="Explore Institutes" action={<AnimatedPressable onPress={() => router.push('/(drawer)/institute')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
         {dashboardInstitutes.map((item) => (<AnimatedPressable key={item.id || item.name} className={`h-[196px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/institute')}>
-            <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${palette.blue}14` }}>
-              <Ionicons name="business-outline" size={22} color={palette.blue}/>
+            <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${palette.blue}14` }}>
+              {item.logo ? (<Image source={{ uri: item.logo }} resizeMode="cover" style={{ width: 52, height: 52, borderRadius: 18 }}/>) : (<View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${palette.blue}14`, borderWidth: 1, borderColor: `${palette.blue}18` }}>
+                  <Text className="text-[16px] font-black" style={{ color: palette.blue, lineHeight: 20 }}>
+                    {(item.name || 'I').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('') || 'I'}
+                  </Text>
+                </View>)}
             </View>
             <View className="min-h-[58px] justify-center">
               <Text numberOfLines={2} ellipsizeMode="tail" className={`text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
