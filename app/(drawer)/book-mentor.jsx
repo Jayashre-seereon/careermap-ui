@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { mentors, palette } from '../../src/careermap-data';
-import { getMentorById, getMentors } from '../../src/api/mentorApi';
+import { getBookedMentorSlots, getMentorById, getMentors } from '../../src/api/mentorApi';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
 const getMentorInitials = (mentor) => {
@@ -40,6 +40,7 @@ const renderMentorAvatar = (mentor, size = 52) => {
       </Text>
     </View>);
 };
+const normalizeSlotKey = (value = '') => String(value).toLowerCase().replace(/\s+/g, '').replace(/\./g, '').replace(/(am|pm)$/i, '');
 export default function BookMentorScreen() {
     const params = useLocalSearchParams();
     const { addBooking, canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
@@ -60,6 +61,7 @@ export default function BookMentorScreen() {
     const [booked, setBooked] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
+    const [bookedSlots, setBookedSlots] = useState([]);
     const celebration = useRef(new Animated.Value(0)).current;
     const fallbackMentor = selectedMentorId ? mentorList.find((item) => String(item.id) === String(selectedMentorId)) || null : null;
     const activeMentor = selectedMentor || fallbackMentor;
@@ -118,6 +120,8 @@ export default function BookMentorScreen() {
         const availabilityForFirstDate = activeMentor.availability[0];
         return (availabilityForSelectedDate?.slots?.length ? availabilityForSelectedDate.slots : availabilityForFirstDate?.slots) || [];
     }, [activeMentor, selectedDate]);
+    const bookedSlotKeys = useMemo(() => bookedSlots.map((slot) => normalizeSlotKey(slot)).filter(Boolean), [bookedSlots]);
+    const isSlotBooked = (slot) => bookedSlotKeys.includes(normalizeSlotKey(slot));
     useEffect(() => {
         if (mentorList.length === 0) {
             setMentorList(mentors);
@@ -159,6 +163,40 @@ export default function BookMentorScreen() {
             setSelectedDate(activeMentor.availability[0]?.key || '');
         }
     }, [activeMentor, selectedDate]);
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadBookedSlots = async () => {
+            if (!activeMentor?.id || !selectedDate) {
+                setBookedSlots([]);
+                return;
+            }
+
+            try {
+                const response = await getBookedMentorSlots(activeMentor.id, selectedDate);
+                if (isMounted) {
+                    setBookedSlots(response);
+                }
+            }
+            catch (error) {
+                console.log('Booked slots fetch failed', error?.response?.data || error?.message || error);
+                if (isMounted) {
+                    setBookedSlots([]);
+                }
+            }
+        };
+
+        loadBookedSlots();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [activeMentor?.id, selectedDate]);
+    useEffect(() => {
+        if (selectedSlot && bookedSlotKeys.includes(normalizeSlotKey(selectedSlot))) {
+            setSelectedSlot('');
+        }
+    }, [bookedSlotKeys, selectedSlot]);
     useEffect(() => {
         if (!processing)
             return;
@@ -477,7 +515,10 @@ export default function BookMentorScreen() {
         <View className={`mt-4 gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Select Date</Text>
           <View className="flex-row flex-wrap gap-2.5">
-            {dates.map((date) => (<Pressable key={date.key} disabled={!date.available} onPress={() => setSelectedDate(date.key)} className="w-[62px] items-center gap-0.5 rounded-[16px] py-2.5" style={{
+            {dates.map((date) => (<Pressable key={date.key} disabled={!date.available} onPress={() => {
+                    setSelectedDate(date.key);
+                    setSelectedSlot('');
+                }} className="w-[62px] items-center gap-0.5 rounded-[16px] py-2.5" style={{
                     backgroundColor: selectedDate === date.key ? palette.primary : preferences.darkMode ? '#111111' : '#f2ebe6',
                     opacity: date.available ? 1 : 0.35,
                 }}>
@@ -491,9 +532,19 @@ export default function BookMentorScreen() {
         {selectedDate ? (<View className={`mt-4 gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
             <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Select Time</Text>
             <View className="flex-row flex-wrap gap-2.5">
-              {slots.map((slot) => (<Pressable key={slot} className="rounded-[12px] px-[14px] py-2.5" onPress={() => setSelectedSlot(slot)} style={{ backgroundColor: selectedSlot === slot ? palette.primary : preferences.darkMode ? '#111111' : '#f2ebe6' }}>
+              {slots.map((slot) => {
+                const slotDisabled = isSlotBooked(slot);
+                return (
+                  <Pressable key={slot} disabled={slotDisabled} className="rounded-[12px] px-[14px] py-2.5" onPress={() => setSelectedSlot(slot)} style={{ backgroundColor: selectedSlot === slot ? palette.primary : preferences.darkMode ? '#111111' : '#f2ebe6', opacity: slotDisabled ? 0.35 : 1 }}>
                   <Text className="text-[12px] font-extrabold" style={{ color: selectedSlot === slot ? '#fff' : palette.text }}>{slot}</Text>
-                </Pressable>))}
+                  {slotDisabled ? (
+                    <Text className="mt-0.5 text-[10px] font-bold" style={{ color: selectedSlot === slot ? '#fff' : palette.muted }}>
+                      Booked
+                    </Text>
+                  ) : null}
+                  </Pressable>
+                );
+              })}
             </View>
           </View>) : null}
 

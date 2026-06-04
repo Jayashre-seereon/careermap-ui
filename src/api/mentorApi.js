@@ -1,4 +1,4 @@
-import api from './axios';
+import api, { ensureAccessToken } from './axios';
 import { palette } from '../careermap-data';
 
 const mentorAccentPalette = [palette.primary, palette.blue, palette.orange, palette.secondary, palette.green, palette.purple, palette.pink, palette.teal];
@@ -110,6 +110,18 @@ function normalizeAvailability(availability) {
     .filter((item) => Boolean(item.key));
 }
 
+function normalizeBookedSlots(payload) {
+  if (Array.isArray(payload)) {
+    return payload.filter(Boolean).map((item) => String(item).trim());
+  }
+
+  if (Array.isArray(payload?.data)) {
+    return payload.data.filter(Boolean).map((item) => String(item).trim());
+  }
+
+  return [];
+}
+
 export function mapMentorItem(item, index = 0) {
   const name = item?.name || 'Unknown Mentor';
   const availability = normalizeAvailability(item?.availability);
@@ -186,4 +198,29 @@ export async function getMentorById(id) {
   const mentorItem = items[0] || response?.data?.data || response?.data;
 
   return mentorItem ? mapMentorItem(mentorItem, 0) : null;
+}
+
+export async function getBookedMentorSlots(mentorId, date) {
+  if (mentorId === null || mentorId === undefined || mentorId === '') {
+    throw new Error('Mentor id is required.');
+  }
+
+  if (!date) {
+    throw new Error('Date is required.');
+  }
+
+  const accessToken = await ensureAccessToken();
+  const response = await api.get('/mentor-booking/booked-slots', {
+    params: {
+      mentorId,
+      date,
+    },
+    headers: accessToken
+      ? {
+          Authorization: `Bearer ${accessToken}`,
+        }
+      : undefined,
+  });
+
+  return normalizeBookedSlots(response?.data);
 }
