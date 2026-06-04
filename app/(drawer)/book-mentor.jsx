@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { Animated, Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { mentors, palette } from '../../src/careermap-data';
-import { getBookedMentorSlots, getMentorById, getMentors } from '../../src/api/mentorApi';
+import { createMentorOrder, getBookedMentorSlots, getMentorById, getMentors, verifyMentorPayment } from '../../src/api/mentorApi';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
+import { openRazorpayCheckout } from '../../src/utils/razorpay';
 const getMentorInitials = (mentor) => {
     const source = String(mentor?.name || mentor?.avatar || 'M').trim();
     const initials = source
@@ -41,9 +42,21 @@ const renderMentorAvatar = (mentor, size = 52) => {
     </View>);
 };
 const normalizeSlotKey = (value = '') => String(value).toLowerCase().replace(/\s+/g, '').replace(/\./g, '').replace(/(am|pm)$/i, '');
+const formatDisplayDate = (value) => {
+    if (!value) {
+        return '';
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return String(value);
+    }
+
+    return parsed.toLocaleDateString('en-GB');
+};
 export default function BookMentorScreen() {
     const params = useLocalSearchParams();
-    const { addBooking, canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
+    const { addBooking, canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess, userProfile } = useAppState();
     const [mentorList, setMentorList] = useState(mentors);
     const [selectedMentorId, setSelectedMentorId] = useState(null);
     const [selectedMentor, setSelectedMentor] = useState(null);
@@ -59,13 +72,15 @@ export default function BookMentorScreen() {
     const [cardCvv, setCardCvv] = useState('');
     const [selectedBank, setSelectedBank] = useState('');
     const [booked, setBooked] = useState(false);
-    const [processing, setProcessing] = useState(false);
+    const [paymentReference, setPaymentReference] = useState('');
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
     const [bookedSlots, setBookedSlots] = useState([]);
     const celebration = useRef(new Animated.Value(0)).current;
     const fallbackMentor = selectedMentorId ? mentorList.find((item) => String(item.id) === String(selectedMentorId)) || null : null;
     const activeMentor = selectedMentor || fallbackMentor;
     const detailUnlocked = activeMentor ? canAccessFreeDetail('book-mentor', activeMentor.name) : true;
+    const selectedDateDisplay = formatDisplayDate(selectedDate);
+    const selectedTimeDisplay = selectedSlot || 'Not selected';
     const formatCardNumber = (value) => value.replace(/\D/g, '').slice(0, 16);
     const formatExpiry = (value) => {
         const digits = value.replace(/\D/g, '').slice(0, 4);
@@ -79,9 +94,7 @@ export default function BookMentorScreen() {
         const [month] = value.split('/').map(Number);
         return month >= 1 && month <= 12;
     };
-    const animationKey = processing
-        ? 'processing'
-        : booked && activeMentor
+    const animationKey = booked && activeMentor
             ? `booked-${selectedMentorId || activeMentor.id || activeMentor.name}`
             : activeMentor && showPayment
                 ? `payment-${selectedMentorId || activeMentor.id || activeMentor.name}-${selectedDate || 'date'}-${selectedSlot || 'slot'}`
@@ -198,25 +211,6 @@ export default function BookMentorScreen() {
         }
     }, [bookedSlotKeys, selectedSlot]);
     useEffect(() => {
-        if (!processing)
-            return;
-        const timer = setTimeout(() => {
-            setProcessing(false);
-            if (activeMentor) {
-                const mentor = activeMentor;
-                addBooking({
-                    id: `booking-${mentor.name}-${selectedDate}-${selectedSlot}`,
-                    mentorName: mentor.name,
-                    date: selectedDate,
-                    time: selectedSlot,
-                    status: 'Confirmed',
-                });
-            }
-            setBooked(true);
-        }, 1600);
-        return () => clearTimeout(timer);
-    }, [activeMentor, addBooking, processing, selectedDate, selectedSlot]);
-    useEffect(() => {
         if (typeof params.selected === 'string' || typeof params.id === 'string') {
             setSelectedMentorId(String(params.selected || params.id));
         }
@@ -270,18 +264,70 @@ export default function BookMentorScreen() {
             bounciness: 10,
         }).start();
     }, [booked, celebration]);
-    if (processing) {
-        return (<Screen animationKey={animationKey}>
-        <SectionHeader title="Processing" subtitle="Confirming your mentor booking." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setProcessing(false)}>
-              <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
-            </Pressable>}/>
-        <View className={`min-h-[280px] items-center justify-center gap-[14px] rounded-[26px] border p-7 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <View className="h-[54px] w-[54px] rounded-full border-4 border-[#eadfd6] border-t-brand"/>
-          <Text className={`text-center text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Processing Payment</Text>
-          <Text className={`text-center text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Please wait while we confirm your mentor booking.</Text>
-        </View>
-      </Screen>);
-    }
+    const handlePayment = async () => {
+        if (!activeMentor || !selectedDate || !selectedSlot) {
+            return;
+        }
+
+        try {
+            const orderResponse = await createMentorOrder({
+                mentorId: activeMentor.id,
+                date: selectedDate,
+                timeSlot: selectedSlot,
+            });
+
+            const order = orderResponse?.order;
+            const key = orderResponse?.key;
+
+            if (!order?.id || !key) {
+                throw new Error('Failed to initiate Razorpay checkout.');
+            }
+
+            const paymentResponse = await openRazorpayCheckout({
+                key,
+                amount: Number(order.amount),
+                currency: order.currency,
+                order_id: order.id,
+                name: 'CareerMap',
+                description: `Mentor booking with ${activeMentor.name}`,
+                prefill: {
+                    name: userProfile?.name || '',
+                    email: userProfile?.email || '',
+                    contact: userProfile?.mobile || '',
+                },
+                theme: {
+                    color: palette.primary,
+                },
+            });
+
+            await verifyMentorPayment({
+                mentorId: activeMentor.id,
+                date: selectedDate,
+                timeSlot: selectedSlot,
+                razorpay_order_id: paymentResponse?.razorpay_order_id || order.id,
+                razorpay_payment_id: paymentResponse?.razorpay_payment_id,
+                razorpay_signature: paymentResponse?.razorpay_signature,
+            });
+
+            const finalPaymentReference = paymentResponse?.razorpay_payment_id || order.id;
+            setPaymentReference(finalPaymentReference);
+            addBooking({
+                id: `booking-${activeMentor.name}-${selectedDate}-${selectedSlot}`,
+                mentorName: activeMentor.name,
+                date: selectedDate,
+                time: selectedSlot,
+                status: 'Confirmed',
+                transactionId: finalPaymentReference,
+            });
+            setBooked(true);
+        }
+        catch (error) {
+            const message = error?.message || error?.response?.data?.message || 'Booking payment failed. Please try again.';
+            if (!/cancelled/i.test(message)) {
+                Alert.alert('Payment issue', message);
+            }
+        }
+    };
     if (booked && activeMentor) {
         const mentor = activeMentor;
         const confetti = [
@@ -308,6 +354,7 @@ export default function BookMentorScreen() {
                     setCardExpiry('');
                     setCardCvv('');
                     setSelectedBank('');
+                    setPaymentReference('');
                 }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
@@ -334,15 +381,18 @@ export default function BookMentorScreen() {
             </View>
           </Animated.View>
           <Text className={`text-center text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Session booked successfully</Text>
-          <Text className={`text-center text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Payment successful. Your session with {mentor.name} is confirmed for {selectedDate} at {selectedSlot}.</Text>
+          <Text className={`text-center text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Payment successful. Your session with {mentor.name} is confirmed for {selectedDateDisplay || selectedDate} at {selectedTimeDisplay}.</Text>
           <View className={`w-full gap-2.5 rounded-[22px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
             <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Mentor: {mentor.name}</Text>
-            <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Date: {selectedDate}</Text>
-            <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Time: {selectedSlot}</Text>
+            <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Date: {selectedDateDisplay || selectedDate}</Text>
+            <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Time: {selectedTimeDisplay}</Text>
             <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Price: {mentor.price}</Text>
-            <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Payment Method: {selectedPayment === 'upi' ? 'UPI' : selectedPayment === 'card' ? 'Credit / Debit Card' : 'Net Banking'}</Text>
+            <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Payment Method: Razorpay Checkout</Text>
+            {paymentReference ? (
+              <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Payment Ref: {paymentReference}</Text>
+            ) : null}
           </View>
-          <AnimatedPressable className="w-full rounded-[16px] bg-brand py-[14px]" onPress={() => {
+          <AnimatedPressable className="w-full rounded-[16px] bg-brand py-[14px] px-[14px]" onPress={() => {
                 setBooked(false);
                 setSelectedMentorId(null);
                 setSelectedMentor(null);
@@ -357,6 +407,7 @@ export default function BookMentorScreen() {
                 setCardExpiry('');
                 setCardCvv('');
                 setSelectedBank('');
+                setPaymentReference('');
             }}>
             <Text className="text-center text-[14px] font-extrabold text-white">Back to Mentor List</Text>
           </AnimatedPressable>
@@ -381,8 +432,8 @@ export default function BookMentorScreen() {
         <View className={`gap-2.5 rounded-[22px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           <Text className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Booking Summary</Text>
           <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Mentor: {mentor.name}</Text>
-          <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Date: {selectedDate}</Text>
-          <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Time: {selectedSlot}</Text>
+          <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Date: {selectedDateDisplay || selectedDate}</Text>
+          <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Time: {selectedTimeDisplay}</Text>
           <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Duration: 45 mins</Text>
           <Text className="text-[13px] font-extrabold text-brand">Total: {mentor.price}</Text>
         </View>
@@ -437,7 +488,7 @@ export default function BookMentorScreen() {
           <Text className="flex-1 text-[11px] font-bold text-success">Your payment is secured with 256-bit SSL encryption</Text>
         </View>
 
-        <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" disabled={!canPay} onPress={() => setProcessing(true)}>
+        <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" disabled={!canPay} onPress={handlePayment}>
           <Text className="text-center text-[14px] font-extrabold text-white">Pay {mentor.price} & Confirm</Text>
         </AnimatedPressable>
       </Screen>);
@@ -451,6 +502,7 @@ export default function BookMentorScreen() {
                     setSelectedDate('');
                     setSelectedSlot('');
                     setShowPayment(false);
+                    setPaymentReference('');
                 }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
@@ -473,6 +525,7 @@ export default function BookMentorScreen() {
                     setSelectedDate('');
                     setSelectedSlot('');
                     setShowPayment(false);
+                    setPaymentReference('');
                 }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
@@ -548,7 +601,7 @@ export default function BookMentorScreen() {
             </View>
           </View>) : null}
 
-        <AnimatedPressable className="mt-4 rounded-[16px] bg-brand py-[14px]" disabled={!selectedDate || !selectedSlot} onPress={() => setShowPayment(true)}>
+        <AnimatedPressable className="mt-4 rounded-[16px] bg-brand py-[14px]" disabled={!selectedDate || !selectedSlot} onPress={handlePayment}>
           <Text className="text-center text-[14px] font-extrabold text-white">Book & Pay</Text>
         </AnimatedPressable>
           </>

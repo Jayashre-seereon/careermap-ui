@@ -1,16 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
-import { getPlans } from '../../src/api/planApi';
+import { createOrder, getPlans, verifyPayment } from '../../src/api/planApi';
 import { palette, subscriptions as fallbackSubscriptions } from '../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+import { openRazorpayCheckout } from '../../src/utils/razorpay';
 export default function SubscriptionScreen() {
-    const { activePlanId, preferences } = useAppState();
+    const { activePlanId, preferences, userProfile } = useAppState();
     const { returnTo } = useLocalSearchParams();
     const [plans, setPlans] = useState(fallbackSubscriptions);
     const [isLoading, setIsLoading] = useState(true);
+    const [isProcessingPlan, setIsProcessingPlan] = useState('');
     useEffect(() => {
         let isMounted = true;
         const loadPlans = async () => {
@@ -34,6 +36,66 @@ export default function SubscriptionScreen() {
             isMounted = false;
         };
     }, []);
+    const handleSelectPlan = async (plan) => {
+        if (!plan?.id || isProcessingPlan) {
+            return;
+        }
+
+        try {
+            setIsProcessingPlan(plan.id);
+            const backendPlanId = plan.apiId || plan.raw?.id || plan.id;
+            const orderResponse = await createOrder(plan);
+            const order = orderResponse?.order;
+            const key = orderResponse?.key;
+
+            if (!order?.id || !key) {
+                throw new Error('Failed to initiate Razorpay checkout.');
+            }
+
+            const paymentResponse = await openRazorpayCheckout({
+                key,
+                amount: Number(order.amount),
+                currency: order.currency,
+                order_id: order.id,
+                name: 'CareerMap',
+                description: `${plan.name} subscription`,
+                prefill: {
+                    name: userProfile?.name || '',
+                    email: userProfile?.email || '',
+                    contact: userProfile?.mobile || '',
+                },
+                theme: {
+                    color: palette.primary,
+                },
+            });
+
+            await verifyPayment({
+                planId: backendPlanId,
+                planKey: plan.id,
+                razorpay_order_id: paymentResponse?.razorpay_order_id || order.id,
+                razorpay_payment_id: paymentResponse?.razorpay_payment_id,
+                razorpay_signature: paymentResponse?.razorpay_signature,
+            });
+
+            router.replace({
+                pathname: '/payment-success',
+                params: {
+                    planId: plan.id,
+                    transactionId: paymentResponse?.razorpay_payment_id || order.id,
+                    ...(returnTo ? { returnTo } : {}),
+                },
+            });
+        }
+        catch (error) {
+            const message = error?.message || error?.response?.data?.message || 'Payment failed. Please try again.';
+            if (!/cancelled/i.test(message)) {
+                Alert.alert('Payment issue', message);
+            }
+        }
+        finally {
+            setIsProcessingPlan('');
+        }
+    };
     return (<Screen>
       <SectionHeader title="Subscription Plans" subtitle="Key plans from the Vercel prototype, adapted here as mobile cards."/>
 
@@ -68,15 +130,17 @@ export default function SubscriptionScreen() {
                   <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{feature}</Text>
                 </View>))}
             </View>
-            <AnimatedPressable className="mt-1 rounded-[14px] py-3" onPress={() => router.push({
-                pathname: '/checkout',
-                params: {
-                    planId: plan.id,
-                    ...(returnTo ? { returnTo } : {}),
-                },
-            })} style={{ backgroundColor: activePlanId === plan.id ? `${palette.green}14` : palette.primary }}>
+            <AnimatedPressable
+              className="mt-1 rounded-[14px] py-3"
+              onPress={() => {
+                if (activePlanId !== plan.id) {
+                  void handleSelectPlan(plan);
+                }
+              }}
+              style={{ backgroundColor: activePlanId === plan.id ? `${palette.green}14` : palette.primary }}
+            >
               <Text className="text-center text-[14px] font-extrabold" style={{ color: activePlanId === plan.id ? palette.green : '#fff' }}>
-                {activePlanId === plan.id ? 'Current Plan' : 'Choose Plan'}
+                {isProcessingPlan === plan.id ? 'Processing...' : activePlanId === plan.id ? 'Current Plan' : 'Choose Plan'}
               </Text>
             </AnimatedPressable>
           </View>))}

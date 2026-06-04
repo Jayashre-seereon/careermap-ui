@@ -172,3 +172,27 @@ export async function getPlanByKey(key) {
   const plans = await getPlans();
   return plans.find((plan) => plan.id === String(key)) || null;
 }
+
+export async function createOrder(planOrId) {
+  const resolvedPlanId =
+    typeof planOrId === 'object' && planOrId !== null
+      ? planOrId.apiId || planOrId.raw?.id || planOrId.id
+      : planOrId;
+
+  if (!resolvedPlanId) {
+    throw new Error('Plan id is required.');
+  }
+
+  const response = await api.post('/user/payment/create-order', {
+    planId: resolvedPlanId,
+    plan_id: resolvedPlanId,
+    planKey: typeof planOrId === 'object' && planOrId !== null ? planOrId.id : undefined,
+  });
+
+  return response?.data;
+}
+
+export async function verifyPayment(paymentData) {
+  const response = await api.post('/user/payment/verify-payment', paymentData);
+  return response?.data;
+}

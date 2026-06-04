@@ -200,6 +200,16 @@ export async function getMentorById(id) {
   return mentorItem ? mapMentorItem(mentorItem, 0) : null;
 }
 
+export async function createMentorOrder(data) {
+  const response = await api.post('/mentor-booking/create-order', data);
+  return response?.data;
+}
+
+export async function verifyMentorPayment(data) {
+  const response = await api.post('/mentor-booking/verify-payment', data);
+  return response?.data;
+}
+
 export async function getBookedMentorSlots(mentorId, date) {
   if (mentorId === null || mentorId === undefined || mentorId === '') {
     throw new Error('Mentor id is required.');
