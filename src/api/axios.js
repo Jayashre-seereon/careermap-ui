@@ -186,7 +186,9 @@ api.interceptors.request.use(
     const isPublicAuthRoute =
       requestUrl.includes('/auth/login/password') ||
       requestUrl.includes('/auth/send-otp') ||
-      requestUrl.includes('/auth/verify-otp');
+      requestUrl.includes('/auth/verify-otp') ||
+      requestUrl.includes('/user/forgot-password') ||
+      requestUrl.includes('/user/reset-password');
     const explicitAuthorization =
       config.headers?.Authorization || config.headers?.authorization;
 
@@ -239,7 +241,13 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (requestUrl.includes('/auth/login/password') || requestUrl.includes('/auth/send-otp') || requestUrl.includes('/auth/verify-otp')) {
+    if (
+      requestUrl.includes('/auth/login/password') ||
+      requestUrl.includes('/auth/send-otp') ||
+      requestUrl.includes('/auth/verify-otp') ||
+      requestUrl.includes('/user/forgot-password') ||
+      requestUrl.includes('/user/reset-password')
+    ) {
       return Promise.reject(error);
     }
 
