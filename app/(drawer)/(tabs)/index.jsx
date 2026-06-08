@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../../../src/api/axios';
+import { checkModuleAccess } from '../../../src/api/moduleAccessApi';
 import { useAppState } from '../../../src/app-state';
-import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../../src/careermap-ui';
+import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../../src/careermap-ui';
+import { openSubscriptionPrompt } from '../../../src/subscription-flow';
 import { featuredInstitutes, featuredMentors, featuredScholarships, moduleCards, palette, studentProfile } from '../../../src/careermap-data';
 const getMentorInitials = (mentor) => {
     const source = String(mentor?.name || 'M').trim();
@@ -61,10 +63,18 @@ export default function HomeScreen() {
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState(Array(personalityQuestions.length).fill(null));
     const [dashboardData, setDashboardData] = useState(null);
+    const [lockedModule, setLockedModule] = useState(null);
     const { isUnlocked, onboarding, unreadNotificationsCount, userProfile } = useAppState();
     const { width } = useWindowDimensions();
     const moduleCardWidth = width < 390 ? '48%' : '31%';
     const lockableModuleTitles = ['Career Library', 'Master Class', 'Book Mentor', 'Scholarships', 'Study Abroad'];
+    const featureByTitle = {
+        'Career Library': 'career-library',
+        'Master Class': 'master-class',
+        'Book Mentor': 'book-mentor',
+        'Scholarships': 'scholarship',
+        'Study Abroad': 'abroad-consultancy',
+    };
     const normalizeModuleTitle = (value) => value?.trim().toLowerCase().replace(/\s+/g, ' ');
     const resolveModuleLookupKey = (value) => {
         const normalized = normalizeModuleTitle(value);
@@ -168,7 +178,52 @@ export default function HomeScreen() {
             type: item.institute_type || '',
             logo: item.logo || null,
         }));
-    }, [dashboardData?.institutions]);
+        }, [dashboardData?.institutions]);
+    const handleModulePress = async (card) => {
+        const moduleId = Number(card?.id);
+
+        if (!Number.isFinite(moduleId)) {
+            const fallbackFeature = featureByTitle[card?.lockTitle || card?.title || ''];
+
+            if (fallbackFeature && !isUnlocked(fallbackFeature)) {
+                setLockedModule({
+                    title: card.title,
+                    route: card.route,
+                    moduleId: null,
+                    message: 'Please purchase a subscription to continue accessing this module.',
+                });
+                return;
+            }
+
+            router.push(card.route);
+            return;
+        }
+
+        try {
+            const response = await checkModuleAccess(moduleId);
+
+            if (!response?.allowed) {
+                setLockedModule({
+                    title: card.title,
+                    route: card.route,
+                    moduleId,
+                    message: response?.message || 'Free preview already used. Please purchase a subscription to continue accessing this module.',
+                });
+                return;
+            }
+
+            router.push({
+                pathname: card.route,
+                params: {
+                    moduleId: String(moduleId),
+                    accessStatus: response?.freePreview ? 'preview' : 'unlocked',
+                },
+            });
+        } catch (error) {
+            console.log('Module access check failed', error?.response?.data || error?.message || error);
+            router.push(card.route);
+        }
+    };
     const personalityResult = useMemo(() => {
         const counts = [0, 0, 0, 0];
         answers.forEach((answer) => {
@@ -303,12 +358,11 @@ export default function HomeScreen() {
       <View className="flex-row flex-wrap gap-3 mt-4 mb-2">
         {dashboardModules.map((card) => {
                 const lockTitle = card.lockTitle || card.title;
-                const showLock = lockableModuleTitles.includes(lockTitle) && !((lockTitle === 'Career Library' && isUnlocked('career-library'))
-                    || (lockTitle === 'Master Class' && isUnlocked('master-class'))
-                    || (lockTitle === 'Book Mentor' && isUnlocked('book-mentor'))
-                    || (lockTitle === 'Scholarships' && isUnlocked('scholarship'))
-                    || (lockTitle === 'Study Abroad' && isUnlocked('abroad-consultancy')));
-                return (<AnimatedPressable key={card.id || card.title} style={{ width: moduleCardWidth }} onPress={() => router.push(card.route)}>
+                const moduleAccessStatus = String(card.accessStatus || '').toLowerCase();
+                const featureKey = featureByTitle[lockTitle];
+                const isModuleUnlocked = moduleAccessStatus ? moduleAccessStatus === 'unlocked' : Boolean(featureKey && isUnlocked(featureKey));
+                const showLock = lockableModuleTitles.includes(lockTitle) && !isModuleUnlocked;
+                return (<AnimatedPressable key={card.id || card.title} style={{ width: moduleCardWidth }} onPress={() => handleModulePress(card)}>
         <View className={`relative aspect-square items-center justify-center gap-2 rounded-[22px] border p-[14px] ${preferences.darkMode ? 'bg-[#080808]' : 'bg-card'}`} style={{ borderColor: preferences.darkMode ? '#1a1a1a' : `${card.tone}30` }}>
               {showLock ? (<View className={`absolute right-3 top-3 h-7 w-7 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
                   <Ionicons name="lock-closed" size={13} color={palette.primary}/>
@@ -388,5 +442,19 @@ export default function HomeScreen() {
             <Ionicons name="chevron-forward" size={18} color={palette.muted}/>
           </AnimatedPressable>))}
       </View>
+      {lockedModule ? (<UnlockBottomSheet title={`Unlock ${lockedModule.title}`} subtitle={lockedModule.message} onClose={() => setLockedModule(null)} onPress={() => {
+                const returnTarget = lockedModule.moduleId
+                    ? {
+                        pathname: lockedModule.route,
+                        params: {
+                            moduleId: String(lockedModule.moduleId),
+                        },
+                    }
+                    : {
+                        pathname: lockedModule.route,
+                    };
+                setLockedModule(null);
+                openSubscriptionPrompt(returnTarget);
+            }}/>) : null}
     </Screen>);
 }

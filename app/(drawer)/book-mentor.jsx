@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Animated, Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
+import { checkModuleAccess, getModules } from '../../src/api/moduleAccessApi';
 import { mentors, palette } from '../../src/careermap-data';
 import { createMentorOrder, getBookedMentorSlots, getMentorById, getMentors, verifyMentorPayment } from '../../src/api/mentorApi';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
@@ -42,6 +43,7 @@ const renderMentorAvatar = (mentor, size = 52) => {
     </View>);
 };
 const normalizeSlotKey = (value = '') => String(value).toLowerCase().replace(/\s+/g, '').replace(/\./g, '').replace(/(am|pm)$/i, '');
+const normalizeModuleTitle = (value = '') => String(value).trim().toLowerCase().replace(/\s+/g, ' ');
 const formatDisplayDate = (value) => {
     if (!value) {
         return '';
@@ -58,6 +60,14 @@ export default function BookMentorScreen() {
     const params = useLocalSearchParams();
     const { addBooking, canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess, userProfile } = useAppState();
     const [mentorList, setMentorList] = useState(mentors);
+    const [resolvedModuleId, setResolvedModuleId] = useState(() => {
+        const parsed = Number(params.moduleId);
+        return Number.isFinite(parsed) ? parsed : null;
+    });
+    const [moduleAccessResolved, setModuleAccessResolved] = useState(false);
+    const [moduleAccessAllowed, setModuleAccessAllowed] = useState(true);
+    const [moduleAccessPreview, setModuleAccessPreview] = useState(false);
+    const [moduleAccessMessage, setModuleAccessMessage] = useState('');
     const [selectedMentorId, setSelectedMentorId] = useState(null);
     const [selectedMentor, setSelectedMentor] = useState(null);
     const [isMentorLoading, setIsMentorLoading] = useState(false);
@@ -79,6 +89,7 @@ export default function BookMentorScreen() {
     const fallbackMentor = selectedMentorId ? mentorList.find((item) => String(item.id) === String(selectedMentorId)) || null : null;
     const activeMentor = selectedMentor || fallbackMentor;
     const detailUnlocked = activeMentor ? canAccessFreeDetail('book-mentor', activeMentor.name) : true;
+    const modulePreviewBanner = !isUnlocked('book-mentor') && moduleAccessPreview;
     const selectedDateDisplay = formatDisplayDate(selectedDate);
     const selectedTimeDisplay = selectedSlot || 'Not selected';
     const formatCardNumber = (value) => value.replace(/\D/g, '').slice(0, 16);
@@ -218,6 +229,83 @@ export default function BookMentorScreen() {
     useEffect(() => {
         let isMounted = true;
 
+        const resolveModuleAccess = async () => {
+            const explicitStatus = String(params.accessStatus || '').toLowerCase();
+
+            if (explicitStatus === 'locked') {
+                if (isMounted) {
+                    setModuleAccessAllowed(false);
+                    setModuleAccessPreview(false);
+                    setModuleAccessMessage('Please purchase a subscription to continue accessing this module.');
+                    setModuleAccessResolved(true);
+                }
+                return;
+            }
+
+            if (explicitStatus === 'unlocked' || explicitStatus === 'preview') {
+                if (isMounted) {
+                    setModuleAccessAllowed(true);
+                    setModuleAccessPreview(explicitStatus === 'preview');
+                    setModuleAccessMessage('');
+                    setModuleAccessResolved(true);
+                }
+                return;
+            }
+
+            try {
+                let moduleId = Number(params.moduleId);
+
+                if (!Number.isFinite(moduleId)) {
+                    const modules = await getModules();
+                    const matchedModule = modules.find((module) => normalizeModuleTitle(module?.title) === 'book mentor')
+                        || modules.find((module) => normalizeModuleTitle(module?.title).includes('book mentor'));
+
+                    moduleId = Number(matchedModule?.id);
+                    if (isMounted && Number.isFinite(moduleId)) {
+                        setResolvedModuleId(moduleId);
+                    }
+                }
+
+                if (!Number.isFinite(moduleId)) {
+                    if (isMounted) {
+                        setModuleAccessAllowed(true);
+                        setModuleAccessPreview(false);
+                        setModuleAccessMessage('');
+                        setModuleAccessResolved(true);
+                    }
+                    return;
+                }
+
+                const response = await checkModuleAccess(moduleId);
+                if (!isMounted) {
+                    return;
+                }
+
+                setResolvedModuleId(moduleId);
+                setModuleAccessAllowed(Boolean(response?.allowed));
+                setModuleAccessPreview(Boolean(response?.freePreview));
+                setModuleAccessMessage(response?.message || '');
+                setModuleAccessResolved(true);
+            } catch (error) {
+                console.log('Module access check failed', error?.response?.data || error?.message || error);
+                if (isMounted) {
+                    setModuleAccessAllowed(true);
+                    setModuleAccessPreview(false);
+                    setModuleAccessMessage('');
+                    setModuleAccessResolved(true);
+                }
+            }
+        };
+
+        resolveModuleAccess();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [params.accessStatus, params.moduleId]);
+    useEffect(() => {
+        let isMounted = true;
+
         const loadMentorDetail = async () => {
             if (!selectedMentorId) {
                 setSelectedMentor(null);
@@ -328,6 +416,44 @@ export default function BookMentorScreen() {
             }
         }
     };
+    if (!moduleAccessResolved) {
+        return (<Screen animationKey="book-mentor-access-loading">
+      <SectionHeader title="Book Mentor" subtitle="Checking your subscription access." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
+                    setSelectedMentorId(null);
+                    setSelectedMentor(null);
+                }}>
+            <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
+          </Pressable>}/>
+      <View className={`flex-1 items-center justify-center gap-3 rounded-[24px] border p-6 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+        <ActivityIndicator size="large" color={palette.primary}/>
+        <Text className={`text-[16px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Checking access...</Text>
+        <Text className={`text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>We are confirming whether your subscription can open the mentor module.</Text>
+      </View>
+    </Screen>);
+    }
+    if (!moduleAccessAllowed) {
+        return (<Screen animationKey="book-mentor-locked">
+      <SectionHeader title="Book Mentor Locked" subtitle="This module needs an active subscription." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
+                    setSelectedMentorId(null);
+                    setSelectedMentor(null);
+                }}>
+            <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
+          </Pressable>}/>
+      <View className={`gap-3 rounded-[26px] border p-6 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+        <View className="h-12 w-12 items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.primary}14` }}>
+          <Ionicons name="lock-closed" size={22} color={palette.primary}/>
+        </View>
+        <Text className={`text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Book Mentor is locked</Text>
+        <Text className={`text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{moduleAccessMessage || 'Please purchase a subscription to unlock mentor booking and profile access.'}</Text>
+        <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => openSubscriptionPrompt({
+                pathname: '/(drawer)/book-mentor',
+                params: resolvedModuleId ? { moduleId: String(resolvedModuleId) } : undefined,
+            })}>
+          <Text className="text-center text-[14px] font-extrabold text-white">View Plans</Text>
+        </AnimatedPressable>
+      </View>
+    </Screen>);
+    }
     if (booked && activeMentor) {
         const mentor = activeMentor;
         const confetti = [
@@ -529,9 +655,9 @@ export default function BookMentorScreen() {
                 }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
-        {!isUnlocked('book-mentor') ? (<View className="self-start rounded-full px-3 py-2" style={{ backgroundColor: `${detailUnlocked ? palette.green : palette.orange}14` }}>
-            <Text className="text-[12px] font-extrabold" style={{ color: detailUnlocked ? palette.green : palette.orange }}>
-              {detailUnlocked ? '1 free mentor detail unlocked' : 'Subscribe to unlock more mentor profiles'}
+        {!isUnlocked('book-mentor') ? (<View className="self-start rounded-full px-3 py-2" style={{ backgroundColor: `${detailUnlocked || modulePreviewBanner ? palette.green : palette.orange}14` }}>
+            <Text className="text-[12px] font-extrabold" style={{ color: detailUnlocked || modulePreviewBanner ? palette.green : palette.orange }}>
+              {detailUnlocked || modulePreviewBanner ? '1 free mentor detail unlocked' : 'Subscribe to unlock more mentor profiles'}
             </Text>
           </View>) : null}
 
