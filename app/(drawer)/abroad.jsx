@@ -19,7 +19,7 @@ export default function AbroadScreen() {
     const [selected, setSelected] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    const [showUnlockSheet, setShowUnlockSheet] = useState(false);
+    //const [showUnlockSheet, setShowUnlockSheet] = useState(false);
     const [preferredCountry, setPreferredCountry] = useState('');
     const [courseInterest, setCourseInterest] = useState('');
     const [budgetRange, setBudgetRange] = useState('');
@@ -28,7 +28,7 @@ export default function AbroadScreen() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const selectedCountry = selected !== null ? countries[selected] : null;
-    const detailUnlocked = selectedCountry ? canAccessFreeDetail('abroad-consultancy', selectedCountry.countryName) : true;
+   // const detailUnlocked = selectedCountry ? canAccessFreeDetail('abroad-consultancy', selectedCountry.countryName) : true;
     const selectedStudyAbroadId = selectedCountry?.id ? Number(selectedCountry.id) : null;
     const consultationPayload = useMemo(() => {
         if (!selectedStudyAbroadId) {
@@ -269,11 +269,11 @@ export default function AbroadScreen() {
                 }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
-        {!unlocked ? (<View className="self-start rounded-full px-3 py-2" style={{ backgroundColor: `${detailUnlocked ? palette.green : palette.orange}12` }}>
+        {/* {!unlocked ? (<View className="self-start rounded-full px-3 py-2" style={{ backgroundColor: `${detailUnlocked ? palette.green : palette.orange}12` }}>
             <Text className="text-[11px] font-extrabold" style={{ color: detailUnlocked ? palette.green : palette.orange }}>
               {detailUnlocked ? '1 free country detail unlocked' : 'Subscribe to unlock more country details'}
             </Text>
-          </View>) : null}
+          </View>) : null} */}
         <View className="relative">
           <>
             <View className="items-center gap-2 py-1.5">
@@ -337,14 +337,10 @@ export default function AbroadScreen() {
         {countries.map((country, index) => {
             const detailOpen = unlocked || canAccessFreeDetail('abroad-consultancy', country.countryName);
             const cardPadding = width < 420 ? 'p-[16px]' : 'p-[18px]';
-            return (<Pressable key={country.id} className={`relative gap-1.5 rounded-[22px] border ${cardPadding} ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => {
-                if (!unlocked && !detailOpen) {
-                    setShowUnlockSheet(true);
-                    return;
-                }
-                registerFreeDetailAccess('abroad-consultancy', country.countryName);
-                setSelected(index);
-            }}>
+            return (<Pressable key={country.id} className={`relative gap-1.5 rounded-[22px] border ${cardPadding} ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} 
+             onPress={() => {
+  setSelected(index);
+}}>
             {width < 520 ? (<View className="gap-3 pt-1">
                 <View className="flex-row items-start gap-3 pr-10">
                   <View className="h-11 w-11 items-center justify-center rounded-[14px]" style={{ backgroundColor: `${palette.primary}10` }}>
@@ -355,9 +351,9 @@ export default function AbroadScreen() {
                     <Text numberOfLines={2} className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.description}</Text>
                   </View>
                 </View>
-                {!unlocked ? (<View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
+                {/* {!unlocked ? (<View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
                   <Ionicons name={detailOpen ? 'lock-open-outline' : 'lock-closed'} size={15} color={palette.primary}/>
-                </View>) : null}
+                </View>) : null} */}
                 <View className="flex-row flex-wrap justify-start gap-2 pl-[52px]">
                   <View className="flex-row items-center gap-2 rounded-full px-2.5 py-1.5" style={{ backgroundColor: `${palette.blue}10` }}>
                     <Ionicons name="school-outline" size={14} color={palette.blue}/>
@@ -379,9 +375,9 @@ export default function AbroadScreen() {
                   <Text numberOfLines={2} className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.description}</Text>
                 </View>
                 <View className="items-end gap-2">
-                  {!unlocked ? (<View className={`h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
+                  {/* {!unlocked ? (<View className={`h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
                     <Ionicons name={detailOpen ? 'lock-open-outline' : 'lock-closed'} size={15} color={palette.primary}/>
-                  </View>) : null}
+                  </View>) : null} */}
                   <View className="flex-row flex-wrap justify-end gap-2">
                     <View className="flex-row items-center gap-2 rounded-full px-3 py-2" style={{ backgroundColor: `${palette.blue}10` }}>
                       <Ionicons name="school-outline" size={14} color={palette.blue}/>
@@ -399,9 +395,9 @@ export default function AbroadScreen() {
           </Pressable>);
         })}
       </View>
-      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Study Abroad" subtitle="Subscribe to more country details, scholarships, visa guidance, and counselling access." onClose={() => setShowUnlockSheet(false)} onPress={() => {
+      {/* {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Study Abroad" subtitle="Subscribe to more country details, scholarships, visa guidance, and counselling access." onClose={() => setShowUnlockSheet(false)} onPress={() => {
                 setShowUnlockSheet(false);
                 openSubscriptionPrompt(showForm ? formReturnTarget : { pathname: '/(drawer)/abroad' });
-            }}/>) : null}
+            }}/>) : null} */}
     </Screen>);
 }
