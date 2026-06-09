@@ -214,8 +214,10 @@ export default function ProfileScreen() {
             return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-[#fcf8f5]'}`}>
           {testHistory.map((item) => (<AnimatedPressable key={item.id} className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/(tabs)/assessment')}>
               <View className="flex-1 pr-3">
-                <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.title}</Text>
-                <Text className={`mt-1 text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.subtitle}</Text>
+                <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.quizName || item.title}</Text>
+                <Text className={`mt-1 text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                  {[item.score ? `Score: ${item.score}` : "", item.attemptedAt ? `Attempted: ${item.attemptedAt}` : item.subtitle].filter(Boolean).join(' • ')}
+                </Text>
               </View>
               <Pill label={item.status} tone={item.status === 'Completed' ? palette.green : palette.secondary}/>
             </AnimatedPressable>))}
@@ -227,7 +229,7 @@ export default function ProfileScreen() {
             <View key={booking.id} className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`}>
               <View>
                 <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{booking.mentorName}</Text>
-                <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{booking.date} | {booking.time}</Text>
+                <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{booking.timeSlot || booking.time} | {booking.mentorFee ? `Fee: Rs ${booking.mentorFee}` : booking.date}</Text>
               </View>
               <Pill label={booking.status} tone={palette.green}/>
             </View>
@@ -238,10 +240,10 @@ export default function ProfileScreen() {
             return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-[#fcf8f5]'}`}>
           {subscriptionRecords.map((record) => (<AnimatedPressable key={record.id} className={`gap-1 rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/subscription')}>
               <View className="flex-row items-center justify-between">
-                <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{record.planName}</Text>
-                <Text className="text-[13px] font-extrabold text-brand">{record.price}</Text>
+                <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{record.subscriptionName || record.planName}</Text>
+                <Text className="text-[13px] font-extrabold text-brand">{record.amount !== "" && record.amount != null ? `Rs ${record.amount}` : record.price}</Text>
               </View>
-              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Valid until: {record.expiryDate}</Text>
+              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Validity: {record.validity || record.expiryDate}</Text>
               <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>TXN: {record.transactionId}</Text>
             </AnimatedPressable>))}
         </View>);
