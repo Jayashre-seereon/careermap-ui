@@ -96,13 +96,7 @@ export default function ProfileScreen() {
     const profileClass = onboarding.selectedClass || 'Class 11';
     const profileStream = onboarding.selectedStream || 'Science';
     const menuItems = useMemo(() => [
-        {
-            label: 'Saved Careers',
-            icon: 'star-outline',
-            tone: palette.orange,
-            action: () => setOpenSection((current) => (current === 'saved' ? null : 'saved')),
-            value: `${savedCareers.length} saved`,
-        },
+        
         {
             label: 'Test History',
             icon: 'time-outline',
