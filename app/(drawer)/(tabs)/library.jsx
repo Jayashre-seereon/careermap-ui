@@ -199,6 +199,41 @@ const specializations = {
         { name: 'Neurological', emoji: '🧠' },
     ],
 };
+function normalizeInstituteItems(value) {
+    return toList(value).map((item, index) => {
+        if (typeof item === 'string') {
+            return {
+                id: `institution-${index}`,
+                name: item,
+                state: '',
+                city: '',
+                country: '',
+                location: item,
+                isTop: false,
+            };
+        }
+        const city = item?.city || '';
+        const state = item?.state || '';
+        const country = item?.countruy || item?.country || '';
+        const location = [city, state, country].filter(Boolean).join(', ') || item?.location || 'Location not available';
+        return {
+            id: item?.id ?? `institution-${index}`,
+            name: item?.name || 'Institution',
+            state,
+            city,
+            country,
+            location,
+            isTop: Boolean(item?.is_top ?? item?.isTop),
+        };
+    });
+}
+function groupInstitutesByTopStatus(value) {
+    const institutes = normalizeInstituteItems(value);
+    const topInstitutes = institutes.filter((item) => item.isTop);
+    const outsideInstitutes = institutes.filter((item) => !item.isTop);
+    const referenceState = topInstitutes.find((item) => item.state)?.state || outsideInstitutes.find((item) => item.state)?.state || '';
+    return { institutes, topInstitutes, outsideInstitutes, referenceState };
+}
 const careerDetails = {
     'General Medicine': {
         title: 'General Medicine (MD)',
@@ -491,7 +526,7 @@ const getCardDescription = (item) => stripHtml(item?.desc || item?.description |
 export default function CareerLibraryScreen() {
     const params = useLocalSearchParams();
     const insets = useSafeAreaInsets();
-    const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess, savedCareers, toggleSavedCareer } = useAppState();
+    const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
     const [currentLevel, setCurrentLevel] = useState('streams');
     const [selectedStream, setSelectedStream] = useState(null);
     const [streamItems, setStreamItems] = useState(normalizeStreamItems([]));
@@ -730,7 +765,7 @@ export default function CareerLibraryScreen() {
     </View>);
     const renderDetailItem = (detail, index) => {
         const title = getDetailTitle(detail);
-        const isSaved = savedCareers.includes(title);
+        const instituteGroups = groupInstitutesByTopStatus(detail?.institutions);
         return (<StaggerFadeUpItem key={`detail-${detail?.id ?? index}`} index={index}>
           <View className="mb-4">
             <View className="mb-3 flex-row items-start gap-3">
@@ -742,10 +777,6 @@ export default function CareerLibraryScreen() {
                 {getDetailDescription(detail) ? (<Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getDetailDescription(detail)}</Text>) : null}
               </View>
             </View>
-            <Pressable onPress={() => toggleSavedCareer(title)} className={`mb-4 flex-row items-center justify-center gap-2 rounded-[14px] border px-4 py-3 ${isSaved ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-              <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={isSaved ? '#fff' : palette.primary}/>
-              <Text className={`text-[13px] font-extrabold ${isSaved ? 'text-white' : 'text-brand'}`}>{isSaved ? 'Saved to Wishlist' : 'Save to Wishlist'}</Text>
-            </Pressable>
              {detailUnlocked ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.green}14` }}>
               <Text className="text-[12px] font-semibold" style={{ color: palette.green }}>
               <Ionicons name="sparkles-outline" size={14} color={palette.green} className="mr-1"/> You have access to view this career detail for free.
@@ -773,12 +804,29 @@ export default function CareerLibraryScreen() {
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
               <View className="mb-3 flex-row items-center gap-2">
                 <Ionicons name="school-outline" size={16} color={palette.primary}/>
-                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Institutions</Text>
+                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Top Institutes</Text>
               </View>
-              {toList(detail?.institutions).length > 0 ? toList(detail?.institutions).map((institution) => (<View key={institution?.id} className="mb-3">
-                  <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
-                  <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{[institution?.city, institution?.state, institution?.countruy].filter(Boolean).join(', ') || 'Location not available'}</Text>
-                </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Institution details not available.</Text>)}
+              <View className="gap-4">
+                {instituteGroups.topInstitutes.length > 0 ? (<View>
+                    <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
+                      {instituteGroups.referenceState ? `Top Institutes of ${instituteGroups.referenceState}` : 'Top Institutes'}
+                    </Text>
+                    {instituteGroups.topInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 rounded-[14px] border border-[#f0e4e2] bg-[#fdf9f9] px-3 py-3">
+                        <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
+                        <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
+                      </View>))}
+                  </View>) : null}
+                {instituteGroups.outsideInstitutes.length > 0 ? (<View>
+                    <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
+                      {instituteGroups.referenceState ? `Top Institutes Outside ${instituteGroups.referenceState}` : 'Top Institutes Outside State'}
+                    </Text>
+                    {instituteGroups.outsideInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 rounded-[14px] border border-[#f0e4e2] bg-white px-3 py-3">
+                        <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
+                        <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
+                      </View>))}
+                  </View>) : null}
+                {!instituteGroups.topInstitutes.length && !instituteGroups.outsideInstitutes.length ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Institution details not available.</Text>) : null}
+              </View>
             </View>
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
               <View className="mb-3 flex-row items-center gap-2">
