@@ -255,8 +255,9 @@ export default function AbroadScreen() {
               <TextInput value={value} onChangeText={setter} placeholder={placeholder} placeholderTextColor={preferences.darkMode ? '#7f7481' : palette.muted} className={`rounded-[16px] border px-4 py-[14px] text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
             </View>))}
           {submitError ? (<Text className="text-[13px] font-semibold text-brand">{submitError}</Text>) : null}
-          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => (unlocked ? handleSubmitConsultation() : openSubscriptionPrompt(formReturnTarget))} disabled={isSubmitting}>
-            <Text className="text-center text-[14px] font-extrabold text-white">{isSubmitting ? 'Submitting...' : unlocked ? 'Submit Request' : 'Subscribe to Submit'}</Text>
+          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]"
+          onPress={handleSubmitConsultation} disabled={isSubmitting}>
+            <Text className="text-center text-[14px] font-extrabold text-white"> {isSubmitting ? 'Submitting...' : 'Submit Request'}</Text>
           </AnimatedPressable>
         </View>
       </Screen>);
@@ -282,7 +283,7 @@ export default function AbroadScreen() {
               </View>
                <Text className={`text-center text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.description}</Text>
             </View>
-
+{isSubmitting ? 'Submitting...' : 'Submit Request'}
             <View className={`gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <Text className="text-[15px] font-extrabold text-brand">Overview</Text>
               <Text className={`text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.overview}</Text>
