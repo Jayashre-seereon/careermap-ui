@@ -671,9 +671,9 @@ export default function BookMentorScreen() {
           <Text className="text-[12px] font-bold text-brand">{mentor.specialty}</Text>
           <View className="flex-row flex-wrap justify-center gap-2.5">
             <View className="flex-row items-center gap-1">
-              <Ionicons name="star" size={12} color={palette.secondary}/>
+              <Ionicons name="trophy" size={12} color={palette.secondary}/>
               <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
-              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>rating</Text>
+              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>ranking</Text>
             </View>
             <Text className="text-[11px]">
               <Text className={`font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{experienceValue}</Text>
@@ -760,7 +760,7 @@ export default function BookMentorScreen() {
             <View className="items-end gap-1">
               <Text className="text-[12px] font-black text-brand">{mentor.price}</Text>
               <View className={`flex-row items-center gap-1 rounded-full px-2.5 py-1 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f7efe8]'}`}>
-                <Ionicons name="star" size={12} color={palette.secondary}/>
+                <Ionicons name="trophy" size={12} color={palette.secondary}/>
                 <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
               </View>
             </View>

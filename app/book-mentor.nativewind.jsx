@@ -153,7 +153,7 @@ export default function BookMentorScreen() {
           <Text className="text-center text-[22px] font-black text-ink">{mentor.name}</Text>
           <Text className="text-[12px] font-bold text-brand">{mentor.specialty}</Text>
           <View className="flex-row flex-wrap justify-center gap-2.5">
-            <Text className="text-[11px] text-muted">{mentor.rating} rating</Text>
+            <Text className="text-[11px] text-muted">{mentor.rating} ranking</Text>
             <Text className="text-[11px] text-muted">{mentor.experience}</Text>
             <Text className="text-[11px] font-extrabold text-brand">{mentor.price}</Text>
           </View>
@@ -210,7 +210,7 @@ export default function BookMentorScreen() {
               <Text className="text-[15px] font-extrabold text-ink">{mentor.name}</Text>
               <Text className="text-[12px] font-bold text-brand">{mentor.specialty}</Text>
               <View className="flex-row gap-2.5">
-                <Text className="text-[11px] text-muted">{mentor.rating} rating</Text>
+                <Text className="text-[11px] text-muted">{mentor.rating} ranking</Text>
                 <Text className="text-[11px] text-muted">{mentor.experience}</Text>
                 <Text className="text-[11px] font-extrabold text-brand">{mentor.price}</Text>
               </View>
