@@ -217,7 +217,7 @@ if (step === 8 && userType === 'student')
     {/* ✅ ADD THIS ONLY */}
     <View className="gap-2 mt-4">
       <Text
-        className={`text-[14px] font-semibold text-center ${
+        className={`text-[18px] font-extrabold text-center ${
           preferences.darkMode ? 'text-white' : 'text-ink'
         }`}
       >
