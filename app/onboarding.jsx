@@ -28,6 +28,7 @@ export default function OnboardingScreen() {
     const [userType, setUserType] = useState('');
     const [step, setStep] = useState(0);
     const [name, setName] = useState('');
+    const [gender, setGender] = useState('');
     const [childName, setChildName] = useState('');
     const [selectedClass, setSelectedClass] = useState('');
     const [selectedStream, setSelectedStream] = useState('');
@@ -67,7 +68,7 @@ export default function OnboardingScreen() {
         if (step === 0)
             return userType !== '';
         if (step === 2)
-            return name.trim().length > 0;
+            return name.trim().length > 0  && gender !== '';
         if (step === 3)
             return userType === 'parent' ? childName.trim().length > 0 : selectedClass !== '' && (selectedClass !== 'Other' || otherClass.trim().length > 0);
         if (step === 4)
@@ -106,6 +107,7 @@ if (step === 8 && userType === 'student')
             const onboardingData = {
                 userType,
                 name,
+                gender,
                 childName,
                 selectedClass: selectedClass === 'Other' ? otherClass.trim() : selectedClass,
                 selectedStream: selectedStream === 'Other' ? otherStream.trim() : selectedStream,
@@ -201,7 +203,57 @@ if (step === 8 && userType === 'student')
             </Text>
           </View>) : null}
 
-        {step === 2 ? (<StepInput darkMode={preferences.darkMode} title="What's your name?" icon="Name" value={name} setValue={setName} placeholder={userType === 'parent' ? 'Enter your name' : 'Enter your full name'}/>) : null}
+       {step === 2 ? (
+  <>
+    <StepInput
+      darkMode={preferences.darkMode}
+      title="What's your name?"
+      icon="Name"
+      value={name}
+      setValue={setName}
+      placeholder={userType === 'parent' ? 'Enter your name' : 'Enter your full name'}
+    />
+
+    {/* ✅ ADD THIS ONLY */}
+    <View className="gap-2 mt-4">
+      <Text
+        className={`text-[14px] font-semibold text-center ${
+          preferences.darkMode ? 'text-white' : 'text-ink'
+        }`}
+      >
+        Select Gender
+      </Text>
+
+      <View className="flex-row gap-3">
+        {['Male', 'Female', 'Other'].map((g) => (
+          <Pressable
+            key={g}
+            onPress={() => setGender(g)}
+            className={`flex-1 items-center justify-center rounded-[14px] border py-3 ${
+              gender === g
+                ? 'bg-brand border-brand'
+                : preferences.darkMode
+                ? 'border-[#1a1a1a] bg-[#080808]'
+                : 'border-line bg-card'
+            }`}
+          >
+            <Text
+              className={`font-bold ${
+                gender === g
+                  ? 'text-white'
+                  : preferences.darkMode
+                  ? 'text-white'
+                  : 'text-ink'
+              }`}
+            >
+              {g}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  </>
+) : null}
 
         {step === 3 && userType === 'student' ? (<ChoiceGrid darkMode={preferences.darkMode} title="Which class are you in?" icon="Class" options={studentClassOptions} selected={selectedClass} onSelect={(value) => {
                 setSelectedClass(value);
