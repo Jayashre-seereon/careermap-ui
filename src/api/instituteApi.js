@@ -1,7 +1,7 @@
 import api from './axios';
 
-function buildLocation(city, state) {
-  return [city, state].filter(Boolean).join(', ') || 'Location not available';
+function buildLocation(address) {
+  return address || 'Address not available';
 }
 
 function stripHtml(value) {
@@ -46,8 +46,7 @@ function mapInstituteItem(item, index) {
   return {
     id: String(item?.id ?? `institute-${index}`),
     name: item?.name || 'Unnamed Institute',
-    location: buildLocation(city, state),
-    courses,
+  location: buildLocation(item?.address),  courses,
     type: instituteType,
     state,
     city,

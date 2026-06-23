@@ -47,8 +47,7 @@ export default function InstituteScreen() {
     const [institutes, setInstitutes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
-    const [selectedIndex, setSelectedIndex] = useState(null);
-    const [showFilters, setShowFilters] = useState(false);
+      const [showFilters, setShowFilters] = useState(false);
     const [typeFilter, setTypeFilter] = useState('All');
     const [stateFilter, setStateFilter] = useState('All');
     const [categoryFilter, setCategoryFilter] = useState('All');
@@ -107,11 +106,8 @@ export default function InstituteScreen() {
         () => buildHierarchyOptions(institutes, 'subcategory', { category: categoryFilter, secondcategory: secondCategoryFilter }),
         [institutes, categoryFilter, secondCategoryFilter]
     );
-
-    const animationKey = selectedIndex !== null
-        ? `institute-${selectedIndex}`
-        : `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az' : 'default'}-${showFilters ? 'filters' : 'plain'}`;
-
+const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az' : 'default'}-${showFilters ? 'filters' : 'plain'}`;
+   
     const filtered = useMemo(() => {
         let source = [...institutes];
 
@@ -148,70 +144,7 @@ export default function InstituteScreen() {
         }
     }, [categoryFilter, categoryOptions, secondCategoryFilter, secondCategoryOptions, subCategoryFilter, subCategoryOptions]);
 
-    if (selectedIndex !== null) {
-        const item = filtered[selectedIndex];
-
-        return (
-            <Screen animationKey={animationKey}>
-                <SectionHeader
-                    title={item.name}
-                    subtitle="Institute detail view shaped to match the reference prototype."
-                    action={
-                        <AnimatedPressable
-                            className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`}
-                            onPress={() => setSelectedIndex(null)}
-                        >
-                            <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
-                        </AnimatedPressable>
-                    }
-                />
-
-                <View className="items-center gap-2 py-2">
-                    <View className="h-[68px] w-[68px] overflow-hidden rounded-[22px]" style={{ backgroundColor: `${palette.primary}12` }}>
-                        {renderInstituteLogo(item, 68)}
-                    </View>
-                    <Text className={`text-center text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
-                    <Text className={`text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.location}</Text>
-                    <View className="flex-row justify-center">
-                        <Pill label={item.type} tone={palette.blue}/>
-                    </View>
-                </View>
-
-                <View className={`gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-                    <Text className="text-[14px] font-extrabold text-brand">About</Text>
-                    <Text className={`text-[13px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.about}</Text>
-                </View>
-
-                <View className={`gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-                    <Text className="text-[14px] font-extrabold text-brand">Courses Offered</Text>
-                    <View className="flex-row flex-wrap gap-2">
-                        {item.courses.length
-                            ? item.courses.map((course) => (
-                                <View key={course} className={`rounded-[12px] px-3 py-2 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f7f2fb]'}`}>
-                                    <Text className="text-[12px] font-bold text-purple-700" style={{ color: palette.purple }}>{course}</Text>
-                                </View>
-                            ))
-                            : (
-                                <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-                                    Course information is not available right now.
-                                </Text>
-                            )}
-                    </View>
-                </View>
-
-                <AnimatedPressable
-                    className="items-center rounded-[16px] bg-brand py-[14px]"
-                    onPress={() => {
-                        if (item.website && item.website !== '#') {
-                            Linking.openURL(item.website);
-                        }
-                    }}
-                >
-                    <Text className="text-[14px] font-extrabold text-white">Visit Official Website</Text>
-                </AnimatedPressable>
-            </Screen>
-        );
-    }
+   
 
     return (
         <Screen animationKey={animationKey}>
@@ -226,12 +159,7 @@ export default function InstituteScreen() {
                         >
                             <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : preferences.darkMode ? '#ffffff' : palette.text}/>
                         </AnimatedPressable>
-                        {/* <AnimatedPressable
-                            className={`rounded-[12px] px-2.5 py-2 ${sortAZ ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`}
-                            onPress={() => setSortAZ((value) => !value)}
-                        >
-                            <Text className={`text-[11px] font-extrabold ${sortAZ ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>A-Z</Text>
-                        </AnimatedPressable> */}
+                      
                     </View>
                 }
             />
@@ -270,11 +198,13 @@ export default function InstituteScreen() {
                 ) : null}
 
                 {filtered.map((item, index) => (
-                    <AnimatedPressable key={item.id} className={`relative gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => setSelectedIndex(index)}>
+                    <AnimatedPressable key={item.id} className={`relative gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} >
                         <View className="absolute right-4 top-4">
                             <Pill label={item.type} tone={palette.blue}/>
                         </View>
+                        
                         <View className="flex-row gap-3">
+
                             <View className="h-[50px] w-[50px] overflow-hidden rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
                                 {renderInstituteLogo(item, 50)}
                             </View>
@@ -283,6 +213,18 @@ export default function InstituteScreen() {
                                 <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.location}</Text>
                             </View>
                         </View>
+                         <AnimatedPressable
+    onPress={(e) => {
+      e.stopPropagation();
+      Linking.openURL(item.website);
+    }}
+    className="absolute right-4 bottom-4 px-2 py-1 rounded-[8px] bg-brand"
+  >
+    <Text className="text-[10px] font-bold text-white">
+      Visit Website
+    </Text>
+  </AnimatedPressable>
+
                     </AnimatedPressable>
                 ))}
             </View>

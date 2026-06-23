@@ -141,13 +141,7 @@ export default function EntranceExamScreen() {
                             </View>
                             <View className="flex-1 pr-3">
                                 <Text className={`mb-0.5 text-[16px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam.name}</Text>
-                                <Text className={`mb-1 text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{exam.authority}</Text>
-                                <View className="mb-0.5 flex-row items-center">
-                                    <Ionicons name="calendar-outline" size={12} color={preferences.darkMode ? '#9f95a4' : palette.muted}/>
-                                    <Text className={`ml-1 text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{exam.date}</Text>
-                                </View>
-                                <Text className={`mb-1.5 text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{exam.eligibility}</Text>
-                            </View>
+                                   </View>
                             <View className="items-end gap-2">
                                 <View className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: `${palette.primary}15` }}>
                                     <Ionicons name="open-outline" size={16} color={palette.primary}/>
