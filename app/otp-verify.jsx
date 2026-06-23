@@ -46,6 +46,8 @@ export default function OtpVerifyScreen() {
       const response = await verifyOtp(mobileNumber, otp, flowType);
 
       if (flowType === 'login') {
+        const requiresInstituteOnboarding = Boolean(response?.user?.isInstituteStudent);
+
         setTempToken('');
         setAccessToken(response.accessToken || '');
         setRefreshToken(response.refreshToken || '');
@@ -62,7 +64,7 @@ export default function OtpVerifyScreen() {
         }
 
         clearAuthFlow();
-        router.replace(next || '/(drawer)/(tabs)');
+        router.replace(requiresInstituteOnboarding ? '/onboarding' : (next || '/(drawer)/(tabs)'));
         return;
       }
 

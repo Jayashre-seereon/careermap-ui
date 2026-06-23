@@ -25,6 +25,7 @@ const priorityOptions = ['High Earning Potential ', 'Passion and Interest', 'Wor
 export default function OnboardingScreen() {
     const { preferences, saveOnboarding } = useAppState();
     const setOnboardingData = useAuthStore((state) => state.setOnboardingData);
+    const hasAuthenticatedSession = useAuthStore((state) => state.hasAuthenticatedSession);
     const [userType, setUserType] = useState('');
     const [step, setStep] = useState(0);
     const [name, setName] = useState('');
@@ -144,7 +145,7 @@ if (step === 8 && userType === 'student')
     }
 
     if (step === 9) {
-        router.replace('/login');
+        router.replace(hasAuthenticatedSession ? '/(drawer)/(tabs)' : '/login');
         return;
     }
 

@@ -45,6 +45,8 @@ export default function LoginScreen() {
   const validatePasswordField = (value) => getPasswordError(value);
 
   const completeLogin = (response) => {
+    const requiresInstituteOnboarding = Boolean(response?.user?.isInstituteStudent);
+
     setAccessToken(response.accessToken || '');
     setRefreshToken(response.refreshToken || '');
     setUser(response.user || null);
@@ -60,7 +62,7 @@ export default function LoginScreen() {
     }
 
     clearAuthFlow();
-    router.replace('/(drawer)/(tabs)');
+    router.replace(requiresInstituteOnboarding ? '/onboarding' : '/(drawer)/(tabs)');
   };
 
   const handleSendOtp = async () => {
