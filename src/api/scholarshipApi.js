@@ -61,6 +61,9 @@ function formatRequirements(requirement) {
 
 function mapScholarshipItem(item, index) {
   const scholarshipType = item?.type || 'Scholarship';
+  const categoryObj = item?.category ?? item?.categoryObj ?? null;
+  const secondcategoryObj = item?.secondcategory ?? item?.secondcategoryObj ?? null;
+  const subcategoryObj = item?.subcategory ?? item?.subcategoryObj ?? null;
 
   return {
     id: String(item?.id ?? `scholarship-${index}`),
@@ -74,6 +77,17 @@ function mapScholarshipItem(item, index) {
     description: stripHtml(item?.description) || 'Scholarship details are not available right now.',
     requirements: formatRequirements(item?.requirement),
     link: item?.url || '#',
+    categoryId: item?.categoryId ?? null,
+    secondcategoryId: item?.secondcategoryId ?? null,
+    subcategoryId: item?.subcategoryId ?? null,
+    categoryObj,
+    secondcategoryObj,
+    subcategoryObj,
+    categoryName: categoryObj?.title || categoryObj?.name || categoryObj?.label || item?.categoryName || '',
+    secondcategoryName:
+      secondcategoryObj?.title || secondcategoryObj?.name || secondcategoryObj?.label || item?.secondcategoryName || '',
+    subcategoryName:
+      subcategoryObj?.title || subcategoryObj?.name || subcategoryObj?.label || item?.subcategoryName || '',
   };
 }
 

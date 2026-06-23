@@ -5,7 +5,8 @@ import { ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getEntranceExams } from '../../src/api/entranceExamApi';
-import { AnimatedPressable, Screen, SectionHeader } from '../../src/careermap-ui';
+import { AnimatedPressable, HierarchyFilterPanel, Screen, SectionHeader } from '../../src/careermap-ui';
+import { buildHierarchyOptions, filterByHierarchy } from '../../src/utils/hierarchy';
 
 export default function EntranceExamScreen() {
     const { preferences } = useAppState();
@@ -13,7 +14,9 @@ export default function EntranceExamScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
     const [typeFilter, setTypeFilter] = useState('All');
-    const [catFilter, setCatFilter] = useState('All');
+    const [categoryFilter, setCategoryFilter] = useState('All');
+    const [secondCategoryFilter, setSecondCategoryFilter] = useState('All');
+    const [subCategoryFilter, setSubCategoryFilter] = useState('All');
     const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
@@ -51,20 +54,44 @@ export default function EntranceExamScreen() {
         () => ['All', ...Array.from(new Set(entranceExams.map((exam) => exam.type).filter(Boolean)))],
         [entranceExams]
     );
-    const categoryFilters = useMemo(
-        () => ['All', ...Array.from(new Set(entranceExams.map((exam) => exam.category).filter(Boolean)))],
-        [entranceExams]
+
+    const hierarchyCategoryOptions = useMemo(
+        () => buildHierarchyOptions(entranceExams, 'category', { secondcategory: secondCategoryFilter, subcategory: subCategoryFilter }),
+        [entranceExams, secondCategoryFilter, subCategoryFilter]
     );
+    const hierarchySecondCategoryOptions = useMemo(
+        () => buildHierarchyOptions(entranceExams, 'secondcategory', { category: categoryFilter, subcategory: subCategoryFilter }),
+        [entranceExams, categoryFilter, subCategoryFilter]
+    );
+    const hierarchySubCategoryOptions = useMemo(
+        () => buildHierarchyOptions(entranceExams, 'subcategory', { category: categoryFilter, secondcategory: secondCategoryFilter }),
+        [entranceExams, categoryFilter, secondCategoryFilter]
+    );
+    const filtered = useMemo(() => {
+        let source = [...entranceExams];
 
-    let filtered = [...entranceExams];
+        if (typeFilter !== 'All') {
+            source = source.filter((exam) => exam.type === typeFilter);
+        }
 
-    if (typeFilter !== 'All') {
-        filtered = filtered.filter((exam) => exam.type === typeFilter);
-    }
+        return filterByHierarchy(source, {
+            category: categoryFilter,
+            secondcategory: secondCategoryFilter,
+            subcategory: subCategoryFilter,
+        });
+    }, [categoryFilter, entranceExams, secondCategoryFilter, subCategoryFilter, typeFilter]);
 
-    if (catFilter !== 'All') {
-        filtered = filtered.filter((exam) => exam.category === catFilter);
-    }
+    useEffect(() => {
+        if (categoryFilter !== 'All' && !hierarchyCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(categoryFilter))) {
+            setCategoryFilter('All');
+        }
+        if (!hierarchySecondCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(secondCategoryFilter))) {
+            setSecondCategoryFilter('All');
+        }
+        if (!hierarchySubCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(subCategoryFilter))) {
+            setSubCategoryFilter('All');
+        }
+    }, [categoryFilter, hierarchyCategoryOptions, hierarchySecondCategoryOptions, hierarchySubCategoryOptions, secondCategoryFilter, subCategoryFilter]);
 
     return (
         <Screen>
@@ -88,14 +115,25 @@ export default function EntranceExamScreen() {
                             </AnimatedPressable>
                         ))}
                     </ScrollView>
-                    <Text className={`text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Category</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
-                        {categoryFilters.map((filterValue) => (
-                            <AnimatedPressable key={filterValue} className={`rounded-2xl border px-3 py-1.5 ${catFilter === filterValue ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-surface'}`} onPress={() => setCatFilter(filterValue)}>
-                                <Text className={`text-[11px] font-semibold ${catFilter === filterValue ? 'text-surface' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{filterValue}</Text>
-                            </AnimatedPressable>
-                        ))}
-                    </ScrollView>
+                    <HierarchyFilterPanel
+                        visible
+                        categoryOptions={hierarchyCategoryOptions}
+                        secondCategoryOptions={hierarchySecondCategoryOptions}
+                        subCategoryOptions={hierarchySubCategoryOptions}
+                        selectedCategory={categoryFilter}
+                        selectedSecondCategory={secondCategoryFilter}
+                        selectedSubCategory={subCategoryFilter}
+                        onChangeCategory={(value) => {
+                            setCategoryFilter(value);
+                            setSecondCategoryFilter('All');
+                            setSubCategoryFilter('All');
+                        }}
+                        onChangeSecondCategory={(value) => {
+                            setSecondCategoryFilter(value);
+                            setSubCategoryFilter('All');
+                        }}
+                        onChangeSubCategory={setSubCategoryFilter}
+                    />
                 </View>
             )}
 

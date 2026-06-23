@@ -4,7 +4,8 @@ import { Image, Linking, ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getInstitutes } from '../../src/api/instituteApi';
-import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+import { AnimatedPressable, HierarchyFilterPanel, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+import { buildHierarchyOptions, filterByHierarchy } from '../../src/utils/hierarchy';
 
 const getInstituteInitials = (name) => {
     const source = String(name || 'Institute').trim();
@@ -50,6 +51,9 @@ export default function InstituteScreen() {
     const [showFilters, setShowFilters] = useState(false);
     const [typeFilter, setTypeFilter] = useState('All');
     const [stateFilter, setStateFilter] = useState('All');
+    const [categoryFilter, setCategoryFilter] = useState('All');
+    const [secondCategoryFilter, setSecondCategoryFilter] = useState('All');
+    const [subCategoryFilter, setSubCategoryFilter] = useState('All');
     const [sortAZ, setSortAZ] = useState(false);
 
     useEffect(() => {
@@ -91,24 +95,58 @@ export default function InstituteScreen() {
         () => ['All', ...Array.from(new Set(institutes.map((item) => item.state).filter(Boolean)))],
         [institutes]
     );
+    const categoryOptions = useMemo(
+        () => buildHierarchyOptions(institutes, 'category', { secondcategory: secondCategoryFilter, subcategory: subCategoryFilter }),
+        [institutes, secondCategoryFilter, subCategoryFilter]
+    );
+    const secondCategoryOptions = useMemo(
+        () => buildHierarchyOptions(institutes, 'secondcategory', { category: categoryFilter, subcategory: subCategoryFilter }),
+        [institutes, categoryFilter, subCategoryFilter]
+    );
+    const subCategoryOptions = useMemo(
+        () => buildHierarchyOptions(institutes, 'subcategory', { category: categoryFilter, secondcategory: secondCategoryFilter }),
+        [institutes, categoryFilter, secondCategoryFilter]
+    );
 
     const animationKey = selectedIndex !== null
         ? `institute-${selectedIndex}`
         : `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az' : 'default'}-${showFilters ? 'filters' : 'plain'}`;
 
-    let filtered = [...institutes];
+    const filtered = useMemo(() => {
+        let source = [...institutes];
 
-    if (typeFilter !== 'All') {
-        filtered = filtered.filter((item) => item.type === typeFilter);
-    }
+        if (typeFilter !== 'All') {
+            source = source.filter((item) => item.type === typeFilter);
+        }
 
-    if (stateFilter !== 'All') {
-        filtered = filtered.filter((item) => item.state === stateFilter);
-    }
+        if (stateFilter !== 'All') {
+            source = source.filter((item) => item.state === stateFilter);
+        }
 
-    if (sortAZ) {
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-    }
+        source = filterByHierarchy(source, {
+            category: categoryFilter,
+            secondcategory: secondCategoryFilter,
+            subcategory: subCategoryFilter,
+        });
+
+        if (sortAZ) {
+            source.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        return source;
+    }, [categoryFilter, institutes, secondCategoryFilter, sortAZ, stateFilter, subCategoryFilter, typeFilter]);
+
+    useEffect(() => {
+        if (categoryFilter !== 'All' && !categoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(categoryFilter))) {
+            setCategoryFilter('All');
+        }
+        if (!secondCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(secondCategoryFilter))) {
+            setSecondCategoryFilter('All');
+        }
+        if (!subCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(subCategoryFilter))) {
+            setSubCategoryFilter('All');
+        }
+    }, [categoryFilter, categoryOptions, secondCategoryFilter, secondCategoryOptions, subCategoryFilter, subCategoryOptions]);
 
     if (selectedIndex !== null) {
         const item = filtered[selectedIndex];
@@ -208,8 +246,33 @@ export default function InstituteScreen() {
                             </AnimatedPressable>
                         ))}
                     </ScrollView>
-
-                   
+                    <Text className={`text-[11px] font-extrabold uppercase tracking-[0.7px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>State</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2.5 pr-1">
+                        {stateOptions.map((label) => (
+                            <AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${stateFilter === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setStateFilter(label)}>
+                                <Text className={`text-[11px] font-extrabold ${stateFilter === label ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
+                            </AnimatedPressable>
+                        ))}
+                    </ScrollView>
+                    <HierarchyFilterPanel
+                        visible
+                        categoryOptions={categoryOptions}
+                        secondCategoryOptions={secondCategoryOptions}
+                        subCategoryOptions={subCategoryOptions}
+                        selectedCategory={categoryFilter}
+                        selectedSecondCategory={secondCategoryFilter}
+                        selectedSubCategory={subCategoryFilter}
+                        onChangeCategory={(value) => {
+                            setCategoryFilter(value);
+                            setSecondCategoryFilter('All');
+                            setSubCategoryFilter('All');
+                        }}
+                        onChangeSecondCategory={(value) => {
+                            setSecondCategoryFilter(value);
+                            setSubCategoryFilter('All');
+                        }}
+                        onChangeSubCategory={setSubCategoryFilter}
+                    />
                 </View>
             ) : null}
 

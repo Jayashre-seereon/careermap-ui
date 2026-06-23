@@ -125,6 +125,9 @@ function normalizeBookedSlots(payload) {
 export function mapMentorItem(item, index = 0) {
   const name = item?.name || 'Unknown Mentor';
   const availability = normalizeAvailability(item?.availability);
+  const categoryObj = item?.category ?? item?.categoryObj ?? null;
+  const secondcategoryObj = item?.secondcategory ?? item?.secondcategoryObj ?? null;
+  const subcategoryObj = item?.subcategory ?? item?.subcategoryObj ?? null;
 
   return {
     id: String(item?.id ?? `mentor-${index}`),
@@ -151,7 +154,17 @@ export function mapMentorItem(item, index = 0) {
     image: item?.image || null,
     resume: item?.resume || null,
     categoryId: item?.categoryId ?? null,
+    secondcategoryId: item?.secondcategoryId ?? null,
     subCategoryId: item?.subCategoryId ?? null,
+    subcategoryId: item?.subcategoryId ?? item?.subCategoryId ?? null,
+    categoryObj,
+    secondcategoryObj,
+    subcategoryObj,
+    categoryName: categoryObj?.title || categoryObj?.name || categoryObj?.label || item?.categoryName || item?.category || '',
+    secondcategoryName:
+      secondcategoryObj?.title || secondcategoryObj?.name || secondcategoryObj?.label || item?.secondcategoryName || item?.secondcategory || '',
+    subcategoryName:
+      subcategoryObj?.title || subcategoryObj?.name || subcategoryObj?.label || item?.subcategoryName || item?.subcategory || '',
     availability,
     raw: item,
   };

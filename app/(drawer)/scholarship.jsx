@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Linking, ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getScholarships } from '../../src/api/scholarshipApi';
-import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
+import { AnimatedPressable, HierarchyFilterPanel, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
+import { buildHierarchyOptions, filterByHierarchy } from '../../src/utils/hierarchy';
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
 
 export default function ScholarshipScreen() {
@@ -18,9 +19,14 @@ export default function ScholarshipScreen() {
     const [showFilters, setShowFilters] = useState(false);
     const [activeStatus, setActiveStatus] = useState('All');
     const [sortBy, setSortBy] = useState('Default');
+    const [categoryFilter, setCategoryFilter] = useState('All');
+    const [secondCategoryFilter, setSecondCategoryFilter] = useState('All');
+    const [subCategoryFilter, setSubCategoryFilter] = useState('All');
     const [selectedId, setSelectedId] = useState(null);
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
-    const animationKey = selectedId !== null ? `scholarship-${selectedId}` : `scholarship-list-${activeStatus}-${sortBy}-${showFilters ? 'filters' : 'plain'}`;
+    const animationKey = selectedId !== null
+        ? `scholarship-${selectedId}`
+        : `scholarship-list-${activeStatus}-${sortBy}-${categoryFilter}-${secondCategoryFilter}-${subCategoryFilter}-${showFilters ? 'filters' : 'plain'}`;
 
     useEffect(() => {
         let isMounted = true;
@@ -53,15 +59,48 @@ export default function ScholarshipScreen() {
         };
     }, []);
 
-    let filtered = activeStatus === 'All' ? [...scholarships] : scholarships.filter((item) => item.status === activeStatus);
+    const categoryOptions = useMemo(
+        () => buildHierarchyOptions(scholarships, 'category', { secondcategory: secondCategoryFilter, subcategory: subCategoryFilter }),
+        [scholarships, secondCategoryFilter, subCategoryFilter]
+    );
+    const secondCategoryOptions = useMemo(
+        () => buildHierarchyOptions(scholarships, 'secondcategory', { category: categoryFilter, subcategory: subCategoryFilter }),
+        [scholarships, categoryFilter, subCategoryFilter]
+    );
+    const subCategoryOptions = useMemo(
+        () => buildHierarchyOptions(scholarships, 'subcategory', { category: categoryFilter, secondcategory: secondCategoryFilter }),
+        [scholarships, categoryFilter, secondCategoryFilter]
+    );
 
-    if (sortBy === 'A-Z') {
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-    }
+    const filtered = useMemo(() => {
+        let source = filterByHierarchy(scholarships, {
+            category: categoryFilter,
+            secondcategory: secondCategoryFilter,
+            subcategory: subCategoryFilter,
+        });
 
-    if (sortBy === 'Z-A') {
-        filtered.sort((a, b) => b.name.localeCompare(a.name));
-    }
+        source = activeStatus === 'All' ? source : source.filter((item) => item.status === activeStatus);
+
+        if (sortBy === 'A-Z') {
+            source = [...source].sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortBy === 'Z-A') {
+            source = [...source].sort((a, b) => b.name.localeCompare(a.name));
+        }
+
+        return source;
+    }, [activeStatus, categoryFilter, scholarships, secondCategoryFilter, sortBy, subCategoryFilter]);
+
+    useEffect(() => {
+        if (categoryFilter !== 'All' && !categoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(categoryFilter))) {
+            setCategoryFilter('All');
+        }
+        if (!secondCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(secondCategoryFilter))) {
+            setSecondCategoryFilter('All');
+        }
+        if (!subCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(subCategoryFilter))) {
+            setSubCategoryFilter('All');
+        }
+    }, [categoryFilter, categoryOptions, secondCategoryFilter, secondCategoryOptions, subCategoryFilter, subCategoryOptions]);
 
     useEffect(() => {
         if (typeof params.selected === 'string') {
@@ -177,7 +216,7 @@ export default function ScholarshipScreen() {
             />
 
             {showFilters ? (
-                <View className="gap-2">
+                <View className="gap-3">
                     <Text className={`text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Status</Text>
 
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
@@ -197,6 +236,26 @@ export default function ScholarshipScreen() {
                             </AnimatedPressable>
                         ))}
                     </ScrollView>
+
+                    <HierarchyFilterPanel
+                        visible
+                        categoryOptions={categoryOptions}
+                        secondCategoryOptions={secondCategoryOptions}
+                        subCategoryOptions={subCategoryOptions}
+                        selectedCategory={categoryFilter}
+                        selectedSecondCategory={secondCategoryFilter}
+                        selectedSubCategory={subCategoryFilter}
+                        onChangeCategory={(value) => {
+                            setCategoryFilter(value);
+                            setSecondCategoryFilter('All');
+                            setSubCategoryFilter('All');
+                        }}
+                        onChangeSecondCategory={(value) => {
+                            setSecondCategoryFilter(value);
+                            setSubCategoryFilter('All');
+                        }}
+                        onChangeSubCategory={setSubCategoryFilter}
+                    />
                 </View>
             ) : null}
 

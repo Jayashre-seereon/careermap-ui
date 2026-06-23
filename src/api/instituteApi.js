@@ -39,6 +39,9 @@ function mapInstituteItem(item, index) {
   const city = item?.city || '';
   const instituteType = item?.institute_type || 'Institute';
   const courses = Array.isArray(item?.course_offered) ? item.course_offered.filter(Boolean) : [];
+  const categoryObj = item?.category ?? item?.categoryObj ?? null;
+  const secondcategoryObj = item?.secondcategory ?? item?.secondcategoryObj ?? null;
+  const subcategoryObj = item?.subcategory ?? item?.subcategoryObj ?? null;
 
   return {
     id: String(item?.id ?? `institute-${index}`),
@@ -52,6 +55,17 @@ function mapInstituteItem(item, index) {
     logo: item?.logo || null,
     about: stripHtml(item?.about) || 'About information is not available right now.',
     website: item?.url || '#',
+    categoryId: item?.categoryId ?? null,
+    secondcategoryId: item?.secondcategoryId ?? null,
+    subcategoryId: item?.subcategoryId ?? null,
+    categoryObj,
+    secondcategoryObj,
+    subcategoryObj,
+    categoryName: categoryObj?.title || categoryObj?.name || categoryObj?.label || item?.categoryName || '',
+    secondcategoryName:
+      secondcategoryObj?.title || secondcategoryObj?.name || secondcategoryObj?.label || item?.secondcategoryName || '',
+    subcategoryName:
+      subcategoryObj?.title || subcategoryObj?.name || subcategoryObj?.label || item?.subcategoryName || '',
   };
 }
 

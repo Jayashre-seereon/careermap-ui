@@ -6,9 +6,10 @@ import { useAppState } from '../../src/app-state';
 import { checkModuleAccess, getModules } from '../../src/api/moduleAccessApi';
 import { mentors, palette } from '../../src/careermap-data';
 import { createMentorOrder, getBookedMentorSlots, getMentorById, getMentors, verifyMentorPayment } from '../../src/api/mentorApi';
-import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
+import { AnimatedPressable, HierarchyFilterPanel, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
 import { openRazorpayCheckout } from '../../src/utils/razorpay';
+import { buildHierarchyOptions, filterByHierarchy } from '../../src/utils/hierarchy';
 const getMentorInitials = (mentor) => {
     const source = String(mentor?.name || mentor?.avatar || 'M').trim();
     const initials = source
@@ -60,6 +61,10 @@ export default function BookMentorScreen() {
     const params = useLocalSearchParams();
     const { addBooking, canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess, userProfile } = useAppState();
     const [mentorList, setMentorList] = useState(mentors);
+    const [showFilters, setShowFilters] = useState(false);
+    const [categoryFilter, setCategoryFilter] = useState('All');
+    const [secondCategoryFilter, setSecondCategoryFilter] = useState('All');
+    const [subCategoryFilter, setSubCategoryFilter] = useState('All');
     const [resolvedModuleId, setResolvedModuleId] = useState(() => {
         const parsed = Number(params.moduleId);
         return Number.isFinite(parsed) ? parsed : null;
@@ -146,11 +151,43 @@ export default function BookMentorScreen() {
     }, [activeMentor, selectedDate]);
     const bookedSlotKeys = useMemo(() => bookedSlots.map((slot) => normalizeSlotKey(slot)).filter(Boolean), [bookedSlots]);
     const isSlotBooked = (slot) => bookedSlotKeys.includes(normalizeSlotKey(slot));
+    const categoryOptions = useMemo(
+        () => buildHierarchyOptions(mentorList, 'category', { secondcategory: secondCategoryFilter, subcategory: subCategoryFilter }),
+        [mentorList, secondCategoryFilter, subCategoryFilter]
+    );
+    const secondCategoryOptions = useMemo(
+        () => buildHierarchyOptions(mentorList, 'secondcategory', { category: categoryFilter, subcategory: subCategoryFilter }),
+        [mentorList, categoryFilter, subCategoryFilter]
+    );
+    const subCategoryOptions = useMemo(
+        () => buildHierarchyOptions(mentorList, 'subcategory', { category: categoryFilter, secondcategory: secondCategoryFilter }),
+        [mentorList, categoryFilter, secondCategoryFilter]
+    );
+    const filteredMentors = useMemo(
+        () =>
+            filterByHierarchy(mentorList, {
+                category: categoryFilter,
+                secondcategory: secondCategoryFilter,
+                subcategory: subCategoryFilter,
+            }),
+        [categoryFilter, mentorList, secondCategoryFilter, subCategoryFilter]
+    );
     useEffect(() => {
         if (mentorList.length === 0) {
             setMentorList(mentors);
         }
     }, [mentorList.length]);
+    useEffect(() => {
+        if (categoryFilter !== 'All' && !categoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(categoryFilter))) {
+            setCategoryFilter('All');
+        }
+        if (!secondCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(secondCategoryFilter))) {
+            setSecondCategoryFilter('All');
+        }
+        if (!subCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(subCategoryFilter))) {
+            setSubCategoryFilter('All');
+        }
+    }, [categoryFilter, categoryOptions, secondCategoryOptions, secondCategoryFilter, subCategoryOptions, subCategoryFilter]);
     useEffect(() => {
         let isMounted = true;
 
@@ -735,13 +772,23 @@ export default function BookMentorScreen() {
       </Screen>);
     }
     return (<Screen animationKey={animationKey}>
-      <SectionHeader title="Book Mentor" subtitle="Mentor list and booking flow adapted closely from the prototype."/>
+      <SectionHeader title="Book Mentor" subtitle="Mentor list and booking flow adapted closely from the prototype." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+            <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : preferences.darkMode ? '#ffffff' : palette.text}/>
+          </AnimatedPressable>}/>
       <View className={`gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
         <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Expert Guidance for the Next Big Decision</Text>
         <Text className={`text-[14px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Explore counsellors across engineering, design, and career planning, then reserve a 1-on-1 slot.</Text>
       </View>
+      {showFilters ? (<HierarchyFilterPanel visible categoryOptions={categoryOptions} secondCategoryOptions={secondCategoryOptions} subCategoryOptions={subCategoryOptions} selectedCategory={categoryFilter} selectedSecondCategory={secondCategoryFilter} selectedSubCategory={subCategoryFilter} onChangeCategory={(value) => {
+            setCategoryFilter(value);
+            setSecondCategoryFilter('All');
+            setSubCategoryFilter('All');
+        }} onChangeSecondCategory={(value) => {
+            setSecondCategoryFilter(value);
+            setSubCategoryFilter('All');
+        }} onChangeSubCategory={setSubCategoryFilter}/>) : null}
       <View className="gap-3">
-        {mentorList.map((mentor, index) => (<Pressable key={mentor.id || mentor.name} className={`flex-row items-center gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => {
+        {filteredMentors.map((mentor, index) => (<Pressable key={mentor.id || mentor.name} className={`flex-row items-center gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => {
                 if (!isUnlocked('book-mentor') && !canAccessFreeDetail('book-mentor', mentor.name)) {
                     setShowUnlockSheet(true);
                     return;

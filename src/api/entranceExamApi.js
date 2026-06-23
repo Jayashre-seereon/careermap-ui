@@ -70,6 +70,10 @@ function formatTopColleges(colleges) {
 }
 
 function mapEntranceExam(item, index) {
+  const categoryObj = item?.category ?? item?.categoryObj ?? null;
+  const secondcategoryObj = item?.secondcategory ?? item?.secondcategoryObj ?? null;
+  const subcategoryObj = item?.subcategory ?? item?.subcategoryObj ?? null;
+
   return {
     id: String(item?.id ?? `entrance-exam-${index}`),
     name: item?.examname || 'Unnamed Exam',
@@ -89,6 +93,17 @@ function mapEntranceExam(item, index) {
     examPattern: formatPattern(item?.exam_pattern),
     topColleges: formatTopColleges(item?.top_institution),
     website: item?.url || '#',
+    categoryId: item?.categoryId ?? null,
+    secondcategoryId: item?.secondcategoryId ?? null,
+    subcategoryId: item?.subcategoryId ?? null,
+    categoryObj,
+    secondcategoryObj,
+    subcategoryObj,
+    categoryName: categoryObj?.title || categoryObj?.name || categoryObj?.label || item?.categoryName || '',
+    secondcategoryName:
+      secondcategoryObj?.title || secondcategoryObj?.name || secondcategoryObj?.label || item?.secondcategoryName || '',
+    subcategoryName:
+      subcategoryObj?.title || subcategoryObj?.name || subcategoryObj?.label || item?.subcategoryName || '',
   };
 }
 
