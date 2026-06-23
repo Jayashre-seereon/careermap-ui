@@ -771,14 +771,12 @@ export default function BookMentorScreen() {
         </View>
       </Screen>);
     }
-    return (<Screen animationKey={animationKey}>
+    return (
+    <Screen animationKey={animationKey}>
       <SectionHeader title="Book Mentor" subtitle="Mentor list and booking flow adapted closely from the prototype." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
             <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : preferences.darkMode ? '#ffffff' : palette.text}/>
           </AnimatedPressable>}/>
-      <View className={`gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-        <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Expert Guidance for the Next Big Decision</Text>
-        <Text className={`text-[14px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Explore counsellors across engineering, design, and career planning, then reserve a 1-on-1 slot.</Text>
-      </View>
+      
       {showFilters ? (<HierarchyFilterPanel visible categoryOptions={categoryOptions} secondCategoryOptions={secondCategoryOptions} subCategoryOptions={subCategoryOptions} selectedCategory={categoryFilter} selectedSecondCategory={secondCategoryFilter} selectedSubCategory={subCategoryFilter} onChangeCategory={(value) => {
             setCategoryFilter(value);
             setSecondCategoryFilter('All');

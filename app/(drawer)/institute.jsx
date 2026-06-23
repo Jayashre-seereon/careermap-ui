@@ -226,34 +226,20 @@ export default function InstituteScreen() {
                         >
                             <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : preferences.darkMode ? '#ffffff' : palette.text}/>
                         </AnimatedPressable>
-                        <AnimatedPressable
+                        {/* <AnimatedPressable
                             className={`rounded-[12px] px-2.5 py-2 ${sortAZ ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`}
                             onPress={() => setSortAZ((value) => !value)}
                         >
                             <Text className={`text-[11px] font-extrabold ${sortAZ ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>A-Z</Text>
-                        </AnimatedPressable>
+                        </AnimatedPressable> */}
                     </View>
                 }
             />
 
             {showFilters ? (
                 <View className="gap-2.5">
-                    <Text className={`text-[11px] font-extrabold uppercase tracking-[0.7px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Institute Type</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2.5 pr-1">
-                        {typeOptions.map((label) => (
-                            <AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${typeFilter === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setTypeFilter(label)}>
-                                <Text className={`text-[11px] font-extrabold ${typeFilter === label ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
-                            </AnimatedPressable>
-                        ))}
-                    </ScrollView>
-                    <Text className={`text-[11px] font-extrabold uppercase tracking-[0.7px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>State</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2.5 pr-1">
-                        {stateOptions.map((label) => (
-                            <AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${stateFilter === label ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setStateFilter(label)}>
-                                <Text className={`text-[11px] font-extrabold ${stateFilter === label ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
-                            </AnimatedPressable>
-                        ))}
-                    </ScrollView>
+                    
+                    
                     <HierarchyFilterPanel
                         visible
                         categoryOptions={categoryOptions}

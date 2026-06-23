@@ -107,14 +107,7 @@ export default function EntranceExamScreen() {
 
             {showFilters && (
                 <View className="gap-3">
-                    <Text className={` text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Exam Type</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
-                        {typeFilters.map((filterValue) => (
-                            <AnimatedPressable key={filterValue} className={`rounded-2xl border px-3 py-1.5 ${typeFilter === filterValue ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-surface'}`} onPress={() => setTypeFilter(filterValue)}>
-                                <Text className={`text-[11px] font-semibold ${typeFilter === filterValue ? 'text-surface' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{filterValue}</Text>
-                            </AnimatedPressable>
-                        ))}
-                    </ScrollView>
+                    
                     <HierarchyFilterPanel
                         visible
                         categoryOptions={hierarchyCategoryOptions}
