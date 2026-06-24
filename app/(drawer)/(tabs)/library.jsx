@@ -229,9 +229,9 @@ function normalizeInstituteItems(value) {
 }
 function groupInstitutesByTopStatus(value) {
     const institutes = normalizeInstituteItems(value);
-    const topInstitutes = institutes.filter((item) => item.isTop);
-    const outsideInstitutes = institutes.filter((item) => !item.isTop);
-    const referenceState = topInstitutes.find((item) => item.state)?.state || outsideInstitutes.find((item) => item.state)?.state || '';
+    const referenceState = 'Odisha';
+    const topInstitutes = institutes.filter((item) => item.state === referenceState);
+    const outsideInstitutes = institutes.filter((item) => item.state !== referenceState);
     return { institutes, topInstitutes, outsideInstitutes, referenceState };
 }
 const careerDetails = {
@@ -768,20 +768,37 @@ export default function CareerLibraryScreen() {
         const instituteGroups = groupInstitutesByTopStatus(detail?.institutions);
         return (<StaggerFadeUpItem key={`detail-${detail?.id ?? index}`} index={index}>
           <View className="mb-4">
+            
             <View className="mb-3 flex-row items-start gap-3">
-              <View className={`h-[56px] w-[56px] items-center justify-center rounded-[18px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#ffecef]'}`}>
-                <Ionicons name={getDetailHeaderIcon(detail)} size={26} color={palette.primary}/>
-              </View>
-              <View className="flex-1">
-                <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
-                {getDetailDescription(detail) ? (<Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getDetailDescription(detail)}</Text>) : null}
-              </View>
-            </View>
-             {detailUnlocked ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.green}14` }}>
+  <View className={`h-[56px] w-[56px] items-center justify-center rounded-[18px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#ffecef]'}`}>
+    <Ionicons name={getDetailHeaderIcon(detail)} size={26} color={palette.primary}/>
+  </View>
+  <View className="flex-1">
+    <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
+    {getDetailDescription(detail) ? (
+      <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+        {getDetailDescription(detail)}
+      </Text>
+    ) : null}
+  </View>
+</View>
+ {detailUnlocked ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.green}14` }}>
               <Text className="text-[12px] font-semibold" style={{ color: palette.green }}>
               <Ionicons name="sparkles-outline" size={14} color={palette.green} className="mr-1"/> You have access to view this career detail for free.
               </Text>
             </View>) : null}
+{detail?.description ? (
+    <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+        <View className="mb-3 flex-row items-center gap-2">
+            <Ionicons name="information-circle-outline" size={16} color={palette.primary}/>
+            <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>About</Text>
+        </View>
+        <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+            {detail.description}
+        </Text>
+    </View>
+) : null}
+            
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
               <View className="mb-3 flex-row items-center gap-2">
                 <Ionicons name="briefcase-outline" size={16} color={palette.primary}/>
