@@ -197,36 +197,47 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
                     <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No institutes available right now.</Text>
                 ) : null}
 
-                {filtered.map((item, index) => (
-                    <AnimatedPressable key={item.id} className={`relative gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} >
-                        <View className="absolute right-4 top-4">
-                            <Pill label={item.type} tone={palette.blue}/>
-                        </View>
-                        
-                        <View className="flex-row gap-3">
+             {filtered.map((item, index) => (
+    <AnimatedPressable 
+        key={item.id} 
+        className={`flex-row justify-between items-start rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
+    >
+        {/* LEFT COLUMN: Logo & Text details */}
+        <View className="flex-1 flex-row gap-3 pr-2">
+            <View className="h-[50px] w-[50px] overflow-hidden rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
+                {renderInstituteLogo(item, 50)}
+            </View>
+            <View className="flex-1 gap-1">
+                <Text numberOfLines={2} className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                    {item.name}
+                </Text>
+                <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                    {item.location}
+                </Text>
+            </View>
+        </View>
 
-                            <View className="h-[50px] w-[50px] overflow-hidden rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
-                                {renderInstituteLogo(item, 50)}
-                            </View>
-                            <View className="flex-1 gap-1 pr-[96px]">
-                                <Text numberOfLines={2} className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
-                                <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.location}</Text>
-                            </View>
-                        </View>
-                         <AnimatedPressable
-    onPress={(e) => {
-      e.stopPropagation();
-      Linking.openURL(item.website);
-    }}
-    className="absolute right-4 bottom-4 px-2 py-1 rounded-[8px] bg-brand"
-  >
-    <Text className="text-[10px] font-bold text-white">
-      Visit Website
-    </Text>
-  </AnimatedPressable>
+        {/* RIGHT COLUMN: Stretched vertically to force button to the absolute bottom */}
+        <View className="self-stretch justify-between items-end pl-2 min-h-[64px]">
+            <View>
+                <Pill label={item.type} tone={palette.blue}/>
+            </View>
+            
+            <AnimatedPressable
+                onPress={(e) => {
+                    e.stopPropagation();
+                    Linking.openURL(item.website);
+                }}
+                className="px-3 py-1.5  mt-4"
+            >
+                <Text className="text-[10px] font-bold text-brand">
+                    Visit Website
+                </Text>
+            </AnimatedPressable>
+        </View>
 
-                    </AnimatedPressable>
-                ))}
+    </AnimatedPressable>
+))}
             </View>
         </Screen>
     );

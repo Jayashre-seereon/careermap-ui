@@ -710,12 +710,9 @@ export default function BookMentorScreen() {
             <View className="flex-row items-center gap-1">
               <Ionicons name="trophy" size={12} color={palette.secondary}/>
               <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
-              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>ranking</Text>
+              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Air/State</Text>
             </View>
-            <Text className="text-[11px]">
-              <Text className={`font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{experienceValue}</Text>
-              <Text className={`font-bold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}> {experienceSuffix}</Text>
-            </Text>
+           
             <Text className="text-[11px] font-extrabold text-brand">{mentor.price}</Text>
           </View>
           <View className="flex-row flex-wrap justify-center gap-2">
@@ -800,15 +797,19 @@ export default function BookMentorScreen() {
             <View className="flex-1 gap-0.5">
               <Text className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
               <Text className="text-[12px] font-bold text-brand">{mentor.specialty}</Text>
-              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{mentor.experience}</Text>
-            </View>
-            <View className="items-end gap-1">
-              <Text className="text-[12px] font-black text-brand">{mentor.price}</Text>
-              <View className={`flex-row items-center gap-1 rounded-full px-2.5 py-1 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f7efe8]'}`}>
-                <Ionicons name="trophy" size={12} color={palette.secondary}/>
-                <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
-              </View>
-            </View>
+                 </View>
+           <View className="items-end gap-1">
+    <Text className="text-[13px] font-black text-brand">{mentor.price}</Text>
+    <View className="flex-row items-center gap-1 ">
+        <Ionicons name="trophy" size={11} color={palette.secondary}/>
+        <Text className={`text-[10px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+            {mentor.rating}
+        </Text>
+        <Text className={`text-[10px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+            Air/State
+        </Text>
+    </View>
+</View>
           </Pressable>))}
       </View>
       {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Mentor Access" subtitle="Subscribe to more mentor profiles and booking access." onClose={() => setShowUnlockSheet(false)} onPress={() => {

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View,Linking } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getEntranceExams } from '../../src/api/entranceExamApi';
@@ -27,27 +27,19 @@ export default function EntranceExamScreen() {
                 setIsLoading(true);
                 setLoadError('');
                 const items = await getEntranceExams();
-
-                if (isMounted) {
-                    setEntranceExams(items);
-                }
+                if (isMounted) setEntranceExams(items);
             } catch (_error) {
                 if (isMounted) {
                     setEntranceExams([]);
                     setLoadError('Failed to load entrance exams.');
                 }
             } finally {
-                if (isMounted) {
-                    setIsLoading(false);
-                }
+                if (isMounted) setIsLoading(false);
             }
         }
 
         loadEntranceExams();
-
-        return () => {
-            isMounted = false;
-        };
+        return () => { isMounted = false; };
     }, []);
 
     const typeFilters = useMemo(
@@ -67,13 +59,10 @@ export default function EntranceExamScreen() {
         () => buildHierarchyOptions(entranceExams, 'subcategory', { category: categoryFilter, secondcategory: secondCategoryFilter }),
         [entranceExams, categoryFilter, secondCategoryFilter]
     );
+
     const filtered = useMemo(() => {
         let source = [...entranceExams];
-
-        if (typeFilter !== 'All') {
-            source = source.filter((exam) => exam.type === typeFilter);
-        }
-
+        if (typeFilter !== 'All') source = source.filter((exam) => exam.type === typeFilter);
         return filterByHierarchy(source, {
             category: categoryFilter,
             secondcategory: secondCategoryFilter,
@@ -107,7 +96,6 @@ export default function EntranceExamScreen() {
 
             {showFilters && (
                 <View className="gap-3">
-                    
                     <HierarchyFilterPanel
                         visible
                         categoryOptions={hierarchyCategoryOptions}
@@ -133,29 +121,65 @@ export default function EntranceExamScreen() {
             <View className="gap-3">
                 {isLoading ? <Text className={`text-[14px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading entrance exams...</Text> : null}
                 {!isLoading && loadError ? <Text className="text-[14px] text-brand">{loadError}</Text> : null}
+
                 {filtered.map((exam) => (
-                    <AnimatedPressable key={exam.id} className={`mb-3 rounded-[12px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card shadow-card'}`} onPress={() => router.push({ pathname: '/(drawer)/entrance-exam-detail', params: { examId: exam.id } })}>
-                        <View className="flex-row items-start">
-                            <View className="mr-3 h-10 w-10 items-center justify-center rounded-[10px]" style={{ backgroundColor: `${palette.primary}15` }}>
+                    <AnimatedPressable
+                        key={exam.id}
+                        className={`mb-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card shadow-card'}`}
+                    >
+                       <View className="flex-row items-center gap-3">
+
+                            {/* Document Icon */}
+                           <View className="h-10 w-10 items-center justify-center rounded-[10px] shrink-0 mt-1" style={{ backgroundColor: `${palette.primary}15` }}>
                                 <Ionicons name="document-text-outline" size={20} color={palette.primary}/>
                             </View>
-                            <View className="flex-1 pr-3">
-                                <Text className={`mb-0.5 text-[16px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam.name}</Text>
-                                   </View>
-                            <View className="items-end gap-2">
-                                <View className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: `${palette.primary}15` }}>
-                                    <Ionicons name="open-outline" size={16} color={palette.primary}/>
-                                </View>
-                                <View className="rounded-[10px] px-2 py-1" style={{ backgroundColor: `${palette.orange}20` }}>
-                                    <Text className="text-[9px] font-bold uppercase" style={{ color: palette.orange }}>Issue: {exam.issueDate}</Text>
-                                </View>
-                                <View className="rounded-[10px] px-2 py-1" style={{ backgroundColor: `${palette.green}20` }}>
-                                    <Text className="text-[9px] font-bold uppercase" style={{ color: palette.green }}>Last: {exam.lastDate}</Text>
-                                </View>
+
+                            {/* Title + Dates + Button in column */}
+                            <View className="flex-1 gap-2">
+
+                                {/* Exam Title */}
+                                <Text className={`text-[15px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                                    {exam.name}
+                                </Text>
+
+                              
                             </View>
+
                         </View>
+                          {/* Dates and Button in one row */}
+                               <View className="flex-row items-center gap-2 pt-3">
+
+                                    {/* Issue Date */}
+                                    <View className="rounded-[10px] px-2 py-1" style={{ backgroundColor: `${palette.orange}20` }}>
+                                        <Text className="text-[9px] font-bold uppercase" style={{ color: palette.orange }}>
+                                            Issue: {exam.issueDate}
+                                        </Text>
+                                    </View>
+
+                                    {/* Last Date */}
+                                    <View className="rounded-[10px] px-2 py-1" style={{ backgroundColor: `${palette.green}20` }}>
+                                        <Text className="text-[9px] font-bold uppercase" style={{ color: palette.green }}>
+                                            Last: {exam.lastDate}
+                                        </Text>
+                                    </View>
+
+                                    {/* Visit Website Button */}
+                                    <AnimatedPressable
+                                        onPress={(e) => {
+                                            e.stopPropagation();
+                                            if (exam.website) Linking.openURL(exam.website);
+                                        }}
+                                        className="px-8 "
+                                    >
+                                        <Text className="text-[10px] font-bold text-brand">
+                                            Visit Website
+                                        </Text>
+                                    </AnimatedPressable>
+
+                                </View>
                     </AnimatedPressable>
                 ))}
+
                 {!isLoading && !loadError && filtered.length === 0 ? (
                     <View className="items-center justify-center py-12">
                         <Text className={`text-[14px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No exams match your filters</Text>
