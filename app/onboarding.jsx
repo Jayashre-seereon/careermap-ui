@@ -8,7 +8,8 @@ import { BeeMascot } from '../src/bee-mascot';
 import { palette } from '../src/careermap-data';
 import { AnimatedBackground } from '../src/animated-background';
 import { AnimatedPressable } from '../src/careermap-ui';
-const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate', 'Post Graduate', 'Working Professional', 'Other'];
+import { useAuthStore } from '../src/store/auth-store';
+const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate', 'Post Graduate','Other'];
 const streamOptions = ['Science', 'Commerce', 'Arts', 'Other'];
 const interestOptions = ['Science & Tech', 'Problem Solving','Research & Discovery','Art & Literature','Business ','Sports','Creativity & Design','Dance & Music','Helping People','Public Speaking' ];
 const clarityOptions = [
@@ -22,10 +23,13 @@ const clarityOptions = [
 const strengthOptions = ['Analytical Thinking', 'Communication', 'Creativity', 'Leadership', 'Problem-solving','Teamwork','Time Management','Adaptability','Critical Thinking','Emotional Intelligence','Technical Skills','Decision Making'];
 const priorityOptions = ['High Earning Potential ', 'Passion and Interest', 'Work-Life Balance', 'Job Security', 'Making a Positive Impact', 'Creative Freedom','Intellectual Growth & Advancement'];
 export default function OnboardingScreen() {
-    const { saveOnboarding } = useAppState();
+    const { preferences, saveOnboarding } = useAppState();
+    const setOnboardingData = useAuthStore((state) => state.setOnboardingData);
+    const hasAuthenticatedSession = useAuthStore((state) => state.hasAuthenticatedSession);
     const [userType, setUserType] = useState('');
     const [step, setStep] = useState(0);
     const [name, setName] = useState('');
+    const [gender, setGender] = useState('');
     const [childName, setChildName] = useState('');
     const [selectedClass, setSelectedClass] = useState('');
     const [selectedStream, setSelectedStream] = useState('');
@@ -65,7 +69,7 @@ export default function OnboardingScreen() {
         if (step === 0)
             return userType !== '';
         if (step === 2)
-            return name.trim().length > 0;
+            return name.trim().length > 0  && gender !== '';
         if (step === 3)
             return userType === 'parent' ? childName.trim().length > 0 : selectedClass !== '' && (selectedClass !== 'Other' || otherClass.trim().length > 0);
         if (step === 4)
@@ -76,102 +80,191 @@ export default function OnboardingScreen() {
             return userType === 'parent'
                 ? selectedStream !== '' && (selectedStream !== 'Other' || otherStream.trim().length > 0)
                 : selectedInterests.length > 0;
-        if (step === 6)
-            return selectedClarity !== '';
-        if (step === 7)
-            return selectedStrengths.length > 0;
-        if (step === 8)
-            return selectedPriorities.length > 0;
+      if (step === 6)
+    return userType === 'parent'
+        ? selectedPriorities.length > 0
+        : selectedClarity !== '';
+
+if (step === 7 && userType === 'student')
+    return selectedStrengths.length > 0;
+
+if (step === 8 && userType === 'student')
+    return selectedPriorities.length > 0;
         return true;
     };
     const next = () => {
-        if (step === 8 && !isOnboardingSaved) {
-            saveOnboarding({
+
+    // Parent Flow
+    if (userType === 'parent') {
+
+        // Stream -> Priority
+        if (step === 5) {
+            setStep(6);
+            return;
+        }
+
+        // Priority -> Success
+        if (step === 6) {
+            const onboardingData = {
                 userType,
                 name,
+                gender,
                 childName,
                 selectedClass: selectedClass === 'Other' ? otherClass.trim() : selectedClass,
                 selectedStream: selectedStream === 'Other' ? otherStream.trim() : selectedStream,
-                selectedInterests,
-                selectedClarity,
-                selectedStrengths,
                 selectedPriorities,
                 selectedGuidance: '',
-            });
-            setIsOnboardingSaved(true);
-            setStep(step + 1);
+            };
+
+            saveOnboarding(onboardingData);
+            setOnboardingData(onboardingData);
+            setStep(9);
             return;
         }
-        if (step < totalSteps - 1) {
-            setStep(step + 1);
-            return;
-        }
-        router.replace('/login');
-    };
+    }
+
+    // Student Flow
+    if (step === 8) {
+        const onboardingData = {
+            userType,
+            name,
+            childName,
+            selectedClass: selectedClass === 'Other' ? otherClass.trim() : selectedClass,
+            selectedStream: selectedStream === 'Other' ? otherStream.trim() : selectedStream,
+            selectedInterests,
+            selectedClarity,
+            selectedStrengths,
+            selectedPriorities,
+            selectedGuidance: '',
+        };
+
+        saveOnboarding(onboardingData);
+        setOnboardingData(onboardingData);
+        setStep(9);
+        return;
+    }
+
+    if (step === 9) {
+        router.replace(hasAuthenticatedSession ? '/(drawer)/(tabs)' : '/login');
+        return;
+    }
+
+    setStep(step + 1);
+};
     return (<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
          <AnimatedBackground /> 
           <ScrollView className="flex-1" contentContainerClassName="flex-grow gap-5 px-6 py-6" showsVerticalScrollIndicator={false}>
-        <Pressable className="h-10 w-10 items-center justify-center rounded-[14px] bg-surface" onPress={() => {
+        <Pressable className={`h-10 w-10 items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => {
             if (step > 0) {
                 setStep((value) => value - 1);
                 return;
             }
             router.back();
         }}>
-          <Ionicons name="arrow-back" size={18} color={palette.text}/>
+          <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
         </Pressable>
         {step > 0 && step < totalSteps - 1 ? (<View className="flex-row gap-1.5">
-            {Array.from({ length: progressCount }).map((_, index) => (<View key={index} className={`h-1.5 flex-1 rounded-full ${index < step ? 'bg-brand' : 'bg-[#e6e0dc]'}`}/>))}
+            {Array.from({ length: progressCount }).map((_, index) => (<View key={index} className={`h-1.5 flex-1 rounded-full ${index < step ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#e6e0dc]'}`}/>))}
           </View>) : null}
 
         <Animated.View style={{ opacity: stepOpacity, transform: [{ translateX: stepTranslate }] }}>
         {step === 0 ? (<View className="flex-grow items-center justify-center gap-4 py-7">
-            <BeeMascot size={100}/>
-            <Text className="text-center text-[28px] font-black leading-9 text-ink">Choose Your Roadmap</Text>
-            <Text className="max-w-[300px] text-center text-[14px] leading-[22px] text-muted">Tell us who you are so we can personalize your experience</Text>
+            <BeeMascot size={100} draggable={false}/>
+            <Text className={`text-center text-[28px] font-black leading-9 ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Choose Your Roadmap</Text>
+            <Text className={`max-w-[300px] text-center text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Tell us who you are so we can personalize your experience</Text>
             <View className="w-full gap-4">
-              <Pressable onPress={() => setUserType('student')} className={`flex-row items-center gap-4 rounded-[24px] border-2 p-[18px] ${userType === 'student' ? 'border-brand bg-[#fff1f4]' : 'border-line bg-card'}`}>
-                <View className={`h-14 w-14 items-center justify-center rounded-[18px] ${userType === 'student' ? 'bg-brand' : 'bg-[#eee8e5]'}`}>
-                  <Text className={`text-[22px] font-black ${userType === 'student' ? 'text-white' : 'text-muted'}`}>S</Text>
+              <Pressable onPress={() => setUserType('student')} className={`flex-row items-center gap-4 rounded-[24px] border-2 p-[18px] ${userType === 'student' ? 'border-brand bg-[#fff1f4]' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+                <View className={`h-14 w-14 items-center justify-center rounded-[18px] ${userType === 'student' ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#eee8e5]'}`}>
+                  <Text className={`text-[22px] font-black ${userType === 'student' ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-muted'}`}>S</Text>
                 </View>
                 <View className="flex-1 gap-0.5">
-                  <Text className="text-[17px] font-extrabold text-ink">I&apos;m a Student</Text>
-                  <Text className="text-[12px] text-muted">Explore career paths for myself</Text>
+                  <Text className={`text-[17px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>I&apos;m a Student</Text>
+                  <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Explore career paths for myself</Text>
                 </View>
               </Pressable>
-              <Pressable onPress={() => setUserType('parent')} className={`flex-row items-center gap-4 rounded-[24px] border-2 p-[18px] ${userType === 'parent' ? 'border-brand bg-[#fff1f4]' : 'border-line bg-card'}`}>
-                <View className={`h-14 w-14 items-center justify-center rounded-[18px] ${userType === 'parent' ? 'bg-brand' : 'bg-[#eee8e5]'}`}>
-                  <Text className={`text-[22px] font-black ${userType === 'parent' ? 'text-white' : 'text-muted'}`}>P</Text>
+              <Pressable onPress={() => setUserType('parent')} className={`flex-row items-center gap-4 rounded-[24px] border-2 p-[18px] ${userType === 'parent' ? 'border-brand bg-[#fff1f4]' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+                <View className={`h-14 w-14 items-center justify-center rounded-[18px] ${userType === 'parent' ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#eee8e5]'}`}>
+                  <Text className={`text-[22px] font-black ${userType === 'parent' ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-muted'}`}>P</Text>
                 </View>
                 <View className="flex-1 gap-0.5">
-                  <Text className="text-[17px] font-extrabold text-ink">I&apos;m a Parent</Text>
-                  <Text className="text-[12px] text-muted">Explore careers for my child</Text>
+                  <Text className={`text-[17px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>I&apos;m a Parent</Text>
+                  <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Explore careers for my child</Text>
                 </View>
               </Pressable>
             </View>
           </View>) : null}
 
         {step === 1 ? (<View className="flex-grow items-center justify-center gap-4 py-7">
-            <BeeMascot size={100}/>
-            <Text className="text-center text-[28px] font-black leading-9 text-ink">{userType === 'parent' ? 'Welcome, Parent!' : "Hi! I'm your Career Guide"}</Text>
-            <Text className="max-w-[300px] text-center text-[14px] leading-[22px] text-muted">
+            <BeeMascot size={100} draggable={false}/>
+            <Text className={`text-center text-[28px] font-black leading-9 ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{userType === 'parent' ? 'Welcome, Parent!' : "Hi! I'm your Career Guide"}</Text>
+            <Text className={`max-w-[300px] text-center text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
               {userType === 'parent'
                 ? "We'll help you explore career options for your child's future."
                 : "I'll help you explore the best career path. Let's get started."}
             </Text>
           </View>) : null}
 
-        {step === 2 ? (<StepInput title="What's your name?" icon="Name" value={name} setValue={setName} placeholder={userType === 'parent' ? 'Enter your name' : 'Enter your full name'}/>) : null}
+       {step === 2 ? (
+  <>
+    <StepInput
+      darkMode={preferences.darkMode}
+      title="What's your name?"
+      icon="Name"
+      value={name}
+      setValue={setName}
+      placeholder={userType === 'parent' ? 'Enter your name' : 'Enter your full name'}
+    />
 
-        {step === 3 && userType === 'student' ? (<ChoiceGrid title="Which class are you in?" icon="Class" options={studentClassOptions} selected={selectedClass} onSelect={(value) => {
+    {/* ✅ ADD THIS ONLY */}
+    <View className="gap-2 mt-4">
+      <Text
+        className={`text-[18px] font-extrabold text-center ${
+          preferences.darkMode ? 'text-white' : 'text-ink'
+        }`}
+      >
+        Select Gender
+      </Text>
+
+      <View className="flex-row gap-3">
+        {['Male', 'Female', 'Other'].map((g) => (
+          <Pressable
+            key={g}
+            onPress={() => setGender(g)}
+            className={`flex-1 items-center justify-center rounded-[14px] border py-3 ${
+              gender === g
+                ? 'bg-brand border-brand'
+                : preferences.darkMode
+                ? 'border-[#1a1a1a] bg-[#080808]'
+                : 'border-line bg-card'
+            }`}
+          >
+            <Text
+              className={`font-bold ${
+                gender === g
+                  ? 'text-white'
+                  : preferences.darkMode
+                  ? 'text-white'
+                  : 'text-ink'
+              }`}
+            >
+              {g}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  </>
+) : null}
+
+        {step === 3 && userType === 'student' ? (<ChoiceGrid darkMode={preferences.darkMode} title="Which class are you in?" icon="Class" options={studentClassOptions} selected={selectedClass} onSelect={(value) => {
                 setSelectedClass(value);
                 if (value !== 'Other')
                     setOtherClass('');
             }} otherValue={otherClass} setOtherValue={setOtherClass}/>) : null}
 
-        {step === 3 && userType === 'parent' ? (<StepInput title="What's your child's name?" icon="Child" value={childName} setValue={setChildName} placeholder="Enter your child's name"/>) : null}
+        {step === 3 && userType === 'parent' ? (<StepInput darkMode={preferences.darkMode} title="What's your child's name?" icon="Child" value={childName} setValue={setChildName} placeholder="Enter your child's name"/>) : null}
 
-        {step === 4 ? (<ChoiceGrid title={userType === 'parent' ? 'Which class is your child in?' : 'Which Stream Excites you the most?'} icon={userType === 'parent' ? 'Class' : 'Stream'} options={userType === 'parent' ? studentClassOptions : streamOptions} selected={userType === 'parent' ? selectedClass : selectedStream} onSelect={(value) => {
+        {step === 4 ? (<ChoiceGrid darkMode={preferences.darkMode} title={userType === 'parent' ? 'Which class is your child currently studying in?' : 'Which Stream Excites you the most?'} icon={userType === 'parent' ? 'Class' : 'Stream'} options={userType === 'parent' ? studentClassOptions : streamOptions} selected={userType === 'parent' ? selectedClass : selectedStream} onSelect={(value) => {
                 if (userType === 'parent') {
                     setSelectedClass(value);
                     if (value !== 'Other')
@@ -183,21 +276,52 @@ export default function OnboardingScreen() {
                     setOtherStream('');
             }} otherValue={userType === 'parent' ? otherClass : otherStream} setOtherValue={userType === 'parent' ? setOtherClass : setOtherStream}/>) : null}
 
-        {step === 5 && userType === 'student' ? (<MultiChoice title="What are your interests?" subtitle="Select all that apply" icon="Interests" options={interestOptions} selected={selectedInterests} onToggle={(value) => toggleMulti(value, selectedInterests, setSelectedInterests)}/>) : null}
+        {step === 5 && userType === 'student' ? (<MultiChoice darkMode={preferences.darkMode} title="What are your interests?"  icon="Interests" options={interestOptions} selected={selectedInterests} onToggle={(value) => toggleMulti(value, selectedInterests, setSelectedInterests)}/>) : null}
 
-        {step === 5 && userType === 'parent' ? (<ChoiceGrid title="Which stream interests your child?" icon="Stream" options={streamOptions} selected={selectedStream} onSelect={(value) => {
+        {step === 5 && userType === 'parent' ? (<ChoiceGrid darkMode={preferences.darkMode} title="Which stream interests your child?" icon="Stream" options={streamOptions} selected={selectedStream} onSelect={(value) => {
                 setSelectedStream(value);
                 if (value !== 'Other')
                     setOtherStream('');
             }} otherValue={otherStream} setOtherValue={setOtherStream}/>) : null}
 
-        {step === 6 ? (<ChoiceList title="Career Clarity" subtitle="How clear are you about your direction?" icon="Clarity" options={clarityOptions} selected={selectedClarity} onSelect={setSelectedClarity}/>) : null}
+     {step === 6 && userType === 'student' ? (
+   <ChoiceList
+      darkMode={preferences.darkMode}
+      title="How clear are you about your direction?"
+      icon="Clarity"
+      options={clarityOptions}
+      selected={selectedClarity}
+      onSelect={setSelectedClarity}
+   />
+) : null}
 
-        {step === 7 ? (<MultiChoice title="Key Strengths" subtitle="What are your core strengths? Pick all that fit." icon="Strengths" options={strengthOptions} selected={selectedStrengths} onToggle={(value) => toggleMulti(value, selectedStrengths, setSelectedStrengths)}/>) : null}
+{step === 7 && userType === 'student' ? (
+   <MultiChoice
+      darkMode={preferences.darkMode}
+      title="What are your core strengths?"
+      icon="Strengths"
+      options={strengthOptions}
+      selected={selectedStrengths}
+      onToggle={(value) =>
+         toggleMulti(value, selectedStrengths, setSelectedStrengths)
+      }
+   />
+) : null}
 
-        {step === 8 ? (<MultiChoice title="Career Priorities" subtitle="What matters most to you in a career?" icon="Priorities" options={priorityOptions} selected={selectedPriorities} onToggle={(value) => toggleMulti(value, selectedPriorities, setSelectedPriorities)}/>) : null}
-
-        {step === 9 ? (<SuccessStep/>) : null}
+{((step === 8 && userType === 'student') ||
+  (step === 6 && userType === 'parent')) ? (
+   <MultiChoice
+      darkMode={preferences.darkMode}
+      title="What matters most to you in a career?"
+      icon="Priorities"
+      options={priorityOptions}
+      selected={selectedPriorities}
+      onToggle={(value) =>
+         toggleMulti(value, selectedPriorities, setSelectedPriorities)
+      }
+   />
+) : null}
+        {step === 9 ? (<SuccessStep darkMode={preferences.darkMode}/>) : null}
 
         </Animated.View>
 
@@ -207,35 +331,35 @@ export default function OnboardingScreen() {
       </ScrollView>
     </SafeAreaView>);
 }
-function StepInput({ title, icon, value, setValue, placeholder, }) {
+function StepInput({ title, icon, value, setValue, placeholder, darkMode, }) {
     return (<View className="gap-[14px] pt-2">
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
-      <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
-      <TextInput value={value} onChangeText={setValue} placeholder={placeholder} placeholderTextColor={palette.muted} className="h-14 rounded-[18px] border border-line bg-card px-4 text-[16px] text-ink"/>
+      <Text className={`text-center text-[24px] font-black leading-8 ${darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
+      <TextInput value={value} onChangeText={setValue} placeholder={placeholder} placeholderTextColor={palette.muted} className={`h-14 rounded-[18px] border px-4 text-[16px] ${darkMode ? 'border-[#1a1a1a] bg-[#080808] text-white' : 'border-line bg-card text-ink'}`}/>
     </View>);
 }
-function ChoiceGrid({ title, icon, options, selected, onSelect, otherValue, setOtherValue, }) {
+function ChoiceGrid({ title, icon, options, selected, onSelect, otherValue, setOtherValue, darkMode, }) {
     return (<View className="gap-[14px] pt-2">
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
-      <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
-      <ChoiceRows options={options} renderOption={(option) => <Chip key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>}/>
-      {selected === 'Other' ? (<TextInput value={otherValue} onChangeText={setOtherValue} placeholder="Please write here" placeholderTextColor={palette.muted} className="h-14 rounded-[18px] border border-line bg-card px-4 text-[16px] text-ink"/>) : null}
+      <Text className={`text-center text-[24px] font-black leading-8 ${darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
+      <ChoiceRows options={options} renderOption={(option) => <Chip darkMode={darkMode} key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>}/>
+      {selected === 'Other' ? (<TextInput value={otherValue} onChangeText={setOtherValue} placeholder="Please write here" placeholderTextColor={palette.muted} className={`h-14 rounded-[18px] border px-4 text-[16px] ${darkMode ? 'border-[#1a1a1a] bg-[#080808] text-white' : 'border-line bg-card text-ink'}`}/>) : null}
     </View>);
 }
-function ChoiceList({ title, subtitle, icon, options, selected, onSelect, }) {
+function ChoiceList({ title, subtitle, icon, options, selected, onSelect, darkMode, }) {
     return (<View className="gap-[14px] pt-2">
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
-      <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
-      <Text className="text-center text-[13px] text-muted">{subtitle}</Text>
-      <ChoiceRows options={options} renderOption={(option) => <Chip key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>}/>
+      <Text className={`text-center text-[24px] font-black leading-8 ${darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
+      <Text className={`text-center text-[13px] ${darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{subtitle}</Text>
+      <ChoiceRows options={options} renderOption={(option) => <Chip darkMode={darkMode} key={option} label={option} active={selected === option} onPress={() => onSelect(option)}/>}/>
     </View>);
 }
-function MultiChoice({ title, subtitle, icon, options, selected, onToggle, }) {
+function MultiChoice({ title, subtitle, icon, options, selected, onToggle, darkMode, }) {
     return (<View className="gap-[14px] pt-2">
       <Text className="text-center text-[26px] font-extrabold text-brand">{icon}</Text>
-      <Text className="text-center text-[24px] font-black leading-8 text-ink">{title}</Text>
-      <Text className="text-center text-[13px] text-muted">{subtitle}</Text>
-      <ChoiceRows options={options} renderOption={(option) => <Chip key={option} label={option} active={selected.includes(option)} onPress={() => onToggle(option)}/>}/>
+      <Text className={`text-center text-[24px] font-black leading-8 ${darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
+      <Text className={`text-center text-[13px] ${darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{subtitle}</Text>
+      <ChoiceRows options={options} renderOption={(option) => <Chip darkMode={darkMode} key={option} label={option} active={selected.includes(option)} onPress={() => onToggle(option)}/>}/>
     </View>);
 }
 function ChoiceRows({ options, renderOption }) {
@@ -247,23 +371,23 @@ function ChoiceRows({ options, renderOption }) {
         </View>))}
     </View>);
 }
-function Chip({ label, active, onPress }) {
-    return (<AnimatedPressable onPress={onPress} className={`min-h-[64px] w-full items-center justify-center rounded-[18px] border px-3 py-[14px] ${active ? 'border-brand bg-brand' : 'border-line bg-card'}`} gradient={active}>
-      <Text className={`text-center text-[13px] font-bold leading-[18px] ${active ? 'text-white' : 'text-ink'}`}>{label}</Text>
+function Chip({ label, active, onPress, darkMode }) {
+    return (<AnimatedPressable onPress={onPress} className={`min-h-[64px] w-full items-center justify-center rounded-[18px] border px-3 py-[14px] ${active ? 'border-brand bg-brand' : darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} gradient={active}>
+      <Text className={`text-center text-[13px] font-bold leading-[18px] ${active ? 'text-white' : darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
     </AnimatedPressable>);
 }
-function SuccessStep() {
+function SuccessStep({ darkMode }) {
     return (<View className="flex-grow items-center justify-end gap-4 pt-8 pb-2">
-      <BeeArrivalAnimation/>
+      <BeeArrivalAnimation darkMode={darkMode}/>
       <View className="items-center gap-3">
-        <Text className="text-center text-[28px] font-black leading-9 text-ink">Great! We&apos;ve personalized your experience</Text>
-        <Text className="max-w-[310px] text-center text-[15px] leading-6 text-muted">
+        <Text className={`text-center text-[28px] font-black leading-9 ${darkMode ? 'text-white' : 'text-ink'}`}>Great! We&apos;ve personalized your experience</Text>
+        <Text className={`max-w-[310px] text-center text-[15px] leading-6 ${darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
           Your career journey is ready. Let&apos;s sign you in to get started!
         </Text>
       </View>
     </View>);
 }
-function BeeArrivalAnimation() {
+function BeeArrivalAnimation({ darkMode }) {
     const boxScale = useRef(new Animated.Value(0)).current;
     const boxRotate = useRef(new Animated.Value(-180)).current;
     const beeOpacity = useRef(new Animated.Value(0)).current;
@@ -342,13 +466,13 @@ function BeeArrivalAnimation() {
         <Animated.View style={{
                 opacity: ringOpacity,
                 transform: [{ scale: ringScale }],
-            }} className="absolute h-36 w-36 rounded-full border border-brand/25 bg-[#fff1f4]"/>
-        <Animated.View className="h-[108px] w-[108px] items-center justify-center rounded-[32px] bg-white" style={{ transform: [{ scale: boxScale }, { rotate: boxSpin }] }}>
+            }} className={`absolute h-36 w-36 rounded-full border border-brand/25 ${darkMode ? 'bg-[#080808]' : 'bg-[#fff1f4]'}`}/>
+        <Animated.View className={`h-[108px] w-[108px] items-center justify-center rounded-[32px] ${darkMode ? 'bg-[#080808]' : 'bg-white'}`} style={{ transform: [{ scale: boxScale }, { rotate: boxSpin }] }}>
           <Animated.View style={{
                     opacity: beeOpacity,
                     transform: [{ translateY: beeTranslate }, { scale: beeEntranceScale }, { translateY: beeFloat }, { rotate: beeTilt }, { scale: beeScale }],
                 }}>
-            <BeeMascot size={76}/>
+            <BeeMascot size={76} draggable={false}/>
           </Animated.View>
         </Animated.View>
       </View>

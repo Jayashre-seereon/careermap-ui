@@ -19,6 +19,7 @@ function RootNavigator() {
         <Stack.Screen name="profile-setup"/>
         <Stack.Screen name="promo"/>
         <Stack.Screen name="forgot-password"/>
+        <Stack.Screen name="reset-password"/>
         <Stack.Screen name="checkout"/>
         <Stack.Screen name="payment-success"/>
         <Stack.Screen name="(drawer)"/>

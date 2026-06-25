@@ -166,142 +166,163 @@ export function CareerBeeAssistant({ hidden = false }) {
         inputRange: [0, 1],
         outputRange: [80, 0],
     });
+    const rootOverlayProps = Platform.OS === 'web'
+        ? { style: { pointerEvents: 'box-none', position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, zIndex: 9999, elevation: 9999 } }
+        : { pointerEvents: 'box-none', style: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, zIndex: 9999, elevation: 9999 } };
+    const openOverlayProps = Platform.OS === 'web'
+        ? { style: { pointerEvents: 'box-none', flex: 1, opacity: overlayOpacity } }
+        : { pointerEvents: 'box-none', style: { flex: 1, opacity: overlayOpacity } };
+    const launcherProps = Platform.OS === 'web'
+        ? {
+            style: {
+                pointerEvents: 'box-none',
+                position: 'absolute',
+                right: compactLauncher ? 10 : 18,
+                bottom: compactLauncher ? Math.max(insets.bottom + 4, 30) : Math.max(insets.bottom + 22, 55),
+                transform: [{ scale: bubbleScale }],
+                zIndex: 9999,
+                elevation: 9999,
+            },
+        }
+        : {
+            pointerEvents: 'box-none',
+            style: {
+                position: 'absolute',
+                right: compactLauncher ? 10 : 18,
+                bottom: compactLauncher ? Math.max(insets.bottom + 4, 30) : Math.max(insets.bottom + 22, 55),
+                transform: [{ scale: bubbleScale }],
+                zIndex: 9999,
+                elevation: 9999,
+            },
+        };
 
     return (
-        <View pointerEvents="box-none" style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, zIndex: 9999, elevation: 9999 }}>
+        <>
             {open ? (
-                <Animated.View pointerEvents="box-none" style={{ flex: 1, opacity: overlayOpacity }}>
-                    <Pressable onPress={closeSheet} style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.3)' }} />
-                    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
-                        <Animated.View
-                            style={{
-                                marginHorizontal: 18,
-                                marginBottom: Math.max(insets.bottom + 14, 20),
-                                borderRadius: 28,
-                                backgroundColor: themed.sheet,
-                                borderWidth: 1,
-                                borderColor: themed.sheetBorder,
-                                overflow: 'hidden',
-                                transform: [{ translateY }],
-                                shadowColor: '#000',
-                                shadowOpacity: 0.28,
-                                shadowRadius: 24,
-                                shadowOffset: { width: 0, height: 14 },
-                                elevation: 18,
-                                maxHeight: '72%',
-                            }}
-                        >
-                            <View style={{ backgroundColor: themed.sheetHeader, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                      <BeeMascot size={50} draggable={false} />
-                            
-                                <View style={{ flex: 1 }}>
-                                    <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Career Bee</Text>
-                                    <Text style={{ color: '#f7c6d5', fontSize: 11, fontWeight: '700' }}>Always here for you</Text>
-                                </View>
-                                <Pressable onPress={closeSheet} style={{ height: 34, width: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Ionicons name="close" size={18} color="#fff" />
-                                </Pressable>
-                            </View>
-
-                            <ScrollView
-                                contentContainerStyle={{ padding: 16, gap: 12, backgroundColor: themed.sheet }}
-                                showsVerticalScrollIndicator={false}
+                <View {...rootOverlayProps}>
+                    <Animated.View {...openOverlayProps}>
+                        <Pressable onPress={closeSheet} style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.3)' }} />
+                        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
+                            <Animated.View
+                                style={{
+                                    marginHorizontal: 18,
+                                    marginBottom: Math.max(insets.bottom + 14, 20),
+                                    borderRadius: 28,
+                                    backgroundColor: themed.sheet,
+                                    borderWidth: 1,
+                                    borderColor: themed.sheetBorder,
+                                    overflow: 'hidden',
+                                    transform: [{ translateY }],
+                                    shadowColor: '#000',
+                                    shadowOpacity: 0.28,
+                                    shadowRadius: 24,
+                                    shadowOffset: { width: 0, height: 14 },
+                                    elevation: 18,
+                                    maxHeight: '72%',
+                                }}
                             >
-                                {messages.map((message) => {
-                                    const isUser = message.role === 'user';
-                                    return (
-                                        <View
-                                            key={message.id}
-                                            style={{
-                                                alignSelf: isUser ? 'flex-end' : 'flex-start',
-                                                maxWidth: '88%',
-                                                backgroundColor: isUser ? palette.primary : themed.sheetSubtle,
-                                                borderRadius: 18,
-                                                paddingHorizontal: 14,
-                                                paddingVertical: 12,
-                                                borderWidth: isUser ? 0 : 1,
-                                                borderColor: isUser ? 'transparent' : themed.sheetBorder,
-                                            }}
-                                        >
-                                            <Text style={{ color: isUser ? '#fff' : themed.text, fontSize: 13, lineHeight: 20, fontWeight: '600' }}>
-                                                {message.text}
-                                            </Text>
-                                        </View>
-                                    );
-                                })}
-
-                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                                    {starterPrompts.map((prompt) => (
-                                        <Pressable
-                                            key={prompt}
-                                            onPress={() => sendMessage(prompt)}
-                                            style={{
-                                                borderRadius: 999,
-                                                borderWidth: 1,
-                                                borderColor: themed.chipBorder,
-                                                backgroundColor: themed.chipBg,
-                                                paddingHorizontal: 12,
-                                                paddingVertical: 8,
-                                            }}
-                                        >
-                                            <Text style={{ color: palette.primary, fontSize: 11, fontWeight: '700' }}>{prompt}</Text>
-                                        </Pressable>
-                                    ))}
-                                </View>
-                            </ScrollView>
-
-                            <View style={{ paddingHorizontal: 16, paddingBottom: 16, paddingTop: 4, backgroundColor: themed.sheet }}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: themed.inputBg, borderRadius: 22, paddingLeft: 14, paddingRight: 8, paddingVertical: 6 }}>
-                                    <TextInput
-                                        value={draft}
-                                        onChangeText={setDraft}
-                                        placeholder="Ask Career Bee anything..."
-                                        placeholderTextColor={themed.muted}
-                                        style={{ flex: 1, color: themed.text, fontSize: 13, paddingVertical: 10 }}
-                                    />
-                                    <Pressable
-                                        onPress={() => sendMessage(draft)}
-                                        style={{
-                                            height: 38,
-                                            width: 38,
-                                            borderRadius: 19,
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            backgroundColor: palette.primary,
-                                            opacity: draft.trim() ? 1 : 0.45,
-                                        }}
-                                        disabled={!draft.trim()}
-                                    >
-                                        <Ionicons name="send" size={16} color="#fff" />
+                                <View style={{ backgroundColor: themed.sheetHeader, paddingHorizontal: 10, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                                          <BeeMascot size={50} draggable={false} />
+                                
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={{ color: '#fff', fontSize: 15, fontWeight: '800' }}>Career Bee</Text>
+                                        <Text style={{ color: '#f7c6d5', fontSize: 11, fontWeight: '700' }}>Always here for you</Text>
+                                    </View>
+                                    <Pressable onPress={closeSheet} style={{ height: 34, width: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Ionicons name="close" size={18} color="#fff" />
                                     </Pressable>
                                 </View>
-                            </View>
-                        </Animated.View>
-                    </KeyboardAvoidingView>
-                </Animated.View>
+
+                                <ScrollView
+                                    contentContainerStyle={{ padding: 16, gap: 12, backgroundColor: themed.sheet }}
+                                    showsVerticalScrollIndicator={false}
+                                >
+                                    {messages.map((message) => {
+                                        const isUser = message.role === 'user';
+                                        return (
+                                            <View
+                                                key={message.id}
+                                                style={{
+                                                    alignSelf: isUser ? 'flex-end' : 'flex-start',
+                                                    maxWidth: '88%',
+                                                    backgroundColor: isUser ? palette.primary : themed.sheetSubtle,
+                                                    borderRadius: 18,
+                                                    paddingHorizontal: 14,
+                                                    paddingVertical: 12,
+                                                    borderWidth: isUser ? 0 : 1,
+                                                    borderColor: isUser ? 'transparent' : themed.sheetBorder,
+                                                }}
+                                            >
+                                                <Text style={{ color: isUser ? '#fff' : themed.text, fontSize: 13, lineHeight: 20, fontWeight: '600' }}>
+                                                    {message.text}
+                                                </Text>
+                                            </View>
+                                        );
+                                    })}
+
+                                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                                        {starterPrompts.map((prompt) => (
+                                            <Pressable
+                                                key={prompt}
+                                                onPress={() => sendMessage(prompt)}
+                                                style={{
+                                                    borderRadius: 999,
+                                                    borderWidth: 1,
+                                                    borderColor: themed.chipBorder,
+                                                    backgroundColor: themed.chipBg,
+                                                    paddingHorizontal: 12,
+                                                    paddingVertical: 8,
+                                                }}
+                                            >
+                                                <Text style={{ color: palette.primary, fontSize: 11, fontWeight: '700' }}>{prompt}</Text>
+                                            </Pressable>
+                                        ))}
+                                    </View>
+                                </ScrollView>
+
+                                <View style={{ paddingHorizontal: 16, paddingBottom: 16, paddingTop: 4, backgroundColor: themed.sheet }}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: themed.inputBg, borderRadius: 22, paddingLeft: 14, paddingRight: 8, paddingVertical: 6 }}>
+                                        <TextInput
+                                            value={draft}
+                                            onChangeText={setDraft}
+                                            placeholder="Ask Career Bee anything..."
+                                            placeholderTextColor={themed.muted}
+                                            style={{ flex: 1, color: themed.text, fontSize: 13, paddingVertical: 10 }}
+                                        />
+                                        <Pressable
+                                            onPress={() => sendMessage(draft)}
+                                            style={{
+                                                height: 38,
+                                                width: 38,
+                                                borderRadius: 19,
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                backgroundColor: palette.primary,
+                                                opacity: draft.trim() ? 1 : 0.45,
+                                            }}
+                                            disabled={!draft.trim()}
+                                        >
+                                            <Ionicons name="send" size={16} color="#fff" />
+                                        </Pressable>
+                                    </View>
+                                </View>
+                            </Animated.View>
+                        </KeyboardAvoidingView>
+                    </Animated.View>
+                </View>
             ) : null}
 
-            {!open && !scrollHidden ? (<Animated.View
-                    pointerEvents="box-none"
-                    style={{
-                        position: 'absolute',
-                        right: compactLauncher ? 10 : 18,
-                        bottom: compactLauncher ? Math.max(insets.bottom + 4, 30) : Math.max(insets.bottom + 22, 55),
-                        transform: [{ scale: bubbleScale }],
-                        zIndex: 9999,
-                        elevation: 9999,
-                    }}
-                >
+            {!open && !scrollHidden ? (
+                <Animated.View {...launcherProps}>
                     <Pressable
                         onPress={openSheet}
                         onPressIn={() => animateBubble(0.94)}
                         onPressOut={() => animateBubble(1)}
-                       
                     >
-                          <BeeMascot size={launcherSize} draggable={false} />
-                     
+                        <BeeMascot size={launcherSize} draggable={false} />
                     </Pressable>
-                </Animated.View>) : null}
-        </View>
+                </Animated.View>
+            ) : null}
+        </>
     );
 }

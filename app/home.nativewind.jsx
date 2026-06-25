@@ -1,10 +1,43 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../src/app-state';
 import { AnimatedPressable, Pill, Screen, SectionHeader } from '../src/careermap-ui';
 import { featuredInstitutes, featuredMentors, featuredScholarships, moduleCards, palette, studentProfile } from '../src/careermap-data';
+const getInstituteInitials = (name) => {
+    const source = String(name || 'Institute').trim();
+    const initials = source
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join('');
+
+    return initials || 'I';
+};
+const renderInstituteLogo = (item, size = 52) => {
+    if (item?.logo) {
+        return (<Image source={{ uri: item.logo }} resizeMode="cover" style={{
+                width: size,
+                height: size,
+                borderRadius: 18,
+            }}/>);
+    }
+
+    return (<View className="items-center justify-center" style={{
+            width: size,
+            height: size,
+            borderRadius: 18,
+            backgroundColor: `${palette.blue}14`,
+            borderWidth: 1,
+            borderColor: `${palette.blue}18`,
+        }}>
+      <Text className="text-[16px] font-black" style={{ color: palette.blue, lineHeight: 20 }}>
+        {getInstituteInitials(item?.name)}
+      </Text>
+    </View>);
+};
 const personalityQuestions = [
     { q: 'When faced with a problem, I prefer to:', options: ['Analyze data systematically', 'Brainstorm creative solutions', 'Discuss with others', 'Act quickly on instinct'] },
     { q: 'In my free time, I enjoy:', options: ['Reading or researching', 'Creating art or music', 'Socializing with friends', 'Physical activities or sports'] },
@@ -74,10 +107,10 @@ export default function HomeScreen() {
         </View>
 
         <View className="flex-row gap-3">
-          <Pressable className="flex-1 items-center rounded-[16px] border border-line bg-card py-[14px]" disabled={currentQuestion === 0} onPress={() => setCurrentQuestion((value) => value - 1)} style={({ pressed }) => ({ opacity: currentQuestion === 0 || pressed ? 0.42 : 1 })}>
+          <Pressable className="min-w-[112px] flex-1 items-center rounded-[16px] border border-line bg-card px-5 py-[14px]" disabled={currentQuestion === 0} onPress={() => setCurrentQuestion((value) => value - 1)} style={({ pressed }) => ({ opacity: currentQuestion === 0 || pressed ? 0.42 : 1 })}>
             <Text className={`text-[14px] font-extrabold ${currentQuestion === 0 ? 'text-muted' : 'text-ink'}`}>Previous</Text>
           </Pressable>
-          <AnimatedPressable className="flex-1 items-center rounded-[16px] bg-brand py-[14px]" disabled={answers[currentQuestion] === null} onPress={() => currentQuestion < personalityQuestions.length - 1 ? setCurrentQuestion((value) => value + 1) : setCompletedPersonality(true)}>
+          <AnimatedPressable className="min-w-[112px] flex-1 items-center rounded-[16px] bg-brand px-5 py-[14px]" disabled={answers[currentQuestion] === null} onPress={() => currentQuestion < personalityQuestions.length - 1 ? setCurrentQuestion((value) => value + 1) : setCompletedPersonality(true)}>
             <Text className="text-[14px] font-extrabold text-white">{currentQuestion < personalityQuestions.length - 1 ? 'Next' : 'See Results'}</Text>
           </AnimatedPressable>
         </View>
@@ -196,8 +229,8 @@ export default function HomeScreen() {
       <SectionHeader title="Explore Institutes" action={<Pressable onPress={() => router.push('/(drawer)/institute')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></Pressable>}/>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
         {featuredInstitutes.map((item) => (<Pressable key={item.name} className="w-[164px] items-center gap-1.5 rounded-[22px] border border-line bg-card p-4" onPress={() => router.push('/(drawer)/institute')}>
-            <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${palette.blue}14` }}>
-              <Ionicons name="business-outline" size={22} color={palette.blue}/>
+            <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${palette.blue}14` }}>
+              {renderInstituteLogo(item)}
             </View>
             <Text className="text-center text-[13px] font-extrabold text-ink">{item.name}</Text>
             <Text className="text-center text-[11px] font-bold text-brand">{item.location}</Text>

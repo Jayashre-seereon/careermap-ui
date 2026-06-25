@@ -24,24 +24,6 @@ export const studentProfile = {
     stream: 'Science',
     subscription: 'Psychometric + Counselling',
 };
-export const existingUsers = [
-    {
-        id: 'user-1',
-        name: 'Jayashree Das',
-        mobile: '9876543210',
-        email: 'jaya@email.com',
-        password: 'Jaya@123',
-        coupon: 'CAREER2026',
-    },
-    {
-        id: 'user-2',
-        name: 'Priya Parent',
-        mobile: '9988776655',
-        email: 'priya.parent@email.com',
-        password: 'Parent@123',
-        coupon: 'PARENTMAP',
-    },
-];
 export const heroStats = [
     { label: 'Saved Careers', value: '18', tone: palette.orange },
     { label: 'Tests Taken', value: '06', tone: palette.blue },
@@ -544,10 +526,10 @@ export const institutes = [
     },
 ];
 export const assessmentFeatures = [
-    '50 MCQ questions',
-    'Aptitude and personality analysis',
-    'AI-powered career matching',
-    'Detailed report summary',
+    '30 module-wise questions',
+    'Interest, personality, aptitude, and values analysis',
+    'Guided step-by-step assessment flow',
+    'Downloadable report summary',
     'One-year validity per plan',
 ];
 export const assessmentPolicies = [

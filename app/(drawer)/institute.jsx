@@ -1,101 +1,244 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
-import { Linking, ScrollView, Text, View } from 'react-native';
-import { institutes, palette } from '../../src/careermap-data';
-import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
-export default function InstituteScreen() {
-    const [selectedIndex, setSelectedIndex] = useState(null);
-    const [showFilters, setShowFilters] = useState(false);
-    const [typeFilter, setTypeFilter] = useState('All');
-    const [careerFilter, setCareerFilter] = useState('All');
-    const [sortAZ, setSortAZ] = useState(false);
-    const animationKey = selectedIndex !== null ? `institute-${selectedIndex}` : `institute-list-${typeFilter}-${careerFilter}-${sortAZ ? 'az' : 'default'}-${showFilters ? 'filters' : 'plain'}`;
-    let filtered = [...institutes];
-    if (typeFilter !== 'All')
-        filtered = filtered.filter((item) => item.type === typeFilter);
-    if (careerFilter !== 'All')
-        filtered = filtered.filter((item) => item.career === careerFilter);
-    if (sortAZ)
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-    if (selectedIndex !== null) {
-        const item = filtered[selectedIndex];
-        return (<Screen animationKey={animationKey}>
-        <SectionHeader title={item.name} subtitle="Institute detail view shaped to match the reference prototype." action={<AnimatedPressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => setSelectedIndex(null)}>
-              <Ionicons name="arrow-back" size={18} color={palette.text}/>
-            </AnimatedPressable>}/>
+import { useEffect, useMemo, useState } from 'react';
+import { Image, Linking, ScrollView, Text, View } from 'react-native';
+import { useAppState } from '../../src/app-state';
+import { palette } from '../../src/careermap-data';
+import { getInstitutes } from '../../src/api/instituteApi';
+import { AnimatedPressable, HierarchyFilterPanel, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+import { buildHierarchyOptions, filterByHierarchy } from '../../src/utils/hierarchy';
 
-        <View className="items-center gap-2 py-2">
-          <View className="h-[68px] w-[68px] items-center justify-center rounded-[22px]" style={{ backgroundColor: `${palette.primary}12` }}>
-            <Ionicons name={item.icon} size={28} color={palette.primary}/>
-          </View>
-          <Text className="text-center text-[22px] font-black text-ink">{item.name}</Text>
-          <Text className="text-center text-[13px] text-muted">{item.location}</Text>
-          <View className="flex-row justify-center">
-            <Pill label={`${item.rank} ${item.type}`} tone={palette.primary}/>
-          </View>
-        </View>
+const getInstituteInitials = (name) => {
+    const source = String(name || 'Institute').trim();
+    const initials = source
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join('');
 
-        <View className="gap-2.5 rounded-[22px] border border-line bg-card p-4">
-          <Text className="text-[14px] font-extrabold text-brand">About</Text>
-          <Text className="text-[13px] leading-[21px] text-muted">{item.about}</Text>
-        </View>
+    return initials || 'I';
+};
 
-        <View className="gap-2.5 rounded-[22px] border border-line bg-card p-4">
-          <Text className="text-[14px] font-extrabold text-brand">Courses Offered</Text>
-          <View className="flex-row flex-wrap gap-2">
-            {item.courses.map((course) => (<View key={course} className="rounded-[12px] bg-[#f7f2fb] px-3 py-2">
-                <Text className="text-[12px] font-bold text-purple-700" style={{ color: palette.purple }}>{course}</Text>
-              </View>))}
-          </View>
-        </View>
-
-        <AnimatedPressable className="items-center rounded-[16px] bg-brand py-[14px]" onPress={() => Linking.openURL(item.website)}>
-          <Text className="text-[14px] font-extrabold text-white">Visit Official Website</Text>
-        </AnimatedPressable>
-      </Screen>);
+const renderInstituteLogo = (item, size = 52) => {
+    if (item?.logo) {
+        return (<Image source={{ uri: item.logo }} resizeMode="cover" style={{
+                width: size,
+                height: size,
+                borderRadius: 16,
+            }}/>);
     }
-    return (<Screen animationKey={animationKey}>
-      <SectionHeader title="Institutes" subtitle="Institute directory with filters and detail cards based on the reference prototype." action={<View className="flex-row gap-2">
-            <AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
-              <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : palette.text}/>
-            </AnimatedPressable>
-            <AnimatedPressable className={`rounded-[12px] px-2.5 py-2 ${sortAZ ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setSortAZ((value) => !value)}>
-              <Text className={`text-[11px] font-extrabold ${sortAZ ? 'text-white' : 'text-ink'}`}>A-Z</Text>
-            </AnimatedPressable>
-          </View>}/>
 
-      {showFilters ? (<View className="gap-2.5">
-          <Text className="text-[11px] font-extrabold uppercase tracking-[0.7px] text-muted">Institute Type</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2.5 pr-1">
-            {['All', 'Engineering', 'Medical', 'Business', 'Design', 'Law'].map((label) => (<AnimatedPressable key={label} className={`rounded-full px-3 py-2 ${typeFilter === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`} onPress={() => setTypeFilter(label)}>
-                <Text className={`text-[11px] font-extrabold ${typeFilter === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
-              </AnimatedPressable>))}
-          </ScrollView>
+    return (<View className="items-center justify-center" style={{
+            width: size,
+            height: size,
+            borderRadius: 16,
+            backgroundColor: `${palette.blue}14`,
+            borderWidth: 1,
+            borderColor: `${palette.blue}18`,
+        }}>
+      <Text className="text-[16px] font-black" style={{ color: palette.blue, lineHeight: 20 }}>
+        {getInstituteInitials(item?.name)}
+      </Text>
+    </View>);
+};
 
-          <Text className="text-[11px] font-extrabold uppercase tracking-[0.7px] text-muted">Career</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2.5 pr-1">
-            {['All', 'Engineering', 'Medical', 'Business', 'Design', 'Law'].map((label) => (<AnimatedPressable key={`career-${label}`} onPress={() => setCareerFilter(label)} className={`rounded-full px-3 py-2 ${careerFilter === label ? 'bg-brand' : 'bg-[#f2ebe6]'}`}>
-                <Text className={`text-[11px] font-extrabold ${careerFilter === label ? 'text-white' : 'text-ink'}`}>{label}</Text>
-              </AnimatedPressable>))}
-          </ScrollView>
-        </View>) : null}
+export default function InstituteScreen() {
+    const { preferences } = useAppState();
+    const [institutes, setInstitutes] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
+      const [showFilters, setShowFilters] = useState(false);
+    const [typeFilter, setTypeFilter] = useState('All');
+    const [stateFilter, setStateFilter] = useState('All');
+    const [categoryFilter, setCategoryFilter] = useState('All');
+    const [secondCategoryFilter, setSecondCategoryFilter] = useState('All');
+    const [subCategoryFilter, setSubCategoryFilter] = useState('All');
+    const [sortAZ, setSortAZ] = useState(false);
 
-      <View className="gap-3">
-        {filtered.map((item, index) => (<AnimatedPressable key={item.name} className="gap-3 rounded-[22px] border border-line bg-card p-4" onPress={() => setSelectedIndex(index)}>
-            <View className="flex-row gap-3">
-              <View className="h-[50px] w-[50px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
-                <Ionicons name={item.icon} size={20} color={palette.primary}/>
-              </View>
-              <View className="flex-1 gap-1">
-                <Text className="text-[15px] font-extrabold text-ink">{item.name}</Text>
-                <Text className="text-[12px] text-muted">{item.location}</Text>
-                <View className="flex-row gap-2">
-                  <Pill label={item.type} tone={palette.blue}/>
-                  <Pill label={item.rank} tone={palette.primary}/>
+    useEffect(() => {
+        let isMounted = true;
+
+        async function loadInstitutes() {
+            try {
+                setIsLoading(true);
+                setLoadError('');
+                const items = await getInstitutes();
+
+                if (isMounted) {
+                    setInstitutes(items);
+                }
+            } catch (_error) {
+                if (isMounted) {
+                    setInstitutes([]);
+                    setLoadError('Failed to load institutes.');
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+        }
+
+        loadInstitutes();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const typeOptions = useMemo(
+        () => ['All', ...Array.from(new Set(institutes.map((item) => item.type).filter(Boolean)))],
+        [institutes]
+    );
+    const stateOptions = useMemo(
+        () => ['All', ...Array.from(new Set(institutes.map((item) => item.state).filter(Boolean)))],
+        [institutes]
+    );
+    const categoryOptions = useMemo(
+        () => buildHierarchyOptions(institutes, 'category', { secondcategory: secondCategoryFilter, subcategory: subCategoryFilter }),
+        [institutes, secondCategoryFilter, subCategoryFilter]
+    );
+    const secondCategoryOptions = useMemo(
+        () => buildHierarchyOptions(institutes, 'secondcategory', { category: categoryFilter, subcategory: subCategoryFilter }),
+        [institutes, categoryFilter, subCategoryFilter]
+    );
+    const subCategoryOptions = useMemo(
+        () => buildHierarchyOptions(institutes, 'subcategory', { category: categoryFilter, secondcategory: secondCategoryFilter }),
+        [institutes, categoryFilter, secondCategoryFilter]
+    );
+const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az' : 'default'}-${showFilters ? 'filters' : 'plain'}`;
+   
+    const filtered = useMemo(() => {
+        let source = [...institutes];
+
+        if (typeFilter !== 'All') {
+            source = source.filter((item) => item.type === typeFilter);
+        }
+
+        if (stateFilter !== 'All') {
+            source = source.filter((item) => item.state === stateFilter);
+        }
+
+        source = filterByHierarchy(source, {
+            category: categoryFilter,
+            secondcategory: secondCategoryFilter,
+            subcategory: subCategoryFilter,
+        });
+
+        if (sortAZ) {
+            source.sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        return source;
+    }, [categoryFilter, institutes, secondCategoryFilter, sortAZ, stateFilter, subCategoryFilter, typeFilter]);
+
+    useEffect(() => {
+        if (categoryFilter !== 'All' && !categoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(categoryFilter))) {
+            setCategoryFilter('All');
+        }
+        if (!secondCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(secondCategoryFilter))) {
+            setSecondCategoryFilter('All');
+        }
+        if (!subCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(subCategoryFilter))) {
+            setSubCategoryFilter('All');
+        }
+    }, [categoryFilter, categoryOptions, secondCategoryFilter, secondCategoryOptions, subCategoryFilter, subCategoryOptions]);
+
+   
+
+    return (
+        <Screen animationKey={animationKey}>
+            <SectionHeader
+                title="Institutes"
+                subtitle="Institute directory with filters and detail cards based on the reference prototype."
+                action={
+                    <View className="flex-row gap-2">
+                        <AnimatedPressable
+                            className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`}
+                            onPress={() => setShowFilters((value) => !value)}
+                        >
+                            <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : preferences.darkMode ? '#ffffff' : palette.text}/>
+                        </AnimatedPressable>
+                      
+                    </View>
+                }
+            />
+
+            {showFilters ? (
+                <View className="gap-2.5">
+                    
+                    
+                    <HierarchyFilterPanel
+                        visible
+                        categoryOptions={categoryOptions}
+                        secondCategoryOptions={secondCategoryOptions}
+                        subCategoryOptions={subCategoryOptions}
+                        selectedCategory={categoryFilter}
+                        selectedSecondCategory={secondCategoryFilter}
+                        selectedSubCategory={subCategoryFilter}
+                        onChangeCategory={(value) => {
+                            setCategoryFilter(value);
+                            setSecondCategoryFilter('All');
+                            setSubCategoryFilter('All');
+                        }}
+                        onChangeSecondCategory={(value) => {
+                            setSecondCategoryFilter(value);
+                            setSubCategoryFilter('All');
+                        }}
+                        onChangeSubCategory={setSubCategoryFilter}
+                    />
                 </View>
-              </View>
+            ) : null}
+
+            <View className="gap-3">
+                {isLoading ? <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading institutes...</Text> : null}
+                {!isLoading && loadError ? <Text className="text-[13px] text-brand">{loadError}</Text> : null}
+                {!isLoading && !loadError && filtered.length === 0 ? (
+                    <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No institutes available right now.</Text>
+                ) : null}
+
+             {filtered.map((item, index) => (
+    <AnimatedPressable 
+        key={item.id} 
+        className={`flex-row justify-between items-start rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
+    >
+        {/* LEFT COLUMN: Logo & Text details */}
+        <View className="flex-1 flex-row gap-3 pr-2">
+            <View className="h-[50px] w-[50px] overflow-hidden rounded-[16px]" style={{ backgroundColor: `${palette.primary}12` }}>
+                {renderInstituteLogo(item, 50)}
             </View>
-          </AnimatedPressable>))}
-      </View>
-    </Screen>);
+            <View className="flex-1 gap-1">
+                <Text numberOfLines={2} className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                    {item.name}
+                </Text>
+                <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                    {item.location}
+                </Text>
+            </View>
+        </View>
+
+        {/* RIGHT COLUMN: Stretched vertically to force button to the absolute bottom */}
+        <View className="self-stretch justify-between items-end pl-2 min-h-[64px]">
+            <View>
+                <Pill label={item.type} tone={palette.blue}/>
+            </View>
+            
+            <AnimatedPressable
+                onPress={(e) => {
+                    e.stopPropagation();
+                    Linking.openURL(item.website);
+                }}
+                className="px-3 py-1.5  mt-4"
+            >
+                <Text className="text-[10px] font-bold text-brand">
+                    Visit Website
+                </Text>
+            </AnimatedPressable>
+        </View>
+
+    </AnimatedPressable>
+))}
+            </View>
+        </Screen>
+    );
 }
