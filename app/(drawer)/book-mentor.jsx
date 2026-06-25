@@ -110,6 +110,23 @@ export default function BookMentorScreen() {
         const [month] = value.split('/').map(Number);
         return month >= 1 && month <= 12;
     };
+    const resetMentorFlow = () => {
+        setBooked(false);
+        setSelectedMentorId(null);
+        setSelectedMentor(null);
+        setIsMentorLoading(false);
+        setSelectedDate('');
+        setSelectedSlot('');
+        setShowPayment(false);
+        setSelectedPayment('');
+        setUpiId('');
+        setCardName('');
+        setCardNumber('');
+        setCardExpiry('');
+        setCardCvv('');
+        setSelectedBank('');
+        setPaymentReference('');
+    };
     const animationKey = booked && activeMentor
             ? `booked-${selectedMentorId || activeMentor.id || activeMentor.name}`
             : activeMentor && showPayment
@@ -502,23 +519,7 @@ export default function BookMentorScreen() {
             { bottom: 118, right: 26, color: palette.primary, rotate: '16deg' },
         ];
         return (<Screen animationKey={animationKey}>
-        <SectionHeader title="Booking Confirmed" subtitle="The mentor booking flow now mirrors the prototype much more closely." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
-                    setBooked(false);
-                    setSelectedMentorId(null);
-                    setSelectedMentor(null);
-                    setIsMentorLoading(false);
-                    setSelectedDate('');
-                    setSelectedSlot('');
-                    setShowPayment(false);
-                    setSelectedPayment('');
-                    setUpiId('');
-                    setCardName('');
-                    setCardNumber('');
-                    setCardExpiry('');
-                    setCardCvv('');
-                    setSelectedBank('');
-                    setPaymentReference('');
-                }}>
+        <SectionHeader title="Booking Confirmed" subtitle="The mentor booking flow now mirrors the prototype much more closely." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={resetMentorFlow}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
         <View className={`overflow-hidden rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
@@ -555,23 +556,7 @@ export default function BookMentorScreen() {
               <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Payment Ref: {paymentReference}</Text>
             ) : null}
           </View>
-          <AnimatedPressable className="w-full rounded-[16px] bg-brand py-[14px] px-[14px]" onPress={() => {
-                setBooked(false);
-                setSelectedMentorId(null);
-                setSelectedMentor(null);
-                setIsMentorLoading(false);
-                setSelectedDate('');
-                setSelectedSlot('');
-                setShowPayment(false);
-                setSelectedPayment('');
-                setUpiId('');
-                setCardName('');
-                setCardNumber('');
-                setCardExpiry('');
-                setCardCvv('');
-                setSelectedBank('');
-                setPaymentReference('');
-            }}>
+          <AnimatedPressable className="w-full rounded-[16px] bg-brand py-[14px] px-[14px]" onPress={resetMentorFlow}>
             <Text className="text-center text-[14px] font-extrabold text-white">Back to Mentor List</Text>
           </AnimatedPressable>
           </View>

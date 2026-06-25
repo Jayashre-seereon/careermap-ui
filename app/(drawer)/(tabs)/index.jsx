@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Image, Modal, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../../../src/api/axios';
 import { checkModuleAccess } from '../../../src/api/moduleAccessApi';
+import { createMentorReview } from '../../../src/api/mentorApi';
 import { useAppState } from '../../../src/app-state';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../../src/subscription-flow';
@@ -64,6 +65,12 @@ export default function HomeScreen() {
     const [answers, setAnswers] = useState(Array(personalityQuestions.length).fill(null));
     const [dashboardData, setDashboardData] = useState(null);
     const [lockedModule, setLockedModule] = useState(null);
+    const [reviewOpen, setReviewOpen] = useState(false);
+    const [reviewSubmitting, setReviewSubmitting] = useState(false);
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewText, setReviewText] = useState('');
+    const [reviewError, setReviewError] = useState('');
+    const [reviewedMentorBookings, setReviewedMentorBookings] = useState([]);
     const { isUnlocked, onboarding, unreadNotificationsCount, userProfile } = useAppState();
     const { width } = useWindowDimensions();
     const moduleCardWidth = width < 390 ? '48%' : '31%';
@@ -178,6 +185,50 @@ export default function HomeScreen() {
             logo: item.logo || null,
         }));
         }, [dashboardData?.institutions]);
+    const pendingMentorReviews = useMemo(() => {
+        const items = dashboardData?.pendingMentorReviews || [];
+        return items.filter((item) => item?.canReview && !reviewedMentorBookings.includes(String(item.bookingId)));
+    }, [dashboardData?.pendingMentorReviews, reviewedMentorBookings]);
+    const activeReview = pendingMentorReviews[0] || null;
+    useEffect(() => {
+        if (activeReview) {
+            setReviewOpen(true);
+            setReviewError('');
+            setReviewRating(5);
+            setReviewText('');
+        } else {
+            setReviewOpen(false);
+        }
+    }, [activeReview?.bookingId]);
+    const submitReview = async () => {
+        if (!activeReview) {
+            return;
+        }
+        if (!reviewRating) {
+            setReviewError('Please select a star rating.');
+            return;
+        }
+        if (!reviewText.trim()) {
+            setReviewError('Please write a short review.');
+            return;
+        }
+        try {
+            setReviewSubmitting(true);
+            setReviewError('');
+            await createMentorReview({
+                bookingId: activeReview.bookingId,
+                rating: reviewRating,
+                review: reviewText.trim(),
+            });
+            setReviewedMentorBookings((current) => [...current, String(activeReview.bookingId)]);
+            Alert.alert('Mentor review submitted');
+            setReviewOpen(false);
+        } catch (error) {
+            setReviewError(error?.response?.data?.message || error?.message || 'Failed to submit review.');
+        } finally {
+            setReviewSubmitting(false);
+        }
+    };
     const handleModulePress = async (card) => {
         const moduleId = Number(card?.id);
 
@@ -447,5 +498,44 @@ export default function HomeScreen() {
                 setLockedModule(null);
                 openSubscriptionPrompt(returnTarget);
             }}/>) : null}
+      <Modal visible={reviewOpen} transparent animationType="fade" statusBarTranslucent onRequestClose={() => setReviewOpen(false)}>
+        <View className="flex-1 items-center justify-center bg-black/50 px-5">
+          <View className={`w-full max-w-[320px] rounded-[24px] p-4 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-white'}`}>
+            <View className="items-center gap-1">
+              <Text className={`text-center text-[19px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>How was your session?</Text>
+              <Text className={`text-[12px] pt-2 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>with {activeReview?.mentorName || 'your mentor'}</Text>
+            </View>
+            <View className="mt-3 flex-row justify-center gap-1">
+              {[1, 2, 3, 4, 5].map((value) => {
+                const filled = value <= reviewRating;
+                return (
+                  <Pressable key={value} onPress={() => setReviewRating(value)} hitSlop={8}>
+                    <Ionicons name={filled ? 'star' : 'star-outline'} size={26} color={filled ? '#f4c200' : palette.muted} />
+                  </Pressable>
+                );
+              })}
+            </View>
+            <TextInput
+              value={reviewText}
+              onChangeText={(value) => {
+                setReviewText(value);
+                setReviewError('');
+              }}
+              placeholder="Write your review..."
+              placeholderTextColor={preferences.darkMode ? '#7f7481' : palette.muted}
+              multiline
+              textAlignVertical="top"
+    
+              className={`mt-3 min-h-[92px] rounded-[14px] border px-4 py-[12px] text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808] text-white' : 'border-line bg-card text-ink'}`}
+            />
+            {reviewError ? (
+              <Text className="mt-2 text-center text-[11px] font-semibold text-danger">{reviewError}</Text>
+            ) : null}
+            <AnimatedPressable className="mt-3 rounded-[14px] bg-brand py-[12px]" disabled={reviewSubmitting || !reviewRating || !reviewText.trim()} onPress={submitReview}>
+              <Text className="text-center text-[13px] font-extrabold text-white">{reviewSubmitting ? 'Submitting...' : 'Submit Review'}</Text>
+            </AnimatedPressable>
+          </View>
+        </View>
+      </Modal>
     </Screen>);
 }

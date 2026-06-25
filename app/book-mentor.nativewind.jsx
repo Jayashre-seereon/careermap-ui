@@ -33,6 +33,16 @@ export default function BookMentorScreen() {
         }, 1600);
         return () => clearTimeout(timer);
     }, [processing]);
+    const resetMentorFlow = () => {
+        setSelectedIndex(null);
+        setSelectedDate('');
+        setSelectedSlot('');
+        setShowPayment(false);
+        setSelectedPayment('');
+        setUpiId('');
+        setBooked(false);
+        setProcessing(false);
+    };
     if (processing) {
         return (<Screen>
         <SectionHeader title="Processing" subtitle="Confirming your mentor booking." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => setProcessing(false)}>
@@ -48,15 +58,7 @@ export default function BookMentorScreen() {
     if (booked && selectedIndex !== null) {
         const mentor = mentors[selectedIndex];
         return (<Screen>
-        <SectionHeader title="Booking Confirmed" subtitle="The mentor booking flow now mirrors the prototype much more closely." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={() => {
-                    setBooked(false);
-                    setSelectedIndex(null);
-                    setSelectedDate('');
-                    setSelectedSlot('');
-                    setShowPayment(false);
-                    setSelectedPayment('');
-                    setUpiId('');
-                }}>
+        <SectionHeader title="Booking Confirmed" subtitle="The mentor booking flow now mirrors the prototype much more closely." action={<Pressable className="h-[38px] w-[38px] items-center justify-center rounded-[12px] bg-[#f2ebe6]" onPress={resetMentorFlow}>
               <Ionicons name="arrow-back" size={18} color={palette.text}/>
             </Pressable>}/>
         <View className="items-center gap-[14px] rounded-[26px] border border-line bg-card p-[22px]">
@@ -68,15 +70,7 @@ export default function BookMentorScreen() {
             <Text className="text-[13px] text-muted">Time: {selectedSlot}</Text>
             <Text className="text-[13px] text-muted">Price: {mentor.price}</Text>
           </View>
-          <AnimatedPressable className="w-full rounded-[16px] bg-brand py-[14px]" onPress={() => {
-                setBooked(false);
-                setSelectedIndex(null);
-                setSelectedDate('');
-                setSelectedSlot('');
-                setShowPayment(false);
-                setSelectedPayment('');
-                setUpiId('');
-            }}>
+          <AnimatedPressable className="w-full rounded-[16px] bg-brand py-[14px]" onPress={resetMentorFlow}>
             <Text className="text-center text-[14px] font-extrabold text-white">Back to Mentor List</Text>
           </AnimatedPressable>
         </View>
@@ -134,7 +128,15 @@ export default function BookMentorScreen() {
           <Text className="flex-1 text-[11px] font-bold text-success">Your payment is secured with 256-bit SSL encryption</Text>
         </View>
 
-        <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" disabled={!canPay} onPress={() => setProcessing(true)}>
+        <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" disabled={!canPay} onPress={() => {
+                const bookingId = `booking-${mentor.name}-${selectedDate}-${selectedSlot}`;
+                setReviewBookingId(bookingId);
+                setReviewRating(0);
+                setReviewText('');
+                setReviewSubmitted(false);
+                setReviewError('');
+                setProcessing(true);
+            }}>
           <Text className="text-center text-[14px] font-extrabold text-white">Pay & Confirm</Text>
         </AnimatedPressable>
       </Screen>);

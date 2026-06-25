@@ -247,3 +247,8 @@ export async function getBookedMentorSlots(mentorId, date) {
 
   return normalizeBookedSlots(response?.data);
 }
+
+export async function createMentorReview(payload) {
+  const response = await api.post('/mentorreview/', payload);
+  return response?.data;
+}
