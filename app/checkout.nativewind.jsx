@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getPlans } from '../src/api/planApi';
 import { palette, subscriptions } from '../src/careermap-data';
 import { AnimatedPressable } from '../src/careermap-ui';
 const paymentMethods = [
@@ -31,7 +32,26 @@ function normalizeCardName(value) {
 }
 export default function CheckoutScreen() {
     const { planId } = useLocalSearchParams();
-    const plan = subscriptions.find((item) => item.id === planId) ?? subscriptions[0];
+    const [plans, setPlans] = useState(subscriptions);
+    useEffect(() => {
+        let isMounted = true;
+        const loadPlans = async () => {
+            try {
+                const response = await getPlans();
+                if (isMounted && response.length > 0) {
+                    setPlans(response);
+                }
+            }
+            catch (error) {
+                console.log('Plans fetch failed', error?.response?.data || error?.message || error);
+            }
+        };
+        loadPlans();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+    const plan = plans.find((item) => String(item.id) === String(planId)) ?? plans[0];
     const [selectedMethod, setSelectedMethod] = useState('upi');
     const [upiId, setUpiId] = useState('');
     const [cardName, setCardName] = useState('');

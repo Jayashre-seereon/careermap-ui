@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Children, useRef } from 'react';
+import { Children, useRef, useState } from 'react';
 import { Animated, DeviceEventEmitter, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppState } from './app-state';
@@ -62,6 +62,131 @@ export function Pill({ label, tone = palette.primary }) {
         {label}
       </Text>
     </View>);
+}
+
+function getHierarchyOptionLabel(option) {
+    if (option === null || option === undefined) {
+        return '';
+    }
+
+    if (typeof option === 'string' || typeof option === 'number') {
+        return String(option);
+    }
+
+    return String(option.label || option.name || option.title || option.text || option.id || '');
+}
+
+export function HierarchyFilterPanel({
+    visible = true,
+    categoryOptions = [],
+    secondCategoryOptions = [],
+    subCategoryOptions = [],
+    selectedCategory = 'All',
+    selectedSecondCategory = 'All',
+    selectedSubCategory = 'All',
+    onChangeCategory,
+    onChangeSecondCategory,
+    onChangeSubCategory,
+}) {
+    const { preferences } = useAppState();
+    const [openField, setOpenField] = useState(null);
+
+    if (!visible) {
+        return null;
+    }
+    const fieldConfig = [
+        {
+            key: 'category',
+            label: 'Category',
+            value: selectedCategory,
+            options: categoryOptions,
+            onChange: onChangeCategory,
+        },
+        {
+            key: 'secondcategory',
+            label: 'Second',
+            value: selectedSecondCategory,
+            options: secondCategoryOptions,
+            onChange: onChangeSecondCategory,
+        },
+        {
+            key: 'subcategory',
+            label: 'Subcategory',
+            value: selectedSubCategory,
+            options: subCategoryOptions,
+            onChange: onChangeSubCategory,
+        },
+    ];
+
+    const activeField = fieldConfig.find((field) => field.key === openField) || null;
+
+    const getFieldDisplayValue = (field) => {
+        const selectedOption = field.options.find((option) => String(option?.value ?? option?.id ?? option?.label ?? '') === String(field.value));
+        return field.value && field.value !== 'All' ? selectedOption?.label || field.value : 'All';
+    };
+
+    const renderField = (field) => {
+        const isOpen = activeField?.key === field.key;
+
+        return (
+            <View key={field.key} className="flex-1 gap-1">
+                <Text className={`text-[10px] font-extrabold uppercase tracking-[0.8px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{field.label}</Text>
+                <AnimatedPressable
+                    className={`h-[42px] flex-row items-center justify-between rounded-[15px] border px-3 ${isOpen ? 'border-brand' : preferences.darkMode ? 'border-[#1a1a1a]' : 'border-[#e8dfda]'} ${preferences.darkMode ? 'bg-[#080808]' : 'bg-white'}`}
+                    onPress={() => setOpenField(isOpen ? null : field.key)}
+                >
+                    <Text numberOfLines={1} className={`flex-1 pr-2 text-[12px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                        {getFieldDisplayValue(field)}
+                    </Text>
+                    <Ionicons name={isOpen ? 'chevron-up' : 'chevron-down'} size={15} color={preferences.darkMode ? '#ffffff' : palette.muted}/>
+                </AnimatedPressable>
+            </View>
+        );
+    };
+
+    const renderOptions = () => {
+        if (!activeField) {
+            return null;
+        }
+
+        const selected = String(activeField.value || 'All');
+
+        return (
+            <View className={`mt-2 overflow-hidden rounded-[16px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-[#e8dfda] bg-white'}`}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 px-2 py-2">
+                    {activeField.options.map((option, index) => {
+                        const value = String(option?.value ?? option?.id ?? option?.label ?? '');
+                        const label = getHierarchyOptionLabel(option);
+                        const active = selected === value || selected === label || (selected === 'All' && value === 'All');
+
+                        return (
+                            <AnimatedPressable
+                                key={`${activeField.key}-${value || index}`}
+                                className={`min-w-[92px] items-center rounded-[13px] border px-3 py-2 ${active ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-[#f2ebe6] bg-[#fdfaf8]'}`}
+                                onPress={() => {
+                                    activeField.onChange?.(value || label || 'All');
+                                    setOpenField(null);
+                                }}
+                            >
+                                <Text numberOfLines={1} className={`text-[12px] font-semibold ${active ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                                    {label || 'All'}
+                                </Text>
+                            </AnimatedPressable>
+                        );
+                    })}
+                </ScrollView>
+            </View>
+        );
+    };
+
+    return (
+        <View className="gap-2">
+            <View className="flex-row gap-2">
+                {fieldConfig.map(renderField)}
+            </View>
+            {renderOptions()}
+        </View>
+    );
 }
 
 export function InfoCard({ icon, title, subtitle, onPress, }) {

@@ -8,7 +8,8 @@ import { BeeMascot } from '../src/bee-mascot';
 import { palette } from '../src/careermap-data';
 import { AnimatedBackground } from '../src/animated-background';
 import { AnimatedPressable } from '../src/careermap-ui';
-const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate', 'Post Graduate', 'Working Professional', 'Other'];
+import { useAuthStore } from '../src/store/auth-store';
+const studentClassOptions = ['Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12', 'Graduate', 'Post Graduate','Other'];
 const streamOptions = ['Science', 'Commerce', 'Arts', 'Other'];
 const interestOptions = ['Science & Tech', 'Problem Solving','Research & Discovery','Art & Literature','Business ','Sports','Creativity & Design','Dance & Music','Helping People','Public Speaking' ];
 const clarityOptions = [
@@ -23,9 +24,12 @@ const strengthOptions = ['Analytical Thinking', 'Communication', 'Creativity', '
 const priorityOptions = ['High Earning Potential ', 'Passion and Interest', 'Work-Life Balance', 'Job Security', 'Making a Positive Impact', 'Creative Freedom','Intellectual Growth & Advancement'];
 export default function OnboardingScreen() {
     const { preferences, saveOnboarding } = useAppState();
+    const setOnboardingData = useAuthStore((state) => state.setOnboardingData);
+    const hasAuthenticatedSession = useAuthStore((state) => state.hasAuthenticatedSession);
     const [userType, setUserType] = useState('');
     const [step, setStep] = useState(0);
     const [name, setName] = useState('');
+    const [gender, setGender] = useState('');
     const [childName, setChildName] = useState('');
     const [selectedClass, setSelectedClass] = useState('');
     const [selectedStream, setSelectedStream] = useState('');
@@ -65,7 +69,7 @@ export default function OnboardingScreen() {
         if (step === 0)
             return userType !== '';
         if (step === 2)
-            return name.trim().length > 0;
+            return name.trim().length > 0  && gender !== '';
         if (step === 3)
             return userType === 'parent' ? childName.trim().length > 0 : selectedClass !== '' && (selectedClass !== 'Other' || otherClass.trim().length > 0);
         if (step === 4)
@@ -76,38 +80,77 @@ export default function OnboardingScreen() {
             return userType === 'parent'
                 ? selectedStream !== '' && (selectedStream !== 'Other' || otherStream.trim().length > 0)
                 : selectedInterests.length > 0;
-        if (step === 6)
-            return selectedClarity !== '';
-        if (step === 7)
-            return selectedStrengths.length > 0;
-        if (step === 8)
-            return selectedPriorities.length > 0;
+      if (step === 6)
+    return userType === 'parent'
+        ? selectedPriorities.length > 0
+        : selectedClarity !== '';
+
+if (step === 7 && userType === 'student')
+    return selectedStrengths.length > 0;
+
+if (step === 8 && userType === 'student')
+    return selectedPriorities.length > 0;
         return true;
     };
     const next = () => {
-        if (step === 8 && !isOnboardingSaved) {
-            saveOnboarding({
+
+    // Parent Flow
+    if (userType === 'parent') {
+
+        // Stream -> Priority
+        if (step === 5) {
+            setStep(6);
+            return;
+        }
+
+        // Priority -> Success
+        if (step === 6) {
+            const onboardingData = {
                 userType,
                 name,
+                gender,
                 childName,
                 selectedClass: selectedClass === 'Other' ? otherClass.trim() : selectedClass,
                 selectedStream: selectedStream === 'Other' ? otherStream.trim() : selectedStream,
-                selectedInterests,
-                selectedClarity,
-                selectedStrengths,
                 selectedPriorities,
                 selectedGuidance: '',
-            });
-            setIsOnboardingSaved(true);
-            setStep(step + 1);
+            };
+
+            saveOnboarding(onboardingData);
+            setOnboardingData(onboardingData);
+            setStep(9);
             return;
         }
-        if (step < totalSteps - 1) {
-            setStep(step + 1);
-            return;
-        }
-        router.replace('/login');
-    };
+    }
+
+    // Student Flow
+    if (step === 8) {
+        const onboardingData = {
+            userType,
+            name,
+            childName,
+            selectedClass: selectedClass === 'Other' ? otherClass.trim() : selectedClass,
+            selectedStream: selectedStream === 'Other' ? otherStream.trim() : selectedStream,
+            selectedInterests,
+            selectedClarity,
+            selectedStrengths,
+            selectedPriorities,
+            selectedGuidance: '',
+        };
+
+        saveOnboarding(onboardingData);
+        setOnboardingData(onboardingData);
+        setStep(9);
+        return;
+    }
+
+    if (step === 9) {
+        router.replace(hasAuthenticatedSession ? '/(drawer)/(tabs)' : '/login');
+        return;
+    }
+
+    setStep(step + 1);
+};
     return (<SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}> 
          <AnimatedBackground /> 
           <ScrollView className="flex-1" contentContainerClassName="flex-grow gap-5 px-6 py-6" showsVerticalScrollIndicator={false}>
@@ -161,7 +204,57 @@ export default function OnboardingScreen() {
             </Text>
           </View>) : null}
 
-        {step === 2 ? (<StepInput darkMode={preferences.darkMode} title="What's your name?" icon="Name" value={name} setValue={setName} placeholder={userType === 'parent' ? 'Enter your name' : 'Enter your full name'}/>) : null}
+       {step === 2 ? (
+  <>
+    <StepInput
+      darkMode={preferences.darkMode}
+      title="What's your name?"
+      icon="Name"
+      value={name}
+      setValue={setName}
+      placeholder={userType === 'parent' ? 'Enter your name' : 'Enter your full name'}
+    />
+
+    {/* ✅ ADD THIS ONLY */}
+    <View className="gap-2 mt-4">
+      <Text
+        className={`text-[18px] font-extrabold text-center ${
+          preferences.darkMode ? 'text-white' : 'text-ink'
+        }`}
+      >
+        Select Gender
+      </Text>
+
+      <View className="flex-row gap-3">
+        {['Male', 'Female', 'Other'].map((g) => (
+          <Pressable
+            key={g}
+            onPress={() => setGender(g)}
+            className={`flex-1 items-center justify-center rounded-[14px] border py-3 ${
+              gender === g
+                ? 'bg-brand border-brand'
+                : preferences.darkMode
+                ? 'border-[#1a1a1a] bg-[#080808]'
+                : 'border-line bg-card'
+            }`}
+          >
+            <Text
+              className={`font-bold ${
+                gender === g
+                  ? 'text-white'
+                  : preferences.darkMode
+                  ? 'text-white'
+                  : 'text-ink'
+              }`}
+            >
+              {g}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  </>
+) : null}
 
         {step === 3 && userType === 'student' ? (<ChoiceGrid darkMode={preferences.darkMode} title="Which class are you in?" icon="Class" options={studentClassOptions} selected={selectedClass} onSelect={(value) => {
                 setSelectedClass(value);
@@ -171,7 +264,7 @@ export default function OnboardingScreen() {
 
         {step === 3 && userType === 'parent' ? (<StepInput darkMode={preferences.darkMode} title="What's your child's name?" icon="Child" value={childName} setValue={setChildName} placeholder="Enter your child's name"/>) : null}
 
-        {step === 4 ? (<ChoiceGrid darkMode={preferences.darkMode} title={userType === 'parent' ? 'Which class is your child in?' : 'Which Stream Excites you the most?'} icon={userType === 'parent' ? 'Class' : 'Stream'} options={userType === 'parent' ? studentClassOptions : streamOptions} selected={userType === 'parent' ? selectedClass : selectedStream} onSelect={(value) => {
+        {step === 4 ? (<ChoiceGrid darkMode={preferences.darkMode} title={userType === 'parent' ? 'Which class is your child currently studying in?' : 'Which Stream Excites you the most?'} icon={userType === 'parent' ? 'Class' : 'Stream'} options={userType === 'parent' ? studentClassOptions : streamOptions} selected={userType === 'parent' ? selectedClass : selectedStream} onSelect={(value) => {
                 if (userType === 'parent') {
                     setSelectedClass(value);
                     if (value !== 'Other')
@@ -183,7 +276,7 @@ export default function OnboardingScreen() {
                     setOtherStream('');
             }} otherValue={userType === 'parent' ? otherClass : otherStream} setOtherValue={userType === 'parent' ? setOtherClass : setOtherStream}/>) : null}
 
-        {step === 5 && userType === 'student' ? (<MultiChoice darkMode={preferences.darkMode} title="What are your interests?" subtitle="Select all that apply" icon="Interests" options={interestOptions} selected={selectedInterests} onToggle={(value) => toggleMulti(value, selectedInterests, setSelectedInterests)}/>) : null}
+        {step === 5 && userType === 'student' ? (<MultiChoice darkMode={preferences.darkMode} title="What are your interests?"  icon="Interests" options={interestOptions} selected={selectedInterests} onToggle={(value) => toggleMulti(value, selectedInterests, setSelectedInterests)}/>) : null}
 
         {step === 5 && userType === 'parent' ? (<ChoiceGrid darkMode={preferences.darkMode} title="Which stream interests your child?" icon="Stream" options={streamOptions} selected={selectedStream} onSelect={(value) => {
                 setSelectedStream(value);
@@ -191,12 +284,43 @@ export default function OnboardingScreen() {
                     setOtherStream('');
             }} otherValue={otherStream} setOtherValue={setOtherStream}/>) : null}
 
-        {step === 6 ? (<ChoiceList darkMode={preferences.darkMode} title="Career Clarity" subtitle="How clear are you about your direction?" icon="Clarity" options={clarityOptions} selected={selectedClarity} onSelect={setSelectedClarity}/>) : null}
+     {step === 6 && userType === 'student' ? (
+   <ChoiceList
+      darkMode={preferences.darkMode}
+      title="How clear are you about your direction?"
+      icon="Clarity"
+      options={clarityOptions}
+      selected={selectedClarity}
+      onSelect={setSelectedClarity}
+   />
+) : null}
 
-        {step === 7 ? (<MultiChoice darkMode={preferences.darkMode} title="Key Strengths" subtitle="What are your core strengths? Pick all that fit." icon="Strengths" options={strengthOptions} selected={selectedStrengths} onToggle={(value) => toggleMulti(value, selectedStrengths, setSelectedStrengths)}/>) : null}
+{step === 7 && userType === 'student' ? (
+   <MultiChoice
+      darkMode={preferences.darkMode}
+      title="What are your core strengths?"
+      icon="Strengths"
+      options={strengthOptions}
+      selected={selectedStrengths}
+      onToggle={(value) =>
+         toggleMulti(value, selectedStrengths, setSelectedStrengths)
+      }
+   />
+) : null}
 
-        {step === 8 ? (<MultiChoice darkMode={preferences.darkMode} title="Career Priorities" subtitle="What matters most to you in a career?" icon="Priorities" options={priorityOptions} selected={selectedPriorities} onToggle={(value) => toggleMulti(value, selectedPriorities, setSelectedPriorities)}/>) : null}
-
+{((step === 8 && userType === 'student') ||
+  (step === 6 && userType === 'parent')) ? (
+   <MultiChoice
+      darkMode={preferences.darkMode}
+      title="What matters most to you in a career?"
+      icon="Priorities"
+      options={priorityOptions}
+      selected={selectedPriorities}
+      onToggle={(value) =>
+         toggleMulti(value, selectedPriorities, setSelectedPriorities)
+      }
+   />
+) : null}
         {step === 9 ? (<SuccessStep darkMode={preferences.darkMode}/>) : null}
 
         </Animated.View>

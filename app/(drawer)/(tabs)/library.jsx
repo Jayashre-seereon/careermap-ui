@@ -3,12 +3,13 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getCareerLibraryCategoriesByStream, getCareerLibraryNext, getCareerLibraryStreams } from '../../../src/api/careerLibraryApi';
 import { useAppState } from '../../../src/app-state';
 import { Screen, UnlockBottomSheet, mobileAssistantScrollProps } from '../../../src/careermap-ui';
 import { palette } from '../../../src/careermap-data';
 import { StaggerFadeUpItem } from '../../../src/page-transition';
 import { openSubscriptionPrompt } from '../../../src/subscription-flow';
-const streams = [
+const fallbackStreams = [
     { name: 'Science', emoji: '🔬', desc: 'Medical, Engineering & Research' },
     { name: 'Commerce', emoji: '📊', desc: 'Business, Finance & Accounting' },
     { name: 'Arts & Humanities', emoji: '🎨', desc: 'Design, Media & Social Work' },
@@ -198,6 +199,41 @@ const specializations = {
         { name: 'Neurological', emoji: '🧠' },
     ],
 };
+function normalizeInstituteItems(value) {
+    return toList(value).map((item, index) => {
+        if (typeof item === 'string') {
+            return {
+                id: `institution-${index}`,
+                name: item,
+                state: '',
+                city: '',
+                country: '',
+                location: item,
+                isTop: false,
+            };
+        }
+        const city = item?.city || '';
+        const state = item?.state || '';
+        const country = item?.countruy || item?.country || '';
+        const location = [city, state, country].filter(Boolean).join(', ') || item?.location || 'Location not available';
+        return {
+            id: item?.id ?? `institution-${index}`,
+            name: item?.name || 'Institution',
+            state,
+            city,
+            country,
+            location,
+            isTop: Boolean(item?.is_top ?? item?.isTop),
+        };
+    });
+}
+function groupInstitutesByTopStatus(value) {
+    const institutes = normalizeInstituteItems(value);
+    const referenceState = 'Odisha';
+    const topInstitutes = institutes.filter((item) => item.state === referenceState);
+    const outsideInstitutes = institutes.filter((item) => item.state !== referenceState);
+    return { institutes, topInstitutes, outsideInstitutes, referenceState };
+}
 const careerDetails = {
     'General Medicine': {
         title: 'General Medicine (MD)',
@@ -330,224 +366,524 @@ const defaultDetail = (name) => ({
     salary: '₹3-20 LPA',
     institutes: ['Leading Institutes'],
 });
+const stripHtml = (value) => {
+    if (!value) {
+        return '';
+    }
+    return String(value).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+};
+const toList = (value) => {
+    if (Array.isArray(value)) {
+        return value.filter(Boolean);
+    }
+    if (!value) {
+        return [];
+    }
+    return [value];
+};
+const formatCurrencyAmount = (value, currency = 'INR') => {
+    if (value === null || value === undefined || value === '') {
+        return '';
+    }
+
+    const amount = Number(value);
+    if (Number.isNaN(amount)) {
+        return String(value);
+    }
+
+    try {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency,
+            maximumFractionDigits: 0,
+        }).format(amount);
+    }
+    catch {
+        return `${currency} ${amount.toLocaleString('en-IN')}`;
+    }
+};
+const formatSalaryRange = (salary) => {
+    const currency = salary?.currency || 'INR';
+    const minSalary = formatCurrencyAmount(salary?.minSalary, currency);
+    const maxSalary = formatCurrencyAmount(salary?.maxSalary, currency);
+
+    if (minSalary && maxSalary) {
+        return `${minSalary} - ${maxSalary}`;
+    }
+
+    return minSalary || maxSalary || 'Salary not available';
+};
+const formatDate = (value) => {
+    if (!value) {
+        return 'Not available';
+    }
+    const parsedDate = new Date(value);
+    if (Number.isNaN(parsedDate.getTime())) {
+        return String(value);
+    }
+    return parsedDate.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    });
+};
+const getItemTitle = (item) => item?.title || item?.name || item?.subcategory?.title || item?.secondcategory?.name || item?.category?.title || item?.path || item?.examname || item?.pathName || `Item ${item?.id ?? ''}`.trim();
+const getDetailTitle = (detail) => detail?.subcategory?.title || detail?.secondcategory?.name || detail?.category?.title || `Career Detail ${detail?.id ?? ''}`.trim();
+const getDetailDescription = (detail) => stripHtml(detail?.subcategory?.description || detail?.secondcategory?.description || detail?.category?.description || detail?.subcategory?.specialization || detail?.secondcategory?.specialization || detail?.category?.specialization || '');
+const educationIcons = ['school-outline', 'book-outline', 'library-outline', 'document-text-outline', 'ribbon-outline'];
+const careerIcons = ['briefcase-outline', 'people-outline', 'albums-outline', 'folder-open-outline', 'sparkles-outline'];
+const mixedIcons = [...educationIcons, ...careerIcons];
+const hashString = (value) => {
+    let hash = 0;
+    const input = String(value ?? '');
+    for (let index = 0; index < input.length; index += 1) {
+        hash = (hash * 31 + input.charCodeAt(index)) | 0;
+    }
+    return Math.abs(hash);
+};
+const pickIcon = (seed, pool) => pool[hashString(seed) % pool.length];
+const getDetailHeaderIcon = (detail) => {
+    const seed = detail?.id ?? detail?.subcategory?.id ?? detail?.secondcategory?.id ?? detail?.category?.id ?? detail?.subcategory?.title ?? detail?.secondcategory?.name ?? detail?.category?.title;
+    if (detail?.subcategory?.id != null) {
+        return pickIcon(seed, educationIcons);
+    }
+    if (detail?.secondcategory?.id != null) {
+        return pickIcon(seed, educationIcons);
+    }
+    return pickIcon(seed, careerIcons);
+};
+const getStepIcon = (type, item) => {
+    const seed = item?.id ?? item?.title ?? item?.name ?? item?.path ?? `${type}-${item?.id ?? 'x'}`;
+    if (type === 'category') {
+        return pickIcon(seed, careerIcons);
+    }
+    if (type === 'second') {
+        return pickIcon(seed, educationIcons);
+    }
+    if (type === 'sub') {
+        return pickIcon(seed, mixedIcons);
+    }
+    if (type === 'preview') {
+        return pickIcon(seed, mixedIcons);
+    }
+    return 'chevron-forward';
+};
+const getCareerAccessKey = (item) => String(item?.id ?? item?.title ?? item?.name ?? item?.path ?? '');
+const getStreamIcon = (streamName) => {
+    const normalized = String(streamName || '').toLowerCase();
+
+    if (normalized.includes('science')) {
+        return 'flask-outline';
+    }
+    if (normalized.includes('commerce')) {
+        return 'calculator-outline';
+    }
+    if (normalized.includes('arts')) {
+        return 'color-palette-outline';
+    }
+    if (normalized.includes('vocational')) {
+        return 'hammer-outline';
+    }
+    return 'layers-outline';
+};
+const getStreamTone = (streamName) => {
+    const normalized = String(streamName || '').toLowerCase();
+
+    if (normalized.includes('science')) {
+        return palette.blue;
+    }
+    if (normalized.includes('commerce')) {
+        return palette.green;
+    }
+    if (normalized.includes('arts')) {
+        return palette.orange;
+    }
+    if (normalized.includes('vocational')) {
+        return palette.pink;
+    }
+    return palette.purple;
+};
+const mapStreamItem = (item, index = 0) => {
+    const fallback = fallbackStreams[index % fallbackStreams.length] || fallbackStreams[0];
+    const title = item?.name || item?.title || item?.streamName || item?.label || fallback?.name || `Stream ${index + 1}`;
+    return {
+        id: item?.id ?? item?.streamId ?? index + 1,
+        name: title,
+        desc: stripHtml(item?.description || item?.desc || item?.about || fallback?.desc || ''),
+        icon: getStreamIcon(title),
+        tone: getStreamTone(title),
+        raw: item,
+    };
+};
+const normalizeStreamItems = (items) => {
+    if (!Array.isArray(items) || items.length === 0) {
+        return fallbackStreams.map((item, index) => mapStreamItem(item, index));
+    }
+    return items.map((item, index) => mapStreamItem(item, index));
+};
+const getCardTitle = (item) => item?.name || item?.title || item?.subcategory?.title || item?.secondcategory?.name || item?.category?.title || item?.path || item?.examname || item?.pathName || `Item ${item?.id ?? ''}`.trim();
+const getCardDescription = (item) => stripHtml(item?.desc || item?.description || item?.about || item?.specialization || item?.subcategory?.description || item?.secondcategory?.description || item?.category?.description || item?.path || '');
 export default function CareerLibraryScreen() {
     const params = useLocalSearchParams();
     const insets = useSafeAreaInsets();
-    const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess, savedCareers, toggleSavedCareer } = useAppState();
+    const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
     const [currentLevel, setCurrentLevel] = useState('streams');
     const [selectedStream, setSelectedStream] = useState(null);
+    const [streamItems, setStreamItems] = useState(normalizeStreamItems([]));
+    const [categories, setCategories] = useState([]);
+    const [secondCategories, setSecondCategories] = useState([]);
+    const [subCategories, setSubCategories] = useState([]);
+    const [details, setDetails] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
-    const [selectedProgram, setSelectedProgram] = useState(null);
-    const [selectedSpecialization, setSelectedSpecialization] = useState(null);
+    const [selectedSecondCategory, setSelectedSecondCategory] = useState(null);
+    const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+    const [selectedDetailSource, setSelectedDetailSource] = useState(null);
+    const [detailReturnLevel, setDetailReturnLevel] = useState('subcategory');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
-    const animationKey = `${currentLevel}-${selectedStream ?? 'none'}-${selectedCategory ?? 'none'}-${selectedProgram ?? 'none'}-${selectedSpecialization ?? 'none'}`;
-    const detailKey = selectedSpecialization ?? selectedProgram;
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadStreams = async () => {
+            try {
+                setLoading(true);
+                setError('');
+                const response = await getCareerLibraryStreams();
+                const items = Array.isArray(response?.data) ? response.data : [];
+
+                if (isMounted) {
+                    setStreamItems(normalizeStreamItems(items));
+                }
+            }
+            catch (_fetchError) {
+                if (isMounted) {
+                    setError('Unable to load streams right now.');
+                    setStreamItems(normalizeStreamItems([]));
+                }
+            }
+            finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadStreams();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+    useEffect(() => {
+        if (typeof params.level === 'string' && ['streams', 'categories', 'secondcategory', 'subcategory', 'details'].includes(params.level)) {
+            setCurrentLevel(params.level);
+        }
+    }, [params.level]);
+    const animationKey = `${currentLevel}-${selectedStream?.id ?? 'none'}-${selectedCategory?.id ?? 'none'}-${selectedSecondCategory?.id ?? 'none'}-${selectedSubCategory?.id ?? 'none'}`;
+    const detailKey = selectedDetailSource?.id != null ? String(selectedDetailSource.id) : selectedSubCategory?.id != null ? String(selectedSubCategory.id) : null;
     const detailUnlocked = detailKey ? canAccessFreeDetail('career-library', detailKey) : true;
     const returnTarget = useMemo(() => ({
         pathname: '/(drawer)/(tabs)/library',
         params: {
-            level: 'details',
-            stream: selectedStream,
-            category: selectedCategory,
-            program: selectedProgram,
-            specialization: selectedSpecialization,
+            level: currentLevel,
+            streamId: selectedStream?.id,
+            categoryId: selectedCategory?.id,
+            secondCategoryId: selectedSecondCategory?.id,
+            subCategoryId: selectedSubCategory?.id,
         },
-    }), [selectedCategory, selectedProgram, selectedSpecialization, selectedStream]);
-    useEffect(() => {
-        if (typeof params.level === 'string') {
-            setCurrentLevel(params.level);
+    }), [currentLevel, selectedStream, selectedCategory, selectedSecondCategory, selectedSubCategory]);
+    const handleClick = async (type, id, item) => {
+        setLoading(true);
+        setError('');
+        setSelectedDetailSource(null);
+        if (type === 'stream') {
+            setSelectedStream(item);
+            setSelectedCategory(null);
+            setSelectedSecondCategory(null);
+            setSelectedSubCategory(null);
+            setDetails([]);
+            setCurrentLevel('categories');
+            setDetailReturnLevel('streams');
         }
-        setSelectedStream(typeof params.stream === 'string' ? params.stream : null);
-        setSelectedCategory(typeof params.category === 'string' ? params.category : null);
-        setSelectedProgram(typeof params.program === 'string' ? params.program : null);
-        setSelectedSpecialization(typeof params.specialization === 'string' ? params.specialization : null);
-    }, [params.category, params.level, params.program, params.specialization, params.stream]);
-    const handleStreamSelect = (stream) => {
-        setSelectedStream(stream);
-        setCurrentLevel('categories');
-    };
-    const handleCategorySelect = (category) => {
-        setSelectedCategory(category);
-        setCurrentLevel('programs');
-    };
-    const handleProgramSelect = (program) => {
-        setSelectedProgram(program);
-        setCurrentLevel('specializations');
-    };
-    const canOpenCareerItem = (itemKey) => isUnlocked('career-library') || canAccessFreeDetail('career-library', itemKey);
-    const handleSpecializationSelect = (specialization) => {
-        if (!canOpenCareerItem(specialization)) {
-            setShowUnlockSheet(true);
-            return;
+        else if (type === 'category') {
+            setSelectedCategory(item);
+            setDetailReturnLevel('categories');
         }
-        registerFreeDetailAccess('career-library', specialization);
-        setSelectedSpecialization(specialization);
-        setCurrentLevel('details');
+        else if (type === 'second') {
+            setSelectedSecondCategory(item);
+            setDetailReturnLevel('secondcategory');
+        }
+        else if (type === 'sub') {
+            setSelectedSubCategory(item);
+            setDetailReturnLevel('subcategory');
+        }
+        try {
+            const response = type === 'stream'
+                ? await getCareerLibraryCategoriesByStream(id)
+                : await getCareerLibraryNext(type, id);
+            const data = response ?? {};
+            const nextItems = Array.isArray(data?.data) ? data.data : [];
+            if (type === 'stream') {
+                setCategories(nextItems);
+                setSecondCategories([]);
+                setSubCategories([]);
+                setDetails([]);
+                setCurrentLevel('categories');
+                return;
+            }
+            if (data.type === 'secondcategory') {
+                setSecondCategories(nextItems);
+                setSubCategories([]);
+                setDetails([]);
+                setCurrentLevel('secondcategory');
+            }
+            else if (data.type === 'subcategory') {
+                setSubCategories(nextItems);
+                setDetails([]);
+                setCurrentLevel('subcategory');
+            }
+            else if (data.type === 'details') {
+                setSelectedDetailSource(item);
+                setDetails(nextItems);
+                setCurrentLevel('details');
+                if (item?.id != null) {
+                    registerFreeDetailAccess('career-library', String(item.id));
+                }
+            }
+            else if (nextItems.length > 0) {
+                setSelectedDetailSource(item);
+                setDetails(nextItems);
+                setCurrentLevel('details');
+                if (item?.id != null) {
+                    registerFreeDetailAccess('career-library', String(item.id));
+                }
+            }
+            else {
+                setSelectedDetailSource(item);
+                setDetails([]);
+                setCurrentLevel('details');
+                if (item?.id != null) {
+                    registerFreeDetailAccess('career-library', String(item.id));
+                }
+            }
+        }
+        catch (_fetchError) {
+            setError('Unable to load the next step. Please try again.');
+        }
+        finally {
+            setLoading(false);
+        }
     };
     const handleBack = () => {
         if (currentLevel === 'details') {
-            setSelectedSpecialization(null);
-            setCurrentLevel('specializations');
+            setCurrentLevel(detailReturnLevel);
         }
-        else if (currentLevel === 'specializations') {
-            setSelectedProgram(null);
-            setCurrentLevel('programs');
-        }
-        else if (currentLevel === 'programs') {
-            setSelectedCategory(null);
-            setCurrentLevel('categories');
+        else if (currentLevel === 'subcategory') {
+            setCurrentLevel('secondcategory');
         }
         else if (currentLevel === 'categories') {
-            setSelectedStream(null);
+            setCurrentLevel('streams');
+        }
+        else {
             setCurrentLevel('streams');
         }
     };
-    const renderStreams = () => (<View className="flex-row flex-wrap gap-3">
-      {streams.map((stream) => (<Pressable key={stream.name} onPress={() => handleStreamSelect(stream.name)} className={`w-[48%] items-center rounded-[16px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <Text className="mb-2 text-[32px]">{stream.emoji}</Text>
-          <Text className={`mb-1 text-center text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{stream.name}</Text>
-          <Text className={`text-center text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{stream.desc}</Text>
-        </Pressable>))}
+    const renderStreamGrid = (items) => (<View className="flex-row flex-wrap gap-3">
+      {items.map((item, index) => (<StaggerFadeUpItem key={`stream-${item?.id ?? index}`} index={index} style={{ width: '48%', flexGrow: 0, flexShrink: 0 }}>
+          <Pressable onPress={() => {
+                handleClick('stream', item?.id, item);
+            }} className={`w-full gap-3 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+            <View className="flex-row items-start justify-between gap-2">
+              <View className="h-[44px] w-[44px] items-center justify-center rounded-[16px]" style={{ backgroundColor: `${(item?.tone || getStreamTone(item?.name))}15` }}>
+                <Ionicons name={item?.icon || getStreamIcon(item?.name)} size={22} color={item?.tone || getStreamTone(item?.name)}/>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={palette.primary}/>
+            </View>
+            <View className="gap-1">
+              <Text numberOfLines={1} className={`text-[15px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item?.name}</Text>
+              <Text numberOfLines={2} className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item?.desc || 'Explore this stream.'}</Text>
+            </View>
+          </Pressable>
+        </StaggerFadeUpItem>))}
     </View>);
-    const renderCategories = () => (<View className="flex-row flex-wrap gap-3">
-      {categories[selectedStream]?.map((category) => (<Pressable key={category.name} onPress={() => handleCategorySelect(category.name)} className={`w-[48%] items-center rounded-[16px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <Text className="mb-2 text-[32px]">{category.emoji}</Text>
-          <Text className={`mb-1 text-center text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{category.name}</Text>
-        </Pressable>))}
+    const renderCategoryGrid = (items) => (<View className="gap-3">
+      {items.map((item, index) => {
+            const accessKey = getCareerAccessKey(item);
+            const unlockedItem = isUnlocked('career-library') || canAccessFreeDetail('career-library', accessKey);
+            return (<StaggerFadeUpItem key={`category-${item?.id ?? index}`} index={index}>
+          <Pressable onPress={() => {
+                    if (!unlockedItem) {
+                        setShowUnlockSheet(true);
+                        return;
+                    }
+                    handleClick('category', item?.id, item);
+                }} className={`w-full flex-row items-center gap-3 rounded-[18px] border px-3 py-3.5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+            <View className="h-[40px] w-[40px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${palette.primary}12` }}>
+              <Ionicons name={getStepIcon('category', item)} size={20} color={palette.primary}/>
+            </View>
+            <View className="flex-1">
+              <Text className={`text-[14px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getCardTitle(item)}</Text>
+              {getCardDescription(item) ? (<Text numberOfLines={1} className={`mt-0.5 text-[12px] leading-4 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getCardDescription(item)}</Text>) : null}
+            </View>
+            <View className="items-end gap-2">
+              {!isUnlocked('career-library') ? (<View className="rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
+                  <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
+                </View>) : null}
+              <Ionicons name="chevron-forward" size={18} color={palette.primary}/>
+            </View>
+          </Pressable>
+        </StaggerFadeUpItem>);
+        })}
     </View>);
-    const renderPrograms = () => {
-        const programList = programs[selectedCategory] || [];
-        return (<View className="gap-3">
-        {programList.map((program, index) => {
-                const unlockedItem = canOpenCareerItem(program.name);
-                return (<StaggerFadeUpItem key={program.name} index={index}>
-                  <Pressable onPress={() => {
-                        handleProgramSelect(program.name);
-                    }} className={`flex-row items-center rounded-[12px] border p-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-            <View className="flex-1 flex-row items-center">
-              <Text className="mr-3 text-[24px]">{program.emoji}</Text>
-              <Text className={`flex-1 text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{program.name}</Text>
+    const renderStepList = (items, type) => (<View className="gap-3">
+      {items.map((item, index) => {
+            const accessKey = getCareerAccessKey(item);
+            const unlockedItem = isUnlocked('career-library') || canAccessFreeDetail('career-library', accessKey);
+            return (<StaggerFadeUpItem key={`${type}-${item?.id ?? index}`} index={index}>
+          <Pressable onPress={() => {
+                    if (!unlockedItem) {
+                        setShowUnlockSheet(true);
+                        return;
+                    }
+                    handleClick(type, item?.id, item);
+                }} className={`flex-row items-center rounded-[14px] border p-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+            <View className={`mr-3 h-10 w-10 items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#fff0e8]'}`}>
+              <Ionicons name={getStepIcon(type, item)} size={18} color={palette.primary}/>
+            </View>
+            <View className="flex-1">
+              <Text className={`text-[15px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getCardTitle(item)}</Text>
+              {getCardDescription(item) ? (<Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getCardDescription(item)}</Text>) : null}
             </View>
             {!isUnlocked('career-library') ? (<View className="mr-2 rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
                 <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
               </View>) : null}
-            <Ionicons name={unlockedItem ? 'chevron-forward' : 'lock-closed'} size={18} color={unlockedItem ? palette.primary : palette.muted}/>
+            <Ionicons name="chevron-forward" size={18} color={palette.primary}/>
           </Pressable>
-          </StaggerFadeUpItem>);
-            })}
-      </View>);
-    };
-    const renderSpecializations = () => {
-        const specializationList = specializations[selectedProgram] || [];
-        if (specializationList.length === 0) {
-            const unlockedItem = canOpenCareerItem(selectedProgram);
-            return (<Pressable onPress={() => handleSpecializationSelect(selectedProgram)} className={`items-center rounded-[16px] border p-6 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <Text className={`mb-2 text-[18px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{selectedProgram}</Text>
-          <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{unlockedItem ? 'View general details' : 'Tap to unlock this career'}</Text>
-          {!isUnlocked('career-library') ? (<View className="mt-3 rounded-full px-3 py-1.5" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
-              <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE ACCESS' : 'LOCKED'}</Text>
+        </StaggerFadeUpItem>);
+        })}
+    </View>);
+    const renderDetailItem = (detail, index) => {
+        const title = getDetailTitle(detail);
+        const instituteGroups = groupInstitutesByTopStatus(detail?.institutions);
+        return (<StaggerFadeUpItem key={`detail-${detail?.id ?? index}`} index={index}>
+          <View className="mb-4">
+            
+            <View className="mb-3 flex-row items-start gap-3">
+  <View className={`h-[56px] w-[56px] items-center justify-center rounded-[18px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#ffecef]'}`}>
+    <Ionicons name={getDetailHeaderIcon(detail)} size={26} color={palette.primary}/>
+  </View>
+  <View className="flex-1">
+    <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
+    {getDetailDescription(detail) ? (
+      <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+        {getDetailDescription(detail)}
+      </Text>
+    ) : null}
+  </View>
+</View>
+ {detailUnlocked ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.green}14` }}>
+              <Text className="text-[12px] font-semibold" style={{ color: palette.green }}>
+              <Ionicons name="sparkles-outline" size={14} color={palette.green} className="mr-1"/> You have access to view this career detail for free.
+              </Text>
             </View>) : null}
-        </Pressable>);
-        }
-        return (<View className="gap-3">
-        {specializationList.map((specialization, index) => {
-                const unlockedItem = canOpenCareerItem(specialization.name);
-                return (<StaggerFadeUpItem key={specialization.name} index={index}>
-                  <Pressable onPress={() => {
-                        handleSpecializationSelect(specialization.name);
-                    }} className={`flex-row items-center rounded-[12px] border p-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-            <View className="flex-1 flex-row items-center">
-              <Text className="mr-3 text-[24px]">{specialization.emoji}</Text>
-              <Text className={`flex-1 text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{specialization.name}</Text>
+{detail?.description ? (
+    <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+        <View className="mb-3 flex-row items-center gap-2">
+            <Ionicons name="information-circle-outline" size={16} color={palette.primary}/>
+            <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>About</Text>
+        </View>
+        <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+            {detail.description}
+        </Text>
+    </View>
+) : null}
+            
+            <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+              <View className="mb-3 flex-row items-center gap-2">
+                <Ionicons name="briefcase-outline" size={16} color={palette.primary}/>
+                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Job Scope</Text>
+              </View>
+              {toList(detail?.jobScope).length > 0 ? toList(detail?.jobScope).map((scope) => (<View key={scope} className="mb-2 flex-row items-start">
+                  <Ionicons name="ellipse" size={6} color={palette.secondary} style={{ marginRight: 8, marginTop: 7 }}/>
+                  <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{scope}</Text>
+                </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Job scope not available.</Text>)}
             </View>
-            {!isUnlocked('career-library') ? (<View className="mr-2 rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
-                <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
-              </View>) : null}
-            <Ionicons name={unlockedItem ? 'chevron-forward' : 'lock-closed'} size={18} color={unlockedItem ? palette.primary : palette.muted}/>
-          </Pressable>
-          </StaggerFadeUpItem>);
-            })}
-      </View>);
-    };
-    const renderDetails = () => {
-        const detail = careerDetails[selectedSpecialization] || defaultDetail(selectedSpecialization);
-        const isSaved = savedCareers.includes(detail.title);
-        return (<View className="flex-1 ">
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
-        {!isUnlocked('career-library') ? (<View className="mb-4 flex-row items-center gap-2 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${detailUnlocked ? palette.green : palette.orange}14` }}>
-            <Ionicons name={detailUnlocked ? 'sparkles-outline' : 'lock-closed'} size={18} color={detailUnlocked ? palette.green : palette.orange}/>
-            <Text className="flex-1 text-[12px] font-semibold" style={{ color: detailUnlocked ? palette.green : palette.orange }}>
-              {detailUnlocked ? 'Your first career detail is unlocked for free.' : 'You have already used the free career detail. Subscribe to view more.'}
-            </Text>
-          </View>) : null}
-
-        <View className={`mb-4 items-center rounded-[24px] border px-4 py-6 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-[#f0e2da] bg-[#fff9f6]'}`}>
-          <View className={`mb-3 h-[76px] w-[76px] items-center justify-center rounded-[24px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#ffecef]'}`}>
-            <Ionicons name="school-outline" size={34} color={palette.primary}/>
+            <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+              <View className="mb-3 flex-row items-center gap-2">
+                <Ionicons name="cash-outline" size={16} color={palette.primary}/>
+                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Salary Range</Text>
+              </View>
+              {toList(detail?.salaryRanges).length > 0 ? toList(detail?.salaryRanges).map((salary, salaryIndex) => (<View key={salary?.id ?? salaryIndex} className="mb-2">
+                  <Text className="text-[15px] font-bold text-brand">{formatSalaryRange(salary)}</Text>
+                </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Salary details not available.</Text>)}
+            </View>
+            <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+              <View className="mb-3 flex-row items-center gap-2">
+                <Ionicons name="school-outline" size={16} color={palette.primary}/>
+                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Top Institutes</Text>
+              </View>
+              <View className="gap-4">
+                {instituteGroups.topInstitutes.length > 0 ? (<View>
+                    <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
+                      {instituteGroups.referenceState ? `Top Institutes of ${instituteGroups.referenceState}` : 'Top Institutes'}
+                    </Text>
+                    {instituteGroups.topInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 rounded-[14px] border border-[#f0e4e2] bg-[#fdf9f9] px-3 py-3">
+                        <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
+                        <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
+                      </View>))}
+                  </View>) : null}
+                {instituteGroups.outsideInstitutes.length > 0 ? (<View>
+                    <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
+                      {instituteGroups.referenceState ? `Top Institutes Outside ${instituteGroups.referenceState}` : 'Top Institutes Outside State'}
+                    </Text>
+                    {instituteGroups.outsideInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 rounded-[14px] border border-[#f0e4e2] bg-white px-3 py-3">
+                        <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
+                        <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
+                      </View>))}
+                  </View>) : null}
+                {!instituteGroups.topInstitutes.length && !instituteGroups.outsideInstitutes.length ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Institution details not available.</Text>) : null}
+              </View>
+            </View>
+            <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+              <View className="mb-3 flex-row items-center gap-2">
+                <Ionicons name="map-outline" size={16} color={palette.primary}/>
+                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Career Paths</Text>
+              </View>
+              {toList(detail?.careerpaths).length > 0 ? toList(detail?.careerpaths).map((pathItem) => (<View key={pathItem?.id} className="mb-2">
+                  <Text className={`text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{pathItem?.pathName || 'Path'}</Text>
+                  <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{pathItem?.path?.pathtype || pathItem?.graduation || 'Path information not available.'}</Text>
+                </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Career path details not available.</Text>)}
+            </View>
+            <View className={`rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+              <View className="mb-3 flex-row items-center gap-2">
+                <Ionicons name="reader-outline" size={16} color={palette.primary}/>
+                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Entrance Exams</Text>
+              </View>
+              {toList(detail?.entranceexams).length > 0 ? toList(detail?.entranceexams).map((exam) => (<View key={exam?.id} className="mb-3">
+                  <Text className={`text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam?.examname || 'Exam'}</Text>
+                  <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{[exam?.mode, exam?.duration, formatDate(exam?.exam_date)].filter(Boolean).join(' • ')}</Text>
+                </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Exam details not available.</Text>)}
+            </View>
           </View>
-          <Text className={`text-center text-[24px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{detail.title}</Text>
-          <Text className={`mt-2 text-center text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{detail.overview}</Text>
-        </View>
-        <Pressable onPress={() => toggleSavedCareer(detail.title)} className={`mb-4 flex-row items-center justify-center gap-2 rounded-[14px] border px-4 py-3 ${isSaved ? 'border-brand bg-brand' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <Ionicons name={isSaved ? 'heart' : 'heart-outline'} size={18} color={isSaved ? '#fff' : palette.primary}/>
-          <Text className={`text-[13px] font-extrabold ${isSaved ? 'text-white' : 'text-brand'}`}>{isSaved ? 'Saved to Wishlist' : 'Save to Wishlist'}</Text>
-        </Pressable>
-
-        <View className={`mb-5 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Career Path</Text>
-          {detail.path.map((step, i) => (<View key={i} className="mb-2.5 flex-row items-start">
-              <Text className="mr-3 h-7 w-7 rounded-full bg-brand text-center text-[13px] font-bold leading-7 text-white">{i + 1}</Text>
-              <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{step}</Text>
-            </View>))}
-        </View>
-
-        <View className={`mb-5 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Education</Text>
-          <Text className={`pt-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{detail.education}</Text>
-        </View>
-
-        <View className={`mb-5 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Entrance Exams</Text>
-          {detail.exams.map(exam => (<View key={exam} className="mb-2 flex-row items-start">
-              <View className={`mr-2 mt-1.5 h-1.5 w-1.5 rounded-full ${preferences.darkMode ? 'bg-[#8b7f8f]' : 'bg-[#b9b2b8]'}`}/>
-              <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{exam}</Text>
-            </View>))}
-        </View>
-
-        <View className={`mb-5 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Job Opportunities</Text>
-          {detail.jobs.map(job => (<View key={job} className="mb-2 flex-row items-start">
-              <View className={`mr-2 mt-1.5 h-1.5 w-1.5 rounded-full ${preferences.darkMode ? 'bg-[#8b7f8f]' : 'bg-[#b9b2b8]'}`}/>
-              <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{job}</Text>
-            </View>))}
-        </View>
-
-        <View className={`mb-5 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Salary Range</Text>
-          <Text className="text-[16px] font-bold text-brand">{detail.salary}</Text>
-        </View>
-
-        <View className={`mb-5 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <Text className={`mb-2 text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Top Institutes</Text>
-          {detail.institutes.map(institute => (<View key={institute} className="mb-2 flex-row items-start">
-              <Ionicons name="star" size={12} color={palette.secondary} style={{ marginRight: 8, marginTop: 3 }}/>
-              <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institute}</Text>
-            </View>))}
-        </View>
-      </ScrollView>
-      </View>);
+        </StaggerFadeUpItem>);
     };
     const getTitle = () => {
-        if (currentLevel === 'streams')
+        if (currentLevel === 'streams') {
             return 'Career Library';
-        if (currentLevel === 'categories')
-            return selectedStream;
-        if (currentLevel === 'programs')
-            return selectedCategory;
-        if (currentLevel === 'specializations')
-            return selectedProgram;
-        if (currentLevel === 'details')
-            return selectedSpecialization;
+        }
+        if (currentLevel === 'categories') {
+            return selectedStream?.name || 'Career Library';
+        }
+        if (currentLevel === 'secondcategory') {
+            return getItemTitle(selectedCategory);
+        }
+        if (currentLevel === 'subcategory') {
+            return getItemTitle(selectedSecondCategory);
+        }
+        if (currentLevel === 'details') {
+            return getItemTitle(selectedDetailSource || selectedSubCategory || selectedSecondCategory || selectedCategory);
+        }
         return 'Career Library';
     };
     return (<Screen scroll={true} animationKey={animationKey}>
@@ -558,11 +894,24 @@ export default function CareerLibraryScreen() {
         <Text className={`text-[18px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getTitle()}</Text>
       </View>
 
-      {currentLevel === 'details' ? (renderDetails()) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
-          {currentLevel === 'streams' && renderStreams()}
-          {currentLevel === 'categories' && renderCategories()}
-          {currentLevel === 'programs' && renderPrograms()}
-          {currentLevel === 'specializations' && renderSpecializations()}
+      {currentLevel === 'streams' ? (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
+          {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading streams...</Text>) : null}
+          {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
+          {renderStreamGrid(streamItems)}
+        </ScrollView>) : currentLevel === 'categories' ? (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
+          {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading categories...</Text>) : null}
+          {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
+          {renderCategoryGrid(categories)}
+        </ScrollView>) : currentLevel === 'details' ? (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
+          {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading details...</Text>) : null}
+          {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
+         
+          {details.length > 0 ? details.map((detail, index) => renderDetailItem(detail, index)) : !loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No details available for this selection.</Text>) : null}
+        </ScrollView>) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
+          {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading...</Text>) : null}
+          {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
+          {currentLevel === 'secondcategory' && renderStepList(secondCategories, 'second')}
+          {currentLevel === 'subcategory' && renderStepList(subCategories, 'sub')}
         </ScrollView>)}
       {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career Library" subtitle="Subscribe to more careers, salary insights, education paths, and institute details." onClose={() => setShowUnlockSheet(false)} onPress={() => {
                 setShowUnlockSheet(false);

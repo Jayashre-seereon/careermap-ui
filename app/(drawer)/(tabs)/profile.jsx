@@ -1,20 +1,92 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../../src/app-state';
+import { getApiErrorMessage, getProfileUpdatePayload, getUserDashboard, logoutUser, updateUserProfile } from '../../../src/api/authApi';
 import { palette } from '../../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen } from '../../../src/careermap-ui';
 import { StaggerFadeUpItem } from '../../../src/page-transition';
+import { formatDateForApi, formatDateForDisplay, getDateError, mapApiUserToProfile, splitFullName } from '../../../src/utils/auth';
+import { useAuthStore } from '../../../src/store/auth-store';
 export default function ProfileScreen() {
     const { activePlanId, bookings, hasActiveSubscription, onboarding, preferences, profileEditRequestKey, requestProfileEdit, savedCareers, saveUserProfile, subscriptionRecords, testHistory, toggleDarkMode, userProfile, } = useAppState();
+    const authUser = useAuthStore((state) => state.user);
+    const accessToken = useAuthStore((state) => state.accessToken);
+    const setAuthUser = useAuthStore((state) => state.setUser);
+    const clearAuthFlow = useAuthStore((state) => state.clearAuthFlow);
+    const logout = useAuthStore((state) => state.logout);
     const [editMode, setEditMode] = useState(false);
-    const [form, setForm] = useState(userProfile);
+    const [form, setForm] = useState({
+        ...userProfile,
+        dob: formatDateForDisplay(userProfile.dob),
+    });
     const [openSection, setOpenSection] = useState(null);
-    const [showPassword, setShowPassword] = useState(false);
+    const [saveStatus, setSaveStatus] = useState({ type: 'idle', message: '' });
+    const [fieldErrors, setFieldErrors] = useState({ dob: '' });
+    const [isSaving, setIsSaving] = useState(false);
+    const [isDashboardLoading, setIsDashboardLoading] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const hasLoadedDashboardRef = useRef(false);
     useEffect(() => {
-        setForm(userProfile);
-    }, [userProfile]);
+        const combinedName = userProfile.name || [authUser?.firstName, authUser?.lastName].filter(Boolean).join(' ').trim();
+        setForm({
+            ...userProfile,
+            dob: formatDateForDisplay(userProfile.dob),
+            name: combinedName || userProfile.name || '',
+            email: userProfile.email || authUser?.email || '',
+            mobile: userProfile.mobile || authUser?.mobile || '',
+            password: userProfile.password || '',
+        });
+    }, [authUser?.email, authUser?.firstName, authUser?.lastName, authUser?.mobile, userProfile]);
+    useEffect(() => {
+        if (hasLoadedDashboardRef.current) {
+            return;
+        }
+        hasLoadedDashboardRef.current = true;
+        let isMounted = true;
+        async function loadDashboardProfile() {
+            try {
+                setIsDashboardLoading(true);
+                const response = await getUserDashboard();
+                const dashboardUser = response?.data?.data || response?.data?.user || response?.data || null;
+                if (!dashboardUser || !isMounted) {
+                    return;
+                }
+                const mappedProfile = mapApiUserToProfile(dashboardUser);
+                if (mappedProfile) {
+                    const fullName = [dashboardUser?.firstName, dashboardUser?.lastName].filter(Boolean).join(' ').trim();
+                    const mergedProfile = {
+                        ...userProfile,
+                        ...mappedProfile,
+                        dob: formatDateForDisplay(mappedProfile.dob),
+                        name: fullName || mappedProfile.name || userProfile.name || '',
+                        email: dashboardUser?.email || mappedProfile.email || userProfile.email || '',
+                        mobile: dashboardUser?.mobile || mappedProfile.mobile || userProfile.mobile || '',
+                        password: '',
+                    };
+                    setForm((current) => ({
+                        ...current,
+                        ...mergedProfile,
+                    }));
+                    saveUserProfile(mergedProfile);
+                }
+                setAuthUser(dashboardUser);
+            }
+            catch (_error) {
+                // Keep the local profile if the dashboard request fails.
+            }
+            finally {
+                if (isMounted) {
+                    setIsDashboardLoading(false);
+                }
+            }
+        }
+        void loadDashboardProfile();
+        return () => {
+            isMounted = false;
+        };
+    }, [saveUserProfile, setAuthUser, userProfile]);
     useEffect(() => {
         if (profileEditRequestKey > 0) {
             setEditMode(true);
@@ -24,13 +96,7 @@ export default function ProfileScreen() {
     const profileClass = onboarding.selectedClass || 'Class 11';
     const profileStream = onboarding.selectedStream || 'Science';
     const menuItems = useMemo(() => [
-        {
-            label: 'Saved Careers',
-            icon: 'star-outline',
-            tone: palette.orange,
-            action: () => setOpenSection((current) => (current === 'saved' ? null : 'saved')),
-            value: `${savedCareers.length} saved`,
-        },
+        
         {
             label: 'Test History',
             icon: 'time-outline',
@@ -56,6 +122,76 @@ export default function ProfileScreen() {
     ], [bookings.length, hasActiveSubscription, savedCareers.length, testHistory.length]);
     const updateField = (key, value) => {
         setForm((current) => ({ ...current, [key]: value }));
+        if (key === 'dob') {
+            setFieldErrors((current) => ({ ...current, dob: getDateError(value) }));
+        }
+        if (saveStatus.type !== 'idle') {
+            setSaveStatus({ type: 'idle', message: '' });
+        }
+    };
+    const handleSaveProfile = async () => {
+        const name = form.name.trim();
+        const nextDobError = form.dob ? getDateError(form.dob) : '';
+        setFieldErrors({ dob: nextDobError });
+        if (!name) {
+            setSaveStatus({ type: 'error', message: 'Please enter your full name.' });
+            return;
+        }
+        if (nextDobError) {
+            setSaveStatus({ type: 'error', message: 'Please enter a valid date of birth.' });
+            return;
+        }
+        const { firstName, lastName } = splitFullName(name);
+        const payload = getProfileUpdatePayload({
+            firstName,
+            lastName,
+            username: authUser?.username || authUser?.email?.split('@')[0] || '',
+            country: form.country.trim() || 'India',
+            state: form.stateName.trim(),
+            city: form.city.trim(),
+            district: form.district.trim(),
+            gender: form.gender,
+            address: form.address.trim(),
+            dataOfBirth: form.dob ? formatDateForApi(form.dob.trim()) : null,
+            image: authUser?.image || 'image_url.png',
+            status: authUser?.status || 'Active',
+        }, authUser || {});
+        try {
+            setIsSaving(true);
+            setSaveStatus({ type: 'idle', message: '' });
+            const response = await updateUserProfile(payload);
+            const updatedUser = response?.data || response?.user || response;
+            if (updatedUser) {
+                setAuthUser(updatedUser);
+                const mappedProfile = mapApiUserToProfile(updatedUser);
+                if (mappedProfile) {
+                    saveUserProfile({
+                        ...userProfile,
+                        ...mappedProfile,
+                        name,
+                        childName: userProfile.childName || '',
+                    });
+                }
+            }
+            else {
+                saveUserProfile({
+                    ...userProfile,
+                    ...form,
+                    name,
+                });
+            }
+            setSaveStatus({ type: 'success', message: response?.message || 'Profile updated successfully.' });
+            setEditMode(false);
+        }
+        catch (error) {
+            setSaveStatus({
+                type: 'error',
+                message: getApiErrorMessage(error, 'Failed to update profile.'),
+            });
+        }
+        finally {
+            setIsSaving(false);
+        }
     };
     const renderInlineSection = (section) => {
         if (section === 'saved' && savedCareers.length > 0) {
@@ -72,8 +208,10 @@ export default function ProfileScreen() {
             return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-[#fcf8f5]'}`}>
           {testHistory.map((item) => (<AnimatedPressable key={item.id} className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/(tabs)/assessment')}>
               <View className="flex-1 pr-3">
-                <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.title}</Text>
-                <Text className={`mt-1 text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.subtitle}</Text>
+                <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.quizName || item.title}</Text>
+                <Text className={`mt-1 text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                  {[item.score ? `Score: ${item.score}` : "", item.attemptedAt ? `Attempted: ${item.attemptedAt}` : item.subtitle].filter(Boolean).join(' • ')}
+                </Text>
               </View>
               <Pill label={item.status} tone={item.status === 'Completed' ? palette.green : palette.secondary}/>
             </AnimatedPressable>))}
@@ -85,7 +223,7 @@ export default function ProfileScreen() {
             <View key={booking.id} className={`flex-row items-center justify-between rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`}>
               <View>
                 <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{booking.mentorName}</Text>
-                <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{booking.date} | {booking.time}</Text>
+                <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{booking.timeSlot || booking.time} | {booking.mentorFee ? `Fee: Rs ${booking.mentorFee}` : booking.date}</Text>
               </View>
               <Pill label={booking.status} tone={palette.green}/>
             </View>
@@ -96,11 +234,11 @@ export default function ProfileScreen() {
             return (<View className={`gap-3 border-t px-4 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-[#fcf8f5]'}`}>
           {subscriptionRecords.map((record) => (<AnimatedPressable key={record.id} className={`gap-1 rounded-[18px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`} onPress={() => router.push('/(drawer)/subscription')}>
               <View className="flex-row items-center justify-between">
-                <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{record.planName}</Text>
-                <Text className="text-[13px] font-extrabold text-brand">{record.price}</Text>
+                <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{record.subscriptionName || record.planName}</Text>
+                <Text className="text-[13px] font-extrabold text-brand">{record.amount !== "" && record.amount != null ? `Rs ${record.amount}` : record.price}</Text>
               </View>
-              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Valid until: {record.expiryDate}</Text>
-              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>TXN: {record.transactionId}</Text>
+              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Validity: {record.validity || record.expiryDate}</Text>
+              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Status: {record.status || 'Active'}</Text>
             </AnimatedPressable>))}
         </View>);
         }
@@ -115,24 +253,53 @@ export default function ProfileScreen() {
           <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Edit Profile</Text>
         </View>
 
+        <View className={`rounded-[20px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+          <Text className={`text-[12px] font-bold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+            Your saved profile details are prefilled here. Email, mobile number, and password are locked and cannot be edited.
+          </Text>
+        </View>
+
+        {saveStatus.message ? (<View className={`rounded-[18px] border px-4 py-3 ${saveStatus.type === 'error'
+                ? preferences.darkMode
+                    ? 'border-[#5a2630] bg-[#2b151b]'
+                    : 'border-[#efc8c0] bg-[#fff4f2]'
+                : preferences.darkMode
+                    ? 'border-[#22462f] bg-[#102016]'
+                    : 'border-[#cde7d4] bg-[#edf8f0]'}`}>
+            <Text className={`text-[13px] font-extrabold ${saveStatus.type === 'error' ? 'text-danger' : 'text-success'}`}>{saveStatus.message}</Text>
+          </View>) : null}
+
+        {isDashboardLoading ? (<View className={`rounded-[18px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-surface'}`}>
+            <Text className={`text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Loading profile details...</Text>
+          </View>) : null}
+
         <View className={`gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+          <View className="gap-1.5">
+            <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Email Address</Text>
+            <View className={`rounded-[18px] border px-4 py-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-surface'}`}>
+              <Text className={`text-[14px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{form.email || 'Not set'}</Text>
+            </View>
+            <Text className={`text-[11px] font-semibold ${preferences.darkMode ? 'text-[#8e8691]' : 'text-muted'}`}>Can&apos;t edit</Text>
+          </View>
+          <View className="gap-1.5">
+            <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Mobile Number</Text>
+            <View className={`rounded-[18px] border px-4 py-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-surface'}`}>
+              <Text className={`text-[14px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{form.mobile || 'Not set'}</Text>
+            </View>
+            <Text className={`text-[11px] font-semibold ${preferences.darkMode ? 'text-[#8e8691]' : 'text-muted'}`}>Can&apos;t edit</Text>
+          </View>
           {[
                 { key: 'name', label: onboarding.userType === 'parent' ? 'Parent Name' : 'Full Name', placeholder: 'Enter full name', keyboardType: 'default' },
-                { key: 'email', label: 'Email Address', placeholder: 'Enter email address', keyboardType: 'email-address' },
-                { key: 'mobile', label: 'Mobile Number', placeholder: '+91 XXXXX XXXXX', keyboardType: 'phone-pad' },
-                { key: 'password', label: 'Password', placeholder: 'Update password', keyboardType: 'default' },
                 { key: 'address', label: 'Address', placeholder: 'Enter address', keyboardType: 'default' },
+                { key: 'district', label: 'District', placeholder: 'Enter district', keyboardType: 'default' },
                 { key: 'city', label: 'City', placeholder: 'Enter city', keyboardType: 'default' },
                 { key: 'stateName', label: 'State', placeholder: 'Enter state', keyboardType: 'default' },
-                { key: 'dob', label: 'Date of Birth', placeholder: 'YYYY-MM-DD', keyboardType: 'numbers-and-punctuation' },
+                { key: 'country', label: 'Country', placeholder: 'Enter country', keyboardType: 'default' },
+                { key: 'dob', label: 'Date of Birth', placeholder: 'DD-MM-YYYY', keyboardType: 'numbers-and-punctuation' },
             ].map((field) => (<View key={field.key} className="gap-1.5">
               <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{field.label}</Text>
-              {field.key === 'password' ? (<View className={`flex-row items-center gap-3 rounded-[18px] border px-4 py-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-surface'}`}>
-                  <TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} secureTextEntry={!showPassword} className={`flex-1 text-[14px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}/>
-                  <AnimatedPressable onPress={() => setShowPassword((value) => !value)}>
-                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={palette.muted}/>
-                  </AnimatedPressable>
-                </View>) : (<TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>)}
+              <TextInput value={form[field.key]} onChangeText={(value) => updateField(field.key, value)} placeholder={field.placeholder} placeholderTextColor={palette.muted} keyboardType={field.keyboardType} className={`rounded-[18px] border px-4 py-[14px] text-[14px] ${field.key === 'dob' && fieldErrors.dob ? 'border-danger' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
+              {field.key === 'dob' && fieldErrors.dob ? (<Text className="text-[11px] font-semibold text-danger">{fieldErrors.dob}</Text>) : null}
             </View>))}
 
           {onboarding.userType === 'parent' ? (<View className="gap-1.5">
@@ -153,28 +320,10 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <View className={`gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          <Text className="text-[15px] font-black text-brand">Onboarding Details</Text>
-          <View className="gap-2">
-            {[
-                ['User Type', onboarding.userType || 'Not set'],
-                ['Class', onboarding.selectedClass || 'Not set'],
-                ['Stream', onboarding.selectedStream || 'Not set'],
-                ['Guidance', onboarding.selectedGuidance || 'Not set'],
-                ['Interests', onboarding.selectedInterests.length > 0 ? onboarding.selectedInterests.join(', ') : 'Not set'],
-            ].map(([label, value]) => (<View key={label} className={`flex-row items-center justify-between rounded-[16px] px-4 py-3 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-surface'}`}>
-                <Text className={`text-[12px] font-bold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
-                <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{value}</Text>
-              </View>))}
-          </View>
+      
 
-        </View>
-
-        <AnimatedPressable className="rounded-[18px] bg-brand py-4" onPress={() => {
-                saveUserProfile(form);
-                setEditMode(false);
-            }}>
-          <Text className="text-center text-[15px] font-extrabold text-white">Save Changes</Text>
+        <AnimatedPressable className="rounded-[18px] bg-brand py-4" disabled={isSaving} onPress={handleSaveProfile}>
+          <Text className="text-center text-[15px] font-extrabold text-white">{isSaving ? 'Saving...' : 'Save Changes'}</Text>
         </AnimatedPressable>
       </Screen>);
     }
@@ -236,9 +385,28 @@ export default function ProfileScreen() {
         })}
       </View>
 
-      <AnimatedPressable className={`flex-row items-center justify-center gap-2 rounded-[18px] border py-4 ${preferences.darkMode ? 'border-[#5a2630] bg-[#2b151b]' : 'border-[#efc8c0] bg-[#fff4f2]'}`} onPress={() => router.replace('/auth-entry')}>
+      <AnimatedPressable className={`flex-row items-center justify-center gap-2 rounded-[18px] border py-4 ${preferences.darkMode ? 'border-[#5a2630] bg-[#2b151b]' : 'border-[#efc8c0] bg-[#fff4f2]'}`} disabled={isLoggingOut} onPress={() => {
+            void (async () => {
+                if (isLoggingOut) {
+                    return;
+                }
+                try {
+                    setIsLoggingOut(true);
+                    await logoutUser(accessToken);
+                }
+                catch (_error) {
+                    // Continue with local sign-out even if the server logout call fails.
+                }
+                finally {
+                    clearAuthFlow();
+                    logout();
+                    setIsLoggingOut(false);
+                    router.replace('/auth-entry');
+                }
+            })();
+        }}>
         <Ionicons name="log-out-outline" size={18} color={palette.danger}/>
-        <Text className="text-[14px] font-extrabold text-danger">Logout</Text>
+        <Text className="text-[14px] font-extrabold text-danger">{isLoggingOut ? 'Logging out...' : 'Logout'}</Text>
       </AnimatedPressable>
 
       <Text className={`text-center text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
@@ -246,3 +414,5 @@ export default function ProfileScreen() {
       </Text>
     </Screen>);
 }
+
+
