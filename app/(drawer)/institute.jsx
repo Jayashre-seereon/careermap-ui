@@ -4,7 +4,7 @@ import { Image, Linking, ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getInstitutes } from '../../src/api/instituteApi';
-import { AnimatedPressable, HierarchyFilterPanel, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
+import { AnimatedPressable, HierarchyFilterPanel, Pill, Screen, SectionHeader ,} from '../../src/careermap-ui';
 import { buildHierarchyOptions, filterByHierarchy } from '../../src/utils/hierarchy';
 
 const getInstituteInitials = (name) => {
@@ -49,6 +49,7 @@ export default function InstituteScreen() {
     const [loadError, setLoadError] = useState('');
       const [showFilters, setShowFilters] = useState(false);
     const [typeFilter, setTypeFilter] = useState('All');
+    const [countryFilter, setCountryFilter] = useState('All');
     const [stateFilter, setStateFilter] = useState('All');
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [secondCategoryFilter, setSecondCategoryFilter] = useState('All');
@@ -85,7 +86,10 @@ export default function InstituteScreen() {
             isMounted = false;
         };
     }, []);
-
+const countryOptions = useMemo(
+    () => ['All', ...Array.from(new Set(institutes.map((item) => item.country).filter(Boolean)))],
+    [institutes]
+);
     const typeOptions = useMemo(
         () => ['All', ...Array.from(new Set(institutes.map((item) => item.type).filter(Boolean)))],
         [institutes]
@@ -111,6 +115,10 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
     const filtered = useMemo(() => {
         let source = [...institutes];
 
+        if (countryFilter !== 'All') {
+    source = source.filter((item) => item.country === countryFilter);
+}
+
         if (typeFilter !== 'All') {
             source = source.filter((item) => item.type === typeFilter);
         }
@@ -130,7 +138,7 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
         }
 
         return source;
-    }, [categoryFilter, institutes, secondCategoryFilter, sortAZ, stateFilter, subCategoryFilter, typeFilter]);
+    }, [categoryFilter, institutes, secondCategoryFilter, sortAZ,countryFilter, stateFilter, subCategoryFilter, typeFilter]);
 
     useEffect(() => {
         if (categoryFilter !== 'All' && !categoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(categoryFilter))) {
@@ -144,7 +152,28 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
         }
     }, [categoryFilter, categoryOptions, secondCategoryFilter, secondCategoryOptions, subCategoryFilter, subCategoryOptions]);
 
-   
+   const DropdownFilter = ({ label, value, options, onChange }) => {
+  return (
+    <View className="gap-1">
+      <Text className="text-[11px] font-semibold text-muted">{label}</Text>
+
+      <View className="rounded-[14px] border border-line bg-white px-3 py-2">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-transparent text-[13px] outline-none"
+        >
+          <option value="All">All</option>
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+      </View>
+    </View>
+  );
+};
 
     return (
         <Screen animationKey={animationKey}>
@@ -166,7 +195,34 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
 
             {showFilters ? (
                 <View className="gap-2.5">
-                    
+                   <View className="flex-row gap-2">
+  <View className="flex-1">
+    <DropdownFilter
+      label="Type"
+      value={typeFilter}
+      options={typeOptions.filter(o => o !== 'All')}
+      onChange={setTypeFilter}
+    />
+  </View>
+
+  <View className="flex-1">
+    <DropdownFilter
+      label="State"
+      value={stateFilter}
+      options={stateOptions.filter(o => o !== 'All')}
+      onChange={setStateFilter}
+    />
+  </View>
+
+  <View className="flex-1">
+    <DropdownFilter
+      label="Country"
+      value={countryFilter}
+      options={countryOptions.filter(o => o !== 'All')}
+      onChange={setCountryFilter}
+    />
+  </View>
+</View>
                     
                     <HierarchyFilterPanel
                         visible
