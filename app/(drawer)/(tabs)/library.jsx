@@ -9,6 +9,8 @@ import { Screen, UnlockBottomSheet, mobileAssistantScrollProps } from '../../../
 import { palette } from '../../../src/careermap-data';
 import { StaggerFadeUpItem } from '../../../src/page-transition';
 import { openSubscriptionPrompt } from '../../../src/subscription-flow';
+import { Video, ResizeMode } from 'expo-av';
+import { Image } from 'react-native';
 const fallbackStreams = [
     { name: 'Science', emoji: '🔬', desc: 'Medical, Engineering & Research' },
     { name: 'Commerce', emoji: '📊', desc: 'Business, Finance & Accounting' },
@@ -402,6 +404,14 @@ const formatCurrencyAmount = (value, currency = 'INR') => {
         return `${currency} ${amount.toLocaleString('en-IN')}`;
     }
 };
+const getMediaType = (url) => {
+    if (!url) return null;
+    const clean = String(url).split('?')[0].toLowerCase();
+    if (/\.(mp4|webm|mov|ogg)$/.test(clean)) return 'video';
+    if (/\.(gif)$/.test(clean)) return 'gif';
+    if (/\.(jpg|jpeg|png|webp|svg)$/.test(clean)) return 'image';
+    return 'image';
+};
 const formatSalaryRange = (salary) => {
     const currency = salary?.currency || 'INR';
     const minSalary = formatCurrencyAmount(salary?.minSalary, currency);
@@ -780,20 +790,52 @@ export default function CareerLibraryScreen() {
         const instituteGroups = groupInstitutesByTopStatus(detail?.institutions);
         return (<StaggerFadeUpItem key={`detail-${detail?.id ?? index}`} index={index}>
           <View className="mb-4">
-            
-            <View className="mb-3 flex-row items-start gap-3">
-  <View className={`h-[56px] w-[56px] items-center justify-center rounded-[18px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#ffecef]'}`}>
-    <Ionicons name={getDetailHeaderIcon(detail)} size={26} color={palette.primary}/>
+     {detail?.media ? (
+  <View className="mb-3 overflow-hidden rounded-[20px]" style={{ height: 180 }}>
+  {getMediaType(detail.media) === 'video' ? (
+  <Video
+    source={{ uri: detail.media }}
+    style={{ width: '100%', height: '100%' }}
+    resizeMode={ResizeMode.COVER}
+    isLooping
+    isMuted
+    shouldPlay
+  />
+) : (
+      <Image
+        source={{ uri: detail.media }}
+        style={{ width: '100%', height: '100%' }}
+        resizeMode="cover"
+      />
+    )}
+    <View
+      className="absolute inset-x-0 bottom-0 px-4 py-3"
+      style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+    >
+      <Text className="text-[18px] font-black text-white">{title}</Text>
+      {getDetailDescription(detail) ? (
+        <Text className="mt-0.5 text-[12px] text-white/85" numberOfLines={1}>
+          {getDetailDescription(detail)}
+        </Text>
+      ) : null}
+    </View>
   </View>
-  <View className="flex-1">
-    <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
-    {getDetailDescription(detail) ? (
-      <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-        {getDetailDescription(detail)}
-      </Text>
-    ) : null}
+) : (
+  
+  <View className="mb-3 flex-row items-start gap-3">
+    <View className={`h-[56px] w-[56px] items-center justify-center rounded-[18px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#ffecef]'}`}>
+      <Ionicons name={getDetailHeaderIcon(detail)} size={26} color={palette.primary}/>
+    </View>
+    <View className="flex-1">
+      <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{title}</Text>
+      {getDetailDescription(detail) ? (
+        <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+          {getDetailDescription(detail)}
+        </Text>
+      ) : null}
+    </View>
   </View>
-</View>
+)}
  {detailUnlocked ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.green}14` }}>
               <Text className="text-[12px] font-semibold" style={{ color: palette.green }}>
               <Ionicons name="sparkles-outline" size={14} color={palette.green} className="mr-1"/> You have access to view this career detail for free.
