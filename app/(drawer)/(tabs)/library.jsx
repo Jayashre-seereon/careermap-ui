@@ -406,12 +406,13 @@ const formatSalaryRange = (salary) => {
     const currency = salary?.currency || 'INR';
     const minSalary = formatCurrencyAmount(salary?.minSalary, currency);
     const maxSalary = formatCurrencyAmount(salary?.maxSalary, currency);
+    const profession = salary?.profession ? `${salary.profession}: ` : '';
 
     if (minSalary && maxSalary) {
-        return `${minSalary} - ${maxSalary}`;
+        return `${profession}${minSalary} to ${maxSalary} /annum`;
     }
 
-    return minSalary || maxSalary || 'Salary not available';
+    return `${profession}${minSalary || maxSalary || 'Salary not available'}`;
 };
 const formatDate = (value) => {
     if (!value) {
@@ -503,6 +504,17 @@ const getStreamTone = (streamName) => {
     }
     return palette.purple;
 };
+
+const extractListItems = (html) => {
+    if (!html) return [];
+    const matches = String(html).match(/<li[^>]*>([\s\S]*?)<\/li>/g) || [];
+    if (matches.length > 0) {
+        return matches.map((li) => stripHtml(li)).filter(Boolean);
+    }
+    const plain = stripHtml(html);
+    return plain ? [plain] : [];
+};
+
 const mapStreamItem = (item, index = 0) => {
     const fallback = fallbackStreams[index % fallbackStreams.length] || fallbackStreams[0];
     const title = item?.name || item?.title || item?.streamName || item?.label || fallback?.name || `Stream ${index + 1}`;
@@ -798,7 +810,62 @@ export default function CareerLibraryScreen() {
         </Text>
     </View>
 ) : null}
-            
+               <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+  <View className="mb-3 flex-row items-center gap-2">
+    <Ionicons name="map-outline" size={16} color={palette.primary}/>
+    <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+      Career Paths{toList(detail?.careerpaths).length > 1 ? ` (${toList(detail?.careerpaths).length})` : ''}
+    </Text>
+  </View>
+
+  {toList(detail?.careerpaths).length > 0 ? toList(detail?.careerpaths).map((pathItem, pathIdx) => (
+    <View
+      key={pathItem?.id ?? pathIdx}
+      className={`mb-3 overflow-hidden rounded-[16px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#0b0b0b]' : 'border-[#f0e4e2] bg-[#fdf9f9]'}`}
+    >
+      {/* Path header */}
+      <View className={`flex-row items-center gap-2 border-b px-3 py-2.5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#141414]' : 'border-[#f0e4e2] bg-[#fff0ee]'}`}>
+        <View className="h-6 w-6 items-center justify-center rounded-full" style={{ backgroundColor: palette.primary }}>
+          <Text className="text-[11px] font-black text-white">{pathIdx + 1}</Text>
+        </View>
+        <Text className={`text-[13px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+          {pathItem?.path?.pathtype || pathItem?.pathName || `Path ${pathIdx + 1}`}
+        </Text>
+      </View>
+
+      {/* Details grid */}
+      <View className="px-3 py-2.5">
+        {[
+          { label: 'Stream', value: detail?.stream?.name },
+          { label: 'Graduation', value: pathItem?.graduation },
+          { label: 'After Graduation', value: pathItem?.aftergraduation },
+          { label: 'After Post Graduation', value: pathItem?.afterpostgraduation },
+          { label: 'Any Other', value: pathItem?.anyother },
+        ]
+          .filter((row) => row.value)
+          .map((row) => (
+            <View key={row.label} className="mb-1.5 flex-row items-start gap-3">
+              <Text className={`w-[130px] text-[11px] font-semibold ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>{row.label}</Text>
+              <Text className={`flex-1 text-[12px] leading-4 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{row.value}</Text>
+            </View>
+          ))}
+        {[pathItem?.graduation, pathItem?.aftergraduation, pathItem?.afterpostgraduation, pathItem?.anyother].every((v) => !v) ? (
+          <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No further path details available.</Text>
+        ) : null}
+      </View>
+    </View>
+  )) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Career path details not available.</Text>)}
+</View>
+<View className={`rounded-[20px] mb-4 border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+              <View className="mb-3 flex-row items-center gap-2">
+                <Ionicons name="reader-outline" size={16} color={palette.primary}/>
+                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Entrance Exams</Text>
+              </View>
+              {toList(detail?.entranceexams).length > 0 ? toList(detail?.entranceexams).map((exam) => (<View key={exam?.id} className="mb-3">
+                  <Text className={`text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam?.examname || 'Exam'}</Text>
+                  <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{[exam?.mode, exam?.duration, formatDate(exam?.exam_date)].filter(Boolean).join(' • ')}</Text>
+                </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Exam details not available.</Text>)}
+            </View>
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
               <View className="mb-3 flex-row items-center gap-2">
                 <Ionicons name="briefcase-outline" size={16} color={palette.primary}/>
@@ -810,10 +877,35 @@ export default function CareerLibraryScreen() {
                 </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Job scope not available.</Text>)}
             </View>
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+  <View className="mb-3 flex-row items-center gap-2">
+    <Ionicons name="star-outline" size={16} color={palette.primary}/>
+    <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Specialization</Text>
+  </View>
+  {extractListItems(detail?.specialization).length > 0 ? extractListItems(detail?.specialization).map((item, i) => (
+    <View key={i} className="mb-2 flex-row items-start">
+      <Ionicons name="star" size={12} color={palette.primary} style={{ marginRight: 8, marginTop: 3 }}/>
+      <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item}</Text>
+    </View>
+  )) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Not available.</Text>)}
+</View>
+
+<View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+  <View className="mb-3 flex-row items-center gap-2">
+    <Ionicons name="checkmark-circle-outline" size={16} color={palette.primary}/>
+    <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Important Factors</Text>
+  </View>
+  {extractListItems(detail?.important_factor).length > 0 ? extractListItems(detail?.important_factor).map((item, i) => (
+    <View key={i} className="mb-2 flex-row items-start">
+      <Ionicons name="checkmark-circle" size={12} color={palette.primary} style={{ marginRight: 8, marginTop: 3 }}/>
+      <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item}</Text>
+    </View>
+  )) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Not available.</Text>)}
+</View>
+            <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
               <View className="mb-3 flex-row items-center gap-2">
-                <Ionicons name="cash-outline" size={16} color={palette.primary}/>
-                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Salary Range</Text>
-              </View>
+    <Ionicons name="cash-outline" size={16} color={palette.primary}/>
+    <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Salary Range</Text>
+  </View>
               {toList(detail?.salaryRanges).length > 0 ? toList(detail?.salaryRanges).map((salary, salaryIndex) => (<View key={salary?.id ?? salaryIndex} className="mb-2">
                   <Text className="text-[15px] font-bold text-brand">{formatSalaryRange(salary)}</Text>
                 </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Salary details not available.</Text>)}
@@ -845,26 +937,8 @@ export default function CareerLibraryScreen() {
                 {!instituteGroups.topInstitutes.length && !instituteGroups.outsideInstitutes.length ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Institution details not available.</Text>) : null}
               </View>
             </View>
-            <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-              <View className="mb-3 flex-row items-center gap-2">
-                <Ionicons name="map-outline" size={16} color={palette.primary}/>
-                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Career Paths</Text>
-              </View>
-              {toList(detail?.careerpaths).length > 0 ? toList(detail?.careerpaths).map((pathItem) => (<View key={pathItem?.id} className="mb-2">
-                  <Text className={`text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{pathItem?.pathName || 'Path'}</Text>
-                  <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{pathItem?.path?.pathtype || pathItem?.graduation || 'Path information not available.'}</Text>
-                </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Career path details not available.</Text>)}
-            </View>
-            <View className={`rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-              <View className="mb-3 flex-row items-center gap-2">
-                <Ionicons name="reader-outline" size={16} color={palette.primary}/>
-                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Entrance Exams</Text>
-              </View>
-              {toList(detail?.entranceexams).length > 0 ? toList(detail?.entranceexams).map((exam) => (<View key={exam?.id} className="mb-3">
-                  <Text className={`text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam?.examname || 'Exam'}</Text>
-                  <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{[exam?.mode, exam?.duration, formatDate(exam?.exam_date)].filter(Boolean).join(' • ')}</Text>
-                </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Exam details not available.</Text>)}
-            </View>
+        
+            
           </View>
         </StaggerFadeUpItem>);
     };
