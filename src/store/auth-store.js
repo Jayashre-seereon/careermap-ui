@@ -42,6 +42,7 @@ function readPersistedAuth() {
       refreshToken: parsed?.state?.refreshToken || '',
       user: parsed?.state?.user || null,
       profileIncomplete: Boolean(parsed?.state?.profileIncomplete),
+      pendingInstituteOnboarding: Boolean(parsed?.state?.pendingInstituteOnboarding),
     };
   } catch {
     return {};
@@ -65,6 +66,7 @@ function persistAuthState(state) {
           refreshToken: state.refreshToken || '',
           user: state.user || null,
           profileIncomplete: Boolean(state.profileIncomplete),
+          pendingInstituteOnboarding: Boolean(state.pendingInstituteOnboarding),
         },
       })
     );
@@ -82,6 +84,7 @@ export const useAuthStore = create((set) => ({
   refreshToken: persistedAuth.refreshToken || '',
   user: persistedAuth.user || null,
   profileIncomplete: Boolean(persistedAuth.profileIncomplete),
+  pendingInstituteOnboarding: Boolean(persistedAuth.pendingInstituteOnboarding),
 
   setSignupForm: (data) =>
     set((state) => ({
@@ -130,6 +133,13 @@ export const useAuthStore = create((set) => ({
       return { profileIncomplete: Boolean(profileIncomplete) };
     }),
 
+  setPendingInstituteOnboarding: (pendingInstituteOnboarding) =>
+    set((state) => {
+      const nextState = { ...state, pendingInstituteOnboarding };
+      persistAuthState(nextState);
+      return { pendingInstituteOnboarding: Boolean(pendingInstituteOnboarding) };
+    }),
+
   clearAuthFlow: () =>
     set(() => ({
       signupForm: initialSignupForm,
@@ -148,6 +158,7 @@ export const useAuthStore = create((set) => ({
         refreshToken: '',
         user: null,
         profileIncomplete: false,
+        pendingInstituteOnboarding: false,
         hasAuthenticatedSession: false,
       };
     }),
