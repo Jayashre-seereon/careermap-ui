@@ -14,6 +14,7 @@ export default function ProfileScreen() {
     const authUser = useAuthStore((state) => state.user);
     const accessToken = useAuthStore((state) => state.accessToken);
     const setAuthUser = useAuthStore((state) => state.setUser);
+    const setProfileIncomplete = useAuthStore((state) => state.setProfileIncomplete);
     const clearAuthFlow = useAuthStore((state) => state.clearAuthFlow);
     const logout = useAuthStore((state) => state.logout);
     const [editMode, setEditMode] = useState(false);
@@ -163,6 +164,7 @@ export default function ProfileScreen() {
             const updatedUser = response?.data || response?.user || response;
             if (updatedUser) {
                 setAuthUser(updatedUser);
+                setProfileIncomplete(false);
                 const mappedProfile = mapApiUserToProfile(updatedUser);
                 if (mappedProfile) {
                     saveUserProfile({
@@ -174,6 +176,7 @@ export default function ProfileScreen() {
                 }
             }
             else {
+                setProfileIncomplete(false);
                 saveUserProfile({
                     ...userProfile,
                     ...form,

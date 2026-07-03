@@ -41,6 +41,8 @@ function readPersistedAuth() {
       accessToken: parsed?.state?.accessToken || '',
       refreshToken: parsed?.state?.refreshToken || '',
       user: parsed?.state?.user || null,
+      profileIncomplete: Boolean(parsed?.state?.profileIncomplete),
+      pendingInstituteOnboarding: Boolean(parsed?.state?.pendingInstituteOnboarding),
     };
   } catch {
     return {};
@@ -63,6 +65,8 @@ function persistAuthState(state) {
           accessToken: state.accessToken || '',
           refreshToken: state.refreshToken || '',
           user: state.user || null,
+          profileIncomplete: Boolean(state.profileIncomplete),
+          pendingInstituteOnboarding: Boolean(state.pendingInstituteOnboarding),
         },
       })
     );
@@ -79,6 +83,8 @@ export const useAuthStore = create((set) => ({
   accessToken: persistedAuth.accessToken || '',
   refreshToken: persistedAuth.refreshToken || '',
   user: persistedAuth.user || null,
+  profileIncomplete: Boolean(persistedAuth.profileIncomplete),
+  pendingInstituteOnboarding: Boolean(persistedAuth.pendingInstituteOnboarding),
 
   setSignupForm: (data) =>
     set((state) => ({
@@ -120,6 +126,20 @@ export const useAuthStore = create((set) => ({
       return { user };
     }),
 
+  setProfileIncomplete: (profileIncomplete) =>
+    set((state) => {
+      const nextState = { ...state, profileIncomplete };
+      persistAuthState(nextState);
+      return { profileIncomplete: Boolean(profileIncomplete) };
+    }),
+
+  setPendingInstituteOnboarding: (pendingInstituteOnboarding) =>
+    set((state) => {
+      const nextState = { ...state, pendingInstituteOnboarding };
+      persistAuthState(nextState);
+      return { pendingInstituteOnboarding: Boolean(pendingInstituteOnboarding) };
+    }),
+
   clearAuthFlow: () =>
     set(() => ({
       signupForm: initialSignupForm,
@@ -137,6 +157,8 @@ export const useAuthStore = create((set) => ({
         accessToken: '',
         refreshToken: '',
         user: null,
+        profileIncomplete: false,
+        pendingInstituteOnboarding: false,
         hasAuthenticatedSession: false,
       };
     }),

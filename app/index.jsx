@@ -296,7 +296,7 @@ export default function SplashRoute() {
         }, 2850);
 
         const navTimer = setTimeout(() => {
-            const { accessToken: storedAccessToken, refreshToken: storedRefreshToken } = useAuthStore.getState();
+            const { accessToken: storedAccessToken, refreshToken: storedRefreshToken, pendingInstituteOnboarding } = useAuthStore.getState();
             const hasStoredSession = Boolean(storedAccessToken || storedRefreshToken);
 
             if (!hasStoredSession) {
@@ -307,7 +307,7 @@ export default function SplashRoute() {
             if (storedRefreshToken && !storedAccessToken) {
                 ensureAccessToken()
                     .then(() => {
-                        router.replace('/(drawer)/(tabs)');
+                        router.replace(pendingInstituteOnboarding ? '/onboarding' : '/(drawer)/(tabs)');
                     })
                     .catch(() => {
                         router.replace('/auth-entry');
@@ -315,7 +315,7 @@ export default function SplashRoute() {
                 return;
             }
 
-            router.replace('/(drawer)/(tabs)');
+            router.replace(pendingInstituteOnboarding ? '/onboarding' : '/(drawer)/(tabs)');
         }, 3350);
 
         // ── 3 side-entry blobs: enter → 3-point float loop ────────────────

@@ -167,16 +167,28 @@ export default function ScholarshipScreen() {
                             <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Deadline</Text>
                             <Text className={`text-[13px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.deadline}</Text>
                         </View>
-                        <View className="flex-row items-start justify-between gap-3">
-                            <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Eligibility</Text>
-                            <Text className={`max-w-[65%] text-right text-[13px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.eligibility}</Text>
-                        </View>
+                       
                     </View>
 
-                    <View className={`mt-3 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-                        <Text className="text-[14px] font-extrabold text-brand">About This Scholarship</Text>
-                        <Text className={`text-[13px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.description}</Text>
-                    </View>
+             <View className={`mt-3 gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+    {item.sections && item.sections.length > 0 ? (
+        item.sections.map((section) => (
+            <View key={section.id} className="gap-1.5">
+                <Text className="text-[14px] font-extrabold text-brand">{section.title}</Text>
+                <Text className={`text-[13px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                    {section.description}
+                </Text>
+            </View>
+        ))
+    ) : (
+        <>
+            <Text className="text-[14px] font-extrabold text-brand">About This Scholarship</Text>
+            <Text className={`text-[13px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                {item.description || 'No details available.'}
+            </Text>
+        </>
+    )}
+</View>
 
                     <View className={`mt-3 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
                         <Text className="text-[14px] font-extrabold text-brand">Requirements</Text>
@@ -187,6 +199,15 @@ export default function ScholarshipScreen() {
                             </View>
                         ))}
                     </View>
+                    <View className={`mt-3 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+    <Text className="text-[14px] font-extrabold text-brand">Eligibility</Text>
+   {item.eligibility.map((eligibility, idx) => (
+    <View key={`${eligibility}-${idx}`} className="flex-row items-center gap-2.5">
+        <View className="h-2 w-2 rounded-full bg-brand"/>
+        <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{eligibility}</Text>
+    </View>
+))}
+</View>
 
                     <AnimatedPressable
                         className="rounded-[16px] bg-brand py-[14px] mt-3"

@@ -35,6 +35,7 @@ function getInstituteIcon(instituteType) {
 }
 
 function mapInstituteItem(item, index) {
+  const country = item?.countruy || '';   
   const state = item?.state || '';
   const city = item?.city || '';
   const instituteType = item?.institute_type || 'Institute';
@@ -48,6 +49,7 @@ function mapInstituteItem(item, index) {
     name: item?.name || 'Unnamed Institute',
   location: buildLocation(item?.address),  courses,
     type: instituteType,
+    country,
     state,
     city,
     icon: getInstituteIcon(instituteType),
