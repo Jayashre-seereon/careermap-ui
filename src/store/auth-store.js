@@ -41,6 +41,7 @@ function readPersistedAuth() {
       accessToken: parsed?.state?.accessToken || '',
       refreshToken: parsed?.state?.refreshToken || '',
       user: parsed?.state?.user || null,
+      profileIncomplete: Boolean(parsed?.state?.profileIncomplete),
     };
   } catch {
     return {};
@@ -63,6 +64,7 @@ function persistAuthState(state) {
           accessToken: state.accessToken || '',
           refreshToken: state.refreshToken || '',
           user: state.user || null,
+          profileIncomplete: Boolean(state.profileIncomplete),
         },
       })
     );
@@ -79,6 +81,7 @@ export const useAuthStore = create((set) => ({
   accessToken: persistedAuth.accessToken || '',
   refreshToken: persistedAuth.refreshToken || '',
   user: persistedAuth.user || null,
+  profileIncomplete: Boolean(persistedAuth.profileIncomplete),
 
   setSignupForm: (data) =>
     set((state) => ({
@@ -120,6 +123,13 @@ export const useAuthStore = create((set) => ({
       return { user };
     }),
 
+  setProfileIncomplete: (profileIncomplete) =>
+    set((state) => {
+      const nextState = { ...state, profileIncomplete };
+      persistAuthState(nextState);
+      return { profileIncomplete: Boolean(profileIncomplete) };
+    }),
+
   clearAuthFlow: () =>
     set(() => ({
       signupForm: initialSignupForm,
@@ -137,6 +147,7 @@ export const useAuthStore = create((set) => ({
         accessToken: '',
         refreshToken: '',
         user: null,
+        profileIncomplete: false,
         hasAuthenticatedSession: false,
       };
     }),
