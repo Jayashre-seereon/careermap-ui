@@ -58,7 +58,29 @@ function formatRequirements(requirement) {
     .map((item) => item.trim())
     .filter(Boolean);
 }
+function formatEligibility(eligibility) {
+  const cleaned = stripHtml(eligibility);
 
+  if (!cleaned) {
+    return ['Eligibility not available'];
+  }
+
+  return cleaned
+    .split(/\r?\n|,|\.(?=\s|$)/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+function mapSections(sections) {
+  if (!Array.isArray(sections)) {
+    return [];
+  }
+
+  return sections.map((section, index) => ({
+    id: String(section?.id ?? `section-${index}`),
+    title: section?.title || `Section ${index + 1}`,
+    description: stripHtml(section?.description) || '',
+  }));
+}
 function mapScholarshipItem(item, index) {
   const scholarshipType = item?.type || 'Scholarship';
   const categoryObj = item?.category ?? item?.categoryObj ?? null;
@@ -68,13 +90,14 @@ function mapScholarshipItem(item, index) {
   return {
     id: String(item?.id ?? `scholarship-${index}`),
     name: item?.name || 'Unnamed Scholarship',
-    eligibility: stripHtml(item?.eligibility) || 'Eligibility not available',
+   eligibility: formatEligibility(item?.eligibility),
     amount: formatAmount(item?.price),
     deadline: formatDeadline(item?.deadline),
     tag: scholarshipType,
     status: getScholarshipStatus(item?.deadline),
     provider: scholarshipType,
     description: stripHtml(item?.description) || 'Scholarship details are not available right now.',
+     sections: mapSections(item?.sections),
     requirements: formatRequirements(item?.requirement),
     link: item?.url || '#',
     categoryId: item?.categoryId ?? null,
