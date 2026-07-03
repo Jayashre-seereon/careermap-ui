@@ -10,6 +10,7 @@ import { useAppState } from '../../../src/app-state';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../../src/subscription-flow';
 import { featuredInstitutes, featuredMentors, featuredScholarships, moduleCards, palette, studentProfile } from '../../../src/careermap-data';
+import { useAuthStore } from '../../../src/store/auth-store';
 const getMentorInitials = (mentor) => {
     const source = String(mentor?.name || 'M').trim();
     const initials = source
@@ -58,7 +59,8 @@ const personalityTypes = [
     { type: 'The Dynamic Explorer', desc: 'You enjoy variety, energy, and fast-moving environments where action leads the way.', careers: ['Business', 'Travel', 'Sports', 'Entrepreneurship'] },
 ];
 export default function HomeScreen() {
-    const { preferences } = useAppState();
+    const { preferences, requestProfileEdit } = useAppState();
+    const profileIncomplete = useAuthStore((state) => state.profileIncomplete);
     const [showPersonalityTest, setShowPersonalityTest] = useState(false);
     const [completedPersonality, setCompletedPersonality] = useState(false);
     const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -71,6 +73,8 @@ export default function HomeScreen() {
     const [reviewText, setReviewText] = useState('');
     const [reviewError, setReviewError] = useState('');
     const [reviewedMentorBookings, setReviewedMentorBookings] = useState([]);
+    const [showProfilePrompt, setShowProfilePrompt] = useState(Boolean(profileIncomplete));
+    const [profilePromptDismissed, setProfilePromptDismissed] = useState(false);
     const { isUnlocked, onboarding, unreadNotificationsCount, userProfile } = useAppState();
     const { width } = useWindowDimensions();
     const moduleCardWidth = width < 390 ? '48%' : '31%';
@@ -200,6 +204,22 @@ export default function HomeScreen() {
             setReviewOpen(false);
         }
     }, [activeReview?.bookingId]);
+    useEffect(() => {
+        if (profileIncomplete && !profilePromptDismissed) {
+            setShowProfilePrompt(true);
+        } else {
+            setShowProfilePrompt(false);
+        }
+    }, [profileIncomplete, profilePromptDismissed]);
+    const handleCompleteProfile = () => {
+      setShowProfilePrompt(false);
+        requestProfileEdit();
+        router.push('/(drawer)/(tabs)/profile');
+    };
+    const dismissProfilePrompt = () => {
+        setProfilePromptDismissed(true);
+        setShowProfilePrompt(false);
+    };
     const submitReview = async () => {
         if (!activeReview) {
             return;
@@ -534,6 +554,56 @@ export default function HomeScreen() {
             <AnimatedPressable className="mt-3 rounded-[14px] bg-brand py-[12px]" disabled={reviewSubmitting || !reviewRating || !reviewText.trim()} onPress={submitReview}>
               <Text className="text-center text-[13px] font-extrabold text-white">{reviewSubmitting ? 'Submitting...' : 'Submit Review'}</Text>
             </AnimatedPressable>
+          </View>
+        </View>
+      </Modal>
+      <Modal visible={showProfilePrompt} transparent animationType="fade" statusBarTranslucent onRequestClose={dismissProfilePrompt}>
+        <View className="flex-1 items-center justify-center bg-black/55 px-5">
+          <View
+            className={`relative w-full max-w-[340px] rounded-[26px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-white'}`}
+            style={{ overflow: 'visible' }}
+          >
+            <Pressable
+              className={`absolute right-3 top-3 z-10 h-9 w-9 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#1d1d1d]' : 'bg-[#f3efec]'}`}
+              style={{ elevation: 4 }}
+              onPress={dismissProfilePrompt}
+              hitSlop={10}
+            >
+              <Ionicons name="close" size={18} color={preferences.darkMode ? '#ffffff' : palette.text} />
+            </Pressable>
+            <View className="items-center gap-3">
+              <View className="mt-2 h-[54px] w-[54px] items-center justify-center rounded-full" style={{ backgroundColor: `${palette.secondary}18` }}>
+                <Ionicons name="person-circle-outline" size={28} color={palette.secondary} />
+              </View>
+              <Text className={`text-center text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Complete your profile</Text>
+              <Text className={`text-center text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+              Login successful. A few profile details are still missing.
+Please complete your profile to continue.
+ </Text>
+            </View>
+           <View className="mt-5 flex-row justify-between">
+  <AnimatedPressable
+    className={`flex-1 items-center rounded-[16px] border px-4 py-3 mr-2 ${
+      preferences.darkMode
+        ? 'border-[#2b2b2b] bg-[#1a1a1a]'
+        : 'border-line bg-[#f5f1ee]'
+    }`}
+    onPress={dismissProfilePrompt}
+  >
+    <Text className={`text-[14px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+      Later
+    </Text>
+  </AnimatedPressable>
+
+  <AnimatedPressable
+    className="flex-1 items-center rounded-[16px] bg-brand px-4 py-3 ml-2"
+    onPress={handleCompleteProfile}
+  >
+    <Text className="text-[14px] font-extrabold text-white">
+      Complete Profile
+    </Text>
+  </AnimatedPressable>
+</View>
           </View>
         </View>
       </Modal>

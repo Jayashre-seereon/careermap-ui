@@ -21,6 +21,8 @@ export default function LoginScreen() {
   const setAccessToken = useAuthStore((state) => state.setAccessToken);
   const setRefreshToken = useAuthStore((state) => state.setRefreshToken);
   const setUser = useAuthStore((state) => state.setUser);
+  const setProfileIncomplete = useAuthStore((state) => state.setProfileIncomplete);
+  const setPendingInstituteOnboarding = useAuthStore((state) => state.setPendingInstituteOnboarding);
   const markAuthenticatedSession = useAuthStore((state) => state.markAuthenticatedSession);
   const clearAuthFlow = useAuthStore((state) => state.clearAuthFlow);
 
@@ -45,11 +47,14 @@ export default function LoginScreen() {
   const validatePasswordField = (value) => getPasswordError(value);
 
   const completeLogin = (response) => {
-    const requiresInstituteOnboarding = Boolean(response?.user?.isInstituteStudent);
+    const profileIncomplete = Boolean(response?.profileIncomplete);
+    const requiresInstituteOnboarding = Boolean(response?.user?.isInstituteStudent) && !profileIncomplete;
 
     setAccessToken(response.accessToken || '');
     setRefreshToken(response.refreshToken || '');
     setUser(response.user || null);
+    setProfileIncomplete(profileIncomplete);
+    setPendingInstituteOnboarding(requiresInstituteOnboarding);
     markAuthenticatedSession();
 
     void createUserHistoryEntry().catch((error) => {
