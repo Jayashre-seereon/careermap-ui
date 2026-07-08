@@ -1,11 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Image, Linking, ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getInstitutes } from '../../src/api/instituteApi';
+import { checkModuleAccess, getModules } from '../../src/api/moduleAccessApi';
 import { AnimatedPressable, HierarchyFilterPanel, Pill, Screen, SectionHeader ,} from '../../src/careermap-ui';
 import { buildHierarchyOptions, filterByHierarchy } from '../../src/utils/hierarchy';
+import { UnlockBottomSheet } from '../../src/careermap-ui';
 
 const getInstituteInitials = (name) => {
     const source = String(name || 'Institute').trim();
@@ -43,10 +46,14 @@ const renderInstituteLogo = (item, size = 52) => {
 };
 
 export default function InstituteScreen() {
+    const params = useLocalSearchParams();
     const { preferences } = useAppState();
     const [institutes, setInstitutes] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
+    const [hasFullAccess, setHasFullAccess] = useState(false);
+    const [moduleAccessResolved, setModuleAccessResolved] = useState(false);
+    const [showUnlockSheet, setShowUnlockSheet] = useState(false);
       const [showFilters, setShowFilters] = useState(false);
     const [typeFilter, setTypeFilter] = useState('All');
     const [countryFilter, setCountryFilter] = useState('All');
@@ -55,6 +62,10 @@ export default function InstituteScreen() {
     const [secondCategoryFilter, setSecondCategoryFilter] = useState('All');
     const [subCategoryFilter, setSubCategoryFilter] = useState('All');
     const [sortAZ, setSortAZ] = useState(false);
+    const resolvedModuleId = useMemo(() => {
+        const parsed = Number(params.moduleId);
+        return Number.isFinite(parsed) ? parsed : null;
+    }, [params.moduleId]);
 
     useEffect(() => {
         let isMounted = true;
@@ -86,6 +97,40 @@ export default function InstituteScreen() {
             isMounted = false;
         };
     }, []);
+    useEffect(() => {
+        let isMounted = true;
+        const resolveModuleAccess = async () => {
+            try {
+                let moduleId = resolvedModuleId;
+                if (!Number.isFinite(moduleId)) {
+                    const modules = await getModules();
+                    const matched = modules.find((module) => String(module?.title || '').trim().toLowerCase().includes('institute'));
+                    moduleId = Number(matched?.id);
+                }
+                if (!Number.isFinite(moduleId)) {
+                    if (isMounted) {
+                        setHasFullAccess(true);
+                        setModuleAccessResolved(true);
+                    }
+                    return;
+                }
+                const response = await checkModuleAccess(moduleId);
+                if (!isMounted) return;
+                setHasFullAccess(String(response?.mode || '').toLowerCase() === 'full');
+                setModuleAccessResolved(true);
+            }
+            catch {
+                if (isMounted) {
+                    setHasFullAccess(true);
+                    setModuleAccessResolved(true);
+                }
+            }
+        };
+        resolveModuleAccess();
+        return () => {
+            isMounted = false;
+        };
+    }, [resolvedModuleId]);
 const countryOptions = useMemo(
     () => ['All', ...Array.from(new Set(institutes.map((item) => item.country).filter(Boolean)))],
     [institutes]
@@ -247,16 +292,28 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
             ) : null}
 
             <View className="gap-3">
+                {!moduleAccessResolved ? <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Checking access...</Text> : null}
                 {isLoading ? <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading institutes...</Text> : null}
                 {!isLoading && loadError ? <Text className="text-[13px] text-brand">{loadError}</Text> : null}
                 {!isLoading && !loadError && filtered.length === 0 ? (
                     <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No institutes available right now.</Text>
                 ) : null}
 
-             {filtered.map((item, index) => (
+             {filtered.map((item, index) => {
+    const cardUnlocked = hasFullAccess || index < 4;
+    return (
     <AnimatedPressable 
         key={item.id} 
         className={`flex-row justify-between items-start rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
+        onPress={() => {
+            if (!cardUnlocked) {
+                setShowUnlockSheet(true);
+                return;
+            }
+            if (item.website && item.website !== '#') {
+                Linking.openURL(item.website);
+            }
+        }}
     >
         {/* LEFT COLUMN: Logo & Text details */}
         <View className="flex-1 flex-row gap-3 pr-2">
@@ -276,13 +333,19 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
         {/* RIGHT COLUMN: Stretched vertically to force button to the absolute bottom */}
         <View className="self-stretch justify-between items-end pl-2 min-h-[64px]">
             <View>
-                <Pill label={item.type} tone={palette.blue}/>
+                <Pill label={cardUnlocked ? 'FREE' : 'LOCK'} tone={cardUnlocked ? palette.green : palette.blue}/>
             </View>
             
             <AnimatedPressable
                 onPress={(e) => {
                     e.stopPropagation();
-                    Linking.openURL(item.website);
+                    if (!cardUnlocked) {
+                        setShowUnlockSheet(true);
+                        return;
+                    }
+                    if (item.website && item.website !== '#') {
+                        Linking.openURL(item.website);
+                    }
                 }}
                 className="px-3 py-1.5  mt-4"
             >
@@ -293,8 +356,9 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
         </View>
 
     </AnimatedPressable>
-))}
+);})}
             </View>
+            {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Institutes" subtitle="Subscribe to more institute cards and links." onClose={() => setShowUnlockSheet(false)} onPress={() => setShowUnlockSheet(false)}/>) : null}
         </Screen>
     );
 }
