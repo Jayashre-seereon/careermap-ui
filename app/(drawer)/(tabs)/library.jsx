@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getCareerLibraryCategoriesByStream, getCareerLibraryNext, getCareerLibraryStreams } from '../../../src/api/careerLibraryApi';
+import { getCareerLibraryCategoriesByStream, getCareerLibraryDetails, getCareerLibraryNext, getCareerLibraryStreams, startCareerLibraryPreview } from '../../../src/api/careerLibraryApi';
 import { useAppState } from '../../../src/app-state';
 import { Screen, UnlockBottomSheet, mobileAssistantScrollProps } from '../../../src/careermap-ui';
 import { palette } from '../../../src/careermap-data';
@@ -564,6 +564,38 @@ export default function CareerLibraryScreen() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
+    const [previewSecondsLeft, setPreviewSecondsLeft] = useState(0);
+    const previewTimeoutRef = useRef(null);
+    const previewIntervalRef = useRef(null);
+
+    const clearPreviewTimers = () => {
+        if (previewTimeoutRef.current) {
+            clearTimeout(previewTimeoutRef.current);
+            previewTimeoutRef.current = null;
+        }
+        if (previewIntervalRef.current) {
+            clearInterval(previewIntervalRef.current);
+            previewIntervalRef.current = null;
+        }
+        setPreviewSecondsLeft(0);
+    };
+
+    const beginPreviewLock = (seconds = 15) => {
+        clearPreviewTimers();
+        const totalSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+        if (totalSeconds <= 0) {
+            setShowUnlockSheet(true);
+            return;
+        }
+        setPreviewSecondsLeft(totalSeconds);
+        previewIntervalRef.current = setInterval(() => {
+            setPreviewSecondsLeft((current) => Math.max(0, current - 1));
+        }, 1000);
+        previewTimeoutRef.current = setTimeout(() => {
+            clearPreviewTimers();
+            setShowUnlockSheet(true);
+        }, totalSeconds * 1000);
+    };
     useEffect(() => {
         let isMounted = true;
 
@@ -597,6 +629,9 @@ export default function CareerLibraryScreen() {
             isMounted = false;
         };
     }, []);
+    useEffect(() => () => {
+        clearPreviewTimers();
+    }, []);
     useEffect(() => {
         if (typeof params.level === 'string' && ['streams', 'categories', 'secondcategory', 'subcategory', 'details'].includes(params.level)) {
             setCurrentLevel(params.level);
@@ -619,6 +654,7 @@ export default function CareerLibraryScreen() {
         setLoading(true);
         setError('');
         setSelectedDetailSource(null);
+        clearPreviewTimers();
         if (type === 'stream') {
             setSelectedStream(item);
             setSelectedCategory(null);
@@ -666,11 +702,25 @@ export default function CareerLibraryScreen() {
                 setCurrentLevel('subcategory');
             }
             else if (data.type === 'details') {
+                const detailResponse = await getCareerLibraryDetails(id);
+                const detailData = detailResponse ?? {};
+                const detailItems = Array.isArray(detailData?.data) ? detailData.data : nextItems;
                 setSelectedDetailSource(item);
-                setDetails(nextItems);
+                setDetails(detailItems);
                 setCurrentLevel('details');
                 if (item?.id != null) {
                     registerFreeDetailAccess('career-library', String(item.id));
+                }
+                const previewResponse = await startCareerLibraryPreview({
+                    moduleId: 60,
+                    pageType: 'sub',
+                    pageId: id,
+                });
+                if (previewResponse?.mode === 'preview') {
+                    beginPreviewLock(previewResponse?.remainingSeconds ?? previewResponse?.previewDurationSeconds ?? 15);
+                }
+                else if (previewResponse?.allowed === false) {
+                    setShowUnlockSheet(true);
                 }
             }
             else if (nextItems.length > 0) {
@@ -731,11 +781,11 @@ export default function CareerLibraryScreen() {
     </View>);
     const renderCategoryGrid = (items) => (<View className="gap-3">
       {items.map((item, index) => {
-            const accessKey = getCareerAccessKey(item);
-            const unlockedItem = isUnlocked('career-library') || canAccessFreeDetail('career-library', accessKey);
+            const accessTier = String(item?.accessTier || '').toLowerCase();
+            const unlockedItem = accessTier === 'preview';
             return (<StaggerFadeUpItem key={`category-${item?.id ?? index}`} index={index}>
           <Pressable onPress={() => {
-                    if (!unlockedItem) {
+                    if (accessTier !== 'preview') {
                         setShowUnlockSheet(true);
                         return;
                     }
@@ -749,9 +799,9 @@ export default function CareerLibraryScreen() {
               {getCardDescription(item) ? (<Text numberOfLines={1} className={`mt-0.5 text-[12px] leading-4 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getCardDescription(item)}</Text>) : null}
             </View>
             <View className="items-end gap-2">
-              {!isUnlocked('career-library') ? (<View className="rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
+              <View className="rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
                   <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
-                </View>) : null}
+                </View>
               <Ionicons name="chevron-forward" size={18} color={palette.primary}/>
             </View>
           </Pressable>
@@ -777,9 +827,9 @@ export default function CareerLibraryScreen() {
               <Text className={`text-[15px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getCardTitle(item)}</Text>
               {getCardDescription(item) ? (<Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{getCardDescription(item)}</Text>) : null}
             </View>
-            {!isUnlocked('career-library') ? (<View className="mr-2 rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
+            <View className="mr-2 rounded-full px-2 py-1" style={{ backgroundColor: unlockedItem ? `${palette.green}14` : '#f8e8d8' }}>
                 <Text className="text-[10px] font-black" style={{ color: unlockedItem ? palette.green : palette.primary }}>{unlockedItem ? 'FREE' : 'LOCK'}</Text>
-              </View>) : null}
+              </View>
             <Ionicons name="chevron-forward" size={18} color={palette.primary}/>
           </Pressable>
         </StaggerFadeUpItem>);
@@ -836,9 +886,14 @@ export default function CareerLibraryScreen() {
     </View>
   </View>
 )}
- {detailUnlocked ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.green}14` }}>
+{detailUnlocked ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.green}14` }}>
               <Text className="text-[12px] font-semibold" style={{ color: palette.green }}>
               <Ionicons name="sparkles-outline" size={14} color={palette.green} className="mr-1"/> You have access to view this career detail for free.
+              </Text>
+            </View>) : null}
+{previewSecondsLeft > 0 ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.primary}14` }}>
+              <Text className="text-[12px] font-semibold" style={{ color: palette.primary }}>
+              <Ionicons name="time-outline" size={14} color={palette.primary} className="mr-1"/> Preview active for {previewSecondsLeft}s
               </Text>
             </View>) : null}
 {detail?.description ? (
