@@ -84,6 +84,18 @@ function resolveLocked(item) {
   return true;
 }
 
+function resolveIsFree(item) {
+  if (typeof item?.is_free === 'boolean') {
+    return item.is_free;
+  }
+
+  if (typeof item?.isFree === 'boolean') {
+    return item.isFree;
+  }
+
+  return false;
+}
+
 function mapMasterclassItem(item, index) {
   const categoryLabel = formatCategoryLabel(item?.category);
 
@@ -96,6 +108,8 @@ function mapMasterclassItem(item, index) {
     career: categoryLabel,
     videoType: categoryLabel,
     locked: resolveLocked(item),
+    isFree: resolveIsFree(item),
+    accessTier: item?.accessTier || (resolveIsFree(item) ? 'preview' : 'locked'),
     url: resolveVideoUrl(item),
   };
 }
@@ -107,4 +121,28 @@ export async function getMasterClasses() {
   return items
     .filter((item) => item?.is_active !== false)
     .map((item, index) => mapMasterclassItem(item, index));
+}
+
+export async function getMasterClassDetails(id) {
+  if (id === null || id === undefined || id === '') {
+    throw new Error('Master class id is required.');
+  }
+
+  const response = await api.get(`/masterclass/${id}`);
+  const data = response?.data?.data ?? response?.data ?? null;
+  return data ? mapMasterclassItem(data, 0) : null;
+}
+
+export async function startMasterClassPreview({ moduleId, pageType, pageId }) {
+  if (moduleId === null || moduleId === undefined || moduleId === '' || pageType === null || pageType === undefined || pageType === '' || pageId === null || pageId === undefined || pageId === '') {
+    throw new Error('moduleId, pageType, and pageId are required.');
+  }
+
+  const response = await api.post('/module-access/preview/start', {
+    moduleId,
+    pageType,
+    pageId,
+  });
+
+  return response?.data ?? null;
 }

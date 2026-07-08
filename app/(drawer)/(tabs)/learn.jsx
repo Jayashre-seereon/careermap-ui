@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
 import { useAppState } from '../../../src/app-state';
 import { palette } from '../../../src/careermap-data';
-import { getMasterClasses } from '../../../src/api/masterclassApi';
+import { checkModuleAccess } from '../../../src/api/moduleAccessApi';
+import { getMasterClasses, startMasterClassPreview } from '../../../src/api/masterclassApi';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet, mobileAssistantScrollProps } from '../../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../../src/subscription-flow';
 
@@ -19,9 +21,9 @@ function formatViews(views) {
 }
 
 export default function LearnScreen() {
+    const params = useLocalSearchParams();
     const insets = useSafeAreaInsets();
-    const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
-    const masterClassUnlocked = isUnlocked('master-class');
+    const { preferences, registerFreeDetailAccess } = useAppState();
     const [masterClasses, setMasterClasses] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
@@ -30,6 +32,66 @@ export default function LearnScreen() {
     const [activeCareer, setActiveCareer] = useState('All');
     const [sortBy, setSortBy] = useState('popular');
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
+    const [hasFullAccess, setHasFullAccess] = useState(false);
+    const [previewSecondsLeft, setPreviewSecondsLeft] = useState(0);
+    const [lockSheetDismissible, setLockSheetDismissible] = useState(true);
+    const [expiredPreviewIds, setExpiredPreviewIds] = useState([]);
+    const [selectedVideo, setSelectedVideo] = useState(null);
+    const previewTimeoutRef = useRef(null);
+    const previewIntervalRef = useRef(null);
+    const resolvedModuleId = useMemo(() => {
+        const parsed = Number(params.moduleId);
+        return Number.isFinite(parsed) ? parsed : 60;
+    }, [params.moduleId]);
+
+    const clearPreviewTimers = useCallback(() => {
+        if (previewTimeoutRef.current) {
+            clearTimeout(previewTimeoutRef.current);
+            previewTimeoutRef.current = null;
+        }
+        if (previewIntervalRef.current) {
+            clearInterval(previewIntervalRef.current);
+            previewIntervalRef.current = null;
+        }
+        setPreviewSecondsLeft(0);
+    }, []);
+
+    const markPreviewExpired = useCallback((id) => {
+        if (!id) return;
+        setExpiredPreviewIds((current) => (current.includes(id) ? current : [...current, id]));
+    }, []);
+
+    const resetToList = useCallback(() => {
+        clearPreviewTimers();
+        setShowUnlockSheet(false);
+        setLockSheetDismissible(true);
+        setSelectedVideo(null);
+    }, [clearPreviewTimers]);
+
+    const beginPreviewLock = useCallback((seconds = 15, classId = null) => {
+        clearPreviewTimers();
+        const totalSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+        if (totalSeconds <= 0) {
+            setLockSheetDismissible(false);
+            markPreviewExpired(classId);
+            setShowUnlockSheet(true);
+            return;
+        }
+        setPreviewSecondsLeft(totalSeconds);
+        previewIntervalRef.current = setInterval(() => {
+            setPreviewSecondsLeft((current) => Math.max(0, current - 1));
+        }, 1000);
+        previewTimeoutRef.current = setTimeout(() => {
+            markPreviewExpired(classId);
+            clearPreviewTimers();
+            setLockSheetDismissible(false);
+            setShowUnlockSheet(true);
+        }, totalSeconds * 1000);
+    }, [clearPreviewTimers, markPreviewExpired]);
+
+    useEffect(() => () => {
+        clearPreviewTimers();
+    }, [clearPreviewTimers]);
     useEffect(() => {
         let isMounted = true;
         async function loadMasterClasses() {
@@ -56,6 +118,26 @@ export default function LearnScreen() {
             isMounted = false;
         };
     }, []);
+    useEffect(() => {
+        let isMounted = true;
+        async function loadModuleAccess() {
+            try {
+                const response = await checkModuleAccess(resolvedModuleId);
+                if (isMounted) {
+                    setHasFullAccess(String(response?.mode || '').toLowerCase() === 'full' && response?.allowed !== false);
+                }
+            }
+            catch {
+                if (isMounted) {
+                    setHasFullAccess(false);
+                }
+            }
+        }
+        loadModuleAccess();
+        return () => {
+            isMounted = false;
+        };
+    }, [resolvedModuleId]);
     const careerOptions = useMemo(() => ['All', ...Array.from(new Set(masterClasses.map((item) => item.career)))], [masterClasses]);
     const videoTypeOptions = useMemo(() => ['All', ...Array.from(new Set(masterClasses.map((item) => item.videoType)))], [masterClasses]);
     let filtered = [...masterClasses];
@@ -75,6 +157,8 @@ export default function LearnScreen() {
         pathname: '/(drawer)/(tabs)/learn',
     }), []);
     const hasSeparateCareerOptions = careerOptions.length > 2 && careerOptions.some((option) => !videoTypeOptions.includes(option));
+    const currentClass = selectedVideo ? masterClasses.find((item) => item.id === selectedVideo) || null : null;
+    const detailPreviewExpired = currentClass ? expiredPreviewIds.includes(currentClass.id) : false;
     return (<Screen scroll={true}>
       <View className="flex-1">
       <ScrollView className="flex-1" contentContainerClassName="gap-[18px]  pt-2 " contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
@@ -115,14 +199,15 @@ export default function LearnScreen() {
         {!isLoading && loadError ? (<Text className="text-[13px] text-brand">{loadError}</Text>) : null}
         {!isLoading && !loadError && filtered.length === 0 ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No master classes available right now.</Text>) : null}
         {filtered.map((item) => {
-                const detailUnlocked = !item.locked || masterClassUnlocked || canAccessFreeDetail('master-class', item.title);
-                return (<View key={item.id} className={`relative gap-[14px] rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} style={{ opacity: item.locked && !detailUnlocked ? 0.96 : 1 }}>
-            {item.locked && !masterClassUnlocked ? (<View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
-                <Ionicons name={detailUnlocked ? 'lock-open-outline' : 'lock-closed'} size={15} color={palette.primary}/>
+                const detailUnlocked = hasFullAccess || item.isFree;
+                const cardUnlocked = hasFullAccess || item.isFree;
+                return (<View key={item.id} className={`relative gap-[14px] rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} style={{ opacity: cardUnlocked ? 1 : 0.96 }}>
+            {!hasFullAccess ? (<View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${cardUnlocked ? 'bg-[#ecf8ef]' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
+                <Ionicons name={cardUnlocked ? 'lock-open-outline' : 'lock-closed'} size={15} color={cardUnlocked ? palette.green : palette.primary}/>
               </View>) : null}
             <View className="flex-row items-start gap-3">
-              <View className={`h-[58px] w-[58px] items-center justify-center rounded-[18px] ${item.locked ? preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2eff2]' : ''}`} style={item.locked ? undefined : { backgroundColor: `${palette.primary}12` }}>
-                <Text className="text-[11px] font-extrabold text-brand-deep">{item.locked ? 'LOCK' : 'PLAY'}</Text>
+              <View className={`h-[58px] w-[58px] items-center justify-center rounded-[18px] ${!cardUnlocked ? preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2eff2]' : ''}`} style={cardUnlocked ? { backgroundColor: `${palette.primary}12` } : undefined}>
+                <Text className="text-[11px] font-extrabold text-brand-deep">{cardUnlocked ? 'PLAY' : 'LOCK'}</Text>
               </View>
               <View className="flex-1 gap-1">
                 <Text className={`text-[15px] font-extrabold leading-[21px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.title}</Text>
@@ -136,31 +221,61 @@ export default function LearnScreen() {
                 </View>
               </View>
             </View>
-            {!masterClassUnlocked && item.locked ? (<Text className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+            {!hasFullAccess && !cardUnlocked ? (<Text className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
                 {detailUnlocked ? 'Your first locked class is available for free.' : 'You have already used the free master class preview.'}
               </Text>) : null}
             <AnimatedPressable onPress={() => {
-                    if (item.locked && !masterClassUnlocked && !detailUnlocked) {
+                    if (!hasFullAccess && !item.isFree && !detailUnlocked) {
                         setShowUnlockSheet(true);
                         return;
                     }
-                    if (item.locked) {
-                        registerFreeDetailAccess('master-class', item.title);
+                    if (hasFullAccess) {
+                        setSelectedVideo(item.id);
+                        if (item.url !== '#') {
+                            Linking.openURL(item.url);
+                        }
+                        return;
                     }
+                    const classId = String(item.id);
+                    if (expiredPreviewIds.includes(classId)) {
+                        setLockSheetDismissible(false);
+                        setShowUnlockSheet(true);
+                        return;
+                    }
+                    registerFreeDetailAccess('master-class', classId);
+                    setSelectedVideo(item.id);
                     if (item.url !== '#') {
                         Linking.openURL(item.url);
                     }
-                }} className={`rounded-[14px] py-[11px] ${item.locked && !masterClassUnlocked ? '' : 'bg-brand'}`} gradient={!(item.locked && !masterClassUnlocked)} style={item.locked && !masterClassUnlocked ? { backgroundColor: `${palette.primary}12` } : undefined}>
-              <Text className="text-center text-[13px] font-extrabold" style={{ color: item.locked && !masterClassUnlocked ? palette.primary : '#ffffff' }}>
-                {item.locked && !masterClassUnlocked ? detailUnlocked ? 'Watch 1 Free Class' : 'Unlock More Classes' : 'Watch Video'}
+                    startMasterClassPreview({
+                        moduleId: resolvedModuleId,
+                        pageType: 'master-class',
+                        pageId: classId,
+                    }).then((response) => {
+                        if (response?.mode === 'preview') {
+                            beginPreviewLock(response?.remainingSeconds ?? response?.previewDurationSeconds ?? 15, classId);
+                        }
+                        else if (response?.mode === 'full') {
+                            clearPreviewTimers();
+                        }
+                        else if (response?.allowed === false) {
+                            setLockSheetDismissible(true);
+                            setShowUnlockSheet(true);
+                        }
+                    }).catch(() => {
+                        setShowUnlockSheet(true);
+                    });
+                }} className={`rounded-[14px] py-[11px] ${cardUnlocked ? 'bg-brand' : ''}`} gradient={cardUnlocked} style={cardUnlocked ? undefined : { backgroundColor: `${palette.primary}12` }}>
+              <Text className="text-center text-[13px] font-extrabold" style={{ color: cardUnlocked ? '#ffffff' : palette.primary }}>
+                {cardUnlocked ? 'Watch Video' : detailUnlocked ? 'Watch 1 Free Class' : 'Unlock More Classes'}
               </Text>
             </AnimatedPressable>
           </View>);
             })}
       </View>
       </ScrollView>
-      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Master Class" subtitle="Subscribe to more classes and keep learning without limits." onClose={() => setShowUnlockSheet(false)} onPress={() => {
-                setShowUnlockSheet(false);
+      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Master Class" subtitle={detailPreviewExpired ? 'Your preview time has ended for this master class.' : 'Subscribe to more classes and keep learning without limits.'} dismissible={lockSheetDismissible} onClose={resetToList} onPress={() => {
+                resetToList();
                 openSubscriptionPrompt(subscriptionTarget);
             }}/>) : null}
       </View>
