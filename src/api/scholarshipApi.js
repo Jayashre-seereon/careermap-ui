@@ -90,6 +90,7 @@ function mapScholarshipItem(item, index) {
   return {
     id: String(item?.id ?? `scholarship-${index}`),
     name: item?.name || 'Unnamed Scholarship',
+    isFree: Boolean(item?.is_free ?? item?.isFree),
    eligibility: formatEligibility(item?.eligibility),
     amount: formatAmount(item?.price),
     deadline: formatDeadline(item?.deadline),
@@ -119,4 +120,28 @@ export async function getScholarships() {
   const items = Array.isArray(response?.data?.data) ? response.data.data : [];
 
   return items.map((item, index) => mapScholarshipItem(item, index));
+}
+
+export async function getScholarshipDetails(id) {
+  if (id === null || id === undefined || id === '') {
+    throw new Error('Scholarship id is required.');
+  }
+
+  const response = await api.get(`/scholarship/${id}`);
+  const data = response?.data?.data ?? response?.data ?? null;
+  return data ? mapScholarshipItem(data, 0) : null;
+}
+
+export async function startScholarshipPreview({ moduleId, pageType, pageId }) {
+  if (moduleId === null || moduleId === undefined || moduleId === '' || pageType === null || pageType === undefined || pageType === '' || pageId === null || pageId === undefined || pageId === '') {
+    throw new Error('moduleId, pageType, and pageId are required.');
+  }
+
+  const response = await api.post('/module-access/preview/start', {
+    moduleId,
+    pageType,
+    pageId,
+  });
+
+  return response?.data ?? null;
 }
