@@ -270,11 +270,12 @@ export function LockedDetailOverlay({ title = 'Unlock', subtitle = 'Subscribe to
     </View>);
 }
 
-export function UnlockBottomSheet({ title = 'Unlock More', subtitle = 'Subscribe to more', onClose, onPress }) {
+export function UnlockBottomSheet({ title = 'Unlock More', subtitle = 'Subscribe to more', onClose, onPress, dismissible = true }) {
     const { preferences } = useAppState();
-    return (<Modal animationType="fade" transparent visible onRequestClose={onClose}>
+    const handleClose = dismissible ? onClose : undefined;
+    return (<Modal animationType="fade" transparent visible onRequestClose={dismissible ? handleClose : () => {}}>
       <View className="flex-1 justify-end">
-        <Pressable className="absolute inset-0" onPress={onClose}>
+        <Pressable className="absolute inset-0" onPress={handleClose} disabled={!dismissible}>
           <View className={`absolute inset-0 ${preferences.darkMode ? 'bg-black/75' : 'bg-[#140b18]/45'}`}/>
           <View className={`absolute inset-0 ${preferences.darkMode ? 'bg-black/10' : 'bg-white/10'}`}/>
         </Pressable>
@@ -294,9 +295,9 @@ export function UnlockBottomSheet({ title = 'Unlock More', subtitle = 'Subscribe
               </View>
 
               <View className="mb-4 flex-row justify-end">
-                <Pressable className={`h-10 w-10 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#121212]' : 'bg-[#f9f1ee]'}`} onPress={onClose}>
+                {dismissible ? (<Pressable className={`h-10 w-10 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#121212]' : 'bg-[#f9f1ee]'}`} onPress={onClose}>
                   <Ionicons name="close" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
-                </Pressable>
+                </Pressable>) : null}
               </View>
 
               <View className="items-center">
