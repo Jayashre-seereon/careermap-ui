@@ -202,9 +202,9 @@ export default function LearnScreen() {
                 const detailUnlocked = hasFullAccess || item.isFree;
                 const cardUnlocked = hasFullAccess || item.isFree;
                 return (<View key={item.id} className={`relative gap-[14px] rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} style={{ opacity: cardUnlocked ? 1 : 0.96 }}>
-            {!hasFullAccess ? (<View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${cardUnlocked ? 'bg-[#ecf8ef]' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
+          <View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${cardUnlocked ? 'bg-[#ecf8ef]' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
                 <Ionicons name={cardUnlocked ? 'lock-open-outline' : 'lock-closed'} size={15} color={cardUnlocked ? palette.green : palette.primary}/>
-              </View>) : null}
+              </View>
             <View className="flex-row items-start gap-3">
              
               <View className="flex-1 gap-1">

@@ -458,10 +458,10 @@ export function AppStateProvider({ children }) {
         activePlanId,
         hasActiveSubscription: activePlanId !== null,
         onboarding,
-        isUnlocked: (feature) => {
+       isUnlocked: (feature) => {
             if (!activePlanId)
                 return false;
-            return planFeatures[activePlanId].includes(feature);
+            return (planFeatures[activePlanId] || []).includes(feature);
         },
         activatePlan: (planId) => {
             setActivePlanIdState(planId);

@@ -418,11 +418,9 @@ export default function ScholarshipScreen() {
                             });
                         }}
                     >
-                        {!hasFullAccess ? (
-                            <View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${detailOpen ? 'bg-[#ecf8ef]' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
-                                <Ionicons name={detailOpen ? 'lock-open-outline' : 'lock-closed'} size={15} color={detailOpen ? palette.green : palette.primary}/>
-                            </View>
-                        ) : null}
+                       <View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${detailOpen ? 'bg-[#ecf8ef]' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
+                            <Ionicons name={detailOpen ? 'lock-open-outline' : 'lock-closed'} size={15} color={detailOpen ? palette.green : palette.primary}/>
+                        </View>
                         <View className="absolute bottom-4 right-4 items-end gap-2">
                             <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.deadline}</Text>
                             <Pill label={item.status} tone={item.status === 'Active' ? palette.green : item.status === 'Expired' ? palette.danger : palette.orange}/>
