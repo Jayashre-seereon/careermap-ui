@@ -332,8 +332,8 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
 
         {/* RIGHT COLUMN: Stretched vertically to force button to the absolute bottom */}
         <View className="self-stretch justify-between items-end pl-2 min-h-[64px]">
-            <View>
-                <Pill label={cardUnlocked ? 'FREE' : 'LOCK'} tone={cardUnlocked ? palette.green : palette.blue}/>
+           <View className="h-6 w-6 items-center justify-center rounded-full" style={{ backgroundColor: `${cardUnlocked ? palette.green : '#e53935'}18` }}>
+                <Ionicons name={cardUnlocked ? 'lock-open' : 'lock-closed'} size={13} color={cardUnlocked ? palette.green : '#e53935'}/>
             </View>
             
             <AnimatedPressable

@@ -206,9 +206,7 @@ export default function LearnScreen() {
                 <Ionicons name={cardUnlocked ? 'lock-open-outline' : 'lock-closed'} size={15} color={cardUnlocked ? palette.green : palette.primary}/>
               </View>) : null}
             <View className="flex-row items-start gap-3">
-              <View className={`h-[58px] w-[58px] items-center justify-center rounded-[18px] ${!cardUnlocked ? preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2eff2]' : ''}`} style={cardUnlocked ? { backgroundColor: `${palette.primary}12` } : undefined}>
-                <Text className="text-[11px] font-extrabold text-brand-deep">{cardUnlocked ? 'PLAY' : 'LOCK'}</Text>
-              </View>
+             
               <View className="flex-1 gap-1">
                 <Text className={`text-[15px] font-extrabold leading-[21px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.title}</Text>
                 <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.mentor}</Text>

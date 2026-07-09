@@ -129,6 +129,7 @@ export default function HomeScreen() {
                 ...card,
                 id: card.title,
                 lockTitle: card.title,
+                accessStatus: 'unlocked',
             }));
         }
         const moduleCardMap = new Map(moduleCards.map((card) => [resolveModuleLookupKey(card.title), card]));
@@ -143,6 +144,7 @@ export default function HomeScreen() {
                 id: module.id,
                 lockTitle: matchedCard.title,
                 title: module.title || matchedCard.title,
+                 accessStatus: String(module.accessStatus || '').toLowerCase(),
             };
         })
             .filter(Boolean);
@@ -426,9 +428,22 @@ export default function HomeScreen() {
 
       <SectionHeader title="Explore Modules" />
       <View className="flex-row flex-wrap gap-3 mt-4 mb-2">
-        {dashboardModules.map((card) => {
+       {dashboardModules.map((card) => {
+                const statusIcon = card.accessStatus === 'locked'
+                    ? 'lock-closed'
+                    : card.accessStatus === 'preview'
+                        ? 'time-outline'
+                        : card.accessStatus === 'unlocked'
+                            ? 'lock-open'
+                            : null;
+                const statusColor = card.accessStatus === 'locked'
+                    ? '#e53935'
+                    : card.accessStatus === 'preview'
+                        ? palette.orange
+                        : palette.green;
                 return (<AnimatedPressable key={card.id || card.title} style={{ width: moduleCardWidth }} onPress={() => handleModulePress(card)}>
         <View className={`relative aspect-square items-center justify-center gap-2 rounded-[22px] border p-[14px] ${preferences.darkMode ? 'bg-[#080808]' : 'bg-card'}`} style={{ borderColor: preferences.darkMode ? '#1a1a1a' : `${card.tone}30` }}>
+           {statusIcon ? (<Ionicons name={statusIcon} size={14} color={statusColor} className="absolute right-2 top-2"/>) : null}
               <View className="h-[42px] w-[42px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${card.tone}14` }}>
                 <Ionicons name={card.icon} size={21} color={card.tone}/>
               </View>

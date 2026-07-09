@@ -823,13 +823,16 @@ export default function BookMentorScreen() {
                   <Text className="text-[12px] font-bold text-brand">{mentor.specialty}</Text>
                 </View>
                 <View className="items-end gap-1">
+                     <View className="h-6 w-6 items-center justify-center rounded-full" style={{ backgroundColor: `${cardUnlocked ? palette.green : '#e53935'}18` }}>
+                    <Ionicons name={cardUnlocked ? 'lock-open' : 'lock-closed'} size={13} color={cardUnlocked ? palette.green : '#e53935'}/>
+                  </View>
                   <Text className="text-[13px] font-black text-brand">{mentor.price}</Text>
                   <View className="flex-row items-center gap-1">
                     <Ionicons name="trophy" size={11} color={palette.secondary}/>
                     <Text className={`text-[10px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
                     <Text className={`text-[10px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Air/State</Text>
                   </View>
-                  <Pill label={cardUnlocked ? 'FREE' : 'LOCK'} tone={cardUnlocked ? palette.green : palette.blue}/>
+                 
                 </View>
               </Pressable>
             );

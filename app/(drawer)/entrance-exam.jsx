@@ -200,12 +200,12 @@ export default function EntranceExamScreen() {
                                         {exam.name}
                                     </Text>
                                     {!cardUnlocked ? (
-                                        <View className="rounded-full bg-[#f8e8d8] px-2 py-1">
-                                            <Text className="text-[10px] font-black text-brand">LOCK</Text>
+                                        <View className="h-6 w-6 items-center justify-center rounded-full bg-[#fdecea]">
+                                            <Ionicons name="lock-closed" size={13} color="#e53935"/>
                                         </View>
                                     ) : (
-                                        <View className="rounded-full bg-[#e4f7ed] px-2 py-1">
-                                            <Text className="text-[10px] font-black text-[#2f9367]">FREE</Text>
+                                        <View className="h-6 w-6 items-center justify-center rounded-full bg-[#e4f7ed]">
+                                            <Ionicons name="lock-open" size={13} color="#2f9367"/>
                                         </View>
                                     )}
                                 </View>
