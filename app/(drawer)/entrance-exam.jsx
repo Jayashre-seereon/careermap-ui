@@ -5,14 +5,19 @@ import { ScrollView, Text, View,Linking } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getEntranceExams } from '../../src/api/entranceExamApi';
-import { AnimatedPressable, HierarchyFilterPanel, Screen, SectionHeader } from '../../src/careermap-ui';
+import { checkModuleAccess, getModules } from '../../src/api/moduleAccessApi';
+import { AnimatedPressable, HierarchyFilterPanel, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { buildHierarchyOptions, filterByHierarchy } from '../../src/utils/hierarchy';
+import { openSubscriptionPrompt } from '../../src/subscription-flow';
 
 export default function EntranceExamScreen() {
     const { preferences } = useAppState();
     const [entranceExams, setEntranceExams] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
+    const [hasFullAccess, setHasFullAccess] = useState(false);
+    const [moduleAccessResolved, setModuleAccessResolved] = useState(false);
+    const [showUnlockSheet, setShowUnlockSheet] = useState(false);
     const [typeFilter, setTypeFilter] = useState('All');
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [secondCategoryFilter, setSecondCategoryFilter] = useState('All');
@@ -40,6 +45,46 @@ export default function EntranceExamScreen() {
 
         loadEntranceExams();
         return () => { isMounted = false; };
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        async function loadModuleAccess() {
+            try {
+                let moduleId = null;
+                const modules = await getModules();
+                const matchedModule = modules.find((module) => String(module?.title || '').trim().toLowerCase().includes('entrance exam'));
+                moduleId = Number(matchedModule?.id);
+
+                if (!Number.isFinite(moduleId)) {
+                    if (isMounted) {
+                        setHasFullAccess(true);
+                        setModuleAccessResolved(true);
+                    }
+                    return;
+                }
+
+                const response = await checkModuleAccess(moduleId);
+                if (!isMounted) {
+                    return;
+                }
+
+                setHasFullAccess(String(response?.mode || '').toLowerCase() === 'full' && response?.allowed !== false);
+                setModuleAccessResolved(true);
+            } catch (_error) {
+                if (isMounted) {
+                    setHasFullAccess(true);
+                    setModuleAccessResolved(true);
+                }
+            }
+        }
+
+        loadModuleAccess();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     const typeFilters = useMemo(
@@ -122,10 +167,23 @@ export default function EntranceExamScreen() {
                 {isLoading ? <Text className={`text-[14px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading entrance exams...</Text> : null}
                 {!isLoading && loadError ? <Text className="text-[14px] text-brand">{loadError}</Text> : null}
 
-                {filtered.map((exam) => (
+                {!moduleAccessResolved ? <Text className={`text-[14px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Checking access...</Text> : null}
+
+                {filtered.map((exam, index) => {
+                    const cardUnlocked = hasFullAccess || index < 4;
+                    return (
                     <AnimatedPressable
                         key={exam.id}
                         className={`mb-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card shadow-card'}`}
+                        onPress={() => {
+                            if (!cardUnlocked) {
+                                setShowUnlockSheet(true);
+                                return;
+                            }
+                            if (exam.website && exam.website !== '#') {
+                                Linking.openURL(exam.website);
+                            }
+                        }}
                     >
                        <View className="flex-row items-center gap-3">
 
@@ -137,10 +195,20 @@ export default function EntranceExamScreen() {
                             {/* Title + Dates + Button in column */}
                             <View className="flex-1 gap-2">
 
-                                {/* Exam Title */}
-                                <Text className={`text-[15px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                                    {exam.name}
-                                </Text>
+                                <View className="flex-row items-start justify-between gap-3">
+                                    <Text className={`flex-1 text-[15px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                                        {exam.name}
+                                    </Text>
+                                    {!cardUnlocked ? (
+                                        <View className="h-6 w-6 items-center justify-center rounded-full bg-[#fdecea]">
+                                            <Ionicons name="lock-closed" size={13} color="#e53935"/>
+                                        </View>
+                                    ) : (
+                                        <View className="h-6 w-6 items-center justify-center rounded-full bg-[#e4f7ed]">
+                                            <Ionicons name="lock-open" size={13} color="#2f9367"/>
+                                        </View>
+                                    )}
+                                </View>
 
                               
                             </View>
@@ -167,6 +235,10 @@ export default function EntranceExamScreen() {
                                     <AnimatedPressable
                                         onPress={(e) => {
                                             e.stopPropagation();
+                                            if (!cardUnlocked) {
+                                                setShowUnlockSheet(true);
+                                                return;
+                                            }
                                             if (exam.website) Linking.openURL(exam.website);
                                         }}
                                         className="px-8 "
@@ -178,7 +250,7 @@ export default function EntranceExamScreen() {
 
                                 </View>
                     </AnimatedPressable>
-                ))}
+                );})}
 
                 {!isLoading && !loadError && filtered.length === 0 ? (
                     <View className="items-center justify-center py-12">
@@ -186,6 +258,17 @@ export default function EntranceExamScreen() {
                     </View>
                 ) : null}
             </View>
+            {showUnlockSheet ? (
+                <UnlockBottomSheet
+                    title="Unlock Entrance Exams"
+                    subtitle="Subscribe to view more exam cards and open locked website links."
+                    onClose={() => setShowUnlockSheet(false)}
+                    onPress={() => {
+                        setShowUnlockSheet(false);
+                        openSubscriptionPrompt({ pathname: '/(drawer)/entrance-exam' });
+                    }}
+                />
+            ) : null}
         </Screen>
     );
 }

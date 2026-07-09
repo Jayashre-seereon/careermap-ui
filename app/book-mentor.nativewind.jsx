@@ -1,9 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { mentors, palette } from '../src/careermap-data';
-import { AnimatedPressable, Pill, Screen, SectionHeader } from '../src/careermap-ui';
+import { checkModuleAccess, getModules } from '../src/api/moduleAccessApi';
+import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../src/careermap-ui';
 export default function BookMentorScreen() {
+    const params = useLocalSearchParams();
     const [selectedIndex, setSelectedIndex] = useState(null);
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedSlot, setSelectedSlot] = useState('');
@@ -12,6 +15,13 @@ export default function BookMentorScreen() {
     const [upiId, setUpiId] = useState('');
     const [booked, setBooked] = useState(false);
     const [processing, setProcessing] = useState(false);
+    const [hasFullAccess, setHasFullAccess] = useState(false);
+    const [moduleAccessResolved, setModuleAccessResolved] = useState(false);
+    const [showUnlockSheet, setShowUnlockSheet] = useState(false);
+    const resolvedModuleId = useMemo(() => {
+        const parsed = Number(params.moduleId);
+        return Number.isFinite(parsed) ? parsed : null;
+    }, [params.moduleId]);
     const dates = useMemo(() => Array.from({ length: 14 }, (_, index) => {
         const current = new Date();
         current.setDate(current.getDate() + index);
@@ -24,6 +34,40 @@ export default function BookMentorScreen() {
         };
     }), []);
     const slots = ['9:00 AM', '10:00 AM', '11:30 AM', '2:00 PM', '3:30 PM', '5:00 PM', '6:30 PM'];
+    useEffect(() => {
+        let isMounted = true;
+        const resolveModuleAccess = async () => {
+            try {
+                let moduleId = resolvedModuleId;
+                if (!Number.isFinite(moduleId)) {
+                    const modules = await getModules();
+                    const matched = modules.find((module) => String(module?.title || '').trim().toLowerCase().includes('mentor'));
+                    moduleId = Number(matched?.id);
+                }
+                if (!Number.isFinite(moduleId)) {
+                    if (isMounted) {
+                        setHasFullAccess(false);
+                        setModuleAccessResolved(true);
+                    }
+                    return;
+                }
+                const response = await checkModuleAccess(moduleId);
+                if (!isMounted) return;
+                setHasFullAccess(String(response?.mode || '').toLowerCase() === 'full');
+                setModuleAccessResolved(true);
+            }
+            catch {
+                if (isMounted) {
+                    setHasFullAccess(false);
+                    setModuleAccessResolved(true);
+                }
+            }
+        };
+        resolveModuleAccess();
+        return () => {
+            isMounted = false;
+        };
+    }, [resolvedModuleId]);
     useEffect(() => {
         if (!processing)
             return;
@@ -199,12 +243,21 @@ export default function BookMentorScreen() {
     }
     return (<Screen>
       <SectionHeader title="Book Mentor" subtitle="Mentor list and booking flow adapted closely from the prototype."/>
+      {!moduleAccessResolved ? (<Text className="text-[13px] text-muted">Checking access...</Text>) : null}
       <View className="gap-2 rounded-[24px] border border-line bg-card p-5">
         <Text className="text-[20px] font-black text-ink">Expert Guidance for the Next Big Decision</Text>
         <Text className="text-[14px] leading-[21px] text-muted">Explore counsellors across engineering, design, and career planning, then reserve a 1-on-1 slot.</Text>
       </View>
       <View className="gap-3">
-        {mentors.map((mentor, index) => (<Pressable key={mentor.name} className="flex-row items-center gap-3 rounded-[22px] border border-line bg-card p-4" onPress={() => setSelectedIndex(index)}>
+        {mentors.map((mentor, index) => {
+            const cardUnlocked = hasFullAccess || index < 4;
+            return (<Pressable key={mentor.name} className="flex-row items-center gap-3 rounded-[22px] border border-line bg-card p-4" onPress={() => {
+                    if (!cardUnlocked) {
+                        setShowUnlockSheet(true);
+                        return;
+                    }
+                    setSelectedIndex(index);
+                }}>
             <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
               <Text className="text-[20px] font-black" style={{ color: mentor.accent }}>{mentor.avatar}</Text>
             </View>
@@ -217,8 +270,10 @@ export default function BookMentorScreen() {
                 <Text className="text-[11px] font-extrabold text-brand">{mentor.price}</Text>
               </View>
             </View>
-            <Pill label="Available" tone={palette.green}/>
-          </Pressable>))}
+            <Pill label={cardUnlocked ? 'FREE' : 'LOCK'} tone={cardUnlocked ? palette.green : palette.blue}/>
+          </Pressable>);
+        })}
       </View>
+      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Mentor Access" subtitle="Preview mode allows the first 4 mentor cards only. Purchase to unlock the full mentor list." onClose={() => setShowUnlockSheet(false)} onPress={() => setShowUnlockSheet(false)}/>) : null}
     </Screen>);
 }
