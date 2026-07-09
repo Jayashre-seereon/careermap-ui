@@ -72,6 +72,7 @@ export default function BookMentorScreen() {
     const [moduleAccessResolved, setModuleAccessResolved] = useState(false);
     const [moduleAccessAllowed, setModuleAccessAllowed] = useState(true);
     const [moduleAccessPreview, setModuleAccessPreview] = useState(false);
+    const [moduleAccessMode, setModuleAccessMode] = useState('');
     const [moduleAccessMessage, setModuleAccessMessage] = useState('');
     const [selectedMentorId, setSelectedMentorId] = useState(null);
     const [selectedMentor, setSelectedMentor] = useState(null);
@@ -94,6 +95,7 @@ export default function BookMentorScreen() {
     const fallbackMentor = selectedMentorId ? mentorList.find((item) => String(item.id) === String(selectedMentorId)) || null : null;
     const activeMentor = selectedMentor || fallbackMentor;
     const detailUnlocked = activeMentor ? canAccessFreeDetail('book-mentor', activeMentor.name) : true;
+    const hasFullAccess = moduleAccessMode === 'full';
     const modulePreviewBanner = !isUnlocked('book-mentor') && moduleAccessPreview;
     const selectedDateDisplay = formatDisplayDate(selectedDate);
     const selectedTimeDisplay = selectedSlot || 'Not selected';
@@ -286,21 +288,92 @@ export default function BookMentorScreen() {
         const resolveModuleAccess = async () => {
             const explicitStatus = String(params.accessStatus || '').toLowerCase();
 
-            if (explicitStatus === 'locked') {
+          if (explicitStatus === 'locked') {
                 if (isMounted) {
                     setModuleAccessAllowed(false);
                     setModuleAccessPreview(false);
                     setModuleAccessMessage('Please purchase a subscription to continue accessing this module.');
+                    setModuleAccessMode('locked');
                     setModuleAccessResolved(true);
                 }
                 return;
             }
 
-            if (explicitStatus === 'unlocked' || explicitStatus === 'preview') {
+          if (explicitStatus === 'unlocked' || explicitStatus === 'preview') {
                 if (isMounted) {
                     setModuleAccessAllowed(true);
                     setModuleAccessPreview(explicitStatus === 'preview');
                     setModuleAccessMessage('');
+                    setModuleAccessMode(explicitStatus === 'unlocked' ? 'full' : 'preview');
+                    setModuleAccessResolved(true);
+                }
+                return;
+            }
+
+            try {
+                let moduleId = Number(params.moduleId);
+
+                if (!Number.isFinite(moduleId)) {
+                    const modules = await getModules();
+                    const matchedModule = modules.find((module) => normalizeModuleTitle(module?.title) === 'book mentor')
+                        || modules.find((module) => normalizeModuleTitle(module?.title).includes('book mentor'));
+
+                    moduleId = Number(matchedModule?.id);
+                    if (isMounted && Number.isFinite(moduleId)) {
+                        setResolvedModuleId(moduleId);
+                    }
+                }
+
+               if (!Number.isFinite(moduleId)) {
+                    if (isMounted) {
+                        setModuleAccessAllowed(true);
+                        setModuleAccessPreview(false);
+                        setModuleAccessMessage('');
+                        setModuleAccessResolved(true);
+                    }
+                    return;
+                }
+
+               const response = await checkModuleAccess(moduleId);
+                if (!isMounted) {
+                    return;
+                }
+
+                setResolvedModuleId(moduleId);
+                setModuleAccessAllowed(Boolean(response?.allowed));
+                setModuleAccessPreview(Boolean(response?.freePreview));
+                setModuleAccessMessage(response?.message || '');
+                setModuleAccessMode(String(response?.mode || '').toLowerCase());
+                setModuleAccessResolved(true);
+            } catch (error) {
+                console.log('Module access check failed', error?.response?.data || error?.message || error);
+                if (isMounted) {
+                    setModuleAccessAllowed(true);
+                    setModuleAccessPreview(false);
+                    setModuleAccessMessage('');
+                    setModuleAccessResolved(true);
+                }
+            }
+        };
+
+        resolveModuleAccess();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [params.accessStatus, params.moduleId]);
+   useEffect(() => {
+        let isMounted = true;
+
+        const resolveModuleAccess = async () => {
+            const explicitStatus = String(params.accessStatus || '').toLowerCase();
+
+            if (explicitStatus === 'locked') {
+                if (isMounted) {
+                    setModuleAccessAllowed(false);
+                    setModuleAccessPreview(false);
+                    setModuleAccessMessage('Please purchase a subscription to continue accessing this module.');
+                    setModuleAccessMode('locked');
                     setModuleAccessResolved(true);
                 }
                 return;
@@ -339,6 +412,7 @@ export default function BookMentorScreen() {
                 setModuleAccessAllowed(Boolean(response?.allowed));
                 setModuleAccessPreview(Boolean(response?.freePreview));
                 setModuleAccessMessage(response?.message || '');
+                setModuleAccessMode(String(response?.mode || '').toLowerCase());
                 setModuleAccessResolved(true);
             } catch (error) {
                 console.log('Module access check failed', error?.response?.data || error?.message || error);
@@ -357,43 +431,6 @@ export default function BookMentorScreen() {
             isMounted = false;
         };
     }, [params.accessStatus, params.moduleId]);
-    useEffect(() => {
-        let isMounted = true;
-
-        const loadMentorDetail = async () => {
-            if (!selectedMentorId) {
-                setSelectedMentor(null);
-                setIsMentorLoading(false);
-                return;
-            }
-
-            setIsMentorLoading(true);
-            try {
-                const mentor = await getMentorById(selectedMentorId);
-                if (isMounted && mentor) {
-                    setSelectedMentor(mentor);
-                }
-            }
-            catch (error) {
-                console.log('Mentor detail fetch failed', error?.response?.data || error?.message || error);
-                if (isMounted) {
-                    const fallbackMentor = mentorList.find((item) => String(item.id) === String(selectedMentorId)) || null;
-                    setSelectedMentor(fallbackMentor);
-                }
-            }
-            finally {
-                if (isMounted) {
-                    setIsMentorLoading(false);
-                }
-            }
-        };
-
-        loadMentorDetail();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [mentorList, selectedMentorId]);
     useEffect(() => {
         if (!booked) {
             celebration.setValue(0);
@@ -767,35 +804,36 @@ export default function BookMentorScreen() {
             setSecondCategoryFilter(value);
             setSubCategoryFilter('All');
         }} onChangeSubCategory={setSubCategoryFilter}/>) : null}
-      <View className="gap-3">
-        {filteredMentors.map((mentor, index) => (<Pressable key={mentor.id || mentor.name} className={`flex-row items-center gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => {
-                if (!isUnlocked('book-mentor') && !canAccessFreeDetail('book-mentor', mentor.name)) {
-                    setShowUnlockSheet(true);
-                    return;
-                }
-                registerFreeDetailAccess('book-mentor', mentor.name);
-                setSelectedMentorId(String(mentor.id || index));
-            }}>
-            <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
-              {renderMentorAvatar(mentor)}
-            </View>
-            <View className="flex-1 gap-0.5">
-              <Text className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
-              <Text className="text-[12px] font-bold text-brand">{mentor.specialty}</Text>
-                 </View>
-           <View className="items-end gap-1">
-    <Text className="text-[13px] font-black text-brand">{mentor.price}</Text>
-    <View className="flex-row items-center gap-1 ">
-        <Ionicons name="trophy" size={11} color={palette.secondary}/>
-        <Text className={`text-[10px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-            {mentor.rating}
-        </Text>
-        <Text className={`text-[10px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-            Air/State
-        </Text>
-    </View>
-</View>
-          </Pressable>))}
+    <View className="gap-3">
+        {filteredMentors.map((mentor, index) => {
+            const cardUnlocked = hasFullAccess || index < 4;
+            return (
+              <Pressable key={mentor.id || mentor.name} className={`flex-row items-center gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => {
+                    if (!cardUnlocked) {
+                        setShowUnlockSheet(true);
+                        return;
+                    }
+                    setSelectedMentorId(String(mentor.id || index));
+                }}>
+                <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
+                  {renderMentorAvatar(mentor)}
+                </View>
+                <View className="flex-1 gap-0.5">
+                  <Text className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
+                  <Text className="text-[12px] font-bold text-brand">{mentor.specialty}</Text>
+                </View>
+                <View className="items-end gap-1">
+                  <Text className="text-[13px] font-black text-brand">{mentor.price}</Text>
+                  <View className="flex-row items-center gap-1">
+                    <Ionicons name="trophy" size={11} color={palette.secondary}/>
+                    <Text className={`text-[10px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
+                    <Text className={`text-[10px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Air/State</Text>
+                  </View>
+                  <Pill label={cardUnlocked ? 'FREE' : 'LOCK'} tone={cardUnlocked ? palette.green : palette.blue}/>
+                </View>
+              </Pressable>
+            );
+        })}
       </View>
       {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Mentor Access" subtitle="Subscribe to more mentor profiles and booking access." onClose={() => setShowUnlockSheet(false)} onPress={() => {
                 setShowUnlockSheet(false);
