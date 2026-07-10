@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { ActivityIndicator, Platform, SafeAreaView, Text, View } from 'react-native';
 import { Asset } from 'expo-asset';
+import { router } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
@@ -31,6 +32,11 @@ export default function AssessmentPreviewScreen() {
       <WebView
         originWhitelist={['*']}
         source={{ uri: htmlAsset.uri }}
+        onMessage={(event) => {
+          if (event.nativeEvent.data === 'GO_DASHBOARD') {
+            router.replace('/(drawer)/(tabs)');
+          }
+        }}
         startInLoadingState
         renderLoading={() => (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>

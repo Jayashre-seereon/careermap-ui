@@ -426,7 +426,7 @@
 
     <div class="cta-block">
       <p>3 personality traits and your full career list are still locked.</p>
-      <button class="primary" onclick="window.location.href='/app/dashboard'">Unlock my full Career Map →</button>
+      <button class="primary" onclick="goToDashboard()">Unlock my full Career Map →</button>
     </div>
 
   </div>
@@ -762,7 +762,7 @@ function showResult(){
   saveResponseForAnalytics(report);
 }
 
-function drawCompass(report){
+  function drawCompass(report){
   const svg = document.getElementById('compass-svg');
   svg.innerHTML = '';
   const cx=140, cy=140, r=95;
@@ -795,6 +795,15 @@ function drawCompass(report){
     const label = isRevealed ? REPOSITORY.traitNames[t] : '???';
     svg.innerHTML += `<text x="${lx}" y="${ly}" text-anchor="middle" class="pin-label${isRevealed?'':' locked'}">${label}</text>`;
   });
+}
+
+function goToDashboard() {
+  if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === 'function') {
+    window.ReactNativeWebView.postMessage('GO_DASHBOARD');
+    return;
+  }
+
+  window.top.location.href = '/';
 }
 </script>
 </body>
