@@ -8,7 +8,7 @@ import { palette, subscriptions as fallbackSubscriptions } from '../../src/caree
 import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
 import { openRazorpayCheckout } from '../../src/utils/razorpay';
 export default function SubscriptionScreen() {
-    const { activePlanId, preferences, userProfile } = useAppState();
+    const { isCurrentSubscriptionPlan, preferences, userProfile } = useAppState();
     const { returnTo } = useLocalSearchParams();
     const [plans, setPlans] = useState(fallbackSubscriptions);
     const [isLoading, setIsLoading] = useState(true);
@@ -133,14 +133,15 @@ export default function SubscriptionScreen() {
             <AnimatedPressable
               className="mt-1 rounded-[14px] py-3"
               onPress={() => {
-                if (activePlanId !== plan.id) {
+                if (!isCurrentSubscriptionPlan(plan)) {
                   void handleSelectPlan(plan);
                 }
               }}
-              style={{ backgroundColor: activePlanId === plan.id ? `${palette.green}14` : palette.primary }}
+              disabled={isCurrentSubscriptionPlan(plan)}
+              style={{ backgroundColor: isCurrentSubscriptionPlan(plan) ? `${palette.green}14` : palette.primary }}
             >
-              <Text className="text-center text-[14px] font-extrabold" style={{ color: activePlanId === plan.id ? palette.green : '#fff' }}>
-                {isProcessingPlan === plan.id ? 'Processing...' : activePlanId === plan.id ? 'Current Plan' : 'Choose Plan'}
+              <Text className="text-center text-[14px] font-extrabold" style={{ color: isCurrentSubscriptionPlan(plan) ? palette.green : '#fff' }}>
+                {isProcessingPlan === plan.id ? 'Processing...' : isCurrentSubscriptionPlan(plan) ? 'Current Plan' : 'Choose Plan'}
               </Text>
             </AnimatedPressable>
           </View>))}

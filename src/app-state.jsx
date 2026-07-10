@@ -262,6 +262,7 @@ function normalizeBookingItems(items = []) {
 function normalizeSubscriptionItems(items = []) {
     return items.map((item, index) => {
         const mapped = mapSubscriptionItem(item, index);
+        const backendPlanId = item?.planId ?? item?.plan_id ?? item?.plan?.id ?? item?.plan?.planId ?? item?.plan?.plan_id ?? null;
         const subscriptionName = item?.plan?.name || item?.subscriptionName || item?.subscription_name || item?.planName || mapped.planName;
         const amount = item?.amount != null ? item.amount : item?.plan?.price != null ? item.plan.price : item?.price != null ? item.price : mapped.amount || '';
         const validity = formatValidityDays(item?.plan?.validity ?? item?.validity ?? item?.validityDays ?? item?.daysValid ?? item?.subscriptionValidity ?? mapped.validity);
@@ -269,6 +270,7 @@ function normalizeSubscriptionItems(items = []) {
 
         return {
             ...mapped,
+            backendPlanId: backendPlanId != null ? String(backendPlanId) : '',
             planName: subscriptionName,
             subscriptionName,
             amount,
@@ -277,6 +279,18 @@ function normalizeSubscriptionItems(items = []) {
             price: amount !== '' ? `Rs ${amount}` : mapped.price,
         };
     });
+}
+
+function resolveActiveSubscriptionPlanIds(items = []) {
+    return items
+        .map((item) => {
+        const backendPlanId = item?.backendPlanId ?? item?.planId ?? item?.plan_id ?? item?.plan?.id ?? item?.plan?.planId ?? item?.plan?.plan_id ?? '';
+        const planName = String(item?.planName || item?.subscriptionName || item?.plan?.name || '').trim().toLowerCase();
+
+        return [backendPlanId != null ? String(backendPlanId) : '', planName];
+    })
+        .flat()
+        .filter(Boolean);
 }
 
 export function AppStateProvider({ children }) {
@@ -316,6 +330,7 @@ export function AppStateProvider({ children }) {
             : []
     );
     const [freeAccessUsage, setFreeAccessUsageState] = useState(persistedAppState.freeAccessUsage ?? initialFreeAccessUsage);
+    const [activeSubscriptionPlanIds, setActiveSubscriptionPlanIds] = useState([]);
     const accessToken = useAuthStore((state) => state.accessToken);
     const refreshToken = useAuthStore((state) => state.refreshToken);
     const hasAuthenticatedSession = useAuthStore((state) => state.hasAuthenticatedSession);
@@ -398,6 +413,7 @@ export function AppStateProvider({ children }) {
                 if (subscriptionItems.length > 0) {
                     const normalizedSubscriptions = normalizeSubscriptionItems(subscriptionItems);
                     setSubscriptionRecords(normalizedSubscriptions);
+                    setActiveSubscriptionPlanIds(resolveActiveSubscriptionPlanIds(normalizedSubscriptions));
                     const activeSubscriptionIndex = subscriptionItems.findIndex((item) => String(item?.status || '').toLowerCase() === 'active');
                     const activeSubscription = activeSubscriptionIndex >= 0 ? normalizedSubscriptions[activeSubscriptionIndex] : normalizedSubscriptions[0];
 
@@ -420,6 +436,7 @@ export function AppStateProvider({ children }) {
                 if (isMounted) {
                     setTestHistory(initialTestHistory);
                     setBookings(initialBookings);
+                    setActiveSubscriptionPlanIds(activePlanId ? [String(activePlanId)] : []);
                     setSubscriptionRecords(activePlanId
                         ? [
                             {
@@ -457,6 +474,37 @@ export function AppStateProvider({ children }) {
     const value = useMemo(() => ({
         activePlanId,
         hasActiveSubscription: activePlanId !== null,
+        activeSubscriptionPlanIds,
+        isCurrentSubscriptionPlan: (plan) => {
+            if (!plan) {
+                return false;
+            }
+
+            const candidateIds = [
+                plan.apiId,
+                plan.raw?.id,
+                plan.id,
+                plan.planId,
+                plan.raw?.planId,
+                plan.raw?.plan?.id,
+                plan.raw?.plan?.planId,
+                plan.raw?.plan?.plan_id,
+            ]
+                .map((value) => (value === null || value === undefined ? '' : String(value).trim()))
+                .filter(Boolean);
+            const candidateNames = [
+                plan.name,
+                plan.planName,
+                plan.subscriptionName,
+                plan.raw?.plan?.name,
+            ]
+                .map((value) => String(value || '').trim().toLowerCase())
+                .filter(Boolean);
+
+            return candidateIds.some((id) => activeSubscriptionPlanIds.includes(id)) ||
+                candidateNames.some((name) => activeSubscriptionPlanIds.includes(name)) ||
+                candidateNames.some((name) => name === String(activePlanId || '').toLowerCase());
+        },
         onboarding,
        isUnlocked: (feature) => {
             if (!activePlanId)
@@ -540,7 +588,7 @@ export function AppStateProvider({ children }) {
         unreadNotificationsCount: notifications.filter((item) => item.unread).length,
         notificationsLoadFailed,
         freeAccessUsage,
-  }), [activePlanId, bookings, freeAccessUsage, notifications, notificationsLoadFailed, onboarding, preferences, profileEditRequestKey, promoMessage, savedCareers, subscriptionRecords, testHistory, userProfile]);
+  }), [activePlanId, activeSubscriptionPlanIds, bookings, freeAccessUsage, notifications, notificationsLoadFailed, onboarding, preferences, profileEditRequestKey, promoMessage, savedCareers, subscriptionRecords, testHistory, userProfile]);
     return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
 }
 export function useAppState() {
