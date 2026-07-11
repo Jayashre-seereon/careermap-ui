@@ -9,7 +9,7 @@ import { createMentorReview } from '../../../src/api/mentorApi';
 import { useAppState } from '../../../src/app-state';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../../src/subscription-flow';
-import { featuredInstitutes, featuredMentors, featuredScholarships, moduleCards, palette, studentProfile } from '../../../src/careermap-data';
+import { featuredInstitutes,  featuredScholarships, moduleCards, palette, studentProfile } from '../../../src/careermap-data';
 import { useAuthStore } from '../../../src/store/auth-store';
 const getMentorInitials = (mentor) => {
     const source = String(mentor?.name || 'M').trim();
@@ -149,21 +149,23 @@ export default function HomeScreen() {
         })
             .filter(Boolean);
     }, [dashboardData?.modules]);
-    const dashboardMentors = useMemo(() => {
-        if (!dashboardData?.mentors?.length) {
-            return featuredMentors;
-        }
-        return dashboardData.mentors.map((mentor, index) => ({
-            ...featuredMentors[index % featuredMentors.length],
-            id: mentor.id,
-            name: mentor.name || featuredMentors[index % featuredMentors.length].name,
-            specialty: mentor.designation || featuredMentors[index % featuredMentors.length].specialty,
-            rating: mentor.rank || featuredMentors[index % featuredMentors.length].rating,
-            averageRating: Number.isFinite(Number(mentor.averageRating)) ? Number(mentor.averageRating) : 0,
-            experience: mentor.experience ? `${mentor.experience} yrs` : featuredMentors[index % featuredMentors.length].experience,
-            image: mentor.image || featuredMentors[index % featuredMentors.length].image || null,
-        }));
-    }, [dashboardData?.mentors]);
+   const mentorAccentPalette = [palette.primary, palette.blue, palette.orange, palette.secondary, palette.green];
+
+const dashboardMentors = useMemo(() => {
+    if (!dashboardData?.mentors?.length) {
+        return [];
+    }
+    return dashboardData.mentors.map((mentor, index) => ({
+        id: mentor.id,
+        name: mentor.name || 'Unknown Mentor',
+        specialty: mentor.designation || 'Career Guidance',
+        rating: mentor.rank || '0',
+        averageRating: Number.isFinite(Number(mentor.averageRating)) ? Number(mentor.averageRating) : 0,
+        experience: mentor.experience ? `${mentor.experience} yrs` : 'Experience not available',
+        image: mentor.image || null,
+        accent: mentorAccentPalette[index % mentorAccentPalette.length],
+    }));
+}, [dashboardData?.mentors]);
     const dashboardScholarships = useMemo(() => {
         if (!dashboardData?.scholarships?.length) {
             return featuredScholarships;
@@ -456,7 +458,8 @@ export default function HomeScreen() {
             })}
       </View>
 
-      <SectionHeader title="Explore Your Mentors" action={<AnimatedPressable onPress={() => router.push('/(drawer)/book-mentor')}><Text className="text-[12px] font-extrabold text-brand mt-4 ">See all</Text></AnimatedPressable>}/>
+     <SectionHeader title="Explore Your Mentors" action={<AnimatedPressable onPress={() => router.push('/(drawer)/book-mentor')}><Text className="text-[12px] font-extrabold text-brand mt-4 ">See all</Text></AnimatedPressable>}/>
+      {dashboardMentors.length > 0 ? (
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
         {dashboardMentors.map((mentor) => (<AnimatedPressable key={mentor.id || mentor.name} className={`h-[168px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/book-mentor')}>
             <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px] " style={{ backgroundColor: `${mentor.accent}15` }}>
@@ -473,6 +476,9 @@ export default function HomeScreen() {
   </Text>
 </View></AnimatedPressable>))}
       </ScrollView>
+      ) : (
+        <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No mentors available right now.</Text>
+      )}
 
       <SectionHeader title="Explore Scholarships" action={<AnimatedPressable onPress={() => router.push('/(drawer)/scholarship')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>}/>
       <View className="gap-3 mb-4 mt-4">
