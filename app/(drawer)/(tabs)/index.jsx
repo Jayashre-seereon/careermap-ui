@@ -159,6 +159,7 @@ export default function HomeScreen() {
             name: mentor.name || featuredMentors[index % featuredMentors.length].name,
             specialty: mentor.designation || featuredMentors[index % featuredMentors.length].specialty,
             rating: mentor.rank || featuredMentors[index % featuredMentors.length].rating,
+            averageRating: Number.isFinite(Number(mentor.averageRating)) ? Number(mentor.averageRating) : 0,
             experience: mentor.experience ? `${mentor.experience} yrs` : featuredMentors[index % featuredMentors.length].experience,
             image: mentor.image || featuredMentors[index % featuredMentors.length].image || null,
         }));
@@ -465,8 +466,12 @@ export default function HomeScreen() {
               <Text numberOfLines={2} ellipsizeMode="tail" className={`text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
             </View>
             <Text numberOfLines={1} ellipsizeMode="tail" className="w-full text-center text-[11px] font-bold text-brand">{mentor.specialty}</Text>
-            <Text numberOfLines={1} ellipsizeMode="tail" className={`w-full text-center text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{mentor.rating} rank | {mentor.experience}</Text>
-          </AnimatedPressable>))}
+          <View className="w-full flex-row items-center justify-center gap-1">
+  <Ionicons name="star" size={11} color="#f4c200"/>
+  <Text numberOfLines={1} ellipsizeMode="tail" className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+    {mentor.averageRating ? mentor.averageRating.toFixed(1) : 'New'} | {mentor.experience}
+  </Text>
+</View></AnimatedPressable>))}
       </ScrollView>
 
       <SectionHeader title="Explore Scholarships" action={<AnimatedPressable onPress={() => router.push('/(drawer)/scholarship')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>}/>
