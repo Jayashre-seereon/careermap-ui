@@ -134,6 +134,8 @@ export function mapMentorItem(item, index = 0) {
     name,
     specialty: item?.designation || item?.specialty || item?.category || 'Career Guidance',
     rating: item?.rank ? String(item.rank) : '0',
+    averageRating: Number.isFinite(Number(item?.averageRating)) ? Number(item.averageRating) : 0,
+    totalReviews: Number.isFinite(Number(item?.totalReviews)) ? Number(item.totalReviews) : 0,
     experience: formatExperience(item?.experience),
     price: formatMentorPrice(item?.mentor_fees ?? item?.mentorFees ?? item?.price),
     tags: [
