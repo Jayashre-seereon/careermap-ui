@@ -13,17 +13,12 @@ export default function TabsLayout() {
     const [lockedTab, setLockedTab] = useState(null);
     const [tabAccess, setTabAccess] = useState({
         library: { status: 'locked' },
-        assessment: { status: 'locked' },
         learn: { status: 'locked' },
     });
     const moduleTitleMatchers = useMemo(() => ({
         library: {
             title: 'Career Library Locked',
             match: 'career library',
-        },
-        assessment: {
-            title: 'Psychometric Test Locked',
-            match: 'psychometric',
         },
         learn: {
             title: 'Master Class Locked',
@@ -39,7 +34,6 @@ export default function TabsLayout() {
                 const modules = await getModules();
                 const nextState = {
                     library: { status: 'locked' },
-                    assessment: { status: 'locked' },
                     learn: { status: 'locked' },
                 };
 
@@ -68,7 +62,6 @@ export default function TabsLayout() {
                 if (isMounted) {
                     setTabAccess({
                         library: { status: 'locked' },
-                        assessment: { status: 'locked' },
                         learn: { status: 'locked' },
                     });
                 }
@@ -97,14 +90,10 @@ export default function TabsLayout() {
             title: config?.title || 'Locked',
             subtitle: tabName === 'library'
                 ? 'Unlock the career library to browse streams, roles, and college paths.'
-                : tabName === 'assessment'
-                    ? 'Unlock the full psychometric test to continue from the tab.'
-                    : 'Unlock master class lessons before opening this tab.',
+                : 'Unlock master class lessons before opening this tab.',
             route: tabName === 'library'
                 ? '/(drawer)/(tabs)/library'
-                : tabName === 'assessment'
-                    ? '/(drawer)/(tabs)/assessment'
-                    : '/(drawer)/(tabs)/learn',
+                : '/(drawer)/(tabs)/learn',
         });
     };
 
@@ -139,17 +128,14 @@ export default function TabsLayout() {
         }} listeners={{
             tabPress: (event) => handleBlockedTabPress('library', event),
         }}/>
-      <Tabs.Screen name="assessment" options={{
-            title: 'Test',
-            tabBarIcon: lockedTabIcon('assessment', 'analytics', 'lock-closed'),
-        }} listeners={{
-            tabPress: (event) => handleBlockedTabPress('assessment', event),
-        }}/>
       <Tabs.Screen name="learn" options={{
             title: 'Learn',
             tabBarIcon: lockedTabIcon('learn', 'school', 'lock-closed'),
         }} listeners={{
             tabPress: (event) => handleBlockedTabPress('learn', event),
+        }}/>
+      <Tabs.Screen name="assessment" options={{
+            href: null,
         }}/>
       <Tabs.Screen name="profile" options={{
             title: 'Profile',
