@@ -728,12 +728,23 @@ export default function BookMentorScreen() {
           </View>
           <Text className={`text-center text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
           <Text className="text-[12px] font-bold text-brand">{mentor.specialty}</Text>
-          <View className="flex-row flex-wrap justify-center gap-2.5">
-            <View className="flex-row items-center gap-1">
-              <Ionicons name="trophy" size={12} color={palette.secondary}/>
-              <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
-              <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Air/State</Text>
-            </View>
+        <View className="flex-row flex-wrap justify-center gap-2.5">
+           <View className="flex-row items-center gap-1">
+  <Ionicons name="trophy" size={12} color={palette.secondary}/>
+  <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
+  <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Air/State</Text>
+</View>
+           <View className="flex-row items-center gap-1">
+  <Ionicons name="star" size={12} color={palette.secondary}/>
+  <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+    {mentor.averageRating ? mentor.averageRating.toFixed(1) : 'New'}
+  </Text>
+
+</View>
+<View className="flex-row items-center gap-1">
+  <Ionicons name="briefcase-outline" size={12} color={palette.blue}/>
+  <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.experience}</Text>
+</View>
            
             <Text className="text-[11px] font-extrabold text-brand">{mentor.price}</Text>
           </View>
@@ -827,11 +838,14 @@ export default function BookMentorScreen() {
                     <Ionicons name={cardUnlocked ? 'lock-open' : 'lock-closed'} size={13} color={cardUnlocked ? palette.green : '#e53935'}/>
                   </View>
                   <Text className="text-[13px] font-black text-brand">{mentor.price}</Text>
-                  <View className="flex-row items-center gap-1">
-                    <Ionicons name="trophy" size={11} color={palette.secondary}/>
-                    <Text className={`text-[10px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
-                    <Text className={`text-[10px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Air/State</Text>
-                  </View>
+                 <View className="flex-row items-center gap-1">
+  <Ionicons name="star" size={11} color={palette.secondary}/>
+  <Text className={`text-[10px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+    {mentor.averageRating ? mentor.averageRating.toFixed(1) : 'New'}
+  </Text>
+
+</View>
+<Text className={`text-[10px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{mentor.experience}</Text>
                  
                 </View>
               </Pressable>
