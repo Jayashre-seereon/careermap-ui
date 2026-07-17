@@ -57,6 +57,74 @@ const formatDisplayDate = (value) => {
 
     return parsed.toLocaleDateString('en-GB');
 };
+const parseLocalDateKey = (value) => {
+    const [year, month, day] = String(value || '').split('-').map(Number);
+    if (!year || !month || !day) {
+        return null;
+    }
+
+    return new Date(year, month - 1, day);
+};
+const isTodayOrFutureDate = (value) => {
+    const parsed = parseLocalDateKey(value);
+    if (!parsed || Number.isNaN(parsed.getTime())) {
+        return false;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    parsed.setHours(0, 0, 0, 0);
+
+    return parsed >= today;
+};
+const getTimeMinutes = (value = '', defaultPeriod = '') => {
+    const match = String(value).trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
+    if (!match) {
+        return null;
+    }
+
+    let hours = Number(match[1]);
+    const minutes = Number(match[2] || '0');
+    const period = String(match[3] || defaultPeriod || '').toLowerCase();
+
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+        return null;
+    }
+
+    if (period === 'am') {
+        if (hours === 12) {
+            hours = 0;
+        }
+    }
+    else if (period === 'pm' && hours < 12) {
+        hours += 12;
+    }
+
+    return (hours * 60) + minutes;
+};
+const isSlotInFuture = (dateKey, slot) => {
+    const selected = parseLocalDateKey(dateKey);
+    if (Number.isNaN(selected.getTime())) {
+        return true;
+    }
+
+    const today = new Date();
+    const isSameDay = selected.toDateString() === today.toDateString();
+    if (!isSameDay) {
+        return true;
+    }
+
+    const parts = String(slot).split('-').map((part) => part.trim()).filter(Boolean);
+    const lastPart = parts[parts.length - 1] || '';
+    const firstPart = parts[0] || '';
+    const inferredPeriod = /pm$/i.test(lastPart) || /pm$/i.test(firstPart) ? 'pm' : /am$/i.test(lastPart) || /am$/i.test(firstPart) ? 'am' : '';
+    const slotEnd = getTimeMinutes(lastPart, inferredPeriod) ?? getTimeMinutes(firstPart, inferredPeriod);
+    if (slotEnd === null) {
+        return true;
+    }
+
+    return slotEnd > ((today.getHours() * 60) + today.getMinutes());
+};
 export default function BookMentorScreen() {
     const params = useLocalSearchParams();
     const { addBooking, canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess, userProfile } = useAppState();
@@ -138,18 +206,23 @@ export default function BookMentorScreen() {
                     : 'mentor-list';
     const dates = useMemo(() => {
         if (activeMentor?.availability?.length) {
-            return activeMentor.availability.map((item) => ({
-                key: item.key,
-                day: item.day,
-                date: item.date,
-                month: item.month,
-                available: item.slots.length > 0,
-            }));
+            return activeMentor.availability
+                .filter((item) => isTodayOrFutureDate(item.key))
+                .map((item) => ({
+                    key: item.key,
+                    day: item.day,
+                    date: item.date,
+                    month: item.month,
+                    available: item.slots.length > 0,
+                }));
         }
 
         return Array.from({ length: 14 }, (_, index) => {
             const current = new Date();
             current.setDate(current.getDate() + index);
+            if (!isTodayOrFutureDate(current)) {
+                return null;
+            }
             return {
                 key: current.toISOString().split('T')[0],
                 day: current.toLocaleDateString('en-IN', { weekday: 'short' }),
@@ -157,7 +230,7 @@ export default function BookMentorScreen() {
                 month: current.toLocaleDateString('en-IN', { month: 'short' }),
                 available: index % 4 !== 1,
             };
-        });
+        }).filter(Boolean);
     }, [activeMentor]);
     const slots = useMemo(() => {
         if (!activeMentor?.availability?.length) {
@@ -166,7 +239,8 @@ export default function BookMentorScreen() {
 
         const availabilityForSelectedDate = activeMentor.availability.find((item) => item.key === selectedDate);
         const availabilityForFirstDate = activeMentor.availability[0];
-        return (availabilityForSelectedDate?.slots?.length ? availabilityForSelectedDate.slots : availabilityForFirstDate?.slots) || [];
+        const resolvedSlots = (availabilityForSelectedDate?.slots?.length ? availabilityForSelectedDate.slots : availabilityForFirstDate?.slots) || [];
+        return resolvedSlots.filter((slot) => isSlotInFuture(selectedDate || availabilityForFirstDate?.key || '', slot));
     }, [activeMentor, selectedDate]);
     const bookedSlotKeys = useMemo(() => bookedSlots.map((slot) => normalizeSlotKey(slot)).filter(Boolean), [bookedSlots]);
     const isSlotBooked = (slot) => bookedSlotKeys.includes(normalizeSlotKey(slot));
@@ -228,21 +302,21 @@ export default function BookMentorScreen() {
             isMounted = false;
         };
     }, []);
-    useEffect(() => {
-        if (!activeMentor) {
-            return;
-        }
+useEffect(() => {
+    if (!activeMentor) {
+        return;
+    }
 
-        if (activeMentor.availability?.length && !activeMentor.availability.some((item) => item.key === selectedDate)) {
-            setSelectedDate(activeMentor.availability[0]?.key || '');
-            setSelectedSlot('');
-            return;
-        }
+    if (dates.length && !dates.some((item) => item.key === selectedDate)) {
+        setSelectedDate(dates[0]?.key || '');
+        setSelectedSlot('');
+        return;
+    }
 
-        if (!selectedDate && activeMentor.availability?.length) {
-            setSelectedDate(activeMentor.availability[0]?.key || '');
-        }
-    }, [activeMentor, selectedDate]);
+    if (!selectedDate && dates.length) {
+        setSelectedDate(dates[0]?.key || '');
+    }
+}, [activeMentor, dates, selectedDate]);
     useEffect(() => {
         let isMounted = true;
 
