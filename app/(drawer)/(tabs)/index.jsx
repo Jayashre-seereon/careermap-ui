@@ -11,6 +11,89 @@ import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } fro
 import { openSubscriptionPrompt } from '../../../src/subscription-flow';
 import { featuredInstitutes,  featuredScholarships, moduleCards, palette, studentProfile } from '../../../src/careermap-data';
 import { useAuthStore } from '../../../src/store/auth-store';
+const parseReviewDateValue = (value) => {
+    if (!value) {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return value;
+    }
+
+    const parsedDate = new Date(value);
+    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+const parseReviewTimeToken = (token) => {
+    const normalizedToken = String(token || '').trim();
+    if (!normalizedToken) {
+        return null;
+    }
+
+    const meridiemMatch = normalizedToken.match(/(AM|PM)$/i);
+    const timeOnly = normalizedToken.replace(/\s*(AM|PM)$/i, '').trim();
+    const [hoursValue = '0', minutesValue = '0'] = timeOnly.split(':');
+    let hours = Number(hoursValue);
+    const minutes = Number(minutesValue || 0);
+
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) {
+        return null;
+    }
+
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+        return null;
+    }
+
+    if (meridiemMatch) {
+        const meridiem = meridiemMatch[1].toUpperCase();
+        if (hours === 12) {
+            hours = 0;
+        }
+        if (meridiem === 'PM') {
+            hours += 12;
+        }
+    }
+
+    return { hours, minutes };
+};
+const getReviewEligibilityTime = (item) => {
+    const explicitEligibilityTime = item?.reviewEligibleAt || item?.canReviewAt || item?.eligibleAt || item?.reviewAt || item?.reviewDate;
+    if (explicitEligibilityTime) {
+        const parsedTime = parseReviewDateValue(explicitEligibilityTime);
+        if (parsedTime) {
+            return parsedTime;
+        }
+    }
+
+    const timeSlotValue = item?.timeSlot || item?.slot || item?.time || '';
+    if (!timeSlotValue) {
+        return null;
+    }
+
+    const timeTokens = String(timeSlotValue).trim().match(/\d{1,2}(?::\d{2})?(?:\s*(?:AM|PM))?/gi) || [];
+    const endToken = timeTokens[timeTokens.length - 1];
+    const endTime = parseReviewTimeToken(endToken);
+    if (!endTime) {
+        return null;
+    }
+
+    const baseDateValue = item?.bookingDate || item?.date || item?.scheduledAt || item?.appointmentDate || item?.slotDate || item?.createdAt;
+    const baseDate = parseReviewDateValue(baseDateValue);
+    if (!baseDate) {
+        return null;
+    }
+
+    const reviewDate = new Date(baseDate);
+    reviewDate.setHours(endTime.hours, endTime.minutes, 0, 0);
+    return reviewDate;
+};
+const isReviewEligible = (item, now = new Date()) => {
+    const eligibilityTime = getReviewEligibilityTime(item);
+    if (!eligibilityTime) {
+        return Boolean(item?.canReview);
+    }
+
+    return eligibilityTime <= now;
+};
 const getMentorInitials = (mentor) => {
     const source = String(mentor?.name || 'M').trim();
     const initials = source
@@ -73,6 +156,7 @@ export default function HomeScreen() {
     const [reviewText, setReviewText] = useState('');
     const [reviewError, setReviewError] = useState('');
     const [reviewedMentorBookings, setReviewedMentorBookings] = useState([]);
+    const [reviewRefreshKey, setReviewRefreshKey] = useState(0);
     const [showProfilePrompt, setShowProfilePrompt] = useState(Boolean(profileIncomplete));
     const [profilePromptDismissed, setProfilePromptDismissed] = useState(false);
     const { isUnlocked, onboarding, unreadNotificationsCount, userProfile } = useAppState();
@@ -196,7 +280,13 @@ const dashboardMentors = useMemo(() => {
         }, [dashboardData?.institutions]);
     const pendingMentorReviews = useMemo(() => {
         const items = dashboardData?.pendingMentorReviews || [];
-        return items.filter((item) => item?.canReview && !reviewedMentorBookings.includes(String(item.bookingId)));
+        return items.filter((item) => {
+            const bookingId = String(item?.bookingId ?? '');
+            if (!item?.canReview || reviewedMentorBookings.includes(bookingId)) {
+                return false;
+            }
+            return isReviewEligible(item, new Date());
+        });
     }, [dashboardData?.pendingMentorReviews, reviewedMentorBookings]);
     const activeReview = pendingMentorReviews[0] || null;
     useEffect(() => {
@@ -208,7 +298,37 @@ const dashboardMentors = useMemo(() => {
         } else {
             setReviewOpen(false);
         }
-    }, [activeReview?.bookingId]);
+    }, [activeReview?.bookingId, activeReview?.timeSlot, reviewRefreshKey]);
+    useEffect(() => {
+        const pendingItems = (dashboardData?.pendingMentorReviews || []).filter((item) => {
+            const bookingId = String(item?.bookingId ?? '');
+            if (!item?.canReview || reviewedMentorBookings.includes(bookingId)) {
+                return false;
+            }
+            return !isReviewEligible(item, new Date());
+        });
+
+        const nextEligibleReview = pendingItems
+            .map((item) => ({ item, eligibleAt: getReviewEligibilityTime(item) }))
+            .filter(({ eligibleAt }) => Boolean(eligibleAt))
+            .sort((left, right) => left.eligibleAt - right.eligibleAt)[0];
+
+        if (!nextEligibleReview) {
+            return;
+        }
+
+        const delay = nextEligibleReview.eligibleAt.getTime() - Date.now();
+        if (delay <= 0) {
+            setReviewRefreshKey((current) => current + 1);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setReviewRefreshKey((current) => current + 1);
+        }, delay);
+
+        return () => clearTimeout(timer);
+    }, [dashboardData?.pendingMentorReviews, reviewedMentorBookings]);
     useEffect(() => {
         if (profileIncomplete && !profilePromptDismissed) {
             setShowProfilePrompt(true);
