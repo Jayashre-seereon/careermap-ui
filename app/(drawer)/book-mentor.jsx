@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Image, Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { createMentorOrder, getBookedMentorSlots, getMentors, verifyMentorPayment } from '../../src/api/mentorApi';
 import { checkModuleAccess, getModules } from '../../src/api/moduleAccessApi';
 import { useAppState } from '../../src/app-state';
@@ -160,6 +160,7 @@ export default function BookMentorScreen() {
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedSlot, setSelectedSlot] = useState('');
     const [showPayment, setShowPayment] = useState(false);
+    const [showBookingPanel, setShowBookingPanel] = useState(false);
     const [selectedPayment, setSelectedPayment] = useState('');
     const [upiId, setUpiId] = useState('');
     const [cardName, setCardName] = useState('');
@@ -199,6 +200,7 @@ export default function BookMentorScreen() {
         setIsMentorLoading(false);
         setSelectedDate('');
         setSelectedSlot('');
+        setShowBookingPanel(false);
         setShowPayment(false);
         setSelectedPayment('');
         setUpiId('');
@@ -258,6 +260,16 @@ export default function BookMentorScreen() {
     }, [activeMentor, selectedDate, dates]);
     const bookedSlotKeys = useMemo(() => bookedSlots.map((slot) => normalizeSlotKey(slot)).filter(Boolean), [bookedSlots]);
     const isSlotBooked = (slot) => bookedSlotKeys.includes(normalizeSlotKey(slot));
+    const openBookingPanel = () => {
+        if (!selectedDate && dates.length) {
+            const firstAvailableDate = dates.find((date) => date.available) || dates[0];
+            setSelectedDate(firstAvailableDate?.key || '');
+        }
+
+        setSelectedSlot('');
+        setShowBookingPanel(true);
+    };
+    const closeBookingPanel = () => setShowBookingPanel(false);
     const categoryOptions = useMemo(
         () => buildHierarchyOptions(mentorList, 'category', { secondcategory: secondCategoryFilter, subcategory: subCategoryFilter }),
         [mentorList, secondCategoryFilter, subCategoryFilter]
@@ -808,85 +820,115 @@ export default function BookMentorScreen() {
                 </Text>
             </View>) : null}
 
-            <View className="relative">
-                <>
-                    <View className="items-center gap-2">
-                        <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
-                            {renderMentorAvatar(mentor)}
-                        </View>
-                        <Text className={`text-center text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
-                        <Text className="text-[12px] font-bold text-brand">{mentor.specialty}</Text>
-                        <View className="flex-row flex-wrap justify-center gap-2.5">
-                            <View className="flex-row items-center gap-1">
-                                <Ionicons name="trophy" size={12} color={palette.secondary} />
-                                <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
-                                <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Air/State</Text>
-                            </View>
-                            <View className="flex-row items-center gap-1">
-                                <Ionicons name="star" size={12} color={palette.secondary} />
-                                <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                                    {mentor.averageRating ? mentor.averageRating.toFixed(1) : 'New'}
-                                </Text>
-
-                            </View>
-                            <View className="flex-row items-center gap-1">
-                                <Ionicons name="briefcase-outline" size={12} color={palette.blue} />
-                                <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.experience}</Text>
-                            </View>
-
-                            <Text className="text-[11px] font-extrabold text-brand">{mentor.price}</Text>
-                        </View>
-                        <View className="flex-row flex-wrap justify-center gap-2">
-                            {mentor.tags.map((tag) => (<Pill key={tag} label={tag} tone={mentor.accent} />))}
-                        </View>
-                    </View>
-
-                    <View className={`mt-4 gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-                        <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>About</Text>
-                        <Text className={`text-[14px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{mentor.bio}</Text>
-                    </View>
-
-                    <View className={`mt-4 gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-                        <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Select Date</Text>
-                        <View className="flex-row flex-wrap gap-2.5">
-                            {dates.map((date) => (<Pressable key={date.key} disabled={!date.available} onPress={() => {
-                                setSelectedDate(date.key);
-                                setSelectedSlot('');
-                            }} className="w-[62px] items-center gap-0.5 rounded-[16px] py-2.5" style={{
-                                backgroundColor: selectedDate === date.key ? palette.primary : preferences.darkMode ? '#111111' : '#f2ebe6',
-                                opacity: date.available ? 1 : 0.35,
-                            }}>
-                                <Text className="text-[10px] font-bold" style={{ color: selectedDate === date.key ? '#fff' : palette.muted }}>{date.day}</Text>
-                                <Text className="text-[17px] font-black" style={{ color: selectedDate === date.key ? '#fff' : palette.text }}>{date.date}</Text>
-                                <Text className="text-[10px] font-bold" style={{ color: selectedDate === date.key ? '#fff' : palette.muted }}>{date.month}</Text>
-                            </Pressable>))}
-                        </View>
-                    </View>
-
-                    {selectedDate ? (<View className={`mt-4 gap-2 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-                        <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Select Time</Text>
-                        <View className="flex-row flex-wrap gap-2.5">
-                            {slots.map((slot) => {
-                                const slotDisabled = isSlotBooked(slot);
-                                return (
-                                    <Pressable key={slot} disabled={slotDisabled} className="rounded-[12px] px-[14px] py-2.5" onPress={() => setSelectedSlot(slot)} style={{ backgroundColor: selectedSlot === slot ? palette.primary : preferences.darkMode ? '#111111' : '#f2ebe6', opacity: slotDisabled ? 0.35 : 1 }}>
-                                        <Text className="text-[12px] font-extrabold" style={{ color: selectedSlot === slot ? '#fff' : palette.text }}>{slot}</Text>
-                                        {slotDisabled ? (
-                                            <Text className="mt-0.5 text-[10px] font-bold" style={{ color: selectedSlot === slot ? '#fff' : palette.muted }}>
-                                                Booked
-                                            </Text>
-                                        ) : null}
-                                    </Pressable>
-                                );
-                            })}
-                        </View>
-                    </View>) : null}
-
-                    <AnimatedPressable className="mt-4 rounded-[16px] bg-brand py-[14px]" disabled={!selectedDate || !selectedSlot} onPress={handlePayment}>
-                        <Text className="text-center text-[14px] font-extrabold text-white">Book & Pay</Text>
+            <View className={`relative rounded-[28px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+                <View className="absolute right-4 top-4 z-10">
+                    <AnimatedPressable className="rounded-full bg-brand px-4 py-2" onPress={openBookingPanel}>
+                        <Text className="text-[12px] font-extrabold text-white">Book Now</Text>
                     </AnimatedPressable>
-                </>
+                </View>
+                <View className="items-center gap-2 pt-6">
+                    <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
+                        {renderMentorAvatar(mentor)}
+                    </View>
+                    <Text className={`text-center text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
+                    <Text className="text-center text-[12px] font-bold text-brand">{mentor.designation || mentor.specialty}</Text>
+                    <View className="flex-row flex-wrap justify-center gap-2.5">
+                        <View className="flex-row items-center gap-1">
+                            <Ionicons name="trophy" size={12} color={palette.secondary} />
+                            <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
+                            <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Rank</Text>
+                        </View>
+                        <View className="flex-row items-center gap-1">
+                            <Ionicons name="star" size={12} color={palette.secondary} />
+                            <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.averageRating ? mentor.averageRating.toFixed(1) : 'New'}</Text>
+                        </View>
+                        <View className="flex-row items-center gap-1">
+                            <Ionicons name="briefcase-outline" size={12} color={palette.blue} />
+                            <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.experience}</Text>
+                        </View>
+                        <Text className="text-[11px] font-extrabold text-brand">{mentor.price}</Text>
+                    </View>
+                    <View className="flex-row flex-wrap justify-center gap-2">
+                        {mentor.tags.map((tag) => (<Pill key={tag} label={tag} tone={mentor.accent} />))}
+                    </View>
+                </View>
             </View>
+
+            <View className={`mt-4 gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+                <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Profile Details</Text>
+                <View className="flex-row flex-wrap gap-2.5">
+                    <View className={`w-full rounded-[18px] border p-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-[#fcf8f5]'}`}>
+                        <Text className={`text-[11px] font-extrabold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Designation</Text>
+                        <Text className={`mt-1 text-[13px] font-semibold leading-[19px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.designation || mentor.specialty}</Text>
+                    </View>
+                  
+                    <View className={`w-full rounded-[18px] border p-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-[#fcf8f5]'}`}>
+                        <Text className={`text-[11px] font-extrabold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Place of Work</Text>
+                        <Text className={`mt-1 text-[13px] font-semibold leading-[19px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.placeOfWork || 'Not available'}</Text>
+                    </View>
+                      <View className={`w-full rounded-[18px] border p-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-[#fcf8f5]'}`}>
+                        <Text className={`text-[11px] font-extrabold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Experience</Text>
+                        <Text className={`mt-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.experience}</Text>
+                    </View>
+                    <View className={`w-full rounded-[18px] border p-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-[#fcf8f5]'}`}>
+                        <Text className={`text-[11px] font-extrabold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Area of Expertise</Text>
+                        <View className="mt-2 flex-row flex-wrap gap-2">
+                            {(mentor.skills?.length ? mentor.skills : String(mentor.skill || '').split(/\r?\n|,/)).filter(Boolean).map((skill) => (<View key={skill} className="rounded-full px-3 py-1.5" style={{ backgroundColor: `${mentor.accent}14` }}>
+                                    <Text className="text-[12px] font-bold" style={{ color: mentor.accent }}>{skill}</Text>
+                                </View>))}
+                        </View>
+                    </View>
+                </View>
+            </View>
+
+            <Modal visible={showBookingPanel} transparent animationType="fade" onRequestClose={closeBookingPanel}>
+                <View className="flex-1 items-center justify-center bg-black/50 px-4">
+                    <View className={`w-full max-w-[360px] max-h-[88%] gap-4 rounded-[28px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+                        <View className="flex-row items-center justify-between">
+                            <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Book Session</Text>
+                            <Pressable className={`h-9 w-9 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={closeBookingPanel}>
+                                <Ionicons name="close" size={18} color={preferences.darkMode ? '#ffffff' : palette.text} />
+                            </Pressable>
+                        </View>
+
+                        <View className={`gap-2 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-[#fcf8f5]'}`}>
+                            <Text className={`text-[18px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Select Date</Text>
+                            <View className="flex-row flex-wrap gap-2.5">
+                                {dates.map((date) => (<Pressable key={date.key} disabled={!date.available} onPress={() => {
+                                        setSelectedDate(date.key);
+                                        setSelectedSlot('');
+                                    }} className="w-[62px] items-center gap-0.5 rounded-[16px] py-2.5" style={{
+                                        backgroundColor: selectedDate === date.key ? palette.primary : preferences.darkMode ? '#111111' : '#f2ebe6',
+                                        opacity: date.available ? 1 : 0.35,
+                                    }}>
+                                        <Text className="text-[10px] font-bold" style={{ color: selectedDate === date.key ? '#fff' : palette.muted }}>{date.day}</Text>
+                                        <Text className="text-[17px] font-black" style={{ color: selectedDate === date.key ? '#fff' : palette.text }}>{date.date}</Text>
+                                        <Text className="text-[10px] font-bold" style={{ color: selectedDate === date.key ? '#fff' : palette.muted }}>{date.month}</Text>
+                                    </Pressable>))}
+                            </View>
+                        </View>
+
+                        {selectedDate ? (<View className={`gap-2 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-[#fcf8f5]'}`}>
+                                <Text className={`text-[18px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Select Time</Text>
+                                <View className="flex-row flex-wrap gap-2.5">
+                                    {slots.map((slot) => {
+                                        const slotDisabled = isSlotBooked(slot);
+                                        return (<Pressable key={slot} disabled={slotDisabled} className="rounded-[12px] px-[14px] py-2.5" onPress={() => setSelectedSlot(slot)} style={{ backgroundColor: selectedSlot === slot ? palette.primary : preferences.darkMode ? '#111111' : '#f2ebe6', opacity: slotDisabled ? 0.35 : 1 }}>
+                                                <Text className="text-[12px] font-extrabold" style={{ color: selectedSlot === slot ? '#fff' : palette.text }}>{slot}</Text>
+                                                {slotDisabled ? (<Text className="mt-0.5 text-[10px] font-bold" style={{ color: selectedSlot === slot ? '#fff' : palette.muted }}>
+                                                        Booked
+                                                    </Text>) : null}
+                                            </Pressable>);
+                                    })}
+                                </View>
+                            </View>) : null}
+
+                        <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" disabled={!selectedDate || !selectedSlot} onPress={handlePayment}>
+                            <Text className="text-center text-[14px] font-extrabold text-white">Book & Pay</Text>
+                        </AnimatedPressable>
+                    </View>
+                </View>
+            </Modal>
         </Screen>);
     }
     return (
@@ -913,6 +955,7 @@ export default function BookMentorScreen() {
                                 return;
                             }
                             setSelectedMentorId(String(mentor.id || index));
+                            setShowBookingPanel(false);
                         }}>
                             <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
                                 {renderMentorAvatar(mentor)}
