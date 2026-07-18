@@ -720,7 +720,7 @@ export default function CareerLibraryScreen() {
     const animationKey = `${currentLevel}-${selectedStream?.id ?? 'none'}-${selectedCategory?.id ?? 'none'}-${selectedSecondCategory?.id ?? 'none'}-${selectedSubCategory?.id ?? 'none'}`;
     const detailKey = selectedDetailSource?.id != null ? String(selectedDetailSource.id) : selectedSubCategory?.id != null ? String(selectedSubCategory.id) : null;
     const detailPreviewExpired = detailKey ? expiredPreviewKeys.includes(detailKey) : false;
-    const detailUnlocked = detailKey ? canAccessFreeDetail('career-library', detailKey) : true;
+    const detailUnlocked = detailKey ? (hasFullAccess || canAccessFreeDetail('career-library', detailKey)) : true;
     const returnTarget = useMemo(() => ({
         pathname: '/(drawer)/(tabs)/library',
         params: {
@@ -900,7 +900,7 @@ export default function CareerLibraryScreen() {
     const renderStepList = (items, type) => (<View className="gap-3">
       {items.map((item, index) => {
             const accessKey = getCareerAccessKey(item);
-            const unlockedItem = isUnlocked('career-library') || canAccessFreeDetail('career-library', accessKey);
+            const unlockedItem = hasFullAccess || isUnlocked('career-library') || canAccessFreeDetail('career-library', accessKey);
             return (<StaggerFadeUpItem key={`${type}-${item?.id ?? index}`} index={index}>
           <Pressable onPress={() => {
                     if (!unlockedItem) {
