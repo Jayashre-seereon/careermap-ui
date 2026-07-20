@@ -254,15 +254,7 @@ export default function ScholarshipScreen() {
                             <Text className={`text-[13px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.deadline}</Text>
                         </View>
                     </View>
-                      <View className={`mt-3 gap-2.5 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-                                <Text className="text-[14px] font-extrabold text-brand">Requirements</Text>
-                                {item.requirements.map((requirement) => (
-                                    <View key={requirement} className="flex-row items-center gap-2.5">
-                                        <View className="h-2 w-2 rounded-full bg-brand"/>
-                                        <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{requirement}</Text>
-                                    </View>
-                                ))}
-                            </View>
+                     
 
                     {detailPreviewExpired ? (
                         <View className="mt-3 items-center gap-3 rounded-[24px] border border-line bg-card p-6">
