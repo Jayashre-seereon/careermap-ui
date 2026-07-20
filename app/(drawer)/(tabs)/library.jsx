@@ -213,6 +213,8 @@ function normalizeInstituteItems(value) {
                 city: '',
                 country: '',
                 location: item,
+                type: '',
+                logo: null,
                 isTop: false,
             };
         }
@@ -227,6 +229,8 @@ function normalizeInstituteItems(value) {
             city,
             country,
             location,
+            type: String(item?.institute_type || item?.type || '').trim(),
+            logo: item?.logo || item?.image || null,
             isTop: Boolean(item?.is_top ?? item?.isTop),
         };
     });
@@ -426,6 +430,19 @@ const formatSalaryRange = (salary) => {
 
     return `${profession}${minSalary || maxSalary || 'Salary not available'}`;
 };
+const getSalaryBullets = (salary) => {
+    if (!salary) {
+        return [];
+    }
+
+    return [
+        salary?.profession ? `Profession: ${salary.profession}` : '',
+        salary?.minSalary ? `Minimum: ${formatCurrencyAmount(salary.minSalary, salary?.currency || 'INR')}` : '',
+        salary?.maxSalary ? `Maximum: ${formatCurrencyAmount(salary.maxSalary, salary?.currency || 'INR')}` : '',
+        salary?.scope ? `Scope: ${salary.scope}` : '',
+        salary?.note || salary?.description || '',
+    ].filter(Boolean);
+};
 const formatDate = (value) => {
     if (!value) {
         return 'Not available';
@@ -562,67 +579,27 @@ export default function CareerLibraryScreen() {
     const [selectedSecondCategory, setSelectedSecondCategory] = useState(null);
     const [selectedSubCategory, setSelectedSubCategory] = useState(null);
     const [selectedDetailSource, setSelectedDetailSource] = useState(null);
+    const [selectedInstituteType, setSelectedInstituteType] = useState('All');
     const [detailReturnLevel, setDetailReturnLevel] = useState('subcategory');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
-    const [previewSecondsLeft, setPreviewSecondsLeft] = useState(0);
     const [hasFullAccess, setHasFullAccess] = useState(false);
+   const [moduleStatus, setModuleStatus] = useState('locked');
     const [lockSheetDismissible, setLockSheetDismissible] = useState(true);
-    const [expiredPreviewKeys, setExpiredPreviewKeys] = useState([]);
-    const previewTimeoutRef = useRef(null);
+    const [isCategoryFree, setIsCategoryFree] = useState(false);
+    const [previewSessionId, setPreviewSessionId] = useState(null);
+    const [previewRemaining, setPreviewRemaining] = useState(0);
+    const [previewExpired, setPreviewExpired] = useState(false);
     const previewIntervalRef = useRef(null);
-    const activePreviewKeyRef = useRef(null);
     const resolvedModuleId = useMemo(() => {
         const parsed = Number(params.moduleId);
         return Number.isFinite(parsed) ? parsed : 60;
     }, [params.moduleId]);
 
-    const clearPreviewTimers = () => {
-        if (previewTimeoutRef.current) {
-            clearTimeout(previewTimeoutRef.current);
-            previewTimeoutRef.current = null;
-        }
-        if (previewIntervalRef.current) {
-            clearInterval(previewIntervalRef.current);
-            previewIntervalRef.current = null;
-        }
-        setPreviewSecondsLeft(0);
-    };
-
-    const markPreviewExpired = (previewKey) => {
-        if (!previewKey) {
-            return;
-        }
-        setExpiredPreviewKeys((current) => (current.includes(previewKey) ? current : [...current, previewKey]));
-    };
-
-    const beginPreviewLock = (seconds = 15, previewKey = null) => {
-        clearPreviewTimers();
-        activePreviewKeyRef.current = previewKey;
-        const totalSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
-        if (totalSeconds <= 0) {
-            setLockSheetDismissible(false);
-            markPreviewExpired(previewKey);
-            setShowUnlockSheet(true);
-            return;
-        }
-        setPreviewSecondsLeft(totalSeconds);
-        previewIntervalRef.current = setInterval(() => {
-            setPreviewSecondsLeft((current) => Math.max(0, current - 1));
-        }, 1000);
-        previewTimeoutRef.current = setTimeout(() => {
-            markPreviewExpired(previewKey);
-            clearPreviewTimers();
-            setLockSheetDismissible(false);
-            setShowUnlockSheet(true);
-        }, totalSeconds * 1000);
-    };
     const resetToStreams = () => {
-        clearPreviewTimers();
         setShowUnlockSheet(false);
         setLockSheetDismissible(true);
-        setPreviewSecondsLeft(0);
         setSelectedStream(null);
         setSelectedCategory(null);
         setSelectedSecondCategory(null);
@@ -631,7 +608,14 @@ export default function CareerLibraryScreen() {
         setDetails([]);
         setCurrentLevel('streams');
         setDetailReturnLevel('subcategory');
-        activePreviewKeyRef.current = null;
+        setIsCategoryFree(false);
+        setPreviewSessionId(null);
+        setPreviewRemaining(0);
+        setPreviewExpired(false);
+        if (previewIntervalRef.current) {
+            clearInterval(previewIntervalRef.current);
+            previewIntervalRef.current = null;
+        }
     };
     useEffect(() => {
         let isMounted = true;
@@ -666,29 +650,52 @@ export default function CareerLibraryScreen() {
             isMounted = false;
         };
     }, []);
+
     useEffect(() => {
-        let isMounted = true;
-        const loadModuleAccess = async () => {
-            try {
-                const response = await checkModuleAccess(resolvedModuleId);
-                if (isMounted) {
-                    setHasFullAccess(String(response?.mode || '').toLowerCase() === 'full' && response?.allowed !== false);
+        if (!previewRemaining) return;
+
+        previewIntervalRef.current = setInterval(() => {
+            setPreviewRemaining((prev) => {
+                if (prev <= 1) {
+                    clearInterval(previewIntervalRef.current);
+                    previewIntervalRef.current = null;
+                    setPreviewExpired(true);
+                    setLockSheetDismissible(false);
+                    setShowUnlockSheet(true);
+                    return 0;
                 }
-            }
-            catch {
-                if (isMounted) {
-                    setHasFullAccess(false);
-                }
-            }
-        };
-        loadModuleAccess();
+                return prev - 1;
+            });
+        }, 1000);
+
         return () => {
-            isMounted = false;
+            if (previewIntervalRef.current) {
+                clearInterval(previewIntervalRef.current);
+                previewIntervalRef.current = null;
+            }
         };
-    }, [resolvedModuleId]);
-    useEffect(() => () => {
-        clearPreviewTimers();
-    }, []);
+    }, [previewRemaining]);
+   useEffect(() => {
+    let isMounted = true;
+    const loadModuleAccess = async () => {
+        try {
+            const response = await checkModuleAccess(resolvedModuleId);
+            if (isMounted && response?.allowed) {
+                setModuleStatus(String(response?.mode || 'locked').toLowerCase());
+                setHasFullAccess(String(response?.mode || '').toLowerCase() === 'full');
+            }
+        }
+        catch {
+            if (isMounted) {
+                setHasFullAccess(false);
+            }
+        }
+    };
+    loadModuleAccess();
+    return () => {
+        isMounted = false;
+    };
+}, [resolvedModuleId]);
     useFocusEffect(useCallback(() => {
         if (typeof params.level !== 'string' || !['streams', 'categories', 'secondcategory', 'subcategory', 'details'].includes(params.level)) {
             resetToStreams();
@@ -701,8 +708,7 @@ export default function CareerLibraryScreen() {
     }, [params.level]);
     const animationKey = `${currentLevel}-${selectedStream?.id ?? 'none'}-${selectedCategory?.id ?? 'none'}-${selectedSecondCategory?.id ?? 'none'}-${selectedSubCategory?.id ?? 'none'}`;
     const detailKey = selectedDetailSource?.id != null ? String(selectedDetailSource.id) : selectedSubCategory?.id != null ? String(selectedSubCategory.id) : null;
-    const detailPreviewExpired = detailKey ? expiredPreviewKeys.includes(detailKey) : false;
-    const detailUnlocked = detailKey ? canAccessFreeDetail('career-library', detailKey) : true;
+    const detailUnlocked = detailKey ? (hasFullAccess || canAccessFreeDetail('career-library', detailKey) || isCategoryFree) : true;
     const returnTarget = useMemo(() => ({
         pathname: '/(drawer)/(tabs)/library',
         params: {
@@ -712,12 +718,36 @@ export default function CareerLibraryScreen() {
             secondCategoryId: selectedSecondCategory?.id,
             subCategoryId: selectedSubCategory?.id,
         },
-    }), [currentLevel, selectedStream, selectedCategory, selectedSecondCategory, selectedSubCategory]);
+    }), [currentLevel, selectedStream, selectedCategory, selectedSecondCategory, selectedSubCategory, isCategoryFree]);
+    const createPreviewSession = async (pageType, pageId, item) => {
+        if (moduleStatus !== 'preview') {
+            return null;
+        }
+
+        try {
+            const preview = await startCareerLibraryPreview({
+                moduleId: resolvedModuleId,
+                pageType,
+                pageId,
+            });
+
+            setPreviewSessionId(preview?.previewSessionId || preview?.access?.previewSessionId || preview?.access?.sessionId || null);
+            setPreviewRemaining(preview?.remainingSeconds ?? preview?.access?.remainingSeconds ?? preview?.previewDurationSeconds ?? preview?.access?.previewDurationSeconds ?? 15);
+
+            return preview?.previewSessionId || preview?.access?.previewSessionId || preview?.access?.sessionId || null;
+        } catch (err) {
+            if (err?.response?.status === 403) {
+                setLockSheetDismissible(true);
+                setShowUnlockSheet(true);
+                return null;
+            }
+            throw err;
+        }
+    }
     const handleClick = async (type, id, item) => {
         setLoading(true);
         setError('');
         setSelectedDetailSource(null);
-        clearPreviewTimers();
         if (type === 'stream') {
             setSelectedStream(item);
             setSelectedCategory(null);
@@ -726,96 +756,177 @@ export default function CareerLibraryScreen() {
             setDetails([]);
             setCurrentLevel('categories');
             setDetailReturnLevel('streams');
-        }
-        else if (type === 'category') {
-            setSelectedCategory(item);
-            setDetailReturnLevel('categories');
-        }
-        else if (type === 'second') {
-            setSelectedSecondCategory(item);
-            setDetailReturnLevel('secondcategory');
-        }
-        else if (type === 'sub') {
-            setSelectedSubCategory(item);
-            setDetailReturnLevel('subcategory');
-        }
-        try {
-            const response = type === 'stream'
-                ? await getCareerLibraryCategoriesByStream(id)
-                : await getCareerLibraryNext(type, id);
-            const data = response ?? {};
-            const nextItems = Array.isArray(data?.data) ? data.data : [];
-            if (type === 'stream') {
+            try {
+                const response = await getCareerLibraryCategoriesByStream(id, resolvedModuleId);
+                const data = response ?? {};
+                const nextItems = Array.isArray(data?.data) ? data.data : [];
                 setCategories(nextItems);
                 setSecondCategories([]);
                 setSubCategories([]);
                 setDetails([]);
                 setCurrentLevel('categories');
-                return;
             }
-            if (data.type === 'secondcategory') {
-                setSecondCategories(nextItems);
-                setSubCategories([]);
-                setDetails([]);
-                setCurrentLevel('secondcategory');
+            catch (_fetchError) {
+                setError('Unable to load categories. Please try again.');
             }
-            else if (data.type === 'subcategory') {
-                setSubCategories(nextItems);
-                setDetails([]);
-                setCurrentLevel('subcategory');
+            finally {
+                setLoading(false);
             }
-            else if (data.type === 'details') {
-                const detailResponse = await getCareerLibraryDetails(id);
-                const detailData = detailResponse ?? {};
-                const detailItems = Array.isArray(detailData?.data) ? detailData.data : nextItems;
-                setSelectedDetailSource(item);
-                setDetails(detailItems);
-                setCurrentLevel('details');
-                if (item?.id != null) {
-                    registerFreeDetailAccess('career-library', String(item.id));
-                }
-                const previewKey = item?.id != null ? String(item.id) : String(id);
-                if (expiredPreviewKeys.includes(previewKey)) {
-                    setLockSheetDismissible(false);
-                    setShowUnlockSheet(true);
-                    return;
-                }
-                const previewResponse = await startCareerLibraryPreview({
-                    moduleId: resolvedModuleId,
-                    pageType: 'sub',
-                    pageId: id,
-                });
-                if (previewResponse?.mode === 'preview') {
-                    beginPreviewLock(previewResponse?.remainingSeconds ?? previewResponse?.previewDurationSeconds ?? 15, previewKey);
-                }
-                else if (previewResponse?.allowed === false) {
-                    setLockSheetDismissible(true);
-                    setShowUnlockSheet(true);
-                }
-            }
-            else if (nextItems.length > 0) {
-                setSelectedDetailSource(item);
-                setDetails(nextItems);
-                setCurrentLevel('details');
-                if (item?.id != null) {
-                    registerFreeDetailAccess('career-library', String(item.id));
-                }
-            }
-            else {
-                setSelectedDetailSource(item);
-                setDetails([]);
-                setCurrentLevel('details');
-                if (item?.id != null) {
-                    registerFreeDetailAccess('career-library', String(item.id));
-                }
-            }
+            return;
         }
-        catch (_fetchError) {
-            setError('Unable to load the next step. Please try again.');
+        else if (type === 'category') {
+            setSelectedCategory(item);
+            setDetailReturnLevel('categories');
+            const accessTier = String(item?.accessTier || '').toLowerCase();
+            setIsCategoryFree(hasFullAccess || accessTier === 'preview');
+            try {
+                const response = await getCareerLibraryNext(type, id);
+                const data = response ?? {};
+                const nextItems = Array.isArray(data?.data) ? data.data : [];
+                if (data.type === 'secondcategory') {
+                    setSecondCategories(nextItems);
+                    setSubCategories([]);
+                    setDetails([]);
+                    setCurrentLevel('secondcategory');
+                }
+                else if (data.type === 'details') {
+                    let detailItems = nextItems;
+                    if (detailItems.length === 0) {
+                        try {
+                            const detailResponse = await getCareerLibraryDetails(id);
+                            const detailData = detailResponse ?? {};
+                            detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
+                        } catch (_err) {
+                            detailItems = [];
+                        }
+                    }
+                    setSelectedDetailSource(item);
+                    setDetails(detailItems);
+                    setCurrentLevel('details');
+                    if (item?.id != null) {
+                        registerFreeDetailAccess('career-library', String(item.id));
+                    }
+                }
+                else {
+                    setSecondCategories(nextItems);
+                    setSubCategories([]);
+                    setDetails([]);
+                    setCurrentLevel('secondcategory');
+                }
+            }
+            catch (_fetchError) {
+                setError('Unable to load the next step. Please try again.');
+            }
+            finally {
+                setLoading(false);
+            }
+            return;
         }
-        finally {
-            setLoading(false);
+        else if (type === 'second') {
+            setSelectedSecondCategory(item);
+            setDetailReturnLevel('secondcategory');
+            try {
+                const response = await getCareerLibraryNext(type, id);
+                const data = response ?? {};
+                const nextItems = Array.isArray(data?.data) ? data.data : [];
+                if (data.type === 'subcategory') {
+                    setSubCategories(nextItems);
+                    setDetails([]);
+                    setCurrentLevel('subcategory');
+                }
+                else if (data.type === 'details') {
+                    let detailItems = nextItems;
+                    if (detailItems.length === 0) {
+                        try {
+                            const detailResponse = await getCareerLibraryDetails(id);
+                            const detailData = detailResponse ?? {};
+                            detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
+                        } catch (_err) {
+                            detailItems = [];
+                        }
+                    }
+                    setSelectedDetailSource(item);
+                    setDetails(detailItems);
+                    setCurrentLevel('details');
+                    if (item?.id != null) {
+                        registerFreeDetailAccess('career-library', String(item.id));
+                    }
+                }
+                else {
+                    setSubCategories(nextItems);
+                    setDetails([]);
+                    setCurrentLevel('subcategory');
+                }
+            }
+            catch (_fetchError) {
+                setError('Unable to load the next step. Please try again.');
+            }
+            finally {
+                setLoading(false);
+            }
+            return;
         }
+        else if (type === 'sub') {
+            setSelectedSubCategory(item);
+            setDetailReturnLevel('subcategory');
+            try {
+                const response = await getCareerLibraryNext(type, id);
+                const data = response ?? {};
+                const nextItems = Array.isArray(data?.data) ? data.data : [];
+                if (data.type === 'details') {
+                    let previewId = null;
+
+                    if (moduleStatus === 'preview') {
+                        previewId = await createPreviewSession('sub', id, item);
+                        if (!previewId) {
+                            setLoading(false);
+                            return;
+                        }
+                    }
+
+                    let detailItems = nextItems;
+                    if (detailItems.length === 0) {
+                        try {
+                            const detailResponse = await getCareerLibraryDetails(id, resolvedModuleId, previewId);
+                            const detailData = detailResponse ?? {};
+                            detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
+                        } catch (_err) {
+                            detailItems = [];
+                        }
+                    }
+                    setSelectedDetailSource(item);
+                    setDetails(detailItems);
+                    setCurrentLevel('details');
+                    if (item?.id != null) {
+                        registerFreeDetailAccess('career-library', String(item.id));
+                    }
+                }
+                else if (nextItems.length > 0) {
+                    setSelectedDetailSource(item);
+                    setDetails(nextItems);
+                    setCurrentLevel('details');
+                    if (item?.id != null) {
+                        registerFreeDetailAccess('career-library', String(item.id));
+                    }
+                }
+                else {
+                    setSelectedDetailSource(item);
+                    setDetails([]);
+                    setCurrentLevel('details');
+                    if (item?.id != null) {
+                        registerFreeDetailAccess('career-library', String(item.id));
+                    }
+                }
+            }
+            catch (_fetchError) {
+                setError('Unable to load the next step. Please try again.');
+            }
+            finally {
+                setLoading(false);
+            }
+            return;
+        }
+        setLoading(false);
     };
     const handleBack = () => {
         if (currentLevel === 'details') {
@@ -882,7 +993,7 @@ export default function CareerLibraryScreen() {
     const renderStepList = (items, type) => (<View className="gap-3">
       {items.map((item, index) => {
             const accessKey = getCareerAccessKey(item);
-            const unlockedItem = isUnlocked('career-library') || canAccessFreeDetail('career-library', accessKey);
+            const unlockedItem = hasFullAccess || isUnlocked('career-library') || canAccessFreeDetail('career-library', accessKey) || isCategoryFree;
             return (<StaggerFadeUpItem key={`${type}-${item?.id ?? index}`} index={index}>
           <Pressable onPress={() => {
                     if (!unlockedItem) {
@@ -910,6 +1021,20 @@ export default function CareerLibraryScreen() {
     const renderDetailItem = (detail, index) => {
         const title = getDetailTitle(detail);
         const instituteGroups = groupInstitutesByTopStatus(detail?.institutions);
+        const salaryBullets = toList(detail?.salaryRanges).flatMap((salary) => getSalaryBullets(salary));
+        const instituteTypeFilter = String(selectedInstituteType || 'All').toLowerCase();
+        const filteredTopInstitutes = instituteGroups.topInstitutes.filter((institution) => {
+            if (!instituteTypeFilter || instituteTypeFilter === 'all') {
+                return true;
+            }
+            return String(institution?.type || '').toLowerCase().includes(instituteTypeFilter);
+        });
+        const filteredOutsideInstitutes = instituteGroups.outsideInstitutes.filter((institution) => {
+            if (!instituteTypeFilter || instituteTypeFilter === 'all') {
+                return true;
+            }
+            return String(institution?.type || '').toLowerCase().includes(instituteTypeFilter);
+        });
         return (<StaggerFadeUpItem key={`detail-${detail?.id ?? index}`} index={index}>
           <View className="mb-4">
      {detail?.media ? (
@@ -959,9 +1084,9 @@ export default function CareerLibraryScreen() {
   </View>
 )}
 
-{previewSecondsLeft > 0 ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.primary}14` }}>
+{previewRemaining > 0 ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.primary}14` }}>
               <Text className="text-[12px] font-semibold" style={{ color: palette.primary }}>
-              <Ionicons name="time-outline" size={14} color={palette.primary} className="mr-1"/> Preview active for {previewSecondsLeft}s
+              <Ionicons name="time-outline" size={14} color={palette.primary} className="mr-1"/> Preview active for {previewRemaining}s
               </Text>
             </View>) : null}
 {detail?.description ? (
@@ -1073,6 +1198,12 @@ export default function CareerLibraryScreen() {
   </View>
               {toList(detail?.salaryRanges).length > 0 ? toList(detail?.salaryRanges).map((salary, salaryIndex) => (<View key={salary?.id ?? salaryIndex} className="mb-2">
                   <Text className="text-[15px] font-bold text-brand">{formatSalaryRange(salary)}</Text>
+                  {getSalaryBullets(salary).length > 0 ? (<View className="mt-2 gap-1.5">
+                      {getSalaryBullets(salary).map((bullet) => (<View key={bullet} className="flex-row items-start gap-2">
+                          <Ionicons name="ellipse" size={6} color={palette.secondary} style={{ marginTop: 7 }}/>
+                          <Text className={`flex-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{bullet}</Text>
+                        </View>))}
+                    </View>) : null}
                 </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Salary details not available.</Text>)}
             </View>
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
@@ -1080,26 +1211,58 @@ export default function CareerLibraryScreen() {
                 <Ionicons name="school-outline" size={16} color={palette.primary}/>
                 <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Top Institutes</Text>
               </View>
+              <View className="mb-3 flex-row flex-wrap gap-2">
+                {['All', 'Government', 'Private'].map((type) => {
+                    const active = selectedInstituteType === type;
+                    return (<Pressable key={type} onPress={() => setSelectedInstituteType(type)} className={`rounded-full px-3 py-1.5 ${active ? 'bg-brand' : preferences.darkMode ? 'bg-[#1a1a1a]' : 'bg-[#f2ebe6]'}`}>
+                        <Text className={`text-[11px] font-bold ${active ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{type}</Text>
+                      </Pressable>);
+                })}
+              </View>
               <View className="gap-4">
-                {instituteGroups.topInstitutes.length > 0 ? (<View>
+                {filteredTopInstitutes.length > 0 ? (<View>
                     <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
                       {instituteGroups.referenceState ? `Top Institutes of ${instituteGroups.referenceState}` : 'Top Institutes'}
                     </Text>
-                    {instituteGroups.topInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 rounded-[14px] border border-[#f0e4e2] bg-[#fdf9f9] px-3 py-3">
-                        <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
-                        <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
+                    {filteredTopInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 flex-row gap-3 rounded-[14px] border border-[#f0e4e2] bg-[#fdf9f9] px-3 py-3">
+                        <View className="h-[48px] w-[48px] overflow-hidden rounded-[12px]" style={{ backgroundColor: `${palette.primary}12` }}>
+                          {institution?.logo ? (<Image source={{ uri: institution.logo }} style={{ width: '100%', height: '100%' }} resizeMode="cover"/>) : (<View className="flex-1 items-center justify-center">
+                              <Ionicons name="business-outline" size={20} color={palette.primary}/>
+                            </View>)}
+                        </View>
+                        <View className="flex-1">
+                          <View className="flex-row items-center gap-2">
+                            <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
+                            {institution?.type ? (<View className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${palette.primary}12` }}>
+                                <Text className="text-[10px] font-bold" style={{ color: palette.primary }}>{institution.type}</Text>
+                              </View>) : null}
+                          </View>
+                          <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
+                        </View>
                       </View>))}
                   </View>) : null}
-                {instituteGroups.outsideInstitutes.length > 0 ? (<View>
+                {filteredOutsideInstitutes.length > 0 ? (<View>
                     <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
                       {instituteGroups.referenceState ? `Top Institutes Outside ${instituteGroups.referenceState}` : 'Top Institutes Outside State'}
                     </Text>
-                    {instituteGroups.outsideInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 rounded-[14px] border border-[#f0e4e2] bg-white px-3 py-3">
-                        <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
-                        <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
+                    {filteredOutsideInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 flex-row gap-3 rounded-[14px] border border-[#f0e4e2] bg-white px-3 py-3">
+                        <View className="h-[48px] w-[48px] overflow-hidden rounded-[12px]" style={{ backgroundColor: `${palette.primary}12` }}>
+                          {institution?.logo ? (<Image source={{ uri: institution.logo }} style={{ width: '100%', height: '100%' }} resizeMode="cover"/>) : (<View className="flex-1 items-center justify-center">
+                              <Ionicons name="business-outline" size={20} color={palette.primary}/>
+                            </View>)}
+                        </View>
+                        <View className="flex-1">
+                          <View className="flex-row items-center gap-2">
+                            <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
+                            {institution?.type ? (<View className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${palette.primary}12` }}>
+                                <Text className="text-[10px] font-bold" style={{ color: palette.primary }}>{institution.type}</Text>
+                              </View>) : null}
+                          </View>
+                          <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
+                        </View>
                       </View>))}
                   </View>) : null}
-                {!instituteGroups.topInstitutes.length && !instituteGroups.outsideInstitutes.length ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Institution details not available.</Text>) : null}
+                {!filteredTopInstitutes.length && !filteredOutsideInstitutes.length ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Institution details not available.</Text>) : null}
               </View>
             </View>
         
@@ -1152,7 +1315,7 @@ export default function CareerLibraryScreen() {
           {currentLevel === 'secondcategory' && renderStepList(secondCategories, 'second')}
           {currentLevel === 'subcategory' && renderStepList(subCategories, 'sub')}
         </ScrollView>)}
-      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career Library" subtitle={detailPreviewExpired ? 'Your preview time has ended for this career detail.' : 'Subscribe to more careers, salary insights, education paths, and institute details.'} dismissible={lockSheetDismissible} onClose={resetToStreams} onPress={() => {
+      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career Library" subtitle={previewExpired ? 'Your preview time has ended for this career detail.' : 'Subscribe to more careers, salary insights, education paths, and institute details.'} dismissible={lockSheetDismissible} onClose={resetToStreams} onPress={() => {
                 setShowUnlockSheet(false);
                 openSubscriptionPrompt(returnTarget);
             }}/>) : null}

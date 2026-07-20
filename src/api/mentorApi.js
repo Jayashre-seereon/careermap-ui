@@ -66,6 +66,17 @@ function stripHtml(value) {
     .trim();
 }
 
+function parseSkillList(value) {
+  if (!value) {
+    return [];
+  }
+
+  return String(value)
+    .split(/\r?\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function formatAvailabilityDate(value) {
   const parsedDate = new Date(value);
 
@@ -138,6 +149,10 @@ export function mapMentorItem(item, index = 0) {
     totalReviews: Number.isFinite(Number(item?.totalReviews)) ? Number(item.totalReviews) : 0,
     experience: formatExperience(item?.experience),
     price: formatMentorPrice(item?.mentor_fees ?? item?.mentorFees ?? item?.price),
+    designation: item?.designation || '',
+    placeOfWork: item?.placeof_word || item?.placeOfWork || '',
+    skill: item?.skill || '',
+    skills: parseSkillList(item?.skill),
     tags: [
   subcategoryObj?.title ||
   secondcategoryObj?.name ||
