@@ -4,7 +4,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getCareerLibraryCategoriesByStream, getCareerLibraryDetails, getCareerLibraryNext, getCareerLibraryStreams, startCareerLibraryPreview } from '../../../src/api/careerLibraryApi';
+import { getCareerLibraryCategoriesByStream, getCareerLibraryDetails, getCareerLibraryNext, getCareerLibraryStreams } from '../../../src/api/careerLibraryApi';
 import { checkModuleAccess } from '../../../src/api/moduleAccessApi';
 import { useAppState } from '../../../src/app-state';
 import { Screen, UnlockBottomSheet, mobileAssistantScrollProps } from '../../../src/careermap-ui';
@@ -584,64 +584,17 @@ export default function CareerLibraryScreen() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
-    const [previewSecondsLeft, setPreviewSecondsLeft] = useState(0);
     const [hasFullAccess, setHasFullAccess] = useState(false);
-   const [moduleStatus, setModuleStatus] = useState('locked'); 
+   const [moduleStatus, setModuleStatus] = useState('locked');
     const [lockSheetDismissible, setLockSheetDismissible] = useState(true);
-    const [expiredPreviewKeys, setExpiredPreviewKeys] = useState([]);
-    const previewTimeoutRef = useRef(null);
-    const previewIntervalRef = useRef(null);
-    const activePreviewKeyRef = useRef(null);
     const resolvedModuleId = useMemo(() => {
         const parsed = Number(params.moduleId);
         return Number.isFinite(parsed) ? parsed : 60;
     }, [params.moduleId]);
 
-    const clearPreviewTimers = () => {
-        if (previewTimeoutRef.current) {
-            clearTimeout(previewTimeoutRef.current);
-            previewTimeoutRef.current = null;
-        }
-        if (previewIntervalRef.current) {
-            clearInterval(previewIntervalRef.current);
-            previewIntervalRef.current = null;
-        }
-        setPreviewSecondsLeft(0);
-    };
-
-    const markPreviewExpired = (previewKey) => {
-        if (!previewKey) {
-            return;
-        }
-        setExpiredPreviewKeys((current) => (current.includes(previewKey) ? current : [...current, previewKey]));
-    };
-
-    const beginPreviewLock = (seconds = 15, previewKey = null) => {
-        clearPreviewTimers();
-        activePreviewKeyRef.current = previewKey;
-        const totalSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
-        if (totalSeconds <= 0) {
-            setLockSheetDismissible(false);
-            markPreviewExpired(previewKey);
-            setShowUnlockSheet(true);
-            return;
-        }
-        setPreviewSecondsLeft(totalSeconds);
-        previewIntervalRef.current = setInterval(() => {
-            setPreviewSecondsLeft((current) => Math.max(0, current - 1));
-        }, 1000);
-        previewTimeoutRef.current = setTimeout(() => {
-            markPreviewExpired(previewKey);
-            clearPreviewTimers();
-            setLockSheetDismissible(false);
-            setShowUnlockSheet(true);
-        }, totalSeconds * 1000);
-    };
     const resetToStreams = () => {
-        clearPreviewTimers();
         setShowUnlockSheet(false);
         setLockSheetDismissible(true);
-        setPreviewSecondsLeft(0);
         setSelectedStream(null);
         setSelectedCategory(null);
         setSelectedSecondCategory(null);
@@ -650,7 +603,6 @@ export default function CareerLibraryScreen() {
         setDetails([]);
         setCurrentLevel('streams');
         setDetailReturnLevel('subcategory');
-        activePreviewKeyRef.current = null;
     };
     useEffect(() => {
         let isMounted = true;
@@ -706,9 +658,6 @@ export default function CareerLibraryScreen() {
         isMounted = false;
     };
 }, [resolvedModuleId]);
-    useEffect(() => () => {
-        clearPreviewTimers();
-    }, []);
     useFocusEffect(useCallback(() => {
         if (typeof params.level !== 'string' || !['streams', 'categories', 'secondcategory', 'subcategory', 'details'].includes(params.level)) {
             resetToStreams();
@@ -721,7 +670,6 @@ export default function CareerLibraryScreen() {
     }, [params.level]);
     const animationKey = `${currentLevel}-${selectedStream?.id ?? 'none'}-${selectedCategory?.id ?? 'none'}-${selectedSecondCategory?.id ?? 'none'}-${selectedSubCategory?.id ?? 'none'}`;
     const detailKey = selectedDetailSource?.id != null ? String(selectedDetailSource.id) : selectedSubCategory?.id != null ? String(selectedSubCategory.id) : null;
-    const detailPreviewExpired = detailKey ? expiredPreviewKeys.includes(detailKey) : false;
     const detailUnlocked = detailKey ? (hasFullAccess || canAccessFreeDetail('career-library', detailKey)) : true;
     const returnTarget = useMemo(() => ({
         pathname: '/(drawer)/(tabs)/library',
@@ -734,41 +682,14 @@ export default function CareerLibraryScreen() {
         },
     }), [currentLevel, selectedStream, selectedCategory, selectedSecondCategory, selectedSubCategory]);
     const createPreviewSession = async (pageType, pageId, previewKey) => {
-    if (moduleStatus !== 'preview') {
-        return null;
+    // Preview session creation disabled to match web version flow
+    // No longer calling http://localhost:5000/api/module-access/preview/start
+    return null;
     }
-    try {
-       const preview = await startCareerLibraryPreview({
-    moduleId: resolvedModuleId,
-    pageType,
-    pageId,
-});
-console.log('PREVIEW START RESPONSE:', JSON.stringify(preview, null, 2));
-const sessionId = preview?.previewSessionId || preview?.access?.previewSessionId || preview?.access?.sessionId || null;  const remaining = preview?.remainingSeconds ?? preview?.access?.remainingSeconds ?? preview?.previewDurationSeconds ?? preview?.access?.previewDurationSeconds ?? 15;
-
-        if (!sessionId) {
-            setLockSheetDismissible(true);
-            setShowUnlockSheet(true);
-            return null;
-        }
-
-        beginPreviewLock(remaining, previewKey);
-        return sessionId;
-    }
-    catch (err) {
-        if (err?.response?.status === 403) {
-            setLockSheetDismissible(true);
-            setShowUnlockSheet(true);
-            return null;
-        }
-        throw err;
-    }
-};
     const handleClick = async (type, id, item) => {
         setLoading(true);
         setError('');
         setSelectedDetailSource(null);
-        clearPreviewTimers();
         if (type === 'stream') {
             setSelectedStream(item);
             setSelectedCategory(null);
@@ -777,95 +698,165 @@ const sessionId = preview?.previewSessionId || preview?.access?.previewSessionId
             setDetails([]);
             setCurrentLevel('categories');
             setDetailReturnLevel('streams');
-        }
-        else if (type === 'category') {
-            setSelectedCategory(item);
-            setDetailReturnLevel('categories');
-        }
-        else if (type === 'second') {
-            setSelectedSecondCategory(item);
-            setDetailReturnLevel('secondcategory');
-        }
-        else if (type === 'sub') {
-            setSelectedSubCategory(item);
-            setDetailReturnLevel('subcategory');
-        }
-        try {
-            const response = type === 'stream'
-                ? await getCareerLibraryCategoriesByStream(id, resolvedModuleId)
-                : await getCareerLibraryNext(type, id);
-            const data = response ?? {};
-            const nextItems = Array.isArray(data?.data) ? data.data : [];
-            if (type === 'stream') {
+            try {
+                const response = await getCareerLibraryCategoriesByStream(id, resolvedModuleId);
+                const data = response ?? {};
+                const nextItems = Array.isArray(data?.data) ? data.data : [];
                 setCategories(nextItems);
                 setSecondCategories([]);
                 setSubCategories([]);
                 setDetails([]);
                 setCurrentLevel('categories');
-                return;
             }
-            if (data.type === 'secondcategory') {
-                setSecondCategories(nextItems);
-                setSubCategories([]);
-                setDetails([]);
-                setCurrentLevel('secondcategory');
+            catch (_fetchError) {
+                setError('Unable to load categories. Please try again.');
             }
-            else if (data.type === 'subcategory') {
-                setSubCategories(nextItems);
-                setDetails([]);
-                setCurrentLevel('subcategory');
+            finally {
+                setLoading(false);
             }
-  else if (data.type === 'details') {
-    const previewKey = item?.id != null ? String(item.id) : String(id);
-
-    if (expiredPreviewKeys.includes(previewKey)) {
-        setLockSheetDismissible(false);
-        setShowUnlockSheet(true);
-        return;
-    }
-
-    let sessionId = null;
-    if (moduleStatus === 'preview') {
-        sessionId = await createPreviewSession('sub', id, previewKey);
-        if (!sessionId) {
-            return; // modal already shown inside createPreviewSession
+            return;
         }
-    }
-
-    const detailResponse = await getCareerLibraryDetails(id, resolvedModuleId, sessionId);
-    const detailData = detailResponse ?? {};
-    const detailItems = Array.isArray(detailData?.data) ? detailData.data : nextItems;
-
-    setSelectedDetailSource(item);
-    setDetails(detailItems);
-    setCurrentLevel('details');
-    if (item?.id != null) {
-        registerFreeDetailAccess('career-library', String(item.id));
-    }
-}
-            else if (nextItems.length > 0) {
-                setSelectedDetailSource(item);
-                setDetails(nextItems);
-                setCurrentLevel('details');
-                if (item?.id != null) {
-                    registerFreeDetailAccess('career-library', String(item.id));
+        else if (type === 'category') {
+            setSelectedCategory(item);
+            setDetailReturnLevel('categories');
+            try {
+                const response = await getCareerLibraryNext(type, id);
+                const data = response ?? {};
+                const nextItems = Array.isArray(data?.data) ? data.data : [];
+                if (data.type === 'secondcategory') {
+                    setSecondCategories(nextItems);
+                    setSubCategories([]);
+                    setDetails([]);
+                    setCurrentLevel('secondcategory');
+                }
+                else if (data.type === 'details') {
+                    let detailItems = nextItems;
+                    if (detailItems.length === 0) {
+                        try {
+                            const detailResponse = await getCareerLibraryDetails(id);
+                            const detailData = detailResponse ?? {};
+                            detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
+                        } catch (_err) {
+                            detailItems = [];
+                        }
+                    }
+                    setSelectedDetailSource(item);
+                    setDetails(detailItems);
+                    setCurrentLevel('details');
+                    if (item?.id != null) {
+                        registerFreeDetailAccess('career-library', String(item.id));
+                    }
+                }
+                else {
+                    setSecondCategories(nextItems);
+                    setSubCategories([]);
+                    setDetails([]);
+                    setCurrentLevel('secondcategory');
                 }
             }
-            else {
-                setSelectedDetailSource(item);
-                setDetails([]);
-                setCurrentLevel('details');
-                if (item?.id != null) {
-                    registerFreeDetailAccess('career-library', String(item.id));
+            catch (_fetchError) {
+                setError('Unable to load the next step. Please try again.');
+            }
+            finally {
+                setLoading(false);
+            }
+            return;
+        }
+        else if (type === 'second') {
+            setSelectedSecondCategory(item);
+            setDetailReturnLevel('secondcategory');
+            try {
+                const response = await getCareerLibraryNext(type, id);
+                const data = response ?? {};
+                const nextItems = Array.isArray(data?.data) ? data.data : [];
+                if (data.type === 'subcategory') {
+                    setSubCategories(nextItems);
+                    setDetails([]);
+                    setCurrentLevel('subcategory');
+                }
+                else if (data.type === 'details') {
+                    let detailItems = nextItems;
+                    if (detailItems.length === 0) {
+                        try {
+                            const detailResponse = await getCareerLibraryDetails(id);
+                            const detailData = detailResponse ?? {};
+                            detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
+                        } catch (_err) {
+                            detailItems = [];
+                        }
+                    }
+                    setSelectedDetailSource(item);
+                    setDetails(detailItems);
+                    setCurrentLevel('details');
+                    if (item?.id != null) {
+                        registerFreeDetailAccess('career-library', String(item.id));
+                    }
+                }
+                else {
+                    setSubCategories(nextItems);
+                    setDetails([]);
+                    setCurrentLevel('subcategory');
                 }
             }
+            catch (_fetchError) {
+                setError('Unable to load the next step. Please try again.');
+            }
+            finally {
+                setLoading(false);
+            }
+            return;
         }
-        catch (_fetchError) {
-            setError('Unable to load the next step. Please try again.');
+        else if (type === 'sub') {
+            setSelectedSubCategory(item);
+            setDetailReturnLevel('subcategory');
+            try {
+                const response = await getCareerLibraryNext(type, id);
+                const data = response ?? {};
+                const nextItems = Array.isArray(data?.data) ? data.data : [];
+                if (data.type === 'details') {
+                    let detailItems = nextItems;
+                    if (detailItems.length === 0) {
+                        try {
+                            const detailResponse = await getCareerLibraryDetails(id);
+                            const detailData = detailResponse ?? {};
+                            detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
+                        } catch (_err) {
+                            detailItems = [];
+                        }
+                    }
+                    setSelectedDetailSource(item);
+                    setDetails(detailItems);
+                    setCurrentLevel('details');
+                    if (item?.id != null) {
+                        registerFreeDetailAccess('career-library', String(item.id));
+                    }
+                }
+                else if (nextItems.length > 0) {
+                    setSelectedDetailSource(item);
+                    setDetails(nextItems);
+                    setCurrentLevel('details');
+                    if (item?.id != null) {
+                        registerFreeDetailAccess('career-library', String(item.id));
+                    }
+                }
+                else {
+                    setSelectedDetailSource(item);
+                    setDetails([]);
+                    setCurrentLevel('details');
+                    if (item?.id != null) {
+                        registerFreeDetailAccess('career-library', String(item.id));
+                    }
+                }
+            }
+            catch (_fetchError) {
+                setError('Unable to load the next step. Please try again.');
+            }
+            finally {
+                setLoading(false);
+            }
+            return;
         }
-        finally {
-            setLoading(false);
-        }
+        setLoading(false);
     };
     const handleBack = () => {
         if (currentLevel === 'details') {
@@ -1023,11 +1014,6 @@ const sessionId = preview?.previewSessionId || preview?.access?.previewSessionId
   </View>
 )}
 
-{previewSecondsLeft > 0 ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.primary}14` }}>
-              <Text className="text-[12px] font-semibold" style={{ color: palette.primary }}>
-              <Ionicons name="time-outline" size={14} color={palette.primary} className="mr-1"/> Preview active for {previewSecondsLeft}s
-              </Text>
-            </View>) : null}
 {detail?.description ? (
     <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
         <View className="mb-3 flex-row items-center gap-2">
@@ -1254,7 +1240,7 @@ const sessionId = preview?.previewSessionId || preview?.access?.previewSessionId
           {currentLevel === 'secondcategory' && renderStepList(secondCategories, 'second')}
           {currentLevel === 'subcategory' && renderStepList(subCategories, 'sub')}
         </ScrollView>)}
-      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career Library" subtitle={detailPreviewExpired ? 'Your preview time has ended for this career detail.' : 'Subscribe to more careers, salary insights, education paths, and institute details.'} dismissible={lockSheetDismissible} onClose={resetToStreams} onPress={() => {
+      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career Library" subtitle="Subscribe to more careers, salary insights, education paths, and institute details." dismissible={lockSheetDismissible} onClose={resetToStreams} onPress={() => {
                 setShowUnlockSheet(false);
                 openSubscriptionPrompt(returnTarget);
             }}/>) : null}
