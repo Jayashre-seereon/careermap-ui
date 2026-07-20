@@ -836,7 +836,7 @@ export default function BookMentorScreen() {
                         <View className="flex-row items-center gap-1">
                             <Ionicons name="trophy" size={12} color={palette.secondary} />
                             <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
-                            <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Rank</Text>
+                            <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>AIR/State</Text>
                         </View>
                         <View className="flex-row items-center gap-1">
                             <Ionicons name="star" size={12} color={palette.secondary} />
@@ -853,8 +853,13 @@ export default function BookMentorScreen() {
                     </View>
                 </View>
             </View>
-
-            <View className={`mt-4 gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+ <View className={`rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+                        <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>About</Text>
+                        <Text className={`mt-1 text-[13px] font-medium leading-[20px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                            {mentor.bio || mentor.description || 'Mentor description is not available right now.'}
+                        </Text>
+                    </View>
+            <View className={` gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
                 <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Profile Details</Text>
                 <View className="flex-row flex-wrap gap-2.5">
                     <View className={`w-full rounded-[18px] border p-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-[#fcf8f5]'}`}>
@@ -878,6 +883,7 @@ export default function BookMentorScreen() {
                                 </View>))}
                         </View>
                     </View>
+                   
                 </View>
             </View>
 
