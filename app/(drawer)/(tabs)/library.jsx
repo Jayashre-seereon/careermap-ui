@@ -586,6 +586,7 @@ export default function CareerLibraryScreen() {
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
     const [previewSecondsLeft, setPreviewSecondsLeft] = useState(0);
     const [hasFullAccess, setHasFullAccess] = useState(false);
+   const [moduleStatus, setModuleStatus] = useState('locked'); 
     const [lockSheetDismissible, setLockSheetDismissible] = useState(true);
     const [expiredPreviewKeys, setExpiredPreviewKeys] = useState([]);
     const previewTimeoutRef = useRef(null);
@@ -684,26 +685,27 @@ export default function CareerLibraryScreen() {
             isMounted = false;
         };
     }, []);
-    useEffect(() => {
-        let isMounted = true;
-        const loadModuleAccess = async () => {
-            try {
-                const response = await checkModuleAccess(resolvedModuleId);
-                if (isMounted) {
-                    setHasFullAccess(String(response?.mode || '').toLowerCase() === 'full' && response?.allowed !== false);
-                }
+   useEffect(() => {
+    let isMounted = true;
+    const loadModuleAccess = async () => {
+        try {
+            const response = await checkModuleAccess(resolvedModuleId);
+            if (isMounted && response?.allowed) {
+                setModuleStatus(String(response?.mode || 'locked').toLowerCase());
+                setHasFullAccess(String(response?.mode || '').toLowerCase() === 'full');
             }
-            catch {
-                if (isMounted) {
-                    setHasFullAccess(false);
-                }
+        }
+        catch {
+            if (isMounted) {
+                setHasFullAccess(false);
             }
-        };
-        loadModuleAccess();
-        return () => {
-            isMounted = false;
-        };
-    }, [resolvedModuleId]);
+        }
+    };
+    loadModuleAccess();
+    return () => {
+        isMounted = false;
+    };
+}, [resolvedModuleId]);
     useEffect(() => () => {
         clearPreviewTimers();
     }, []);
@@ -731,6 +733,37 @@ export default function CareerLibraryScreen() {
             subCategoryId: selectedSubCategory?.id,
         },
     }), [currentLevel, selectedStream, selectedCategory, selectedSecondCategory, selectedSubCategory]);
+    const createPreviewSession = async (pageType, pageId, previewKey) => {
+    if (moduleStatus !== 'preview') {
+        return null;
+    }
+    try {
+       const preview = await startCareerLibraryPreview({
+    moduleId: resolvedModuleId,
+    pageType,
+    pageId,
+});
+console.log('PREVIEW START RESPONSE:', JSON.stringify(preview, null, 2));
+const sessionId = preview?.previewSessionId || preview?.access?.previewSessionId || preview?.access?.sessionId || null;  const remaining = preview?.remainingSeconds ?? preview?.access?.remainingSeconds ?? preview?.previewDurationSeconds ?? preview?.access?.previewDurationSeconds ?? 15;
+
+        if (!sessionId) {
+            setLockSheetDismissible(true);
+            setShowUnlockSheet(true);
+            return null;
+        }
+
+        beginPreviewLock(remaining, previewKey);
+        return sessionId;
+    }
+    catch (err) {
+        if (err?.response?.status === 403) {
+            setLockSheetDismissible(true);
+            setShowUnlockSheet(true);
+            return null;
+        }
+        throw err;
+    }
+};
     const handleClick = async (type, id, item) => {
         setLoading(true);
         setError('');
@@ -759,7 +792,7 @@ export default function CareerLibraryScreen() {
         }
         try {
             const response = type === 'stream'
-                ? await getCareerLibraryCategoriesByStream(id)
+                ? await getCareerLibraryCategoriesByStream(id, resolvedModuleId)
                 : await getCareerLibraryNext(type, id);
             const data = response ?? {};
             const nextItems = Array.isArray(data?.data) ? data.data : [];
@@ -782,35 +815,34 @@ export default function CareerLibraryScreen() {
                 setDetails([]);
                 setCurrentLevel('subcategory');
             }
-            else if (data.type === 'details') {
-                const detailResponse = await getCareerLibraryDetails(id);
-                const detailData = detailResponse ?? {};
-                const detailItems = Array.isArray(detailData?.data) ? detailData.data : nextItems;
-                setSelectedDetailSource(item);
-                setDetails(detailItems);
-                setCurrentLevel('details');
-                if (item?.id != null) {
-                    registerFreeDetailAccess('career-library', String(item.id));
-                }
-                const previewKey = item?.id != null ? String(item.id) : String(id);
-                if (expiredPreviewKeys.includes(previewKey)) {
-                    setLockSheetDismissible(false);
-                    setShowUnlockSheet(true);
-                    return;
-                }
-                const previewResponse = await startCareerLibraryPreview({
-                    moduleId: resolvedModuleId,
-                    pageType: 'sub',
-                    pageId: id,
-                });
-                if (previewResponse?.mode === 'preview') {
-                    beginPreviewLock(previewResponse?.remainingSeconds ?? previewResponse?.previewDurationSeconds ?? 15, previewKey);
-                }
-                else if (previewResponse?.allowed === false) {
-                    setLockSheetDismissible(true);
-                    setShowUnlockSheet(true);
-                }
-            }
+  else if (data.type === 'details') {
+    const previewKey = item?.id != null ? String(item.id) : String(id);
+
+    if (expiredPreviewKeys.includes(previewKey)) {
+        setLockSheetDismissible(false);
+        setShowUnlockSheet(true);
+        return;
+    }
+
+    let sessionId = null;
+    if (moduleStatus === 'preview') {
+        sessionId = await createPreviewSession('sub', id, previewKey);
+        if (!sessionId) {
+            return; // modal already shown inside createPreviewSession
+        }
+    }
+
+    const detailResponse = await getCareerLibraryDetails(id, resolvedModuleId, sessionId);
+    const detailData = detailResponse ?? {};
+    const detailItems = Array.isArray(detailData?.data) ? detailData.data : nextItems;
+
+    setSelectedDetailSource(item);
+    setDetails(detailItems);
+    setCurrentLevel('details');
+    if (item?.id != null) {
+        registerFreeDetailAccess('career-library', String(item.id));
+    }
+}
             else if (nextItems.length > 0) {
                 setSelectedDetailSource(item);
                 setDetails(nextItems);
