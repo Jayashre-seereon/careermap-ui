@@ -4,7 +4,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getCareerLibraryCategoriesByStream, getCareerLibraryDetails, getCareerLibraryNext, getCareerLibraryStreams } from '../../../src/api/careerLibraryApi';
+import { getCareerLibraryCategoriesByStream, getCareerLibraryDetails, getCareerLibraryNext, getCareerLibraryStreams, startCareerLibraryPreview } from '../../../src/api/careerLibraryApi';
 import { checkModuleAccess } from '../../../src/api/moduleAccessApi';
 import { useAppState } from '../../../src/app-state';
 import { Screen, UnlockBottomSheet, mobileAssistantScrollProps } from '../../../src/careermap-ui';
@@ -587,6 +587,11 @@ export default function CareerLibraryScreen() {
     const [hasFullAccess, setHasFullAccess] = useState(false);
    const [moduleStatus, setModuleStatus] = useState('locked');
     const [lockSheetDismissible, setLockSheetDismissible] = useState(true);
+    const [isCategoryFree, setIsCategoryFree] = useState(false);
+    const [previewSessionId, setPreviewSessionId] = useState(null);
+    const [previewRemaining, setPreviewRemaining] = useState(0);
+    const [previewExpired, setPreviewExpired] = useState(false);
+    const previewIntervalRef = useRef(null);
     const resolvedModuleId = useMemo(() => {
         const parsed = Number(params.moduleId);
         return Number.isFinite(parsed) ? parsed : 60;
@@ -603,6 +608,14 @@ export default function CareerLibraryScreen() {
         setDetails([]);
         setCurrentLevel('streams');
         setDetailReturnLevel('subcategory');
+        setIsCategoryFree(false);
+        setPreviewSessionId(null);
+        setPreviewRemaining(0);
+        setPreviewExpired(false);
+        if (previewIntervalRef.current) {
+            clearInterval(previewIntervalRef.current);
+            previewIntervalRef.current = null;
+        }
     };
     useEffect(() => {
         let isMounted = true;
@@ -637,6 +650,31 @@ export default function CareerLibraryScreen() {
             isMounted = false;
         };
     }, []);
+
+    useEffect(() => {
+        if (!previewRemaining) return;
+
+        previewIntervalRef.current = setInterval(() => {
+            setPreviewRemaining((prev) => {
+                if (prev <= 1) {
+                    clearInterval(previewIntervalRef.current);
+                    previewIntervalRef.current = null;
+                    setPreviewExpired(true);
+                    setLockSheetDismissible(false);
+                    setShowUnlockSheet(true);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => {
+            if (previewIntervalRef.current) {
+                clearInterval(previewIntervalRef.current);
+                previewIntervalRef.current = null;
+            }
+        };
+    }, [previewRemaining]);
    useEffect(() => {
     let isMounted = true;
     const loadModuleAccess = async () => {
@@ -670,7 +708,7 @@ export default function CareerLibraryScreen() {
     }, [params.level]);
     const animationKey = `${currentLevel}-${selectedStream?.id ?? 'none'}-${selectedCategory?.id ?? 'none'}-${selectedSecondCategory?.id ?? 'none'}-${selectedSubCategory?.id ?? 'none'}`;
     const detailKey = selectedDetailSource?.id != null ? String(selectedDetailSource.id) : selectedSubCategory?.id != null ? String(selectedSubCategory.id) : null;
-    const detailUnlocked = detailKey ? (hasFullAccess || canAccessFreeDetail('career-library', detailKey)) : true;
+    const detailUnlocked = detailKey ? (hasFullAccess || canAccessFreeDetail('career-library', detailKey) || isCategoryFree) : true;
     const returnTarget = useMemo(() => ({
         pathname: '/(drawer)/(tabs)/library',
         params: {
@@ -680,11 +718,31 @@ export default function CareerLibraryScreen() {
             secondCategoryId: selectedSecondCategory?.id,
             subCategoryId: selectedSubCategory?.id,
         },
-    }), [currentLevel, selectedStream, selectedCategory, selectedSecondCategory, selectedSubCategory]);
-    const createPreviewSession = async (pageType, pageId, previewKey) => {
-    // Preview session creation disabled to match web version flow
-    // No longer calling http://localhost:5000/api/module-access/preview/start
-    return null;
+    }), [currentLevel, selectedStream, selectedCategory, selectedSecondCategory, selectedSubCategory, isCategoryFree]);
+    const createPreviewSession = async (pageType, pageId, item) => {
+        if (moduleStatus !== 'preview') {
+            return null;
+        }
+
+        try {
+            const preview = await startCareerLibraryPreview({
+                moduleId: resolvedModuleId,
+                pageType,
+                pageId,
+            });
+
+            setPreviewSessionId(preview?.previewSessionId || preview?.access?.previewSessionId || preview?.access?.sessionId || null);
+            setPreviewRemaining(preview?.remainingSeconds ?? preview?.access?.remainingSeconds ?? preview?.previewDurationSeconds ?? preview?.access?.previewDurationSeconds ?? 15);
+
+            return preview?.previewSessionId || preview?.access?.previewSessionId || preview?.access?.sessionId || null;
+        } catch (err) {
+            if (err?.response?.status === 403) {
+                setLockSheetDismissible(true);
+                setShowUnlockSheet(true);
+                return null;
+            }
+            throw err;
+        }
     }
     const handleClick = async (type, id, item) => {
         setLoading(true);
@@ -719,6 +777,8 @@ export default function CareerLibraryScreen() {
         else if (type === 'category') {
             setSelectedCategory(item);
             setDetailReturnLevel('categories');
+            const accessTier = String(item?.accessTier || '').toLowerCase();
+            setIsCategoryFree(hasFullAccess || accessTier === 'preview');
             try {
                 const response = await getCareerLibraryNext(type, id);
                 const data = response ?? {};
@@ -814,10 +874,20 @@ export default function CareerLibraryScreen() {
                 const data = response ?? {};
                 const nextItems = Array.isArray(data?.data) ? data.data : [];
                 if (data.type === 'details') {
+                    let previewId = null;
+
+                    if (moduleStatus === 'preview') {
+                        previewId = await createPreviewSession('sub', id, item);
+                        if (!previewId) {
+                            setLoading(false);
+                            return;
+                        }
+                    }
+
                     let detailItems = nextItems;
                     if (detailItems.length === 0) {
                         try {
-                            const detailResponse = await getCareerLibraryDetails(id);
+                            const detailResponse = await getCareerLibraryDetails(id, resolvedModuleId, previewId);
                             const detailData = detailResponse ?? {};
                             detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
                         } catch (_err) {
@@ -923,7 +993,7 @@ export default function CareerLibraryScreen() {
     const renderStepList = (items, type) => (<View className="gap-3">
       {items.map((item, index) => {
             const accessKey = getCareerAccessKey(item);
-            const unlockedItem = hasFullAccess || isUnlocked('career-library') || canAccessFreeDetail('career-library', accessKey);
+            const unlockedItem = hasFullAccess || isUnlocked('career-library') || canAccessFreeDetail('career-library', accessKey) || isCategoryFree;
             return (<StaggerFadeUpItem key={`${type}-${item?.id ?? index}`} index={index}>
           <Pressable onPress={() => {
                     if (!unlockedItem) {
@@ -1014,6 +1084,11 @@ export default function CareerLibraryScreen() {
   </View>
 )}
 
+{previewRemaining > 0 ? (<View className="mb-3 rounded-[12px] px-3 py-3" style={{ backgroundColor: `${palette.primary}14` }}>
+              <Text className="text-[12px] font-semibold" style={{ color: palette.primary }}>
+              <Ionicons name="time-outline" size={14} color={palette.primary} className="mr-1"/> Preview active for {previewRemaining}s
+              </Text>
+            </View>) : null}
 {detail?.description ? (
     <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
         <View className="mb-3 flex-row items-center gap-2">
@@ -1240,7 +1315,7 @@ export default function CareerLibraryScreen() {
           {currentLevel === 'secondcategory' && renderStepList(secondCategories, 'second')}
           {currentLevel === 'subcategory' && renderStepList(subCategories, 'sub')}
         </ScrollView>)}
-      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career Library" subtitle="Subscribe to more careers, salary insights, education paths, and institute details." dismissible={lockSheetDismissible} onClose={resetToStreams} onPress={() => {
+      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career Library" subtitle={previewExpired ? 'Your preview time has ended for this career detail.' : 'Subscribe to more careers, salary insights, education paths, and institute details.'} dismissible={lockSheetDismissible} onClose={resetToStreams} onPress={() => {
                 setShowUnlockSheet(false);
                 openSubscriptionPrompt(returnTarget);
             }}/>) : null}
