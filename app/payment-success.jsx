@@ -17,9 +17,15 @@ export default function PaymentSuccessScreen() {
   const celebration = useRef(new Animated.Value(0)).current;
   const [plans, setPlans] = useState(fallbackSubscriptions);
 
+  const fallbackPlan = plans?.find?.((item) => item) || fallbackSubscriptions?.[0] || {
+    id: 'subscription',
+    name: 'Subscription Plan',
+    price: 'Paid plan',
+  };
+
   const plan =
     plans.find((item) => String(item.id) === String(planId)) ??
-    plans[0];
+    fallbackPlan;
 
   const returnTarget = decodeReturnTarget(returnTo);
 
@@ -42,10 +48,10 @@ export default function PaymentSuccessScreen() {
 
   // activate plan
   useEffect(() => {
-    if (plan.id) {
+    if (plan?.id) {
       activatePlan(plan.id);
     }
-  }, [activatePlan, plan.id]);
+  }, [activatePlan, plan?.id]);
 
   useEffect(() => {
     let isMounted = true;
@@ -159,7 +165,7 @@ export default function PaymentSuccessScreen() {
               color: palette.primary,
             }}
           >
-            {plan.name}
+            {plan?.name || 'Subscription Plan'}
           </Text>
         </View>
 
@@ -171,8 +177,8 @@ export default function PaymentSuccessScreen() {
           }}
         >
           {[
-            ['Plan', plan.name],
-            ['Amount', plan.price],
+            ['Plan', plan?.name || 'Subscription Plan'],
+            ['Amount', plan?.price || 'Paid plan'],
             ['Transaction ID', transactionId ?? 'TXN00000000'],
             ['Validity', `1 Year (until ${validUntil})`],
           ].map(([label, value], i) => (

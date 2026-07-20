@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Image, Modal, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import api from '../../../src/api/axios';
 import { createMentorReview } from '../../../src/api/mentorApi';
-import { checkModuleAccess } from '../../../src/api/moduleAccessApi';
+import { checkModuleAccess, getModules } from '../../../src/api/moduleAccessApi';
 import { useAppState } from '../../../src/app-state';
 import { featuredInstitutes, featuredScholarships, moduleCards, palette, studentProfile } from '../../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../../src/careermap-ui';
@@ -159,6 +159,11 @@ export default function HomeScreen() {
   const [reviewRefreshKey, setReviewRefreshKey] = useState(0);
   const [showProfilePrompt, setShowProfilePrompt] = useState(Boolean(profileIncomplete));
   const [profilePromptDismissed, setProfilePromptDismissed] = useState(false);
+  const [sectionAccess, setSectionAccess] = useState({
+    mentors: { status: 'locked' },
+    scholarships: { status: 'locked' },
+    institutes: { status: 'locked' },
+  });
   const { isUnlocked, onboarding, unreadNotificationsCount, userProfile } = useAppState();
   const { width } = useWindowDimensions();
   const moduleCardWidth = width < 390 ? '48%' : '31%';
@@ -169,6 +174,26 @@ export default function HomeScreen() {
     'Scholarships': 'scholarship',
     'Study Abroad': 'abroad-consultancy',
   };
+  const sectionTargets = useMemo(() => ({
+    mentors: {
+      title: 'Mentor Access Locked',
+      matchers: ['book mentor', 'mentor'],
+      route: '/(drawer)/book-mentor',
+      subtitle: 'Unlock mentor sessions to browse and book the full guidance list.',
+    },
+    scholarships: {
+      title: 'Scholarship Access Locked',
+      matchers: ['scholarship'],
+      route: '/(drawer)/scholarship',
+      subtitle: 'Unlock scholarship listings to view all opportunities and details.',
+    },
+    institutes: {
+      title: 'Institute Access Locked',
+      matchers: ['institute'],
+      route: '/(drawer)/institute',
+      subtitle: 'Unlock institute listings to browse the full college catalog.',
+    },
+  }), []);
   const normalizeModuleTitle = (value) => value?.trim().toLowerCase().replace(/\s+/g, ' ');
   const resolveModuleLookupKey = (value) => {
     const normalized = normalizeModuleTitle(value);
@@ -180,6 +205,59 @@ export default function HomeScreen() {
     }
     return normalized;
   };
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSectionAccess() {
+      try {
+        const modules = await getModules();
+        const nextState = {
+          mentors: { status: 'locked' },
+          scholarships: { status: 'locked' },
+          institutes: { status: 'locked' },
+        };
+
+        for (const [sectionName, config] of Object.entries(sectionTargets)) {
+          const matchedModule = modules.find((module) => {
+            const title = String(module?.title || '').trim().toLowerCase();
+            return config.matchers.some((matcher) => title.includes(matcher));
+          });
+          const moduleId = Number(matchedModule?.id);
+
+          if (!Number.isFinite(moduleId)) {
+            continue;
+          }
+
+          const response = await checkModuleAccess(moduleId).catch(() => null);
+          const mode = String(response?.mode || '').toLowerCase();
+          nextState[sectionName] = {
+            status: mode || (response?.allowed === false ? 'locked' : 'locked'),
+            moduleId,
+            title: config.title,
+            route: config.route,
+            subtitle: config.subtitle,
+          };
+        }
+
+        if (isMounted) {
+          setSectionAccess(nextState);
+        }
+      } catch {
+        if (isMounted) {
+          setSectionAccess({
+            mentors: { status: 'locked' },
+            scholarships: { status: 'locked' },
+            institutes: { status: 'locked' },
+          });
+        }
+      }
+    }
+
+    void loadSectionAccess();
+    return () => {
+      isMounted = false;
+    };
+  }, [sectionTargets]);
   const loadDashboard = async (isMountedRef) => {
     try {
       const response = await api.get('/user/dashboard');
@@ -419,6 +497,52 @@ export default function HomeScreen() {
       router.push(card.route);
     }
   };
+  const handleSectionPress = (sectionName) => {
+    const config = sectionAccess[sectionName];
+    const unlocked = config?.status === 'full' || config?.status === 'preview';
+
+    if (unlocked) {
+      router.push(config.moduleId
+        ? {
+          pathname: config.route,
+          params: {
+            moduleId: String(config.moduleId),
+          },
+        }
+        : config.route);
+      return;
+    }
+
+    setLockedModule({
+      title: config?.title || 'Locked',
+      route: config?.route,
+      moduleId: config?.moduleId ?? null,
+      message: config?.subtitle || 'Please purchase a subscription to continue accessing this section.',
+    });
+  };
+  const handleSectionSeeAll = (sectionName) => {
+    const config = sectionAccess[sectionName];
+    const unlocked = config?.status === 'full' || config?.status === 'preview';
+
+    if (unlocked) {
+      router.push(config.moduleId
+        ? {
+          pathname: config.route,
+          params: {
+            moduleId: String(config.moduleId),
+          },
+        }
+        : config.route);
+      return;
+    }
+
+    setLockedModule({
+      title: config?.title || 'Locked',
+      route: config?.route,
+      moduleId: config?.moduleId ?? null,
+      message: config?.subtitle || 'Please purchase a subscription to continue accessing this section.',
+    });
+  };
   const personalityResult = useMemo(() => {
     const counts = [0, 0, 0, 0];
     answers.forEach((answer) => {
@@ -581,7 +705,9 @@ export default function HomeScreen() {
     <SectionHeader title="Explore Your Mentors" action={<AnimatedPressable onPress={() => router.push('/(drawer)/book-mentor')}><Text className="text-[12px] font-extrabold text-brand mt-4 ">See all</Text></AnimatedPressable>} />
     {dashboardMentors.length > 0 ? (
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
-        {dashboardMentors.map((mentor) => (<AnimatedPressable key={mentor.id || mentor.name} className={`h-[168px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/book-mentor')}>
+        {dashboardMentors.map((mentor) => {
+          const mentorUnlocked = sectionAccess.mentors.status === 'full' || sectionAccess.mentors.status === 'preview';
+          return (<AnimatedPressable key={mentor.id || mentor.name} className={`relative h-[168px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => handleSectionPress('mentors')}>
           <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px] " style={{ backgroundColor: `${mentor.accent}15` }}>
             {renderMentorAvatar(mentor)}
           </View>
@@ -594,15 +720,22 @@ export default function HomeScreen() {
             <Text numberOfLines={1} ellipsizeMode="tail" className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
               {mentor.averageRating ? mentor.averageRating.toFixed(1) : 'New'} | {mentor.experience}
             </Text>
-          </View></AnimatedPressable>))}
+          </View>
+          <View className="absolute right-2 top-2 rounded-full px-2 py-1" style={{ backgroundColor: mentorUnlocked ? `${palette.green}14` : `${palette.primary}14` }}>
+           
+          </View>
+          </AnimatedPressable>);
+        })}
       </ScrollView>
     ) : (
       <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No mentors available right now.</Text>
     )}
 
-    <SectionHeader title="Explore Scholarships" action={<AnimatedPressable onPress={() => router.push('/(drawer)/scholarship')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>} />
+    <SectionHeader title="Explore Scholarships" action={<AnimatedPressable onPress={() => handleSectionSeeAll('scholarships')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>} />
     <View className="gap-3 mb-4 mt-4">
-      {dashboardScholarships.map((item) => (<AnimatedPressable key={item.id || item.name} className={`flex-row items-center gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/scholarship')}>
+      {dashboardScholarships.map((item) => {
+        const scholarshipUnlocked = sectionAccess.scholarships.status === 'full' || sectionAccess.scholarships.status === 'preview';
+        return (<AnimatedPressable key={item.id || item.name} className={`relative flex-row items-center gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => handleSectionPress('scholarships')}>
         <View className={`h-[42px] w-[42px] items-center justify-center rounded-[14px] ${preferences.darkMode ? 'bg-[#163126]' : 'bg-[#edf9f1]'}`}>
           <Ionicons name="ribbon-outline" size={20} color={palette.green} />
         </View>
@@ -614,12 +747,16 @@ export default function HomeScreen() {
           <Pill label={item.tag} tone={palette.primary} />
           <Text numberOfLines={1} ellipsizeMode="tail" className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.deadline}</Text>
         </View>
-      </AnimatedPressable>))}
+       
+        </AnimatedPressable>);
+      })}
     </View>
 
-    <SectionHeader title="Explore Institutes" action={<AnimatedPressable onPress={() => router.push('/(drawer)/institute')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>} />
+    <SectionHeader title="Explore Institutes" action={<AnimatedPressable onPress={() => handleSectionSeeAll('institutes')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>} />
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
-      {dashboardInstitutes.map((item) => (<AnimatedPressable key={item.id || item.name} className={`h-[196px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => router.push('/(drawer)/institute')}>
+      {dashboardInstitutes.map((item) => {
+        const instituteUnlocked = sectionAccess.institutes.status === 'full' || sectionAccess.institutes.status === 'preview';
+        return (<AnimatedPressable key={item.id || item.name} className={`relative h-[196px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => handleSectionPress('institutes')}>
         <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${palette.blue}14` }}>
           {item.logo ? (<Image source={{ uri: item.logo }} resizeMode="cover" style={{ width: 52, height: 52, borderRadius: 18 }} />) : (<View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${palette.blue}14`, borderWidth: 1, borderColor: `${palette.blue}18` }}>
             <Text className="text-[16px] font-black" style={{ color: palette.blue, lineHeight: 20 }}>
@@ -632,7 +769,9 @@ export default function HomeScreen() {
         </View>
         <Text numberOfLines={1} ellipsizeMode="tail" className="w-full text-center text-[11px] font-bold text-brand">{item.location}</Text>
         <Text numberOfLines={1} ellipsizeMode="tail" className={`w-full text-center text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.type}</Text>
-      </AnimatedPressable>))}
+      
+        </AnimatedPressable>);
+      })}
     </ScrollView>
 
     <View className={`gap-2 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
