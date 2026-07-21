@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View ,Linking} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getCareerLibraryCategoriesByStream, getCareerLibraryDetails, getCareerLibraryNext, getCareerLibraryStreams, startCareerLibraryPreview } from '../../../src/api/careerLibraryApi';
 import { checkModuleAccess } from '../../../src/api/moduleAccessApi';
@@ -13,6 +13,7 @@ import { StaggerFadeUpItem } from '../../../src/page-transition';
 import { openSubscriptionPrompt } from '../../../src/subscription-flow';
 import { Video, ResizeMode } from 'expo-av';
 import { Image } from 'react-native';
+
 const fallbackStreams = [
     { name: 'Science', emoji: '🔬', desc: 'Medical, Engineering & Research' },
     { name: 'Commerce', emoji: '📊', desc: 'Business, Finance & Accounting' },
@@ -216,6 +217,7 @@ function normalizeInstituteItems(value) {
                 type: '',
                 logo: null,
                 isTop: false,
+                 url: null,   
             };
         }
         const city = item?.city || '';
@@ -232,6 +234,7 @@ function normalizeInstituteItems(value) {
             type: String(item?.institute_type || item?.type || '').trim(),
             logo: item?.logo || item?.image || null,
             isTop: Boolean(item?.is_top ?? item?.isTop),
+             url: item?.url || null,  
         };
     });
 }
@@ -425,7 +428,7 @@ const formatSalaryRange = (salary) => {
     const profession = salary?.profession ? `${salary.profession}: ` : '';
 
     if (minSalary && maxSalary) {
-        return `${profession}${minSalary} to ${maxSalary} /annum`;
+        return `${profession}${minSalary}L to ${maxSalary}L/annum`;
     }
 
     return `${profession}${minSalary || maxSalary || 'Salary not available'}`;
@@ -1147,15 +1150,20 @@ export default function CareerLibraryScreen() {
   )) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Career path details not available.</Text>)}
 </View>
 <View className={`rounded-[20px] mb-4 border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-              <View className="mb-3 flex-row items-center gap-2">
-                <Ionicons name="reader-outline" size={16} color={palette.primary}/>
-                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Entrance Exams</Text>
-              </View>
-              {toList(detail?.entranceexams).length > 0 ? toList(detail?.entranceexams).map((exam) => (<View key={exam?.id} className="mb-3">
-                  <Text className={`text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam?.examname || 'Exam'}</Text>
-                  <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{[exam?.mode, exam?.duration, formatDate(exam?.exam_date)].filter(Boolean).join(' • ')}</Text>
-                </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Exam details not available.</Text>)}
-            </View>
+  <View className="mb-3 flex-row items-center gap-2">
+    <Ionicons name="reader-outline" size={16} color={palette.primary}/>
+    <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Entrance Exams</Text>
+  </View>
+  {toList(detail?.entranceexams).length > 0 ? toList(detail?.entranceexams).map((exam) => (<View key={exam?.id} className="mb-3 flex-row items-center justify-between">
+      <View className="flex-1">
+        <Text className={`text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam?.examname || 'Exam'}</Text>
+        <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{[exam?.mode, exam?.duration, formatDate(exam?.exam_date)].filter(Boolean).join(' • ')}</Text>
+      </View>
+      {exam?.url ? (<Pressable onPress={() => Linking.openURL(exam.url)} className="h-9 w-9 items-center justify-center rounded-full ml-2" style={{ borderWidth: 1, borderColor: '#f0e4e2' }}>
+          <Ionicons name="arrow-forward" size={16} color={palette.primary}/>
+        </Pressable>) : null}
+    </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Exam details not available.</Text>)}
+</View>
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
               <View className="mb-3 flex-row items-center gap-2">
                 <Ionicons name="briefcase-outline" size={16} color={palette.primary}/>
@@ -1196,15 +1204,22 @@ export default function CareerLibraryScreen() {
     <Ionicons name="cash-outline" size={16} color={palette.primary}/>
     <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Salary Range</Text>
   </View>
-              {toList(detail?.salaryRanges).length > 0 ? toList(detail?.salaryRanges).map((salary, salaryIndex) => (<View key={salary?.id ?? salaryIndex} className="mb-2">
-                  <Text className="text-[15px] font-bold text-brand">{formatSalaryRange(salary)}</Text>
-                  {getSalaryBullets(salary).length > 0 ? (<View className="mt-2 gap-1.5">
-                      {getSalaryBullets(salary).map((bullet) => (<View key={bullet} className="flex-row items-start gap-2">
-                          <Ionicons name="ellipse" size={6} color={palette.secondary} style={{ marginTop: 7 }}/>
-                          <Text className={`flex-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{bullet}</Text>
-                        </View>))}
-                    </View>) : null}
-                </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Salary details not available.</Text>)}
+            {toList(detail?.salaryRanges).length > 0 ? (
+  <View className="gap-2">
+    {toList(detail?.salaryRanges).map((salary, salaryIndex) => (
+      <View key={salary?.id ?? salaryIndex} className="flex-row items-start gap-2">
+        <Ionicons name="ellipse" size={6} color={palette.primary} style={{ marginTop: 7 }} />
+        <Text className="flex-1 text-[15px] font-bold text-brand">
+          {formatSalaryRange(salary)}
+        </Text>
+      </View>
+    ))}
+  </View>
+) : (
+  <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+    Salary details not available.
+  </Text>
+)}
             </View>
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
               <View className="mb-3 flex-row items-center gap-2">
@@ -1220,48 +1235,54 @@ export default function CareerLibraryScreen() {
                 })}
               </View>
               <View className="gap-4">
-                {filteredTopInstitutes.length > 0 ? (<View>
-                    <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
-                      {instituteGroups.referenceState ? `Top Institutes of ${instituteGroups.referenceState}` : 'Top Institutes'}
-                    </Text>
-                    {filteredTopInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 flex-row gap-3 rounded-[14px] border border-[#f0e4e2] bg-[#fdf9f9] px-3 py-3">
-                        <View className="h-[48px] w-[48px] overflow-hidden rounded-[12px]" style={{ backgroundColor: `${palette.primary}12` }}>
-                          {institution?.logo ? (<Image source={{ uri: institution.logo }} style={{ width: '100%', height: '100%' }} resizeMode="cover"/>) : (<View className="flex-1 items-center justify-center">
-                              <Ionicons name="business-outline" size={20} color={palette.primary}/>
-                            </View>)}
-                        </View>
-                        <View className="flex-1">
-                          <View className="flex-row items-center gap-2">
-                            <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
-                            {institution?.type ? (<View className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${palette.primary}12` }}>
-                                <Text className="text-[10px] font-bold" style={{ color: palette.primary }}>{institution.type}</Text>
-                              </View>) : null}
-                          </View>
-                          <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
-                        </View>
-                      </View>))}
-                  </View>) : null}
-                {filteredOutsideInstitutes.length > 0 ? (<View>
-                    <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
-                      {instituteGroups.referenceState ? `Top Institutes Outside ${instituteGroups.referenceState}` : 'Top Institutes Outside State'}
-                    </Text>
-                    {filteredOutsideInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 flex-row gap-3 rounded-[14px] border border-[#f0e4e2] bg-white px-3 py-3">
-                        <View className="h-[48px] w-[48px] overflow-hidden rounded-[12px]" style={{ backgroundColor: `${palette.primary}12` }}>
-                          {institution?.logo ? (<Image source={{ uri: institution.logo }} style={{ width: '100%', height: '100%' }} resizeMode="cover"/>) : (<View className="flex-1 items-center justify-center">
-                              <Ionicons name="business-outline" size={20} color={palette.primary}/>
-                            </View>)}
-                        </View>
-                        <View className="flex-1">
-                          <View className="flex-row items-center gap-2">
-                            <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
-                            {institution?.type ? (<View className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${palette.primary}12` }}>
-                                <Text className="text-[10px] font-bold" style={{ color: palette.primary }}>{institution.type}</Text>
-                              </View>) : null}
-                          </View>
-                          <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
-                        </View>
-                      </View>))}
-                  </View>) : null}
+            {filteredTopInstitutes.length > 0 ? (<View>
+    <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
+      {instituteGroups.referenceState ? `Top Institutes of ${instituteGroups.referenceState}` : 'Top Institutes'}
+    </Text>
+    {filteredTopInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 flex-row items-center gap-3 rounded-[14px] border border-[#f0e4e2] bg-[#fdf9f9] px-3 py-3">
+        <View className="h-[48px] w-[48px] overflow-hidden rounded-[12px]" style={{ backgroundColor: `${palette.primary}12` }}>
+          {institution?.logo ? (<Image source={{ uri: institution.logo }} style={{ width: '100%', height: '100%' }} resizeMode="cover"/>) : (<View className="flex-1 items-center justify-center">
+              <Ionicons name="business-outline" size={20} color={palette.primary}/>
+            </View>)}
+        </View>
+        <View className="flex-1">
+          <View className="flex-row items-center gap-2">
+            <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
+            {institution?.type ? (<View className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${palette.primary}12` }}>
+                <Text className="text-[10px] font-bold" style={{ color: palette.primary }}>{institution.type}</Text>
+              </View>) : null}
+          </View>
+          <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
+        </View>
+        {institution?.url ? (<Pressable onPress={() => Linking.openURL(institution.url)} className="h-9 w-9 items-center justify-center rounded-full" style={{ borderWidth: 1, borderColor: '#f0e4e2' }}>
+            <Ionicons name="arrow-forward" size={16} color={palette.primary}/>
+          </Pressable>) : null}
+      </View>))}
+  </View>) : null}
+             {filteredOutsideInstitutes.length > 0 ? (<View>
+    <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
+      {instituteGroups.referenceState ? `Top Institutes Outside ${instituteGroups.referenceState}` : 'Top Institutes Outside State'}
+    </Text>
+    {filteredOutsideInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 flex-row items-center gap-3 rounded-[14px] border border-[#f0e4e2] bg-white px-3 py-3">
+        <View className="h-[48px] w-[48px] overflow-hidden rounded-[12px]" style={{ backgroundColor: `${palette.primary}12` }}>
+          {institution?.logo ? (<Image source={{ uri: institution.logo }} style={{ width: '100%', height: '100%' }} resizeMode="cover"/>) : (<View className="flex-1 items-center justify-center">
+              <Ionicons name="business-outline" size={20} color={palette.primary}/>
+            </View>)}
+        </View>
+        <View className="flex-1">
+          <View className="flex-row items-center gap-2">
+            <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
+            {institution?.type ? (<View className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${palette.primary}12` }}>
+                <Text className="text-[10px] font-bold" style={{ color: palette.primary }}>{institution.type}</Text>
+              </View>) : null}
+          </View>
+          <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
+        </View>
+        {institution?.url ? (<Pressable onPress={() => Linking.openURL(institution.url)} className="h-9 w-9 items-center justify-center rounded-full" style={{ borderWidth: 1, borderColor: '#f0e4e2' }}>
+            <Ionicons name="arrow-forward" size={16} color={palette.primary}/>
+          </Pressable>) : null}
+      </View>))}
+  </View>) : null}
                 {!filteredTopInstitutes.length && !filteredOutsideInstitutes.length ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Institution details not available.</Text>) : null}
               </View>
             </View>
