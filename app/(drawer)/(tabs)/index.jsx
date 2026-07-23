@@ -623,7 +623,7 @@ export default function HomeScreen() {
           <Text className={`text-[16px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Get a Full Psychometric Analysis</Text>
           <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Take the deeper assessment to unlock a richer career report with stronger recommendations.</Text>
           <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => router.push('/(drawer)/(tabs)/assessment')}>
-            <Text className="text-center text-[14px] font-extrabold text-white">Take Full Psychometric Test</Text>
+            <Text className="text-center text-[14px] font-extrabold text-white">Take The Free Personality Test</Text>
           </AnimatedPressable>
         </View>
 
@@ -668,7 +668,7 @@ export default function HomeScreen() {
             : 'Answer quick questions to discover your personality type and ideal career direction.'}
         </Text>
         <AnimatedPressable className="mt-1 self-start rounded-full bg-white px-4 py-2.5" onPress={() => router.push('/(drawer)/assessment-preview')}>
-          <Text className="text-[13px] font-extrabold text-brand">Take Full Psychometric Test</Text>
+          <Text className="text-[13px] font-extrabold text-brand">Take The Free Personality Test</Text>
         </AnimatedPressable>
       </View>
     </View>
