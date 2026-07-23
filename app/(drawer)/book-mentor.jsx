@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Image, Modal, Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Image, Modal, Pressable, Text, TextInput, View ,Linking} from 'react-native';
 import { createMentorOrder, getBookedMentorSlots, getMentors, verifyMentorPayment } from '../../src/api/mentorApi';
 import { checkModuleAccess, getModules } from '../../src/api/moduleAccessApi';
 import { useAppState } from '../../src/app-state';
@@ -821,11 +821,31 @@ export default function BookMentorScreen() {
             </View>) : null}
 
             <View className={`relative rounded-[28px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-                <View className="absolute right-4 top-4 z-10">
-                    <AnimatedPressable className="rounded-full bg-brand px-4 py-2" onPress={openBookingPanel}>
-                        <Text className="text-[12px] font-extrabold text-white">Book Now</Text>
-                    </AnimatedPressable>
-                </View>
+               <View className="absolute top-4 left-4 right-4 z-10 flex-row justify-between">
+  
+  {/* Resume Button (Left) */}
+  {mentor.resume && (
+    <AnimatedPressable
+      className="rounded-full bg-brand px-4 py-2"
+      onPress={() => Linking.openURL(mentor.resume)}
+    >
+      <Text className="text-[12px] font-extrabold text-white">
+        Resume
+      </Text>
+    </AnimatedPressable>
+  )}
+
+  {/* Book Now Button (Right) */}
+  <AnimatedPressable
+    className="rounded-full bg-brand px-4 py-2"
+    onPress={openBookingPanel}
+  >
+    <Text className="text-[12px] font-extrabold text-white">
+      Book Now
+    </Text>
+  </AnimatedPressable>
+
+</View>
                 <View className="items-center gap-2 pt-6">
                     <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${mentor.accent}15` }}>
                         {renderMentorAvatar(mentor)}
