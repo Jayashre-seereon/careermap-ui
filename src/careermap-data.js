@@ -66,7 +66,7 @@ export const moduleCards = [
         tone: palette.pink,
     },
     {
-        title: 'Book Mentor',
+        title: 'Book Your Mentor',
         subtitle: 'Reserve guidance with an expert mentor.',
         icon: 'people-outline',
         route: '/(drawer)/book-mentor',

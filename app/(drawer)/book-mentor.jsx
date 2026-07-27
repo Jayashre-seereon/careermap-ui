@@ -444,8 +444,8 @@ const searchableSubCategoryOptions = useMemo(() => {
 
                 if (!Number.isFinite(moduleId)) {
                     const modules = await getModules();
-                    const matchedModule = modules.find((module) => normalizeModuleTitle(module?.title) === 'book mentor')
-                        || modules.find((module) => normalizeModuleTitle(module?.title).includes('book mentor'));
+                    const matchedModule = modules.find((module) => normalizeModuleTitle(module?.title) === 'book your mentor')
+                        || modules.find((module) => normalizeModuleTitle(module?.title).includes('book your mentor'));
 
                     moduleId = Number(matchedModule?.id);
                     if (isMounted && Number.isFinite(moduleId)) {
@@ -513,8 +513,8 @@ const searchableSubCategoryOptions = useMemo(() => {
 
                 if (!Number.isFinite(moduleId)) {
                     const modules = await getModules();
-                    const matchedModule = modules.find((module) => normalizeModuleTitle(module?.title) === 'book mentor')
-                        || modules.find((module) => normalizeModuleTitle(module?.title).includes('book mentor'));
+                    const matchedModule = modules.find((module) => normalizeModuleTitle(module?.title) === 'book your mentor')
+                        || modules.find((module) => normalizeModuleTitle(module?.title).includes('book your mentor'));
 
                     moduleId = Number(matchedModule?.id);
                     if (isMounted && Number.isFinite(moduleId)) {
@@ -638,7 +638,7 @@ const searchableSubCategoryOptions = useMemo(() => {
     };
     if (!moduleAccessResolved) {
         return (<Screen animationKey="book-mentor-access-loading">
-            <SectionHeader title="Book Mentor" subtitle="Checking your subscription access." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
+            <SectionHeader title="Book Your Mentor" subtitle="Checking your subscription access." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
                 setSelectedMentorId(null);
                 setSelectedMentor(null);
             }}>
@@ -653,7 +653,7 @@ const searchableSubCategoryOptions = useMemo(() => {
     }
     if (!moduleAccessAllowed) {
         return (<Screen animationKey="book-mentor-locked">
-            <SectionHeader title="Book Mentor Locked" subtitle="This module needs an active subscription." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
+            <SectionHeader title="Book Your Mentor Locked" subtitle="This module needs an active subscription." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
                 setSelectedMentorId(null);
                 setSelectedMentor(null);
             }}>
@@ -663,7 +663,7 @@ const searchableSubCategoryOptions = useMemo(() => {
                 <View className="h-12 w-12 items-center justify-center rounded-[16px]" style={{ backgroundColor: `${palette.primary}14` }}>
                     <Ionicons name="lock-closed" size={22} color={palette.primary} />
                 </View>
-                <Text className={`text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Book Mentor is locked</Text>
+                <Text className={`text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Book Your Mentor is locked</Text>
                 <Text className={`text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{moduleAccessMessage || 'Please purchase a subscription to unlock mentor booking and profile access.'}</Text>
                 <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={() => openSubscriptionPrompt({
                     pathname: '/(drawer)/book-mentor',
@@ -988,7 +988,7 @@ const searchableSubCategoryOptions = useMemo(() => {
     }
     return (
         <Screen animationKey={animationKey}>
-            <SectionHeader title="Book Mentor" subtitle="Mentor list and booking flow adapted closely from the prototype." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+            <SectionHeader title="Book Your Mentor" subtitle="Mentor list and booking flow adapted closely from the prototype." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
                 <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : preferences.darkMode ? '#ffffff' : palette.text} />
             </AnimatedPressable>} />
 

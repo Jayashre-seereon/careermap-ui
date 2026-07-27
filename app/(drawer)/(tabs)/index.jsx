@@ -170,14 +170,14 @@ export default function HomeScreen() {
   const featureByTitle = {
     'Career Archive': 'career-archive',
     'Master Class': 'master-class',
-    'Book Mentor': 'book-mentor',
+    'Book Your Mentor': 'book-mentor',
     'Scholarships': 'scholarship',
     'Study Abroad': 'abroad-consultancy',
   };
   const sectionTargets = useMemo(() => ({
     mentors: {
       title: 'Mentor Access Locked',
-      matchers: ['book mentor', 'mentor'],
+      matchers: ['book your mentor', 'book mentor', 'mentor'],
       route: '/(drawer)/book-mentor',
       subtitle: 'Unlock mentor sessions to browse and book the full guidance list.',
     },

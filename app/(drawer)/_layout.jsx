@@ -66,7 +66,7 @@ export default function DrawerRoot() {
             drawerIcon: renderDrawerIcon('settings-outline'),
         }}/>
         <Drawer.Screen name="book-mentor" options={{
-            title: 'Book Mentor',
+            title: 'Book Your Mentor',
             drawerIcon: renderDrawerIcon('people-outline'),
         }}/>
         <Drawer.Screen name="psychometric-test" options={{
