@@ -17,8 +17,8 @@ export default function TabsLayout() {
     });
     const moduleTitleMatchers = useMemo(() => ({
         library: {
-            title: 'Career Library Locked',
-            match: 'career library',
+            title: 'Career Archive Locked',
+            match: 'career archive',
         },
         learn: {
             title: 'Master Class Locked',
@@ -89,7 +89,7 @@ export default function TabsLayout() {
         setLockedTab({
             title: config?.title || 'Locked',
             subtitle: tabName === 'library'
-                ? 'Unlock the career library to browse streams, roles, and college paths.'
+                ? 'Unlock the career archive to browse streams, roles, and college paths.'
                 : 'Unlock master class lessons before opening this tab.',
             route: tabName === 'library'
                 ? '/(drawer)/(tabs)/library'

@@ -31,7 +31,7 @@ export const heroStats = [
 ];
 export const moduleCards = [
     {
-        title: 'Career Library',
+        title: 'Career Archive',
         subtitle: 'Explore streams, roles, and college paths.',
         icon: 'book-outline',
         route: '/(drawer)/(tabs)/library',

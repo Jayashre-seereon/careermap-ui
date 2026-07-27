@@ -168,7 +168,7 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const moduleCardWidth = width < 390 ? '48%' : '31%';
   const featureByTitle = {
-    'Career Library': 'career-library',
+    'Career Archive': 'career-archive',
     'Master Class': 'master-class',
     'Book Mentor': 'book-mentor',
     'Scholarships': 'scholarship',

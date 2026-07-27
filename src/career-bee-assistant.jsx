@@ -15,7 +15,7 @@ const starterPrompts = [
 ];
 
 const starterReplies = {
-    'what careers suit me': 'Start with your strengths, favorite subjects, and the kind of work you enjoy. The Assessment and Career Library screens in this app are the best first step.',
+    'what careers suit me': 'Start with your strengths, favorite subjects, and the kind of work you enjoy. The Assessment and Career Archive screens in this app are the best first step.',
     'how to prepare for jee': 'Focus on PCM basics, a weekly mock-test routine, and revision blocks. I can also guide you toward Entrance Exam and mentor support inside the app.',
     'tell me about scholarships': 'Open the Scholarships section to filter active options, deadlines, and eligibility. I can help you shortlist merit, science, or need-based scholarships.',
     'help me choose a stream': 'Think about your interests, comfort with subjects, and future goals. Science fits tech and medical paths, Commerce fits business and finance, and Arts opens design, law, media, and social sciences.',

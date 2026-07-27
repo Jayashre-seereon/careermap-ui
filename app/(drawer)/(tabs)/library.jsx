@@ -1293,10 +1293,10 @@ export default function CareerLibraryScreen() {
     };
     const getTitle = () => {
         if (currentLevel === 'streams') {
-            return 'Career Library';
+            return 'Career Archive';
         }
         if (currentLevel === 'categories') {
-            return selectedStream?.name || 'Career Library';
+            return selectedStream?.name || 'Career Archive';
         }
         if (currentLevel === 'secondcategory') {
             return getItemTitle(selectedCategory);
@@ -1307,7 +1307,7 @@ export default function CareerLibraryScreen() {
         if (currentLevel === 'details') {
             return getItemTitle(selectedDetailSource || selectedSubCategory || selectedSecondCategory || selectedCategory);
         }
-        return 'Career Library';
+        return 'Career Archive';
     };
     return (<Screen scroll={true} animationKey={animationKey}>
       <View className="flex-row items-center">
@@ -1336,7 +1336,7 @@ export default function CareerLibraryScreen() {
           {currentLevel === 'secondcategory' && renderStepList(secondCategories, 'second')}
           {currentLevel === 'subcategory' && renderStepList(subCategories, 'sub')}
         </ScrollView>)}
-      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career Library" subtitle={previewExpired ? 'Your preview time has ended for this career detail.' : 'Subscribe to more careers, salary insights, education paths, and institute details.'} dismissible={lockSheetDismissible} onClose={resetToStreams} onPress={() => {
+      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career Archive" subtitle={previewExpired ? 'Your preview time has ended for this career detail.' : 'Subscribe to more careers, salary insights, education paths, and institute details.'} dismissible={lockSheetDismissible} onClose={resetToStreams} onPress={() => {
                 setShowUnlockSheet(false);
                 openSubscriptionPrompt(returnTarget);
             }}/>) : null}
