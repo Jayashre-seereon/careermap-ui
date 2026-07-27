@@ -21,8 +21,8 @@ export default function TabsLayout() {
             match: 'career archive',
         },
         learn: {
-            title: 'Master Class Locked',
-            match: 'master class',
+            title: 'Career & Personality Videos Locked',
+            match: 'career & personality videos',
         },
     }), []);
 
@@ -90,7 +90,7 @@ export default function TabsLayout() {
             title: config?.title || 'Locked',
             subtitle: tabName === 'library'
                 ? 'Unlock the career archive to browse streams, roles, and college paths.'
-                : 'Unlock master class lessons before opening this tab.',
+                : 'Unlock career & personality videos before opening this tab.',
             route: tabName === 'library'
                 ? '/(drawer)/(tabs)/library'
                 : '/(drawer)/(tabs)/learn',

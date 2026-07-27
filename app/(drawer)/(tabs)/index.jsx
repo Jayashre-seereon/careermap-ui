@@ -169,7 +169,7 @@ export default function HomeScreen() {
   const moduleCardWidth = width < 390 ? '48%' : '31%';
   const featureByTitle = {
     'Career Archive': 'career-archive',
-    'Master Class': 'master-class',
+    'Career & Personality Videos': 'master-class',
     'Book Your Mentor': 'book-mentor',
     'Scholarships': 'scholarship',
     'Study Abroad': 'abroad-consultancy',
@@ -201,7 +201,7 @@ export default function HomeScreen() {
       return 'scholarships';
     }
     if (normalized === 'masterclass' || normalized === 'masterclasses') {
-      return 'master class';
+      return 'career & personality videos';
     }
     return normalized;
   };

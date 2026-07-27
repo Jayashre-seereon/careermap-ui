@@ -45,7 +45,7 @@ export const moduleCards = [
         tone: palette.purple,
     },
     {
-        title: 'Master Class',
+        title: 'Career & Personality Videos',
         subtitle: 'Short expert-led learning videos.',
         icon: 'school-outline',
         route: '/(drawer)/(tabs)/learn',
