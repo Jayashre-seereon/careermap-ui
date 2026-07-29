@@ -197,6 +197,9 @@ export default function HomeScreen() {
   const normalizeModuleTitle = (value) => value?.trim().toLowerCase().replace(/\s+/g, ' ');
   const resolveModuleLookupKey = (value) => {
     const normalized = normalizeModuleTitle(value);
+    if (normalized === 'assessment' || normalized === 'career psychometric assessment') {
+      return 'career psychometric assessment';
+    }
     if (normalized === 'scholarship') {
       return 'scholarships';
     }
@@ -204,6 +207,10 @@ export default function HomeScreen() {
       return 'career & personality videos';
     }
     return normalized;
+  };
+  const isCareerPsychometricAssessmentModule = (card) => {
+    const normalizedTitle = normalizeModuleTitle(card?.lockTitle || card?.title || '');
+    return normalizedTitle === 'career psychometric assessment' || normalizedTitle === 'assessment';
   };
   useEffect(() => {
     let isMounted = true;
@@ -454,6 +461,7 @@ export default function HomeScreen() {
   };
   const handleModulePress = async (card) => {
     const moduleId = Number(card?.id);
+    const isAssessmentModule = isCareerPsychometricAssessmentModule(card);
 
     if (!Number.isFinite(moduleId)) {
       const fallbackFeature = featureByTitle[card?.lockTitle || card?.title || ''];
@@ -469,6 +477,29 @@ export default function HomeScreen() {
       }
 
       router.push(card.route);
+      return;
+    }
+
+    if (isAssessmentModule) {
+      const explicitStatus = String(card?.accessStatus || '').toLowerCase();
+
+      if (explicitStatus === 'locked') {
+        setLockedModule({
+          title: card.title,
+          route: card.route,
+          moduleId,
+          message: 'This module is locked. Please purchase a subscription to continue accessing this module.',
+        });
+        return;
+      }
+
+      router.push({
+        pathname: card.route,
+        params: {
+          moduleId: String(moduleId),
+          accessStatus: explicitStatus || 'unlocked',
+        },
+      });
       return;
     }
 

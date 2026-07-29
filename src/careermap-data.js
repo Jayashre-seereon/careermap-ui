@@ -38,7 +38,7 @@ export const moduleCards = [
         tone: palette.blue,
     },
     {
-        title: 'Assessment',
+        title: 'Career Psychometric Assessment',
         subtitle: 'Discover aptitude and personality insights.',
         icon: 'analytics-outline',
         route: '/(drawer)/(tabs)/assessment',
