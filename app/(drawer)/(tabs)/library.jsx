@@ -238,6 +238,12 @@ function normalizeInstituteItems(value) {
         };
     });
 }
+function normalizeCountry(value) {
+    return String(value || '').trim().toLowerCase();
+}
+function normalizeState(value) {
+    return String(value || '').trim().toLowerCase();
+}
 function groupInstitutesByTopStatus(value) {
     const institutes = normalizeInstituteItems(value);
     const referenceState = 'Odisha';
@@ -582,7 +588,10 @@ export default function CareerLibraryScreen() {
     const [selectedSecondCategory, setSelectedSecondCategory] = useState(null);
     const [selectedSubCategory, setSelectedSubCategory] = useState(null);
     const [selectedDetailSource, setSelectedDetailSource] = useState(null);
-    const [selectedInstituteType, setSelectedInstituteType] = useState('All');
+    const [selectedInstituteCountry, setSelectedInstituteCountry] = useState('All');
+    const [selectedInstituteState, setSelectedInstituteState] = useState('All');
+    const [showInstituteCountryDropdown, setShowInstituteCountryDropdown] = useState(false);
+    const [showInstituteStateDropdown, setShowInstituteStateDropdown] = useState(false);
     const [detailReturnLevel, setDetailReturnLevel] = useState('subcategory');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -1025,19 +1034,28 @@ export default function CareerLibraryScreen() {
         const title = getDetailTitle(detail);
         const instituteGroups = groupInstitutesByTopStatus(detail?.institutions);
         const salaryBullets = toList(detail?.salaryRanges).flatMap((salary) => getSalaryBullets(salary));
-        const instituteTypeFilter = String(selectedInstituteType || 'All').toLowerCase();
-        const filteredTopInstitutes = instituteGroups.topInstitutes.filter((institution) => {
-            if (!instituteTypeFilter || instituteTypeFilter === 'all') {
-                return true;
+        const countryOptions = ['All', 'India', 'Other'];
+        const outsideInstitutes = instituteGroups.outsideInstitutes;
+        const stateOptions = selectedInstituteCountry === 'India'
+            ? ['All', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Chandigarh', 'Puducherry', 'Andaman and Nicobar Islands', 'Dadra and Nagar Haveli and Daman and Diu', 'Lakshadweep']
+            : selectedInstituteCountry === 'Other'
+                ? ['All', ...Array.from(new Set(outsideInstitutes.filter((institution) => normalizeCountry(institution?.country || institution?.countruy) === 'other').map((institution) => institution?.state).filter(Boolean)))]
+                : ['All', ...Array.from(new Set(outsideInstitutes.map((institution) => institution?.state).filter(Boolean)))];
+        const filteredTopInstitutes = instituteGroups.topInstitutes;
+        const filteredOutsideInstitutes = outsideInstitutes.filter((institution) => {
+            const country = normalizeCountry(institution?.country || institution?.countruy);
+            if (selectedInstituteCountry === 'India' && country !== 'india') {
+                return false;
             }
-            return String(institution?.type || '').toLowerCase().includes(instituteTypeFilter);
-        });
-        const filteredOutsideInstitutes = instituteGroups.outsideInstitutes.filter((institution) => {
-            if (!instituteTypeFilter || instituteTypeFilter === 'all') {
-                return true;
+            if (selectedInstituteCountry === 'Other' && country !== 'other') {
+                return false;
             }
-            return String(institution?.type || '').toLowerCase().includes(instituteTypeFilter);
+            if (selectedInstituteState !== 'All' && normalizeState(institution?.state) !== normalizeState(selectedInstituteState)) {
+                return false;
+            }
+            return true;
         });
+        const hasFilteredOutsideInstitutes = filteredOutsideInstitutes.length > 0;
         return (<StaggerFadeUpItem key={`detail-${detail?.id ?? index}`} index={index}>
           <View className="mb-4">
      {detail?.media ? (
@@ -1229,14 +1247,6 @@ export default function CareerLibraryScreen() {
                 <Ionicons name="school-outline" size={16} color={palette.primary}/>
                 <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Top Institutes</Text>
               </View>
-              <View className="mb-3 flex-row flex-wrap gap-2">
-                {['All', 'Government', 'Private'].map((type) => {
-                    const active = selectedInstituteType === type;
-                    return (<Pressable key={type} onPress={() => setSelectedInstituteType(type)} className={`rounded-full px-3 py-1.5 ${active ? 'bg-brand' : preferences.darkMode ? 'bg-[#1a1a1a]' : 'bg-[#f2ebe6]'}`}>
-                        <Text className={`text-[11px] font-bold ${active ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{type}</Text>
-                      </Pressable>);
-                })}
-              </View>
               <View className="gap-4">
             {filteredTopInstitutes.length > 0 ? (<View>
     <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
@@ -1263,6 +1273,65 @@ export default function CareerLibraryScreen() {
       </View>))}
   </View>) : null}
              {filteredOutsideInstitutes.length > 0 ? (<View>
+    <View className="mb-3 gap-2">
+      <View className="relative z-20">
+        <Pressable
+          onPress={() => setShowInstituteCountryDropdown((value) => !value)}
+          className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
+        >
+          <Text className={`text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+            {selectedInstituteCountry === 'All' ? 'All Countries' : selectedInstituteCountry}
+          </Text>
+          <Ionicons name={showInstituteCountryDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text}/>
+        </Pressable>
+        {showInstituteCountryDropdown ? (
+          <View className={`mt-2 overflow-hidden rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
+            {countryOptions.map((option) => (
+              <Pressable
+                key={option}
+                onPress={() => {
+                  setSelectedInstituteCountry(option);
+                  setSelectedInstituteState('All');
+                  setShowInstituteCountryDropdown(false);
+                }}
+                className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
+              >
+                <Text className={`text-[13px] font-semibold ${selectedInstituteCountry === option ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{option}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+      </View>
+      <View className="relative z-10">
+        <Pressable
+          onPress={() => setShowInstituteStateDropdown((value) => !value)}
+          className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
+        >
+          <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+            {selectedInstituteState === 'All' ? 'All States' : selectedInstituteState}
+          </Text>
+          <Ionicons name={showInstituteStateDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text}/>
+        </Pressable>
+        {showInstituteStateDropdown ? (
+          <View className={`mt-2 max-h-[220px] overflow-hidden rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
+            <ScrollView keyboardShouldPersistTaps="handled">
+              {stateOptions.map((option) => (
+                <Pressable
+                  key={option}
+                  onPress={() => {
+                    setSelectedInstituteState(option);
+                    setShowInstituteStateDropdown(false);
+                  }}
+                  className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
+                >
+                  <Text className={`text-[13px] font-semibold ${selectedInstituteState === option ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{option}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+      </View>
+    </View>
     <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
       {instituteGroups.referenceState ? `Top Institutes Outside ${instituteGroups.referenceState}` : 'Top Institutes Outside State'}
     </Text>
@@ -1286,6 +1355,22 @@ export default function CareerLibraryScreen() {
           </Pressable>) : null}
       </View>))}
   </View>) : null}
+            {!hasFilteredOutsideInstitutes ? (<View className="items-center gap-2 rounded-[16px] border border-dashed border-[#f0e4e2] bg-[#fffaf8] px-4 py-5">
+                <Ionicons name="alert-circle-outline" size={22} color={palette.primary}/>
+                <Text className={`text-center text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                  No institutes found for the selected state.
+                </Text>
+                <Pressable
+                  onPress={() => setSelectedInstituteState('All')}
+                  className="flex-row items-center gap-1 rounded-full px-3 py-2"
+                  style={{ backgroundColor: `${palette.primary}12` }}
+                >
+                  <Ionicons name="close-circle-outline" size={16} color={palette.primary}/>
+                  <Text className="text-[12px] font-bold" style={{ color: palette.primary }}>
+                    Clear state filter
+                  </Text>
+                </Pressable>
+              </View>) : null}
                 {!filteredTopInstitutes.length && !filteredOutsideInstitutes.length ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>Institution details not available.</Text>) : null}
               </View>
             </View>
