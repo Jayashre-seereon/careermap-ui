@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, Text, View, Linking, TextInput, Pressable } from 'react-native';
+import { Modal, ScrollView, Text, View, Linking, TextInput, Pressable } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getEntranceExams } from '../../src/api/entranceExamApi';
@@ -30,7 +30,9 @@ const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 const [secondCategorySearchQuery, setSecondCategorySearchQuery] = useState('');
 const [showSecondCategoryDropdown, setShowSecondCategoryDropdown] = useState(false);
 const [subCategorySearchQuery, setSubCategorySearchQuery] = useState('');
-const [showSubCategoryDropdown, setShowSubCategoryDropdown] = useState(false);
+    const [showSubCategoryDropdown, setShowSubCategoryDropdown] = useState(false);
+    const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+    const [activeDescription, setActiveDescription] = useState('');
     useEffect(() => {
         let isMounted = true;
 
@@ -504,9 +506,6 @@ const filtered = useMemo(() => {
                                 setShowUnlockSheet(true);
                                 return;
                             }
-                            if (exam.website && exam.website !== '#') {
-                                Linking.openURL(exam.website);
-                            }
                         }}
                     >
                        <View className="flex-row items-center gap-3">
@@ -533,29 +532,17 @@ const filtered = useMemo(() => {
                                         </View>
                                     )}
                                 </View>
-
-                              
-                            </View>
-
-                        </View>
-                          {/* Dates and Button in one row */}
-                               <View className="flex-row items-center gap-2 pt-3">
-
-                                    {/* Issue Date */}
+                                <View className="flex-row flex-wrap items-center gap-2">
                                     <View className="rounded-[10px] px-2 py-1" style={{ backgroundColor: `${palette.orange}20` }}>
                                         <Text className="text-[9px] font-bold uppercase" style={{ color: palette.orange }}>
                                             Issue: {exam.issueDate}
                                         </Text>
                                     </View>
-
-                                    {/* Last Date */}
                                     <View className="rounded-[10px] px-2 py-1" style={{ backgroundColor: `${palette.green}20` }}>
                                         <Text className="text-[9px] font-bold uppercase" style={{ color: palette.green }}>
                                             Last: {exam.lastDate}
                                         </Text>
                                     </View>
-
-                                    {/* Visit Website Button */}
                                     <AnimatedPressable
                                         onPress={(e) => {
                                             e.stopPropagation();
@@ -565,14 +552,32 @@ const filtered = useMemo(() => {
                                             }
                                             if (exam.website) Linking.openURL(exam.website);
                                         }}
-                                        className="px-8 "
+                                        className="rounded-full px-2 py-1.5"
                                     >
                                         <Text className="text-[10px] font-bold text-brand">
                                             Visit Website
                                         </Text>
                                     </AnimatedPressable>
-
+                                    <Pressable
+                                        onPress={(e) => {
+                                            e.stopPropagation();
+                                            if (!cardUnlocked) {
+                                                setShowUnlockSheet(true);
+                                                return;
+                                            }
+                                            setActiveDescription(exam.about || 'Description not available.');
+                                            setShowDescriptionModal(true);
+                                        }}
+                                        className="rounded-full px-2 py-1.5"
+                                    >
+                                        <Text className="text-[10px] font-bold text-brand">
+                                            View
+                                        </Text>
+                                    </Pressable>
                                 </View>
+                            </View>
+
+                        </View>
                     </AnimatedPressable>
                 );})}
 
@@ -593,6 +598,35 @@ const filtered = useMemo(() => {
                     }}
                 />
             ) : null}
+            <Modal
+                visible={showDescriptionModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowDescriptionModal(false)}
+            >
+                <Pressable
+                    onPress={() => setShowDescriptionModal(false)}
+                    className="flex-1 items-center justify-center bg-black/50 px-5"
+                >
+                    <Pressable
+                        onPress={() => {}}
+                        className={`w-full max-w-[360px] rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-[#e8dfda] bg-white'}`}
+                        style={{ maxHeight: '75%' }}
+                    >
+                        <View className="mb-4 flex-row items-center justify-between">
+                            <Text className={`text-[18px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Description</Text>
+                            <Pressable onPress={() => setShowDescriptionModal(false)} className="h-8 w-8 items-center justify-center rounded-full bg-[#f2ebe6]">
+                                <Ionicons name="close" size={18} color={palette.text}/>
+                            </Pressable>
+                        </View>
+                        <ScrollView style={{ flexGrow: 0 }}>
+                            <Text className={`text-[14px] leading-6 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                                {activeDescription}
+                            </Text>
+                        </ScrollView>
+                    </Pressable>
+                </Pressable>
+            </Modal>
         </Screen>
     );
 }
