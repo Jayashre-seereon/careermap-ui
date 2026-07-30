@@ -174,6 +174,17 @@ export default function HomeScreen() {
     'Scholarships': 'scholarship',
     'Study Abroad': 'abroad-consultancy',
   };
+  const moduleOrder = [
+    'Career Archive',
+    'Entrance Exam',
+    'Institutes',
+    'Scholarship',
+    'Career Psychometric Assessment',
+    'Book Your Mentor',
+    'Career & Personality Videos',
+    'Study Abroad',
+    'Quiz',
+  ];
   const sectionTargets = useMemo(() => ({
     mentors: {
       title: 'Mentor Access Locked',
@@ -316,7 +327,25 @@ export default function HomeScreen() {
           accessStatus: String(module.accessStatus || '').toLowerCase(),
         };
       })
-      .filter(Boolean);
+      .filter(Boolean)
+      .sort((left, right) => {
+        const leftIndex = moduleOrder.indexOf(left.title);
+        const rightIndex = moduleOrder.indexOf(right.title);
+
+        if (leftIndex === -1 && rightIndex === -1) {
+          return 0;
+        }
+
+        if (leftIndex === -1) {
+          return 1;
+        }
+
+        if (rightIndex === -1) {
+          return -1;
+        }
+
+        return leftIndex - rightIndex;
+      });
   }, [dashboardData?.modules]);
   const mentorAccentPalette = [palette.primary, palette.blue, palette.orange, palette.secondary, palette.green];
 
