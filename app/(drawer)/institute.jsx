@@ -22,6 +22,45 @@ const getInstituteInitials = (name) => {
     return initials || 'I';
 };
 
+const INDIA_STATES = [
+    'Andhra Pradesh',
+    'Arunachal Pradesh',
+    'Assam',
+    'Bihar',
+    'Chhattisgarh',
+    'Goa',
+    'Gujarat',
+    'Haryana',
+    'Himachal Pradesh',
+    'Jharkhand',
+    'Karnataka',
+    'Kerala',
+    'Madhya Pradesh',
+    'Maharashtra',
+    'Manipur',
+    'Meghalaya',
+    'Mizoram',
+    'Nagaland',
+    'Odisha',
+    'Punjab',
+    'Rajasthan',
+    'Sikkim',
+    'Tamil Nadu',
+    'Telangana',
+    'Tripura',
+    'Uttar Pradesh',
+    'Uttarakhand',
+    'West Bengal',
+    'Delhi',
+    'Jammu and Kashmir',
+    'Ladakh',
+    'Chandigarh',
+    'Puducherry',
+    'Andaman and Nicobar Islands',
+    'Dadra and Nagar Haveli and Daman and Diu',
+    'Lakshadweep',
+];
+
 const renderInstituteLogo = (item, size = 52) => {
     if (item?.logo) {
         return (<Image source={{ uri: item.logo }} resizeMode="cover" style={{
@@ -144,18 +183,20 @@ const [subCategorySearchQuery, setSubCategorySearchQuery] = useState('');
             isMounted = false;
         };
     }, [resolvedModuleId]);
-const countryOptions = useMemo(
-    () => ['All', ...Array.from(new Set(institutes.map((item) => item.country).filter(Boolean)))],
-    [institutes]
-);
+const countryOptions = ['All', 'India', 'Other'];
     const typeOptions = useMemo(
         () => ['All', ...Array.from(new Set(institutes.map((item) => item.type).filter(Boolean)))],
         [institutes]
     );
-    const stateOptions = useMemo(
-        () => ['All', ...Array.from(new Set(institutes.map((item) => item.state).filter(Boolean)))],
-        [institutes]
-    );
+    const stateOptions = useMemo(() => {
+        const source = countryFilter === 'India'
+            ? INDIA_STATES
+            : countryFilter === 'Other'
+                ? Array.from(new Set(institutes.filter((item) => String(item.country || '').trim().toLowerCase() !== 'india').map((item) => item.state).filter(Boolean)))
+                : Array.from(new Set(institutes.map((item) => item.state).filter(Boolean)));
+
+        return ['All', ...source];
+    }, [countryFilter, institutes]);
     const categoryOptions = useMemo(
         () => buildHierarchyOptions(institutes, 'category', { secondcategory: secondCategoryFilter, subcategory: subCategoryFilter }),
         [institutes, secondCategoryFilter, subCategoryFilter]
@@ -197,6 +238,11 @@ const searchableStateOptions = useMemo(() => {
     return source.filter((o) => String(o).toLowerCase().includes(query));
 }, [stateOptions, stateSearchQuery]);
 
+useEffect(() => {
+    setStateFilter('All');
+    setStateSearchQuery('');
+}, [countryFilter]);
+
 const searchableCategoryOptions = useMemo(() => {
     const query = categorySearchQuery.trim().toLowerCase();
     if (!query) return categoryOptions;
@@ -220,8 +266,12 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
         let source = [...institutes];
 
         if (countryFilter !== 'All') {
-    source = source.filter((item) => item.country === countryFilter);
-}
+            if (countryFilter === 'Other') {
+                source = source.filter((item) => String(item.country || '').trim().toLowerCase() !== 'india');
+            } else {
+                source = source.filter((item) => String(item.country || '').trim() === countryFilter);
+            }
+        }
 
         if (typeFilter !== 'All') {
             source = source.filter((item) => item.type === typeFilter);
@@ -345,7 +395,48 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
                 </View>
             ) : null}
         </View>
-
+ {/* Country */}
+        <View className="relative z-10">
+            <Pressable
+                onPress={() => setShowCountryDropdown((value) => !value)}
+                className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
+            >
+                <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                    {countryFilter !== 'All' ? countryFilter : 'All Countries'}
+                </Text>
+                <Ionicons name={showCountryDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text} />
+            </Pressable>
+            {showCountryDropdown ? (
+                <View className={`mt-2 max-h-[280px] rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
+                    <View className="p-2">
+                        <TextInput
+                            value={countrySearchQuery}
+                            onChangeText={setCountrySearchQuery}
+                            placeholder="Type to search..."
+                            placeholderTextColor={preferences.darkMode ? '#666666' : '#a89a94'}
+                            autoFocus
+                            className={`rounded-[10px] border px-3 py-2 text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-[#f2ebe6] text-ink'}`}
+                        />
+                    </View>
+                    <ScrollView className="max-h-[220px]" keyboardShouldPersistTaps="handled">
+                        {countryFilter !== 'All' ? (
+                            <Pressable onPress={() => { setCountryFilter('All'); setCountrySearchQuery(''); setShowCountryDropdown(false); }} className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
+                                <Text className="text-[13px] font-bold text-brand">All Countries</Text>
+                            </Pressable>
+                        ) : null}
+                        {searchableCountryOptions.length === 0 ? (
+                            <Text className={`px-4 py-4 text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No results found</Text>
+                        ) : (
+                            searchableCountryOptions.map((opt) => (
+                                <Pressable key={opt} onPress={() => { setCountryFilter(opt); setCountrySearchQuery(''); setShowCountryDropdown(false); }} className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
+                                    <Text numberOfLines={1} className={`text-[13px] font-semibold ${opt === countryFilter ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{opt}</Text>
+                                </Pressable>
+                            ))
+                        )}
+                    </ScrollView>
+                </View>
+            ) : null}
+        </View>
         {/* State */}
         <View className="relative z-20">
             <Pressable
@@ -389,48 +480,7 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
             ) : null}
         </View>
 
-        {/* Country */}
-        <View className="relative z-10">
-            <Pressable
-                onPress={() => setShowCountryDropdown((value) => !value)}
-                className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
-            >
-                <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                    {countryFilter !== 'All' ? countryFilter : 'All Countries'}
-                </Text>
-                <Ionicons name={showCountryDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text} />
-            </Pressable>
-            {showCountryDropdown ? (
-                <View className={`mt-2 max-h-[280px] rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
-                    <View className="p-2">
-                        <TextInput
-                            value={countrySearchQuery}
-                            onChangeText={setCountrySearchQuery}
-                            placeholder="Type to search..."
-                            placeholderTextColor={preferences.darkMode ? '#666666' : '#a89a94'}
-                            autoFocus
-                            className={`rounded-[10px] border px-3 py-2 text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-[#f2ebe6] text-ink'}`}
-                        />
-                    </View>
-                    <ScrollView className="max-h-[220px]" keyboardShouldPersistTaps="handled">
-                        {countryFilter !== 'All' ? (
-                            <Pressable onPress={() => { setCountryFilter('All'); setCountrySearchQuery(''); setShowCountryDropdown(false); }} className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
-                                <Text className="text-[13px] font-bold text-brand">All Countries</Text>
-                            </Pressable>
-                        ) : null}
-                        {searchableCountryOptions.length === 0 ? (
-                            <Text className={`px-4 py-4 text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No results found</Text>
-                        ) : (
-                            searchableCountryOptions.map((opt) => (
-                                <Pressable key={opt} onPress={() => { setCountryFilter(opt); setCountrySearchQuery(''); setShowCountryDropdown(false); }} className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
-                                    <Text numberOfLines={1} className={`text-[13px] font-semibold ${opt === countryFilter ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{opt}</Text>
-                                </Pressable>
-                            ))
-                        )}
-                    </ScrollView>
-                </View>
-            ) : null}
-        </View>
+       
 
         {/* Category */}
         <View className="relative z-10">
