@@ -588,6 +588,7 @@ export default function CareerLibraryScreen() {
     const [selectedSecondCategory, setSelectedSecondCategory] = useState(null);
     const [selectedSubCategory, setSelectedSubCategory] = useState(null);
     const [selectedDetailSource, setSelectedDetailSource] = useState(null);
+    const [selectedInstituteType, setSelectedInstituteType] = useState('All');
     const [selectedInstituteCountry, setSelectedInstituteCountry] = useState('All');
     const [selectedInstituteState, setSelectedInstituteState] = useState('All');
     const [showInstituteCountryDropdown, setShowInstituteCountryDropdown] = useState(false);
@@ -1034,6 +1035,7 @@ export default function CareerLibraryScreen() {
         const title = getDetailTitle(detail);
         const instituteGroups = groupInstitutesByTopStatus(detail?.institutions);
         const salaryBullets = toList(detail?.salaryRanges).flatMap((salary) => getSalaryBullets(salary));
+        const instituteTypeFilter = String(selectedInstituteType || 'All').trim().toLowerCase();
         const countryOptions = ['All', 'India', 'Other'];
         const outsideInstitutes = instituteGroups.outsideInstitutes;
         const stateOptions = selectedInstituteCountry === 'India'
@@ -1041,7 +1043,12 @@ export default function CareerLibraryScreen() {
             : selectedInstituteCountry === 'Other'
                 ? ['All', ...Array.from(new Set(outsideInstitutes.filter((institution) => normalizeCountry(institution?.country || institution?.countruy) === 'other').map((institution) => institution?.state).filter(Boolean)))]
                 : ['All', ...Array.from(new Set(outsideInstitutes.map((institution) => institution?.state).filter(Boolean)))];
-        const filteredTopInstitutes = instituteGroups.topInstitutes;
+        const filteredTopInstitutes = instituteGroups.topInstitutes.filter((institution) => {
+            if (!instituteTypeFilter || instituteTypeFilter === 'all') {
+                return true;
+            }
+            return String(institution?.type || '').trim().toLowerCase().includes(instituteTypeFilter);
+        });
         const filteredOutsideInstitutes = outsideInstitutes.filter((institution) => {
             const country = normalizeCountry(institution?.country || institution?.countruy);
             if (selectedInstituteCountry === 'India' && country !== 'india') {
@@ -1051,6 +1058,12 @@ export default function CareerLibraryScreen() {
                 return false;
             }
             if (selectedInstituteState !== 'All' && normalizeState(institution?.state) !== normalizeState(selectedInstituteState)) {
+                return false;
+            }
+            if (!instituteTypeFilter || instituteTypeFilter === 'all') {
+                return true;
+            }
+            if (!String(institution?.type || '').trim().toLowerCase().includes(instituteTypeFilter)) {
                 return false;
             }
             return true;
@@ -1246,6 +1259,22 @@ export default function CareerLibraryScreen() {
               <View className="mb-3 flex-row items-center gap-2">
                 <Ionicons name="school-outline" size={16} color={palette.primary}/>
                 <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Top Institutes</Text>
+              </View>
+              <View className="mb-3 flex-row flex-wrap gap-2">
+                {['All', 'Government', 'Private'].map((type) => {
+                  const active = selectedInstituteType === type;
+                  return (
+                    <Pressable
+                      key={type}
+                      onPress={() => setSelectedInstituteType(type)}
+                      className={`rounded-full px-3 py-1.5 ${active ? 'bg-brand' : preferences.darkMode ? 'bg-[#1a1a1a]' : 'bg-[#f2ebe6]'}`}
+                    >
+                      <Text className={`text-[11px] font-bold ${active ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                        {type}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
               </View>
               <View className="gap-4">
             {filteredTopInstitutes.length > 0 ? (<View>
