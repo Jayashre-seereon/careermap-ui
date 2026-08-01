@@ -174,6 +174,7 @@ export default function HomeScreen() {
     'Book Your Mentor': 'book-mentor',
     'Scholarships': 'scholarship',
     'Study Abroad': 'abroad-consultancy',
+    'Career News Letter': 'career-news-letter',
   };
   const moduleOrder = [
     'Career Archive',
@@ -185,6 +186,7 @@ export default function HomeScreen() {
     'Career & Personality Videos',
     'Study Abroad',
     'Quiz',
+    'Career News Letter',
   ];
   const sectionTargets = useMemo(() => ({
     mentors: {
@@ -210,6 +212,12 @@ export default function HomeScreen() {
       matchers: ['institute'],
       route: '/(drawer)/institute',
       subtitle: 'Unlock institute listings to browse the full college catalog.',
+    },
+    newsletter: {
+      title: 'Career News Letter Access Locked',
+      matchers: ['career news letter', 'career newsletter', 'newsletter'],
+      route: '/(drawer)/newsletter',
+      subtitle: 'Unlock career news letters to read the latest updates and articles.',
     },
   }), []);
   const normalizeModuleTitle = (value) => value?.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -241,6 +249,7 @@ export default function HomeScreen() {
           entranceExam: { status: 'locked' },
           scholarships: { status: 'locked' },
           institutes: { status: 'locked' },
+          newsletter: { status: 'locked' },
         };
 
         for (const [sectionName, config] of Object.entries(sectionTargets)) {
@@ -275,6 +284,7 @@ export default function HomeScreen() {
             entranceExam: { status: 'locked' },
             scholarships: { status: 'locked' },
             institutes: { status: 'locked' },
+            newsletter: { status: 'locked' },
           });
         }
       }

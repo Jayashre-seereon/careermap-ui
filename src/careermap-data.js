@@ -93,6 +93,13 @@ export const moduleCards = [
         route: '/(drawer)/abroad',
         tone: palette.purple,
     },
+    {
+        title: 'Career News Letter',
+        subtitle: 'Read the latest career updates and highlights.',
+        icon: 'newspaper-outline',
+        route: '/(drawer)/newsletter',
+        tone: palette.pink,
+    },
 ];
 export const entranceExams = [
    

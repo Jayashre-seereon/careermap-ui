@@ -61,14 +61,19 @@ export default function DrawerRoot() {
             title: 'Career & Personality Videos',
             drawerIcon: renderDrawerIcon('school-outline'),
         }}/>
+        <Drawer.Screen name="newsletter" options={{
+            title: 'Career News Letter',
+            drawerIcon: renderDrawerIcon('newspaper-outline'),
+        }}/>
+         <Drawer.Screen name="book-mentor" options={{
+            title: 'Book Your Mentor',
+            drawerIcon: renderDrawerIcon('people-outline'),
+        }}/>
         <Drawer.Screen name="settings" options={{
             title: 'Settings',
             drawerIcon: renderDrawerIcon('settings-outline'),
         }}/>
-        <Drawer.Screen name="book-mentor" options={{
-            title: 'Book Your Mentor',
-            drawerIcon: renderDrawerIcon('people-outline'),
-        }}/>
+       
         <Drawer.Screen name="psychometric-test" options={{
             drawerItemStyle: { display: 'none' },
         }}/>
