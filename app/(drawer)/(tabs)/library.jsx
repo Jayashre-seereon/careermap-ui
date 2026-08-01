@@ -841,18 +841,25 @@ export default function CareerLibraryScreen() {
               <Ionicons name="time-outline" size={14} color={palette.primary} className="mr-1"/> Preview active for {previewRemaining}s
               </Text>
             </View>) : null}
-{detail?.description ? (
-    <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-        <View className="mb-3 flex-row items-center gap-2">
-            <Ionicons name="information-circle-outline" size={16} color={palette.primary}/>
-            <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>About</Text>
+{toList(detail?.descriptions).length > 0 ? (
+  <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+    {toList(detail?.descriptions)
+      .slice()
+      .sort((a, b) => (a?.sortOrder ?? 0) - (b?.sortOrder ?? 0))
+      .map((section, sectionIdx, arr) => (
+        <View
+          key={section?.id ?? sectionIdx}
+          className={sectionIdx < arr.length - 1 ? `mb-3 pb-3 border-b ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}` : ''}
+        >
+          <View className="mb-2 flex-row items-center gap-2">
+             <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{section?.title || 'About'}</Text>
+          </View>
+          <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+            {stripHtml(section?.description)}
+          </Text>
         </View>
-       <Text className={`text-[13px] leading-5 ${
-  preferences.darkMode ? 'text-gray-300' : 'text-gray-900'
-}`}>
-  {detail.description}
-</Text>
-    </View>
+      ))}
+  </View>
 ) : null}
  <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
   <View className="mb-3 flex-row items-center gap-2">
