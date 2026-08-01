@@ -474,7 +474,30 @@ export default function CareerLibraryScreen() {
             }
             throw err;
         }
-    }
+    };
+    const loadDetailItemsWithPreview = async ({ type, id, item, nextItems }) => {
+        let previewId = null;
+
+        if (moduleStatus === 'preview') {
+            previewId = await createPreviewSession(type, id, item);
+            if (!previewId) {
+                return null;
+            }
+        }
+
+        let detailItems = nextItems;
+        if (detailItems.length === 0) {
+            try {
+                const detailResponse = await getCareerLibraryDetails(id, resolvedModuleId, previewId);
+                const detailData = detailResponse ?? {};
+                detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
+            } catch (_err) {
+                detailItems = [];
+            }
+        }
+
+        return detailItems;
+    };
     const handleClick = async (type, id, item) => {
         setLoading(true);
         setError('');
@@ -521,15 +544,10 @@ export default function CareerLibraryScreen() {
                     setCurrentLevel('secondcategory');
                 }
                 else if (data.type === 'details') {
-                    let detailItems = nextItems;
-                    if (detailItems.length === 0) {
-                        try {
-                            const detailResponse = await getCareerLibraryDetails(id);
-                            const detailData = detailResponse ?? {};
-                            detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
-                        } catch (_err) {
-                            detailItems = [];
-                        }
+                    const detailItems = await loadDetailItemsWithPreview({ type, id, item, nextItems });
+                    if (!detailItems) {
+                        setLoading(false);
+                        return;
                     }
                     setSelectedDetailSource(item);
                     setDetails(detailItems);
@@ -566,15 +584,10 @@ export default function CareerLibraryScreen() {
                     setCurrentLevel('subcategory');
                 }
                 else if (data.type === 'details') {
-                    let detailItems = nextItems;
-                    if (detailItems.length === 0) {
-                        try {
-                            const detailResponse = await getCareerLibraryDetails(id);
-                            const detailData = detailResponse ?? {};
-                            detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
-                        } catch (_err) {
-                            detailItems = [];
-                        }
+                    const detailItems = await loadDetailItemsWithPreview({ type, id, item, nextItems });
+                    if (!detailItems) {
+                        setLoading(false);
+                        return;
                     }
                     setSelectedDetailSource(item);
                     setDetails(detailItems);
@@ -605,25 +618,10 @@ export default function CareerLibraryScreen() {
                 const data = response ?? {};
                 const nextItems = Array.isArray(data?.data) ? data.data : [];
                 if (data.type === 'details') {
-                    let previewId = null;
-
-                    if (moduleStatus === 'preview') {
-                        previewId = await createPreviewSession('sub', id, item);
-                        if (!previewId) {
-                            setLoading(false);
-                            return;
-                        }
-                    }
-
-                    let detailItems = nextItems;
-                    if (detailItems.length === 0) {
-                        try {
-                            const detailResponse = await getCareerLibraryDetails(id, resolvedModuleId, previewId);
-                            const detailData = detailResponse ?? {};
-                            detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
-                        } catch (_err) {
-                            detailItems = [];
-                        }
+                    const detailItems = await loadDetailItemsWithPreview({ type, id, item, nextItems });
+                    if (!detailItems) {
+                        setLoading(false);
+                        return;
                     }
                     setSelectedDetailSource(item);
                     setDetails(detailItems);
