@@ -242,7 +242,7 @@ export default function BookMentorScreen() {
       </Screen>);
     }
     return (<Screen>
-      <SectionHeader title="Book Mentor" subtitle="Mentor list and booking flow adapted closely from the prototype."/>
+      <SectionHeader title="Book Your Mentor" subtitle="Mentor list and booking flow adapted closely from the prototype."/>
       {!moduleAccessResolved ? (<Text className="text-[13px] text-muted">Checking access...</Text>) : null}
       <View className="gap-2 rounded-[24px] border border-line bg-card p-5">
         <Text className="text-[20px] font-black text-ink">Expert Guidance for the Next Big Decision</Text>

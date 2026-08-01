@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getEntranceExams } from '../../src/api/entranceExamApi';
@@ -33,6 +33,7 @@ export default function EntranceExamDetailScreen() {
     const { preferences } = useAppState();
     const { examId } = useLocalSearchParams();
     const [entranceExams, setEntranceExams] = useState([]);
+    const [showDescriptionModal, setShowDescriptionModal] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -175,7 +176,42 @@ export default function EntranceExamDetailScreen() {
                         <Text className="text-[18px] font-extrabold text-white">Visit Official Website</Text>
                     </View>
                 </AnimatedPressable>
+                <Pressable
+                    onPress={() => setShowDescriptionModal(true)}
+                    className="items-center"
+                >
+                    <Text className="text-[15px] font-extrabold text-brand">View</Text>
+                </Pressable>
             </View>
+
+            <Modal
+                visible={showDescriptionModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowDescriptionModal(false)}
+            >
+                <Pressable
+                    onPress={() => setShowDescriptionModal(false)}
+                    className="flex-1 items-center justify-center bg-black/50 px-5"
+                >
+                    <Pressable
+                        onPress={() => {}}
+                        className={`w-full max-w-[420px] rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-[#e8dfda] bg-white'}`}
+                    >
+                        <View className="mb-4 flex-row items-center justify-between">
+                            <Text className={`text-[18px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Description</Text>
+                            <Pressable onPress={() => setShowDescriptionModal(false)} className="h-8 w-8 items-center justify-center rounded-full bg-[#f2ebe6]">
+                                <Ionicons name="close" size={18} color={palette.text}/>
+                            </Pressable>
+                        </View>
+                        <ScrollView>
+                            <Text className={`text-[14px] leading-6 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                                {exam.about || 'Description not available.'}
+                            </Text>
+                        </ScrollView>
+                    </Pressable>
+                </Pressable>
+            </Modal>
         </Screen>
     );
 }

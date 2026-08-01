@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { createOrder, getPlans, verifyPayment } from '../../src/api/planApi';
 import { palette, subscriptions as fallbackSubscriptions } from '../../src/careermap-data';
@@ -13,6 +13,45 @@ export default function SubscriptionScreen() {
     const [plans, setPlans] = useState(fallbackSubscriptions);
     const [isLoading, setIsLoading] = useState(true);
     const [isProcessingPlan, setIsProcessingPlan] = useState('');
+
+    const comparePlans = [
+        {
+            label: 'Basic',
+            price: '₹1,500',
+            note: '',
+            features: [true, false, false, false, false, false, false, false, false],
+        },
+        {
+            label: 'Standard',
+            price: '₹3,000',
+            note: '',
+            features: [true, true, true, true, false, false, false, false, false],
+        },
+        {
+            label: 'Most Popular',
+            price: '₹5,000',
+            note: '',
+            features: [true, true, true, true, true, true, true, false, false],
+        },
+        {
+            label: 'Premium',
+            price: '₹7,500',
+            note: '(₹5,000 + ₹2,500)',
+            features: [true, true, true, true, true, true, true, true, true],
+        },
+    ];
+
+    const compareFeatures = [
+        'Initial Career Guidance',
+        'Detailed Psychometric Assessment',
+        'Personalized Career Recommendations',
+        'Comprehensive Career Counselling',
+        'Personalized Career Roadmap',
+        'End-to-End Career Planning',
+        'Annual Career Mentorship & Follow-up Support',
+        'Study Abroad Guidance & Counselling',
+        'Abroad Consultancy Support',
+    ];
     useEffect(() => {
         let isMounted = true;
         const loadPlans = async () => {
@@ -99,6 +138,17 @@ export default function SubscriptionScreen() {
     return (<Screen>
       <SectionHeader title="Subscription Plans" subtitle="Key plans from the Vercel prototype, adapted here as mobile cards."/>
 
+      <View className={`mb-4 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+        <Text className={`text-[14px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Unsure About Your Next Step?</Text>
+        <Text className={`mt-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Take the test, then speak to our counsellor for guided support.</Text>
+        <AnimatedPressable
+          className="mt-3 rounded-[16px] bg-brand px-4 py-3"
+          onPress={() => router.push({ pathname: '/(drawer)/settings', params: { view: 'help' } })}
+        >
+          <Text className="text-center text-[14px] font-extrabold text-white">Speak to our Counsellor</Text>
+        </AnimatedPressable>
+      </View>
+
       {isLoading ? (<View className="flex-1 items-center justify-center gap-3">
           <ActivityIndicator size="large" color={palette.primary}/>
           <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading plans...</Text>
@@ -145,6 +195,65 @@ export default function SubscriptionScreen() {
               </Text>
             </AnimatedPressable>
           </View>))}
+
+        <View className={`mt-2 gap-4 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+          <View className="gap-1">
+            <Text className={`text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Compare features</Text>
+            <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Find the best option by comparing key features.</Text>
+          </View>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="pr-2">
+            <View style={{ minWidth: 820 }} className={`overflow-hidden rounded-[20px] border ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-[#e8dfda]'}`}>
+              <View className={`flex-row flex-nowrap border-b ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-[#f0e8e2] bg-[#faf7f5]'}`}>
+                <View className="w-[255px] shrink-0 px-5 py-4">
+                  <Text className={`text-[16px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Features</Text>
+                </View>
+                {comparePlans.map((plan) => (
+                  <View
+                    key={plan.label}
+                    className={`w-[141px] shrink-0 border-l px-3 py-4 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-[#f0e8e2]'}`}
+                    style={plan.featured ? { backgroundColor: preferences.darkMode ? '#141015' : '#fff7f3' } : null}
+                  >
+                    <View className="items-center gap-0.5">
+                      {plan.featured ? (
+                        <Text className="rounded-full bg-brand px-1.5 py-0.5 text-[9px] font-black text-white">Most Popular</Text>
+                      ) : null}
+                      <Text className={`w-full text-center text-[10px] font-black uppercase tracking-[1px] leading-3 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{plan.label}</Text>
+                      <Text className="text-[14px] font-black text-brand">{plan.price}</Text>
+                      {plan.note ? <Text className={`text-center text-[9px] italic leading-3 ${preferences.darkMode ? 'text-[#8f8f8f]' : 'text-muted'}`}>{plan.note}</Text> : null}
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              {compareFeatures.map((feature, featureIndex) => (
+                <View key={feature} className={`flex-row flex-nowrap ${featureIndex === compareFeatures.length - 1 ? '' : preferences.darkMode ? 'border-b border-[#1a1a1a]' : 'border-b border-[#f0e8e2]'}`}>
+                  <View className="w-[255px] shrink-0 justify-center px-5 py-4">
+                    <Text className={`text-[11px] leading-4 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{feature}</Text>
+                  </View>
+                  {comparePlans.map((plan) => {
+                    const available = plan.features[featureIndex];
+                    return (
+                      <View
+                        key={`${plan.label}-${feature}`}
+                        className={`w-[141px] shrink-0 items-center justify-center border-l px-3 py-4 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-[#f0e8e2]'}`}
+                        style={plan.featured ? { backgroundColor: preferences.darkMode ? 'rgba(255,255,255,0.02)' : '#fffdfb' } : null}
+                      >
+                        {available ? (
+                          <View className="h-5 w-5 items-center justify-center rounded-full" style={{ backgroundColor: palette.primary }}>
+                            <Ionicons name="checkmark" size={12} color="#ffffff"/>
+                          </View>
+                        ) : (
+                          <Ionicons name="close" size={15} color={preferences.darkMode ? '#6d6d6d' : '#c7b8b1'}/>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
       </View>)}
     </Screen>);
 }

@@ -15,195 +15,10 @@ import { Video, ResizeMode } from 'expo-av';
 import { Image } from 'react-native';
 
 const fallbackStreams = [
-    { name: 'Science', emoji: '🔬', desc: 'Medical, Engineering & Research' },
-    { name: 'Commerce', emoji: '📊', desc: 'Business, Finance & Accounting' },
-    { name: 'Arts & Humanities', emoji: '🎨', desc: 'Design, Media & Social Work' },
-    { name: 'Vocational', emoji: '🔧', desc: 'Hospitality, Fashion & More' },
-    { name: 'Neutral', emoji: '⚡', desc: 'Law, Education & Defence' },
-];
-const categories = {
-    Science: [
-        { name: 'Medical', emoji: '🏥' },
-        { name: 'Engineering', emoji: '⚙️' },
-        { name: 'Pure Sciences', emoji: '🔬' },
-        { name: 'Agriculture & Allied', emoji: '🌾' },
-    ],
-    Commerce: [
-        { name: 'Business Management', emoji: '💼' },
-        { name: 'Finance & Banking', emoji: '💰' },
-        { name: 'Accounting & Taxation', emoji: '📋' },
-        { name: 'Marketing & Advertising', emoji: '📢' },
-    ],
-    'Arts & Humanities': [
-        { name: 'Design & Fine Arts', emoji: '🎨' },
-        { name: 'Media & Journalism', emoji: '📺' },
-        { name: 'Literature & Languages', emoji: '📖' },
-        { name: 'Social Sciences', emoji: '🤝' },
-    ],
-    Vocational: [
-        { name: 'Hospitality & Tourism', emoji: '🏨' },
-        { name: 'Fashion & Textile', emoji: '👗' },
-        { name: 'Agriculture & Dairy', emoji: '🌾' },
-        { name: 'Automotive & Mechanical', emoji: '🚗' },
-    ],
-    Neutral: [
-        { name: 'Law & Legal Studies', emoji: '⚖️' },
-        { name: 'Education & Teaching', emoji: '📚' },
-        { name: 'Defence & Security', emoji: '🎖️' },
-        { name: 'Sports & Fitness', emoji: '⚽' },
-    ],
-};
-const programs = {
-    Medical: [
-        { name: 'MBBS', emoji: '🩺' },
-        { name: 'BDS (Dentistry)', emoji: '🦷' },
-        { name: 'BAMS (Ayurveda)', emoji: '🌿' },
-        { name: 'B.Pharm (Pharmacy)', emoji: '💊' },
-        { name: 'B.Sc Nursing', emoji: '🏥' },
-        { name: 'BPT (Physiotherapy)', emoji: '🦴' },
-    ],
-    Engineering: [
-        { name: 'B.Tech / B.E.', emoji: '⚙️' },
-        { name: 'M.Tech', emoji: '🎓' },
-        { name: 'Diploma Engineering', emoji: '📐' },
-        { name: 'B.Arch (Architecture)', emoji: '🏛️' },
-    ],
-    'Pure Sciences': [
-        { name: 'B.Sc Physics', emoji: '⚛️' },
-        { name: 'B.Sc Chemistry', emoji: '🧪' },
-        { name: 'B.Sc Mathematics', emoji: '📐' },
-        { name: 'B.Sc Biology', emoji: '🧬' },
-        { name: 'M.Sc Programs', emoji: '🎓' },
-    ],
-    'Agriculture & Allied': [
-        { name: 'B.Sc Agriculture', emoji: '🌱' },
-        { name: 'B.V.Sc (Veterinary)', emoji: '🐾' },
-        { name: 'B.F.Sc (Fisheries)', emoji: '🐟' },
-        { name: 'B.Sc Forestry', emoji: '🌲' },
-    ],
-    'Business Management': [
-        { name: 'BBA', emoji: '💼' },
-        { name: 'MBA', emoji: '🎓' },
-        { name: 'BMS', emoji: '📊' },
-        { name: 'Entrepreneurship', emoji: '🚀' },
-    ],
-    'Finance & Banking': [
-        { name: 'B.Com (Hons)', emoji: '📋' },
-        { name: 'CA (Chartered Accountant)', emoji: '📈' },
-        { name: 'CFA', emoji: '💹' },
-        { name: 'Banking & Insurance', emoji: '🏦' },
-    ],
-    'Accounting & Taxation': [
-        { name: 'B.Com', emoji: '📋' },
-        { name: 'CA Foundation', emoji: '📈' },
-        { name: 'CS (Company Secretary)', emoji: '📜' },
-        { name: 'CMA', emoji: '📊' },
-    ],
-    'Marketing & Advertising': [
-        { name: 'BBA Marketing', emoji: '📢' },
-        { name: 'B.Com Advertising', emoji: '🎯' },
-        { name: 'Digital Marketing', emoji: '💻' },
-        { name: 'MBA Marketing', emoji: '🎓' },
-    ],
-    'Design & Fine Arts': [
-        { name: 'B.Des', emoji: '🎨' },
-        { name: 'B.F.A', emoji: '🖌️' },
-        { name: 'M.Des', emoji: '🎓' },
-        { name: 'Animation & VFX', emoji: '🎬' },
-    ],
-    'Media & Journalism': [
-        { name: 'B.A Journalism', emoji: '📰' },
-        { name: 'BJMC', emoji: '🎙️' },
-        { name: 'Film Making', emoji: '🎥' },
-        { name: 'Mass Communication', emoji: '📺' },
-    ],
-    'Literature & Languages': [
-        { name: 'B.A English', emoji: '📖' },
-        { name: 'B.A Hindi', emoji: '📝' },
-        { name: 'Foreign Languages', emoji: '🌍' },
-        { name: 'M.A Literature', emoji: '🎓' },
-    ],
-    'Social Sciences': [
-        { name: 'B.A Psychology', emoji: '🧠' },
-        { name: 'B.A Sociology', emoji: '👥' },
-        { name: 'B.A Political Science', emoji: '🏛️' },
-        { name: 'B.S.W (Social Work)', emoji: '🤝' },
-    ],
-    'Hospitality & Tourism': [
-        { name: 'BHM (Hotel Mgmt)', emoji: '🏨' },
-        { name: 'B.Sc Hospitality', emoji: '🍽️' },
-        { name: 'Tourism Management', emoji: '✈️' },
-        { name: 'Culinary Arts', emoji: '👨‍🍳' },
-    ],
-    'Fashion & Textile': [
-        { name: 'B.Des Fashion', emoji: '👗' },
-        { name: 'Textile Design', emoji: '🧵' },
-        { name: 'Fashion Technology', emoji: '✂️' },
-        { name: 'Apparel Management', emoji: '👔' },
-    ],
-    'Agriculture & Dairy': [
-        { name: 'Dairy Technology', emoji: '🥛' },
-        { name: 'Food Technology', emoji: '🍕' },
-        { name: 'Horticulture', emoji: '🌺' },
-        { name: 'Sericulture', emoji: '🦋' },
-    ],
-    'Automotive & Mechanical': [
-        { name: 'Auto Engineering', emoji: '🚗' },
-        { name: 'Mechanical Diploma', emoji: '🔧' },
-        { name: 'ITI Courses', emoji: '🛠️' },
-        { name: 'EV Technology', emoji: '⚡' },
-    ],
-    'Law & Legal Studies': [
-        { name: 'BA LLB (5 Year)', emoji: '⚖️' },
-        { name: 'LLB (3 Year)', emoji: '📜' },
-        { name: 'LLM', emoji: '🎓' },
-        { name: 'Corporate Law', emoji: '🏢' },
-    ],
-    'Education & Teaching': [
-        { name: 'B.Ed', emoji: '📚' },
-        { name: 'D.El.Ed', emoji: '✏️' },
-        { name: 'M.Ed', emoji: '🎓' },
-        { name: 'Special Education', emoji: '🌟' },
-    ],
-    'Defence & Security': [
-        { name: 'NDA', emoji: '🎖️' },
-        { name: 'CDS', emoji: '⭐' },
-        { name: 'Indian Navy', emoji: '⚓' },
-        { name: 'Air Force', emoji: '✈️' },
-    ],
-    'Sports & Fitness': [
-        { name: 'B.P.Ed', emoji: '🏃' },
-        { name: 'Sports Management', emoji: '🏆' },
-        { name: 'Sports Science', emoji: '🧬' },
-        { name: 'Yoga & Naturopathy', emoji: '🧘' },
-    ],
-};
-const specializations = {
-    MBBS: [
-        { name: 'General Medicine', emoji: '🩺' },
-        { name: 'Surgery', emoji: '🔪' },
-    ],
-    'BDS (Dentistry)': [
-        { name: 'Orthodontics', emoji: '🦷' },
-        { name: 'Oral Surgery', emoji: '🔪' },
-    ],
-    'BAMS (Ayurveda)': [
-        { name: 'Panchakarma', emoji: '🌿' },
-        { name: 'Kayachikitsa', emoji: '🍃' },
-    ],
-    'B.Pharm (Pharmacy)': [
-        { name: 'Clinical Pharmacy', emoji: '💊' },
-        { name: 'Pharmaceutical Research', emoji: '🧪' },
-    ],
-    'B.Sc Nursing': [
-        { name: 'Critical Care', emoji: '🏥' },
-        { name: 'Community Health', emoji: '🤝' },
-    ],
-    'BPT (Physiotherapy)': [
-        { name: 'Orthopedic', emoji: '🦴' },
-        { name: 'Neurological', emoji: '🧠' },
-    ],
-};
+   ];
+
+
+
 function normalizeInstituteItems(value) {
     return toList(value).map((item, index) => {
         if (typeof item === 'string') {
@@ -238,6 +53,12 @@ function normalizeInstituteItems(value) {
         };
     });
 }
+function normalizeCountry(value) {
+    return String(value || '').trim().toLowerCase();
+}
+function normalizeState(value) {
+    return String(value || '').trim().toLowerCase();
+}
 function groupInstitutesByTopStatus(value) {
     const institutes = normalizeInstituteItems(value);
     const referenceState = 'Odisha';
@@ -245,128 +66,7 @@ function groupInstitutesByTopStatus(value) {
     const outsideInstitutes = institutes.filter((item) => item.state !== referenceState);
     return { institutes, topInstitutes, outsideInstitutes, referenceState };
 }
-const careerDetails = {
-    'General Medicine': {
-        title: 'General Medicine (MD)',
-        overview: 'General Medicine involves the diagnosis, treatment, and prevention of adult diseases. Physicians in this specialization manage a wide range of health conditions and often serve as the first point of specialist care for patients.',
-        path: ['10+2 (PCB)', 'MBBS (5.5 years)', 'Internship (1 year)', 'MD General Medicine (3 years)', 'Senior Resident', 'Consultant / Professor'],
-        education: 'MBBS followed by MD in General Medicine',
-        exams: ['NEET UG', 'NEET PG', 'AIIMS', 'JIPMER'],
-        jobs: ['General Physician', 'Consultant', 'Hospital Medical Officer', 'Academic Professor', 'ICU Specialist'],
-        salary: '₹8-25 LPA',
-        institutes: ['AIIMS Delhi', 'CMC Vellore', 'JIPMER', 'Maulana Azad Medical College', 'KEM Mumbai'],
-    },
-    'Surgery': {
-        title: 'General Surgery (MS)',
-        overview: 'General Surgery focuses on operative treatment for trauma, abdominal conditions, oncologic cases, and emergency surgical care. Surgeons combine diagnosis, procedural skill, and post-operative management.',
-        path: ['10+2 (PCB)', 'MBBS (5.5 years)', 'Internship', 'MS General Surgery (3 years)', 'MCh Specialization', 'Senior Surgeon'],
-        education: 'MBBS + MS in General Surgery, with MCh for super-specialization',
-        exams: ['NEET UG', 'NEET PG', 'NEET SS'],
-        jobs: ['General Surgeon', 'Laparoscopic Surgeon', 'Trauma Surgeon', 'Surgical Oncologist'],
-        salary: '₹10-30 LPA',
-        institutes: ['AIIMS Delhi', 'PGIMER Chandigarh', 'SGPGI Lucknow'],
-    },
-    'Orthodontics': {
-        title: 'Orthodontics',
-        overview: 'Orthodontists specialize in correcting teeth alignment and bite using braces and aligners.',
-        path: ['10+2 (PCB)', 'BDS (4 years)', 'MDS Orthodontics (3 years)', 'Orthodontist'],
-        education: 'BDS + MDS Orthodontics',
-        exams: ['NEET UG', 'NEET MDS'],
-        jobs: ['Orthodontist', 'Dental Specialist', 'Private Practice'],
-        salary: '₹6-20 LPA',
-        institutes: ['Government Dental College', 'Private Dental Colleges'],
-    },
-    'Oral Surgery': {
-        title: 'Oral Surgery',
-        overview: 'Oral surgeons perform surgical procedures in the mouth, jaw, and face.',
-        path: ['10+2 (PCB)', 'BDS (4 years)', 'MDS Oral Surgery (3 years)', 'Oral Surgeon'],
-        education: 'BDS + MDS Oral Surgery',
-        exams: ['NEET UG', 'NEET MDS'],
-        jobs: ['Oral Surgeon', 'Maxillofacial Surgeon'],
-        salary: '₹7-22 LPA',
-        institutes: ['Government Dental College', 'Private Dental Colleges'],
-    },
-    'Panchakarma': {
-        title: 'Panchakarma',
-        overview: 'Panchakarma specialists provide traditional Ayurvedic cleansing and therapeutic treatments.',
-        path: ['10+2 (PCB)', 'BAMS (5.5 years)', 'MD Panchakarma (3 years)', 'Panchakarma Therapist'],
-        education: 'BAMS + MD Panchakarma',
-        exams: ['NEET UG', 'AIAPGET'],
-        jobs: ['Panchakarma Specialist', 'Ayurvedic Therapist'],
-        salary: '₹4-12 LPA',
-        institutes: ['Banaras Hindu University', 'Gujarat Ayurved University'],
-    },
-    'Kayachikitsa': {
-        title: 'Kayachikitsa',
-        overview: 'Kayachikitsa (Internal Medicine in Ayurveda) focuses on treating various diseases through Ayurvedic medicine.',
-        path: ['10+2 (PCB)', 'BAMS (5.5 years)', 'MD Kayachikitsa (3 years)', 'Ayurvedic Physician'],
-        education: 'BAMS + MD Kayachikitsa',
-        exams: ['NEET UG', 'AIAPGET'],
-        jobs: ['Ayurvedic Physician', 'Internal Medicine Specialist'],
-        salary: '₹4-10 LPA',
-        institutes: ['Banaras Hindu University', 'Gujarat Ayurved University'],
-    },
-    'Clinical Pharmacy': {
-        title: 'Clinical Pharmacy',
-        overview: 'Clinical pharmacists work directly with patients and healthcare teams to optimize medication therapy.',
-        path: ['10+2 (PCB)', 'B.Pharm (4 years)', 'M.Pharm Clinical Pharmacy (2 years)', 'Clinical Pharmacist'],
-        education: 'B.Pharm + M.Pharm in Clinical Pharmacy',
-        exams: ['GPAT', 'University Exams'],
-        jobs: ['Clinical Pharmacist', 'Hospital Pharmacist'],
-        salary: '₹5-15 LPA',
-        institutes: ['NIPER Hyderabad', 'Manipal College of Pharmacy'],
-    },
-    'Pharmaceutical Research': {
-        title: 'Pharmaceutical Research',
-        overview: 'Pharmaceutical researchers develop new drugs and conduct clinical trials.',
-        path: ['10+2 (PCB)', 'B.Pharm (4 years)', 'M.Pharm/PhD (2-5 years)', 'Research Scientist'],
-        education: 'B.Pharm + M.Pharm/PhD',
-        exams: ['GPAT', 'CSIR NET', 'UGC NET'],
-        jobs: ['Research Scientist', 'Drug Developer', 'Clinical Researcher'],
-        salary: '₹6-20 LPA',
-        institutes: ['NIPER Hyderabad', 'BITS Pilani'],
-    },
-    'Critical Care': {
-        title: 'Critical Care Nursing',
-        overview: 'Critical care nurses provide intensive care to critically ill patients in ICUs.',
-        path: ['10+2 (PCB)', 'B.Sc Nursing (4 years)', 'Specialization (1-2 years)', 'Critical Care Nurse'],
-        education: 'B.Sc Nursing + Specialization',
-        exams: ['AIIMS Nursing', 'JIPMER Nursing'],
-        jobs: ['ICU Nurse', 'Critical Care Specialist'],
-        salary: '₹4-10 LPA',
-        institutes: ['AIIMS Delhi', 'CMC Vellore'],
-    },
-    'Community Health': {
-        title: 'Community Health Nursing',
-        overview: 'Community health nurses provide healthcare services to communities and populations.',
-        path: ['10+2 (PCB)', 'B.Sc Nursing (4 years)', 'Community Medicine Focus', 'Community Health Nurse'],
-        education: 'B.Sc Nursing',
-        exams: ['AIIMS Nursing', 'JIPMER Nursing'],
-        jobs: ['Community Health Nurse', 'Public Health Nurse'],
-        salary: '₹3-8 LPA',
-        institutes: ['AIIMS Delhi', 'CMC Vellore'],
-    },
-    'Orthopedic': {
-        title: 'Orthopedic Physiotherapy',
-        overview: 'Orthopedic physiotherapists treat musculoskeletal injuries and conditions.',
-        path: ['10+2 (PCB)', 'BPT (4.5 years)', 'MPT Orthopedic (2 years)', 'Orthopedic Physiotherapist'],
-        education: 'BPT + MPT Orthopedic',
-        exams: ['University Entrance Tests'],
-        jobs: ['Orthopedic Physiotherapist', 'Sports Physical Therapist'],
-        salary: '₹4-12 LPA',
-        institutes: ['Christian Medical College', 'Manipal University'],
-    },
-    'Neurological': {
-        title: 'Neurological Physiotherapy',
-        overview: 'Neurological physiotherapists treat conditions affecting the nervous system.',
-        path: ['10+2 (PCB)', 'BPT (4.5 years)', 'MPT Neurology (2 years)', 'Neuro Physiotherapist'],
-        education: 'BPT + MPT Neurology',
-        exams: ['University Entrance Tests'],
-        jobs: ['Neurological Physiotherapist', 'Neuro Rehabilitation Specialist'],
-        salary: '₹4-12 LPA',
-        institutes: ['Christian Medical College', 'Manipal University'],
-    },
-};
+
 const defaultDetail = (name) => ({
     title: name,
     overview: `${name} is a specialized field offering excellent career prospects.`,
@@ -559,11 +259,35 @@ const mapStreamItem = (item, index = 0) => {
         raw: item,
     };
 };
-const normalizeStreamItems = (items) => {
-    if (!Array.isArray(items) || items.length === 0) {
-        return fallbackStreams.map((item, index) => mapStreamItem(item, index));
+const STREAM_DISPLAY_ORDER = ['Science', 'Commerce', 'Arts & Humanities', 'Neutral', 'Competitive', 'Vocational'];
+const normalizeStreamOrderKey = (value) => {
+    const normalized = String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/\s+/g, ' ');
+
+    if (normalized === 'arts and humanities') {
+        return 'arts and humanities';
     }
-    return items.map((item, index) => mapStreamItem(item, index));
+
+    return normalized;
+};
+const STREAM_ORDER_KEYS = STREAM_DISPLAY_ORDER.map((label) => normalizeStreamOrderKey(label));
+const normalizeStreamItems = (items) => {
+    const source = Array.isArray(items) && items.length > 0 ? items : fallbackStreams;
+    return source
+        .map((item, index) => mapStreamItem(item, index))
+        .sort((a, b) => {
+            const aIndex = STREAM_ORDER_KEYS.indexOf(normalizeStreamOrderKey(a?.name));
+            const bIndex = STREAM_ORDER_KEYS.indexOf(normalizeStreamOrderKey(b?.name));
+            const safeA = aIndex === -1 ? Number.MAX_SAFE_INTEGER : aIndex;
+            const safeB = bIndex === -1 ? Number.MAX_SAFE_INTEGER : bIndex;
+            if (safeA !== safeB) {
+                return safeA - safeB;
+            }
+            return String(a?.name || '').localeCompare(String(b?.name || ''));
+        });
 };
 const getCardTitle = (item) => item?.name || item?.title || item?.subcategory?.title || item?.secondcategory?.name || item?.category?.title || item?.path || item?.examname || item?.pathName || `Item ${item?.id ?? ''}`.trim();
 const getCardDescription = (item) => stripHtml(item?.desc || item?.description || item?.about || item?.specialization || item?.subcategory?.description || item?.secondcategory?.description || item?.category?.description || item?.path || '');
@@ -583,6 +307,10 @@ export default function CareerLibraryScreen() {
     const [selectedSubCategory, setSelectedSubCategory] = useState(null);
     const [selectedDetailSource, setSelectedDetailSource] = useState(null);
     const [selectedInstituteType, setSelectedInstituteType] = useState('All');
+    const [selectedInstituteCountry, setSelectedInstituteCountry] = useState('All');
+    const [selectedInstituteState, setSelectedInstituteState] = useState('All');
+    const [showInstituteCountryDropdown, setShowInstituteCountryDropdown] = useState(false);
+    const [showInstituteStateDropdown, setShowInstituteStateDropdown] = useState(false);
     const [detailReturnLevel, setDetailReturnLevel] = useState('subcategory');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -746,7 +474,30 @@ export default function CareerLibraryScreen() {
             }
             throw err;
         }
-    }
+    };
+    const loadDetailItemsWithPreview = async ({ type, id, item, nextItems }) => {
+        let previewId = null;
+
+        if (moduleStatus === 'preview') {
+            previewId = await createPreviewSession(type, id, item);
+            if (!previewId) {
+                return null;
+            }
+        }
+
+        let detailItems = nextItems;
+        if (detailItems.length === 0) {
+            try {
+                const detailResponse = await getCareerLibraryDetails(id, resolvedModuleId, previewId);
+                const detailData = detailResponse ?? {};
+                detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
+            } catch (_err) {
+                detailItems = [];
+            }
+        }
+
+        return detailItems;
+    };
     const handleClick = async (type, id, item) => {
         setLoading(true);
         setError('');
@@ -793,15 +544,10 @@ export default function CareerLibraryScreen() {
                     setCurrentLevel('secondcategory');
                 }
                 else if (data.type === 'details') {
-                    let detailItems = nextItems;
-                    if (detailItems.length === 0) {
-                        try {
-                            const detailResponse = await getCareerLibraryDetails(id);
-                            const detailData = detailResponse ?? {};
-                            detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
-                        } catch (_err) {
-                            detailItems = [];
-                        }
+                    const detailItems = await loadDetailItemsWithPreview({ type, id, item, nextItems });
+                    if (!detailItems) {
+                        setLoading(false);
+                        return;
                     }
                     setSelectedDetailSource(item);
                     setDetails(detailItems);
@@ -838,15 +584,10 @@ export default function CareerLibraryScreen() {
                     setCurrentLevel('subcategory');
                 }
                 else if (data.type === 'details') {
-                    let detailItems = nextItems;
-                    if (detailItems.length === 0) {
-                        try {
-                            const detailResponse = await getCareerLibraryDetails(id);
-                            const detailData = detailResponse ?? {};
-                            detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
-                        } catch (_err) {
-                            detailItems = [];
-                        }
+                    const detailItems = await loadDetailItemsWithPreview({ type, id, item, nextItems });
+                    if (!detailItems) {
+                        setLoading(false);
+                        return;
                     }
                     setSelectedDetailSource(item);
                     setDetails(detailItems);
@@ -877,25 +618,10 @@ export default function CareerLibraryScreen() {
                 const data = response ?? {};
                 const nextItems = Array.isArray(data?.data) ? data.data : [];
                 if (data.type === 'details') {
-                    let previewId = null;
-
-                    if (moduleStatus === 'preview') {
-                        previewId = await createPreviewSession('sub', id, item);
-                        if (!previewId) {
-                            setLoading(false);
-                            return;
-                        }
-                    }
-
-                    let detailItems = nextItems;
-                    if (detailItems.length === 0) {
-                        try {
-                            const detailResponse = await getCareerLibraryDetails(id, resolvedModuleId, previewId);
-                            const detailData = detailResponse ?? {};
-                            detailItems = Array.isArray(detailData?.data) ? detailData.data : [];
-                        } catch (_err) {
-                            detailItems = [];
-                        }
+                    const detailItems = await loadDetailItemsWithPreview({ type, id, item, nextItems });
+                    if (!detailItems) {
+                        setLoading(false);
+                        return;
                     }
                     setSelectedDetailSource(item);
                     setDetails(detailItems);
@@ -1025,19 +751,46 @@ export default function CareerLibraryScreen() {
         const title = getDetailTitle(detail);
         const instituteGroups = groupInstitutesByTopStatus(detail?.institutions);
         const salaryBullets = toList(detail?.salaryRanges).flatMap((salary) => getSalaryBullets(salary));
-        const instituteTypeFilter = String(selectedInstituteType || 'All').toLowerCase();
+        const instituteTypeFilter = String(selectedInstituteType || 'All').trim().toLowerCase();
+        const descriptions = toList(detail?.descriptions);
+        const careerPaths = toList(detail?.careerpaths);
+        const entranceExams = toList(detail?.entranceexams);
+        const specializations = extractListItems(detail?.specialization);
+        const jobScopes = toList(detail?.jobScope);
+        const importantFacts = extractListItems(detail?.important_factor || detail?.importantFacts || detail?.importantfacts || detail?.facts || detail?.keyFacts);
+        const countryOptions = ['All', 'India', 'Other'];
+        const outsideInstitutes = instituteGroups.outsideInstitutes;
+        const stateOptions = selectedInstituteCountry === 'India'
+            ? ['All', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Chandigarh', 'Puducherry', 'Andaman and Nicobar Islands', 'Dadra and Nagar Haveli and Daman and Diu', 'Lakshadweep']
+            : selectedInstituteCountry === 'Other'
+                ? ['All', ...Array.from(new Set(outsideInstitutes.filter((institution) => normalizeCountry(institution?.country || institution?.countruy) === 'other').map((institution) => institution?.state).filter(Boolean)))]
+                : ['All', ...Array.from(new Set(outsideInstitutes.map((institution) => institution?.state).filter(Boolean)))];
         const filteredTopInstitutes = instituteGroups.topInstitutes.filter((institution) => {
             if (!instituteTypeFilter || instituteTypeFilter === 'all') {
                 return true;
             }
-            return String(institution?.type || '').toLowerCase().includes(instituteTypeFilter);
+            return String(institution?.type || '').trim().toLowerCase().includes(instituteTypeFilter);
         });
-        const filteredOutsideInstitutes = instituteGroups.outsideInstitutes.filter((institution) => {
+        const filteredOutsideInstitutes = outsideInstitutes.filter((institution) => {
+            const country = normalizeCountry(institution?.country || institution?.countruy);
+            if (selectedInstituteCountry === 'India' && country !== 'india') {
+                return false;
+            }
+            if (selectedInstituteCountry === 'Other' && country !== 'other') {
+                return false;
+            }
+            if (selectedInstituteState !== 'All' && normalizeState(institution?.state) !== normalizeState(selectedInstituteState)) {
+                return false;
+            }
             if (!instituteTypeFilter || instituteTypeFilter === 'all') {
                 return true;
             }
-            return String(institution?.type || '').toLowerCase().includes(instituteTypeFilter);
+            if (!String(institution?.type || '').trim().toLowerCase().includes(instituteTypeFilter)) {
+                return false;
+            }
+            return true;
         });
+        const hasFilteredOutsideInstitutes = filteredOutsideInstitutes.length > 0;
         return (<StaggerFadeUpItem key={`detail-${detail?.id ?? index}`} index={index}>
           <View className="mb-4">
      {detail?.media ? (
@@ -1092,26 +845,36 @@ export default function CareerLibraryScreen() {
               <Ionicons name="time-outline" size={14} color={palette.primary} className="mr-1"/> Preview active for {previewRemaining}s
               </Text>
             </View>) : null}
-{detail?.description ? (
-    <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-        <View className="mb-3 flex-row items-center gap-2">
-            <Ionicons name="information-circle-outline" size={16} color={palette.primary}/>
-            <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>About</Text>
+{descriptions.length > 0 ? (
+  <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+    {descriptions
+      .slice()
+      .sort((a, b) => (a?.sortOrder ?? 0) - (b?.sortOrder ?? 0))
+      .map((section, sectionIdx, arr) => (
+        <View
+          key={section?.id ?? sectionIdx}
+          className={sectionIdx < arr.length - 1 ? `mb-3 pb-3 border-b ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}` : ''}
+        >
+          <View className="mb-2 flex-row items-center gap-2">
+             <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{section?.title || 'About'}</Text>
+          </View>
+          <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+            {stripHtml(section?.description)}
+          </Text>
         </View>
-        <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-            {detail.description}
-        </Text>
-    </View>
+      ))}
+  </View>
 ) : null}
-               <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+{careerPaths.length > 0 ? (
+ <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
   <View className="mb-3 flex-row items-center gap-2">
     <Ionicons name="map-outline" size={16} color={palette.primary}/>
     <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-      Career Paths{toList(detail?.careerpaths).length > 1 ? ` (${toList(detail?.careerpaths).length})` : ''}
+      Career Paths{careerPaths.length > 1 ? ` (${careerPaths.length})` : ''}
     </Text>
   </View>
 
-  {toList(detail?.careerpaths).length > 0 ? toList(detail?.careerpaths).map((pathItem, pathIdx) => (
+  {careerPaths.map((pathItem, pathIdx) => (
     <View
       key={pathItem?.id ?? pathIdx}
       className={`mb-3 overflow-hidden rounded-[16px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#0b0b0b]' : 'border-[#f0e4e2] bg-[#fdf9f9]'}`}
@@ -1139,88 +902,96 @@ export default function CareerLibraryScreen() {
           .map((row) => (
             <View key={row.label} className="mb-1.5 flex-row items-start gap-3">
               <Text className={`w-[130px] text-[11px] font-semibold ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>{row.label}</Text>
-              <Text className={`flex-1 text-[12px] leading-4 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{row.value}</Text>
+              <Text className={`flex-1 text-[12px] leading-4 ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{row.value}</Text>
             </View>
           ))}
-        {[pathItem?.graduation, pathItem?.aftergraduation, pathItem?.afterpostgraduation, pathItem?.anyother].every((v) => !v) ? (
-          <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No further path details available.</Text>
-        ) : null}
       </View>
     </View>
-  )) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Career path details not available.</Text>)}
+  ))}
 </View>
+) : null}
+{entranceExams.length > 0 ? (
 <View className={`rounded-[20px] mb-4 border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
   <View className="mb-3 flex-row items-center gap-2">
     <Ionicons name="reader-outline" size={16} color={palette.primary}/>
     <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Entrance Exams</Text>
   </View>
-  {toList(detail?.entranceexams).length > 0 ? toList(detail?.entranceexams).map((exam) => (<View key={exam?.id} className="mb-3 flex-row items-center justify-between">
+  {entranceExams.map((exam) => (<View key={exam?.id} className="mb-3 flex-row items-center justify-between">
       <View className="flex-1">
         <Text className={`text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam?.examname || 'Exam'}</Text>
-        <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{[exam?.mode, exam?.duration, formatDate(exam?.exam_date)].filter(Boolean).join(' • ')}</Text>
+        <Text className={`text-[12px] ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{[exam?.mode, exam?.duration, formatDate(exam?.exam_date)].filter(Boolean).join(' • ')}</Text>
       </View>
       {exam?.url ? (<Pressable onPress={() => Linking.openURL(exam.url)} className="h-9 w-9 items-center justify-center rounded-full ml-2" style={{ borderWidth: 1, borderColor: '#f0e4e2' }}>
           <Ionicons name="arrow-forward" size={16} color={palette.primary}/>
         </Pressable>) : null}
-    </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Exam details not available.</Text>)}
+    </View>))}
 </View>
-            <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-              <View className="mb-3 flex-row items-center gap-2">
-                <Ionicons name="briefcase-outline" size={16} color={palette.primary}/>
-                <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Job Scope</Text>
-              </View>
-              {toList(detail?.jobScope).length > 0 ? toList(detail?.jobScope).map((scope) => (<View key={scope} className="mb-2 flex-row items-start">
-                  <Ionicons name="ellipse" size={6} color={palette.secondary} style={{ marginRight: 8, marginTop: 7 }}/>
-                  <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{scope}</Text>
-                </View>)) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Job scope not available.</Text>)}
-            </View>
-            <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-  <View className="mb-3 flex-row items-center gap-2">
-    <Ionicons name="star-outline" size={16} color={palette.primary}/>
-    <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Specialization</Text>
-  </View>
-  {extractListItems(detail?.specialization).length > 0 ? extractListItems(detail?.specialization).map((item, i) => (
-    <View key={i} className="mb-2 flex-row items-start">
-      <Ionicons name="star" size={12} color={palette.primary} style={{ marginRight: 8, marginTop: 3 }}/>
-      <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item}</Text>
+) : null}
+           
+{specializations.length > 0 ? (
+  <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+    <View className="mb-3 flex-row items-center gap-2">
+      <Ionicons name="star-outline" size={16} color={palette.primary}/>
+      <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Specialization</Text>
     </View>
-  )) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Not available.</Text>)}
-</View>
-
-<View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-  <View className="mb-3 flex-row items-center gap-2">
-    <Ionicons name="checkmark-circle-outline" size={16} color={palette.primary}/>
-    <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Important Factors</Text>
-  </View>
-  {extractListItems(detail?.important_factor).length > 0 ? extractListItems(detail?.important_factor).map((item, i) => (
-    <View key={i} className="mb-2 flex-row items-start">
-      <Ionicons name="checkmark-circle" size={12} color={palette.primary} style={{ marginRight: 8, marginTop: 3 }}/>
-      <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item}</Text>
-    </View>
-  )) : (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Not available.</Text>)}
-</View>
-            <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
-              <View className="mb-3 flex-row items-center gap-2">
-    <Ionicons name="cash-outline" size={16} color={palette.primary}/>
-    <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Salary Range</Text>
-  </View>
-            {toList(detail?.salaryRanges).length > 0 ? (
-  <View className="gap-2">
-    {toList(detail?.salaryRanges).map((salary, salaryIndex) => (
-      <View key={salary?.id ?? salaryIndex} className="flex-row items-start gap-2">
-        <Ionicons name="ellipse" size={6} color={palette.primary} style={{ marginTop: 7 }} />
-        <Text className="flex-1 text-[15px] font-bold text-brand">
-          {formatSalaryRange(salary)}
-        </Text>
+    {specializations.map((item, i) => (
+      <View key={i} className="mb-2 flex-row items-start">
+        <Ionicons name="star" size={12} color={palette.primary} style={{ marginRight: 8, marginTop: 3 }}/>
+        <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{item}</Text>
       </View>
     ))}
   </View>
-) : (
-  <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-    Salary details not available.
-  </Text>
-)}
-            </View>
+) : null}
+
+{importantFacts.length > 0 ? (
+  <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+    <View className="mb-3 flex-row items-center gap-2">
+      <Ionicons name="checkmark-circle-outline" size={16} color={palette.primary}/>
+      <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Important Factors</Text>
+    </View>
+    {importantFacts.map((item, i) => (
+      <View key={i} className="mb-2 flex-row items-start">
+        <Ionicons name="checkmark-circle" size={12} color={palette.primary} style={{ marginRight: 8, marginTop: 3 }}/>
+        <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item}</Text>
+      </View>
+    ))}
+  </View>
+) : null}
+
+{jobScopes.length > 0 ? (
+  <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+    <View className="mb-3 flex-row items-center gap-2">
+      <Ionicons name="briefcase-outline" size={16} color={palette.primary}/>
+      <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Job Scope</Text>
+    </View>
+    {jobScopes.map((scope) => (
+      <View key={scope} className="mb-2 flex-row items-start">
+        <Ionicons name="ellipse" size={6} color={palette.secondary} style={{ marginRight: 8, marginTop: 7 }}/>
+        <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{scope}</Text>
+      </View>
+    ))}
+  </View>
+) : null}
+
+{toList(detail?.salaryRanges).length > 0 ? (
+  <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
+    <View className="mb-3 flex-row items-center gap-2">
+      <Ionicons name="cash-outline" size={16} color={palette.primary}/>
+      <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Salary Range</Text>
+    </View>
+    <View className="gap-2">
+      {toList(detail?.salaryRanges).map((salary, salaryIndex) => (
+        <View key={salary?.id ?? salaryIndex} className="flex-row items-start gap-2">
+          <Ionicons name="ellipse" size={6} color={palette.primary} style={{ marginTop: 7 }} />
+          <Text className="flex-1 text-[15px] font-bold text-brand">
+            {formatSalaryRange(salary)}
+          </Text>
+        </View>
+      ))}
+    </View>
+  </View>
+) : null}
+{instituteGroups.topInstitutes.length > 0 || instituteGroups.outsideInstitutes.length > 0 ? (
             <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
               <View className="mb-3 flex-row items-center gap-2">
                 <Ionicons name="school-outline" size={16} color={palette.primary}/>
@@ -1228,10 +999,18 @@ export default function CareerLibraryScreen() {
               </View>
               <View className="mb-3 flex-row flex-wrap gap-2">
                 {['All', 'Government', 'Private'].map((type) => {
-                    const active = selectedInstituteType === type;
-                    return (<Pressable key={type} onPress={() => setSelectedInstituteType(type)} className={`rounded-full px-3 py-1.5 ${active ? 'bg-brand' : preferences.darkMode ? 'bg-[#1a1a1a]' : 'bg-[#f2ebe6]'}`}>
-                        <Text className={`text-[11px] font-bold ${active ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{type}</Text>
-                      </Pressable>);
+                  const active = selectedInstituteType === type;
+                  return (
+                    <Pressable
+                      key={type}
+                      onPress={() => setSelectedInstituteType(type)}
+                      className={`rounded-full px-3 py-1.5 ${active ? 'bg-brand' : preferences.darkMode ? 'bg-[#1a1a1a]' : 'bg-[#f2ebe6]'}`}
+                    >
+                      <Text className={`text-[11px] font-bold ${active ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                        {type}
+                      </Text>
+                    </Pressable>
+                  );
                 })}
               </View>
               <View className="gap-4">
@@ -1252,7 +1031,7 @@ export default function CareerLibraryScreen() {
                 <Text className="text-[10px] font-bold" style={{ color: palette.primary }}>{institution.type}</Text>
               </View>) : null}
           </View>
-          <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
+          <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{institution?.location || 'Location not available'}</Text>
         </View>
         {institution?.url ? (<Pressable onPress={() => Linking.openURL(institution.url)} className="h-9 w-9 items-center justify-center rounded-full" style={{ borderWidth: 1, borderColor: '#f0e4e2' }}>
             <Ionicons name="arrow-forward" size={16} color={palette.primary}/>
@@ -1260,6 +1039,65 @@ export default function CareerLibraryScreen() {
       </View>))}
   </View>) : null}
              {filteredOutsideInstitutes.length > 0 ? (<View>
+    <View className="mb-3 gap-2">
+      <View className="relative z-20">
+        <Pressable
+          onPress={() => setShowInstituteCountryDropdown((value) => !value)}
+          className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
+        >
+          <Text className={`text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+            {selectedInstituteCountry === 'All' ? 'All Countries' : selectedInstituteCountry}
+          </Text>
+          <Ionicons name={showInstituteCountryDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text}/>
+        </Pressable>
+        {showInstituteCountryDropdown ? (
+          <View className={`mt-2 overflow-hidden rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
+            {countryOptions.map((option) => (
+              <Pressable
+                key={option}
+                onPress={() => {
+                  setSelectedInstituteCountry(option);
+                  setSelectedInstituteState('All');
+                  setShowInstituteCountryDropdown(false);
+                }}
+                className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
+              >
+                <Text className={`text-[13px] font-semibold ${selectedInstituteCountry === option ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{option}</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+      </View>
+      <View className="relative z-10">
+        <Pressable
+          onPress={() => setShowInstituteStateDropdown((value) => !value)}
+          className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
+        >
+          <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+            {selectedInstituteState === 'All' ? 'All States' : selectedInstituteState}
+          </Text>
+          <Ionicons name={showInstituteStateDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text}/>
+        </Pressable>
+        {showInstituteStateDropdown ? (
+          <View className={`mt-2 max-h-[220px] overflow-hidden rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
+            <ScrollView keyboardShouldPersistTaps="handled">
+              {stateOptions.map((option) => (
+                <Pressable
+                  key={option}
+                  onPress={() => {
+                    setSelectedInstituteState(option);
+                    setShowInstituteStateDropdown(false);
+                  }}
+                  className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
+                >
+                  <Text className={`text-[13px] font-semibold ${selectedInstituteState === option ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{option}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+      </View>
+    </View>
     <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
       {instituteGroups.referenceState ? `Top Institutes Outside ${instituteGroups.referenceState}` : 'Top Institutes Outside State'}
     </Text>
@@ -1276,16 +1114,33 @@ export default function CareerLibraryScreen() {
                 <Text className="text-[10px] font-bold" style={{ color: palette.primary }}>{institution.type}</Text>
               </View>) : null}
           </View>
-          <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{institution?.location || 'Location not available'}</Text>
+          <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{institution?.location || 'Location not available'}</Text>
         </View>
         {institution?.url ? (<Pressable onPress={() => Linking.openURL(institution.url)} className="h-9 w-9 items-center justify-center rounded-full" style={{ borderWidth: 1, borderColor: '#f0e4e2' }}>
             <Ionicons name="arrow-forward" size={16} color={palette.primary}/>
           </Pressable>) : null}
       </View>))}
   </View>) : null}
-                {!filteredTopInstitutes.length && !filteredOutsideInstitutes.length ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Institution details not available.</Text>) : null}
+            {!hasFilteredOutsideInstitutes ? (<View className="items-center gap-2 rounded-[16px] border border-dashed border-[#f0e4e2] bg-[#fffaf8] px-4 py-5">
+                <Ionicons name="alert-circle-outline" size={22} color={palette.primary}/>
+                <Text className={`text-center text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                  No institutes found for the selected state.
+                </Text>
+                <Pressable
+                  onPress={() => setSelectedInstituteState('All')}
+                  className="flex-row items-center gap-1 rounded-full px-3 py-2"
+                  style={{ backgroundColor: `${palette.primary}12` }}
+                >
+                  <Ionicons name="close-circle-outline" size={16} color={palette.primary}/>
+                  <Text className="text-[12px] font-bold" style={{ color: palette.primary }}>
+                    Clear state filter
+                  </Text>
+                </Pressable>
+              </View>) : null}
+                {!filteredTopInstitutes.length && !filteredOutsideInstitutes.length ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>Institution details not available.</Text>) : null}
               </View>
             </View>
+) : null}
         
             
           </View>
@@ -1293,10 +1148,10 @@ export default function CareerLibraryScreen() {
     };
     const getTitle = () => {
         if (currentLevel === 'streams') {
-            return 'Career Library';
+            return 'Career Archive';
         }
         if (currentLevel === 'categories') {
-            return selectedStream?.name || 'Career Library';
+            return selectedStream?.name || 'Career Archive';
         }
         if (currentLevel === 'secondcategory') {
             return getItemTitle(selectedCategory);
@@ -1307,7 +1162,7 @@ export default function CareerLibraryScreen() {
         if (currentLevel === 'details') {
             return getItemTitle(selectedDetailSource || selectedSubCategory || selectedSecondCategory || selectedCategory);
         }
-        return 'Career Library';
+        return 'Career Archive';
     };
     return (<Screen scroll={true} animationKey={animationKey}>
       <View className="flex-row items-center">
@@ -1329,14 +1184,14 @@ export default function CareerLibraryScreen() {
           {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading details...</Text>) : null}
           {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
          
-          {details.length > 0 ? details.map((detail, index) => renderDetailItem(detail, index)) : !loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No details available for this selection.</Text>) : null}
+          {details.length > 0 ? details.map((detail, index) => renderDetailItem(detail, index)) : !loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>No details available for this selection.</Text>) : null}
         </ScrollView>) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
           {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading...</Text>) : null}
           {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
           {currentLevel === 'secondcategory' && renderStepList(secondCategories, 'second')}
           {currentLevel === 'subcategory' && renderStepList(subCategories, 'sub')}
         </ScrollView>)}
-      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career Library" subtitle={previewExpired ? 'Your preview time has ended for this career detail.' : 'Subscribe to more careers, salary insights, education paths, and institute details.'} dismissible={lockSheetDismissible} onClose={resetToStreams} onPress={() => {
+      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career Archive" subtitle={previewExpired ? 'Your preview time has ended for this career detail.' : 'Subscribe to more careers, salary insights, education paths, and institute details.'} dismissible={lockSheetDismissible} onClose={resetToStreams} onPress={() => {
                 setShowUnlockSheet(false);
                 openSubscriptionPrompt(returnTarget);
             }}/>) : null}
