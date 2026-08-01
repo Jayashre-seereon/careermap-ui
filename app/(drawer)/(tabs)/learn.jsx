@@ -105,7 +105,7 @@ export default function LearnScreen() {
             } catch (_error) {
                 if (isMounted) {
                     setMasterClasses([]);
-                    setLoadError('Failed to load master classes.');
+                    setLoadError('Failed to load Career & Personality Videos.');
                 }
             } finally {
                 if (isMounted) {
@@ -162,7 +162,7 @@ export default function LearnScreen() {
     return (<Screen scroll={true}>
       <View className="flex-1">
       <ScrollView className="flex-1" contentContainerClassName="gap-[18px]  pt-2 " contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
-      <SectionHeader title="Master Class" subtitle="Learning videos and sorting adapted closely from the prototype master class screen." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
+      <SectionHeader title="Career & Personality Videos" subtitle="Learning videos and sorting adapted closely from the prototype career & personality videos screen." action={<AnimatedPressable className={`h-[40px] w-[40px] items-center justify-center rounded-[12px] ${showFilters ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowFilters((value) => !value)}>
             <Ionicons name={showFilters ? 'options' : 'options-outline'} size={18} color={showFilters ? '#ffffff' : preferences.darkMode ? '#ffffff' : palette.text}/>
           </AnimatedPressable>}/>
  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
@@ -195,9 +195,9 @@ export default function LearnScreen() {
         </View>) : null}
 
       <View className="gap-3">
-        {isLoading ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading master classes...</Text>) : null}
+        {isLoading ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading career & personality videos...</Text>) : null}
         {!isLoading && loadError ? (<Text className="text-[13px] text-brand">{loadError}</Text>) : null}
-        {!isLoading && !loadError && filtered.length === 0 ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No master classes available right now.</Text>) : null}
+        {!isLoading && !loadError && filtered.length === 0 ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No Career & Personality Videos available right now.</Text>) : null}
         {filtered.map((item) => {
                 const detailUnlocked = hasFullAccess || item.isFree;
                 const cardUnlocked = hasFullAccess || item.isFree;
@@ -220,7 +220,7 @@ export default function LearnScreen() {
               </View>
             </View>
             {!hasFullAccess && !cardUnlocked ? (<Text className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-                {detailUnlocked ? 'Your first locked class is available for free.' : 'You have already used the free master class preview.'}
+                {detailUnlocked ? 'Your first locked video is available for free.' : 'You have already used the free career & personality video preview.'}
               </Text>) : null}
             <AnimatedPressable onPress={() => {
                     if (!hasFullAccess && !item.isFree && !detailUnlocked) {
@@ -272,7 +272,7 @@ export default function LearnScreen() {
             })}
       </View>
       </ScrollView>
-      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Master Class" subtitle={detailPreviewExpired ? 'Your preview time has ended for this master class.' : 'Subscribe to more classes and keep learning without limits.'} dismissible={lockSheetDismissible} onClose={resetToList} onPress={() => {
+      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Career & Personality Videos" subtitle={detailPreviewExpired ? 'Your preview time has ended for this career & personality video.' : 'Subscribe to more videos and keep learning without limits.'} dismissible={lockSheetDismissible} onClose={resetToList} onPress={() => {
                 resetToList();
                 openSubscriptionPrompt(subscriptionTarget);
             }}/>) : null}

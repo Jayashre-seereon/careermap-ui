@@ -101,7 +101,7 @@ function mapMasterclassItem(item, index) {
 
   return {
     id: String(item?.id ?? `${item?.title ?? 'masterclass'}-${index}`),
-    title: item?.title || 'Untitled Master Class',
+    title: item?.title || 'Untitled Career & Personality Videos',
     mentor: resolveMentorName(item),
     duration: formatMasterclassTime(item?.time || item?.duration),
     views: resolveViews(item),
@@ -125,7 +125,7 @@ export async function getMasterClasses() {
 
 export async function getMasterClassDetails(id) {
   if (id === null || id === undefined || id === '') {
-    throw new Error('Master class id is required.');
+    throw new Error('Career & Personality Videos id is required.');
   }
 
   const response = await api.get(`/masterclass/${id}`);

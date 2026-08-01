@@ -161,6 +161,7 @@ export default function HomeScreen() {
   const [profilePromptDismissed, setProfilePromptDismissed] = useState(false);
   const [sectionAccess, setSectionAccess] = useState({
     mentors: { status: 'locked' },
+    entranceExam: { status: 'locked' },
     scholarships: { status: 'locked' },
     institutes: { status: 'locked' },
   });
@@ -168,18 +169,37 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const moduleCardWidth = width < 390 ? '48%' : '31%';
   const featureByTitle = {
-    'Career Library': 'career-library',
-    'Master Class': 'master-class',
-    'Book Mentor': 'book-mentor',
+    'Career Archive': 'career-archive',
+    'Career & Personality Videos': 'master-class',
+    'Book Your Mentor': 'book-mentor',
     'Scholarships': 'scholarship',
     'Study Abroad': 'abroad-consultancy',
+    'Career News Letter': 'career-news-letter',
   };
+  const moduleOrder = [
+    'Career Archive',
+    'Entrance Exam',
+    'Institutes',
+    'Scholarship',
+    'Career Psychometric Assessment',
+    'Book Your Mentor',
+    'Career & Personality Videos',
+    'Study Abroad',
+    'Quiz',
+    'Career News Letter',
+  ];
   const sectionTargets = useMemo(() => ({
     mentors: {
       title: 'Mentor Access Locked',
-      matchers: ['book mentor', 'mentor'],
+      matchers: ['book your mentor', 'book mentor', 'mentor'],
       route: '/(drawer)/book-mentor',
       subtitle: 'Unlock mentor sessions to browse and book the full guidance list.',
+    },
+    entranceExam: {
+      title: 'Entrance Exam Access Locked',
+      matchers: ['entrance exam', 'exam'],
+      route: '/(drawer)/entrance-exam',
+      subtitle: 'Unlock entrance exam content to browse the full preparation list.',
     },
     scholarships: {
       title: 'Scholarship Access Locked',
@@ -193,17 +213,30 @@ export default function HomeScreen() {
       route: '/(drawer)/institute',
       subtitle: 'Unlock institute listings to browse the full college catalog.',
     },
+    newsletter: {
+      title: 'Career News Letter Access Locked',
+      matchers: ['career news letter', 'career newsletter', 'newsletter'],
+      route: '/(drawer)/newsletter',
+      subtitle: 'Unlock career news letters to read the latest updates and articles.',
+    },
   }), []);
   const normalizeModuleTitle = (value) => value?.trim().toLowerCase().replace(/\s+/g, ' ');
   const resolveModuleLookupKey = (value) => {
     const normalized = normalizeModuleTitle(value);
+    if (normalized === 'assessment' || normalized === 'career psychometric assessment') {
+      return 'career psychometric assessment';
+    }
     if (normalized === 'scholarship') {
       return 'scholarships';
     }
     if (normalized === 'masterclass' || normalized === 'masterclasses') {
-      return 'master class';
+      return 'career & personality videos';
     }
     return normalized;
+  };
+  const isCareerPsychometricAssessmentModule = (card) => {
+    const normalizedTitle = normalizeModuleTitle(card?.lockTitle || card?.title || '');
+    return normalizedTitle === 'career psychometric assessment' || normalizedTitle === 'assessment';
   };
   useEffect(() => {
     let isMounted = true;
@@ -213,8 +246,10 @@ export default function HomeScreen() {
         const modules = await getModules();
         const nextState = {
           mentors: { status: 'locked' },
+          entranceExam: { status: 'locked' },
           scholarships: { status: 'locked' },
           institutes: { status: 'locked' },
+          newsletter: { status: 'locked' },
         };
 
         for (const [sectionName, config] of Object.entries(sectionTargets)) {
@@ -246,8 +281,10 @@ export default function HomeScreen() {
         if (isMounted) {
           setSectionAccess({
             mentors: { status: 'locked' },
+            entranceExam: { status: 'locked' },
             scholarships: { status: 'locked' },
             institutes: { status: 'locked' },
+            newsletter: { status: 'locked' },
           });
         }
       }
@@ -309,7 +346,25 @@ export default function HomeScreen() {
           accessStatus: String(module.accessStatus || '').toLowerCase(),
         };
       })
-      .filter(Boolean);
+      .filter(Boolean)
+      .sort((left, right) => {
+        const leftIndex = moduleOrder.indexOf(left.title);
+        const rightIndex = moduleOrder.indexOf(right.title);
+
+        if (leftIndex === -1 && rightIndex === -1) {
+          return 0;
+        }
+
+        if (leftIndex === -1) {
+          return 1;
+        }
+
+        if (rightIndex === -1) {
+          return -1;
+        }
+
+        return leftIndex - rightIndex;
+      });
   }, [dashboardData?.modules]);
   const mentorAccentPalette = [palette.primary, palette.blue, palette.orange, palette.secondary, palette.green];
 
@@ -328,6 +383,20 @@ export default function HomeScreen() {
       accent: mentorAccentPalette[index % mentorAccentPalette.length],
     }));
   }, [dashboardData?.mentors]);
+  const dashboardEntranceExams = useMemo(() => {
+    if (!dashboardData?.entranceExams?.length) {
+      return [];
+    }
+
+    return dashboardData.entranceExams.map((exam, index) => ({
+      id: exam.id,
+      name: exam.examname || 'Entrance Exam',
+      date: exam.issuedate || '',
+      lastDate: exam.lastdate || '',
+      image: exam.image || null,
+      accent: mentorAccentPalette[index % mentorAccentPalette.length],
+    }));
+  }, [dashboardData?.entranceExams]);
   const dashboardScholarships = useMemo(() => {
     if (!dashboardData?.scholarships?.length) {
       return featuredScholarships;
@@ -454,6 +523,7 @@ export default function HomeScreen() {
   };
   const handleModulePress = async (card) => {
     const moduleId = Number(card?.id);
+    const isAssessmentModule = isCareerPsychometricAssessmentModule(card);
 
     if (!Number.isFinite(moduleId)) {
       const fallbackFeature = featureByTitle[card?.lockTitle || card?.title || ''];
@@ -469,6 +539,29 @@ export default function HomeScreen() {
       }
 
       router.push(card.route);
+      return;
+    }
+
+    if (isAssessmentModule) {
+      const explicitStatus = String(card?.accessStatus || '').toLowerCase();
+
+      if (explicitStatus === 'locked') {
+        setLockedModule({
+          title: card.title,
+          route: card.route,
+          moduleId,
+          message: 'This module is locked. Please purchase a subscription to continue accessing this module.',
+        });
+        return;
+      }
+
+      router.push({
+        pathname: card.route,
+        params: {
+          moduleId: String(moduleId),
+          accessStatus: explicitStatus || 'unlocked',
+        },
+      });
       return;
     }
 
@@ -751,6 +844,34 @@ export default function HomeScreen() {
         </AnimatedPressable>);
       })}
     </View>
+
+    <SectionHeader title="Explore Entrance Exam" action={<AnimatedPressable onPress={() => handleSectionSeeAll('entranceExam')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>} />
+    {dashboardEntranceExams.length > 0 ? (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
+        {dashboardEntranceExams.map((exam) => {
+          const entranceExamUnlocked = sectionAccess.entranceExam.status === 'full' || sectionAccess.entranceExam.status === 'preview';
+          return (<AnimatedPressable key={exam.id || exam.name} className={`relative h-[168px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => handleSectionPress('entranceExam')}>
+          <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${exam.accent}15` }}>
+            {exam.image ? (
+              <Image source={{ uri: exam.image }} resizeMode="cover" style={{ width: 52, height: 52, borderRadius: 18 }} />
+            ) : (
+              <View className="h-[52px] w-[52px] items-center justify-center rounded-[18px]" style={{ backgroundColor: `${exam.accent}15`, borderWidth: 1, borderColor: `${exam.accent}18` }}>
+                <Text className="text-[16px] font-black" style={{ color: exam.accent, lineHeight: 20 }}>
+                  {(exam.name || 'E').trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join('') || 'E'}
+                </Text>
+              </View>
+            )}
+          </View>
+          <View className="h-[34px] justify-center">
+            <Text numberOfLines={2} ellipsizeMode="tail" className={`text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam.name}</Text>
+          </View>
+        
+          </AnimatedPressable>);
+        })}
+      </ScrollView>
+    ) : (
+      <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No entrance exams available right now.</Text>
+    )}
 
     <SectionHeader title="Explore Institutes" action={<AnimatedPressable onPress={() => handleSectionSeeAll('institutes')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></AnimatedPressable>} />
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">

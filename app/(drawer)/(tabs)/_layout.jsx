@@ -17,12 +17,12 @@ export default function TabsLayout() {
     });
     const moduleTitleMatchers = useMemo(() => ({
         library: {
-            title: 'Career Library Locked',
-            match: 'career library',
+            title: 'Career Archive Locked',
+            match: 'career archive',
         },
         learn: {
-            title: 'Master Class Locked',
-            match: 'master class',
+            title: 'Career & Personality Videos Locked',
+            match: 'career & personality videos',
         },
     }), []);
 
@@ -89,8 +89,8 @@ export default function TabsLayout() {
         setLockedTab({
             title: config?.title || 'Locked',
             subtitle: tabName === 'library'
-                ? 'Unlock the career library to browse streams, roles, and college paths.'
-                : 'Unlock master class lessons before opening this tab.',
+                ? 'Unlock the career archive to browse streams, roles, and college paths.'
+                : 'Unlock career & personality videos before opening this tab.',
             route: tabName === 'library'
                 ? '/(drawer)/(tabs)/library'
                 : '/(drawer)/(tabs)/learn',

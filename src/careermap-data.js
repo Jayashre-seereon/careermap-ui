@@ -31,21 +31,21 @@ export const heroStats = [
 ];
 export const moduleCards = [
     {
-        title: 'Career Library',
+        title: 'Career Archive',
         subtitle: 'Explore streams, roles, and college paths.',
         icon: 'book-outline',
         route: '/(drawer)/(tabs)/library',
         tone: palette.blue,
     },
     {
-        title: 'Assessment',
+        title: 'Career Psychometric Assessment',
         subtitle: 'Discover aptitude and personality insights.',
         icon: 'analytics-outline',
         route: '/(drawer)/(tabs)/assessment',
         tone: palette.purple,
     },
     {
-        title: 'Master Class',
+        title: 'Career & Personality Videos',
         subtitle: 'Short expert-led learning videos.',
         icon: 'school-outline',
         route: '/(drawer)/(tabs)/learn',
@@ -66,7 +66,7 @@ export const moduleCards = [
         tone: palette.pink,
     },
     {
-        title: 'Book Mentor',
+        title: 'Book Your Mentor',
         subtitle: 'Reserve guidance with an expert mentor.',
         icon: 'people-outline',
         route: '/(drawer)/book-mentor',
@@ -92,6 +92,13 @@ export const moduleCards = [
         icon: 'globe-outline',
         route: '/(drawer)/abroad',
         tone: palette.purple,
+    },
+    {
+        title: 'Career News Letter',
+        subtitle: 'Read the latest career updates and highlights.',
+        icon: 'newspaper-outline',
+        route: '/(drawer)/newsletter',
+        tone: palette.pink,
     },
 ];
 export const entranceExams = [

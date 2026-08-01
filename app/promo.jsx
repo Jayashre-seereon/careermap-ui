@@ -10,7 +10,7 @@ import { StaggerFadeUpItem, ZoomInPage } from '../src/page-transition';
 const beeImage = require('../assets/images/bee.png');
 const features = [
     { title: 'Psychometric Tests ⭐', desc: 'Discover strengths and ideal fit ' },
-    { title: 'Career Library', desc: '500+ career options across streams' },
+    { title: 'Career Archive', desc: '500+ career options across streams' },
      { title: 'Expert Mentors', desc: 'Guidance from counsellors and experts' },
     { title: 'Scholarships & Exams', desc: 'Stay updated on opportunities' },
     { title: 'Study Abroad', desc: 'Explore international education paths' },

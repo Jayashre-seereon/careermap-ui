@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
@@ -10,11 +10,12 @@ import { StaggerFadeUpItem } from '../../src/page-transition';
 import { useAuthStore } from '../../src/store/auth-store';
 export default function SettingsScreen() {
     const { preferences, requestProfileEdit, toggleDarkMode, userProfile } = useAppState();
+    const { view: initialView } = useLocalSearchParams();
     const authUser = useAuthStore((state) => state.user);
     const accessToken = useAuthStore((state) => state.accessToken);
     const clearAuthFlow = useAuthStore((state) => state.clearAuthFlow);
     const logout = useAuthStore((state) => state.logout);
-    const [view, setView] = useState('menu');
+    const [view, setView] = useState(initialView === 'help' ? 'help' : 'menu');
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
         newPassword: '',

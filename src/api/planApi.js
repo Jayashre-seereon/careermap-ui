@@ -10,8 +10,8 @@ const fallbackPlanKeyMap = {
 
 const fallbackFeatureCatalog = {
   psychometric: ['1 Psychometric Test', 'Basic report', 'Career suggestions'],
-  premium: ['Detailed report', '1-on-1 counselling', 'Mentor booking access', 'Master class access'],
-  infocentre: ['Psychometric test', 'Career library', 'Master class videos', 'Mentor booking', 'Scholarship info'],
+  premium: ['Detailed report', '1-on-1 counselling', 'Mentor booking access', 'Career & Personality Videos access'],
+  infocentre: ['Psychometric test', 'Career Archive', 'Career & Personality Videos', 'Mentor booking', 'Scholarship info'],
   abroad: ['Study Abroad module', 'Country details', 'Consultation request access'],
 };
 
