@@ -44,15 +44,22 @@ export default function SubscriptionScreen() {
     ];
 
     const compareFeatures = [
-        'Initial Career Guidance',
-        'Detailed Psychometric Assessment',
-        'Personalized Career Recommendations',
-        'Comprehensive Career Counselling',
-        'Personalized Career Roadmap',
-        'End-to-End Career Planning',
-        'Annual Career Mentorship & Follow-up Support',
-        'Study Abroad Guidance & Counselling',
-        'Abroad Consultancy Support',
+        { label: 'Initial Career Guidance', notes: [null, null, null, null] },
+        { label: 'Detailed Psychometric Assessment', notes: [null, null, null, null] },
+        { label: 'Personalized Career Recommendations', notes: [null, null, null, null] },
+        { label: 'Comprehensive Career Counselling', notes: [null, null, '(Unlimited for 1 Year)', '(Unlimited for 1 Year)'] },
+        { label: 'Personalized Career Roadmap', notes: [null, null, null, null] },
+        { label: 'End-to-End Career Planning', notes: [null, null, null, null] },
+        { label: 'Annual Career Mentorship & Follow-up Support', notes: [null, null, null, null] },
+        { label: 'Study Abroad Guidance & Counselling', notes: [null, null, null, null] },
+        { label: 'Abroad Consultancy Support', notes: [null, null, null, null] },
+    ];
+
+    const compareBestFor = [
+        'Students looking for initial career guidance',
+        'Students seeking a detailed assessment and personalized counselling',
+        'Students requiring complete career planning with year-long mentorship',
+        'Students planning both their career and higher education abroad',
     ];
     useEffect(() => {
         let isMounted = true;
@@ -252,16 +259,17 @@ export default function SubscriptionScreen() {
                 ))}
               </View>
 
-              {compareFeatures.map((feature, featureIndex) => (
-                <View key={feature} className={`flex-row flex-nowrap ${featureIndex === compareFeatures.length - 1 ? '' : preferences.darkMode ? 'border-b border-[#1a1a1a]' : 'border-b border-[#f0e8e2]'}`}>
+            {compareFeatures.map((feature, featureIndex) => (
+                <View key={feature.label} className={`flex-row flex-nowrap ${preferences.darkMode ? 'border-b border-[#1a1a1a]' : 'border-b border-[#f0e8e2]'}`}>
                   <View className="w-[255px] shrink-0 justify-center px-5 py-4">
-                    <Text className={`text-[11px] leading-4 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{feature}</Text>
+                    <Text className={`text-[11px] leading-4 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{feature.label}</Text>
                   </View>
-                  {comparePlans.map((plan) => {
+                  {comparePlans.map((plan, planIndex) => {
                     const available = plan.features[featureIndex];
+                    const note = feature.notes?.[planIndex];
                     return (
                       <View
-                        key={`${plan.label}-${feature}`}
+                        key={`${plan.label}-${feature.label}`}
                         className={`w-[141px] shrink-0 items-center justify-center border-l px-3 py-4 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-[#f0e8e2]'}`}
                         style={plan.featured ? { backgroundColor: preferences.darkMode ? 'rgba(255,255,255,0.02)' : '#fffdfb' } : null}
                       >
@@ -272,11 +280,32 @@ export default function SubscriptionScreen() {
                         ) : (
                           <Ionicons name="close" size={15} color={preferences.darkMode ? '#6d6d6d' : '#c7b8b1'}/>
                         )}
+                        {note ? (
+                          <Text
+                            className={`mt-1 text-center text-[9px] italic leading-3 ${preferences.darkMode ? 'text-[#8f8f8f]' : 'text-muted'}`}
+                          >
+                            {note}
+                          </Text>
+                        ) : null}
                       </View>
                     );
                   })}
                 </View>
-              ))}
+            ))}
+
+              <View className="flex-row flex-nowrap">
+                <View className={`w-[255px] shrink-0 justify-center px-5 py-4 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#faf7f5]'}`}>
+                  <Text className={`text-[12px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Best For</Text>
+                </View>
+                {compareBestFor.map((text, i) => (
+                  <View
+                    key={i}
+                    className={`w-[141px] shrink-0 justify-center border-l px-3 py-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-[#f0e8e2] bg-[#faf7f5]'}`}
+                  >
+                    <Text className={`text-center text-[10px] leading-4 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{text}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
           </ScrollView>
         </View>
