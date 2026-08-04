@@ -159,8 +159,8 @@ export function mapMentorItem(item, index = 0) {
   categoryObj?.title ||
   ''
 ].filter(Boolean),
-    bio: stripHtml(item?.description) || 'Mentor profile information is not available right now.',
-    accent: mentorAccentPalette[index % mentorAccentPalette.length],
+   bio: stripHtml(item?.description) || 'Mentor profile information is not available right now.',
+    bioHtml: item?.description || '',  accent: mentorAccentPalette[index % mentorAccentPalette.length],
     avatar: buildAvatar(name),
     email: item?.email || '',
     phoneNumber: item?.phone_number || item?.phoneNumber || '',

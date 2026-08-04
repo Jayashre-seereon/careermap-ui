@@ -79,6 +79,7 @@ function mapSections(sections) {
     id: String(section?.id ?? `section-${index}`),
     title: section?.title || `Section ${index + 1}`,
     description: stripHtml(section?.description) || '',
+    descriptionHtml: section?.description || '',
   }));
 }
 function mapScholarshipItem(item, index) {
@@ -97,9 +98,9 @@ function mapScholarshipItem(item, index) {
     tag: scholarshipType,
     status: getScholarshipStatus(item?.deadline),
     provider: scholarshipType,
-    description: stripHtml(item?.description) || 'Scholarship details are not available right now.',
-     sections: mapSections(item?.sections),
-    requirements: formatRequirements(item?.requirement),
+   description: stripHtml(item?.description) || 'Scholarship details are not available right now.',
+    descriptionHtml: item?.description || '',
+     sections: mapSections(item?.sections),  requirements: formatRequirements(item?.requirement),
     link: item?.url || '#',
     categoryId: item?.categoryId ?? null,
     secondcategoryId: item?.secondcategoryId ?? null,
