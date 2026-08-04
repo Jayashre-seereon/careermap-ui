@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View ,Linking} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, ScrollView, Text, View ,Linking, useWindowDimensions} from 'react-native';
+import RenderHTML from 'react-native-render-html';import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getCareerLibraryCategoriesByStream, getCareerLibraryDetails, getCareerLibraryNext, getCareerLibraryStreams, startCareerLibraryPreview } from '../../../src/api/careerLibraryApi';
 import { checkModuleAccess } from '../../../src/api/moduleAccessApi';
 import { useAppState } from '../../../src/app-state';
@@ -294,6 +294,7 @@ const getCardDescription = (item) => stripHtml(item?.desc || item?.description |
 export default function CareerLibraryScreen() {
     const params = useLocalSearchParams();
     const insets = useSafeAreaInsets();
+    const { width: screenWidth } = useWindowDimensions();
     const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
     const [currentLevel, setCurrentLevel] = useState('streams');
     const [selectedStream, setSelectedStream] = useState(null);
@@ -747,6 +748,15 @@ export default function CareerLibraryScreen() {
         </StaggerFadeUpItem>);
         })}
     </View>);
+    const htmlTagStyles = {
+        h1: { fontSize: 16, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 4 },
+        h2: { fontSize: 15, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 4 },
+        h3: { fontSize: 14, fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 3 },
+        p: { marginVertical: 2 },
+        li: { marginVertical: 1 },
+        strong: { fontWeight: '800' },
+        a: { color: palette.primary },
+    };
     const renderDetailItem = (detail, index) => {
         const title = getDetailTitle(detail);
         const instituteGroups = groupInstitutesByTopStatus(detail?.institutions);
@@ -755,10 +765,11 @@ export default function CareerLibraryScreen() {
         const descriptions = toList(detail?.descriptions);
         const careerPaths = toList(detail?.careerpaths);
         const entranceExams = toList(detail?.entranceexams);
-        const specializations = extractListItems(detail?.specialization);
+      const specializations = extractListItems(detail?.specialization);
+        const specializationHtml = detail?.specialization || '';
         const jobScopes = toList(detail?.jobScope);
         const importantFacts = extractListItems(detail?.important_factor || detail?.importantFacts || detail?.importantfacts || detail?.facts || detail?.keyFacts);
-        const countryOptions = ['All', 'India', 'Other'];
+        const importantFactorHtml = detail?.important_factor || detail?.importantFacts || detail?.importantfacts || detail?.facts || detail?.keyFacts || ''; const countryOptions = ['All', 'India', 'Other'];
         const outsideInstitutes = instituteGroups.outsideInstitutes;
         const stateOptions = selectedInstituteCountry === 'India'
             ? ['All', 'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Chandigarh', 'Puducherry', 'Andaman and Nicobar Islands', 'Dadra and Nagar Haveli and Daman and Diu', 'Lakshadweep']
@@ -858,9 +869,23 @@ export default function CareerLibraryScreen() {
           <View className="mb-2 flex-row items-center gap-2">
              <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{section?.title || 'About'}</Text>
           </View>
-          <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
-            {stripHtml(section?.description)}
-          </Text>
+          {section?.description ? (
+            <ScrollView
+                horizontal
+                nestedScrollEnabled
+                showsHorizontalScrollIndicator={true}
+                style={{ maxHeight: 420 }}
+            >
+                <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={true} style={{ maxHeight: 420 }}>
+                    <RenderHTML
+                        contentWidth={screenWidth - 64}
+                        source={{ html: section.description }}
+                        baseStyle={{ color: preferences.darkMode ? '#d1d5db' : '#111827', fontSize: 13, lineHeight: 20 }}
+                        tagsStyles={htmlTagStyles}
+                    />
+                </ScrollView>
+            </ScrollView>
+          ) : null}
         </View>
       ))}
   </View>
@@ -928,33 +953,33 @@ export default function CareerLibraryScreen() {
 </View>
 ) : null}
            
-{specializations.length > 0 ? (
+{specializationHtml ? (
   <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
     <View className="mb-3 flex-row items-center gap-2">
       <Ionicons name="star-outline" size={16} color={palette.primary}/>
       <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Specialization</Text>
     </View>
-    {specializations.map((item, i) => (
-      <View key={i} className="mb-2 flex-row items-start">
-        <Ionicons name="star" size={12} color={palette.primary} style={{ marginRight: 8, marginTop: 3 }}/>
-        <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{item}</Text>
-      </View>
-    ))}
+    <RenderHTML
+        contentWidth={screenWidth - 64}
+        source={{ html: specializationHtml }}
+        baseStyle={{ color: preferences.darkMode ? '#d1d5db' : '#111827', fontSize: 13, lineHeight: 20 }}
+        tagsStyles={htmlTagStyles}
+    />
   </View>
 ) : null}
 
-{importantFacts.length > 0 ? (
+{importantFactorHtml ? (
   <View className={`mb-4 rounded-[20px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-card'}`}>
     <View className="mb-3 flex-row items-center gap-2">
       <Ionicons name="checkmark-circle-outline" size={16} color={palette.primary}/>
       <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Important Factors</Text>
     </View>
-    {importantFacts.map((item, i) => (
-      <View key={i} className="mb-2 flex-row items-start">
-        <Ionicons name="checkmark-circle" size={12} color={palette.primary} style={{ marginRight: 8, marginTop: 3 }}/>
-        <Text className={`flex-1 text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item}</Text>
-      </View>
-    ))}
+    <RenderHTML
+        contentWidth={screenWidth - 64}
+        source={{ html: importantFactorHtml }}
+        baseStyle={{ color: preferences.darkMode ? '#b7aeb9' : palette.muted, fontSize: 13, lineHeight: 20 }}
+        tagsStyles={htmlTagStyles}
+    />
   </View>
 ) : null}
 

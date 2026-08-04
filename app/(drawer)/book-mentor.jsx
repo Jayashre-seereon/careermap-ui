@@ -1,5 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
+import RenderHTML from 'react-native-render-html';
+import { useWindowDimensions } from 'react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Animated, Image, Modal, Pressable, ScrollView, Text, TextInput, View, Linking } from 'react-native';
 import { createMentorOrder, getBookedMentorSlots, getMentors, verifyMentorPayment } from '../../src/api/mentorApi';
@@ -139,6 +141,7 @@ const getFutureSlots = (dateKey, slotList) => {
 };
 export default function BookMentorScreen() {
     const params = useLocalSearchParams();
+    const { width: screenWidth } = useWindowDimensions();
     const { addBooking, canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess, userProfile } = useAppState();
     const [mentorList, setMentorList] = useState(mentors);
     const [showFilters, setShowFilters] = useState(false);
@@ -902,11 +905,33 @@ const searchableSubCategoryOptions = useMemo(() => {
                     </View>
                 </View>
             </View>
- <View className={`rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+<View className={`rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
                         <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>About</Text>
-                        <Text className={`mt-1 text-[13px] font-medium leading-[20px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                            {mentor.bio || mentor.description || 'Mentor description is not available right now.'}
-                        </Text>
+                        {mentor.bioHtml ? (
+                            <RenderHTML
+                                contentWidth={screenWidth - 80}
+                                source={{ html: mentor.bioHtml }}
+                                baseStyle={{
+                                    color: preferences.darkMode ? '#ffffff' : palette.text,
+                                    fontSize: 13,
+                                    lineHeight: 20,
+                                    marginTop: 4,
+                                }}
+                                tagsStyles={{
+                                    h1: { fontSize: 20, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 6 },
+                                    h2: { fontSize: 18, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 6 },
+                                    h3: { fontSize: 16, fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 4 },
+                                    p: { marginVertical: 4 },
+                                    li: { marginVertical: 2 },
+                                    strong: { fontWeight: '800' },
+                                    a: { color: palette.primary },
+                                }}
+                            />
+                        ) : (
+                            <Text className={`mt-1 text-[13px] font-medium leading-[20px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                                {mentor.bio || mentor.description || 'Mentor description is not available right now.'}
+                            </Text>
+                        )}
                     </View>
             <View className={` gap-3 rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
                 <Text className={`text-[20px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Profile Details</Text>
