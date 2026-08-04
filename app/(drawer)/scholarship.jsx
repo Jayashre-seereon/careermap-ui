@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, Pressable, ScrollView, Text, View ,TextInput} from 'react-native';
+import { Linking, Pressable, ScrollView, Text, View, TextInput, useWindowDimensions } from 'react-native';
+import RenderHTML from 'react-native-render-html';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getScholarships, startScholarshipPreview } from '../../src/api/scholarshipApi';
@@ -12,6 +13,7 @@ import { openSubscriptionPrompt } from '../../src/subscription-flow';
 
 export default function ScholarshipScreen() {
     const params = useLocalSearchParams();
+    const { width: screenWidth } = useWindowDimensions();
     const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
     const [hasFullAccess, setHasFullAccess] = useState(false);
     const [scholarships, setScholarships] = useState([]);
@@ -311,22 +313,64 @@ const searchableTypeOptions = useMemo(() => {
                         </View>
                     ) : (
                         <>
-                            <View className={`mt-3 gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+                         <View className={`mt-3 gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
                                 {item.sections && item.sections.length > 0 ? (
                                     item.sections.map((section) => (
                                         <View key={section.id} className="gap-1.5">
                                             <Text className="text-[14px] font-extrabold text-brand">{section.title}</Text>
-                                            <Text className={`text-[13px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-                                                {section.description}
-                                            </Text>
+                                            {section.descriptionHtml ? (
+                                                <RenderHTML
+                                                    contentWidth={screenWidth - 64}
+                                                    source={{ html: section.descriptionHtml }}
+                                                    baseStyle={{
+                                                        color: preferences.darkMode ? '#b7aeb9' : palette.muted,
+                                                        fontSize: 13,
+                                                        lineHeight: 21,
+                                                    }}
+                                                    tagsStyles={{
+                                                        h1: { fontSize: 18, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 6 },
+                                                        h2: { fontSize: 16, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 6 },
+                                                        h3: { fontSize: 15, fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 4 },
+                                                        p: { marginVertical: 4 },
+                                                        li: { marginVertical: 2 },
+                                                        strong: { fontWeight: '800' },
+                                                        a: { color: palette.primary },
+                                                    }}
+                                                />
+                                            ) : (
+                                                <Text className={`text-[13px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                                                    {section.description}
+                                                </Text>
+                                            )}
                                         </View>
                                     ))
                                 ) : (
                                     <>
                                         <Text className="text-[14px] font-extrabold text-brand">About This Scholarship</Text>
-                                        <Text className={`text-[13px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-                                            {item.description || 'No details available.'}
-                                        </Text>
+                                        {item.descriptionHtml ? (
+                                            <RenderHTML
+                                                contentWidth={screenWidth - 64}
+                                                source={{ html: item.descriptionHtml }}
+                                                baseStyle={{
+                                                    color: preferences.darkMode ? '#b7aeb9' : palette.muted,
+                                                    fontSize: 13,
+                                                    lineHeight: 21,
+                                                }}
+                                                tagsStyles={{
+                                                    h1: { fontSize: 18, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 6 },
+                                                    h2: { fontSize: 16, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 6 },
+                                                    h3: { fontSize: 15, fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 4 },
+                                                    p: { marginVertical: 4 },
+                                                    li: { marginVertical: 2 },
+                                                    strong: { fontWeight: '800' },
+                                                    a: { color: palette.primary },
+                                                }}
+                                            />
+                                        ) : (
+                                            <Text className={`text-[13px] leading-[21px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                                                {item.description || 'No details available.'}
+                                            </Text>
+                                        )}
                                     </>
                                 )}
                             </View>

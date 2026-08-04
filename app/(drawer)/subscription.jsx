@@ -1,14 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, View,useWindowDimensions } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { createOrder, getPlans, verifyPayment } from '../../src/api/planApi';
 import { palette, subscriptions as fallbackSubscriptions } from '../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
 import { openRazorpayCheckout } from '../../src/utils/razorpay';
+import RenderHTML from 'react-native-render-html';
 export default function SubscriptionScreen() {
     const { isCurrentSubscriptionPlan, preferences, userProfile } = useAppState();
+    const { width: screenWidth } = useWindowDimensions();
     const { returnTo } = useLocalSearchParams();
     const [plans, setPlans] = useState(fallbackSubscriptions);
     const [isLoading, setIsLoading] = useState(true);
@@ -161,19 +163,43 @@ export default function SubscriptionScreen() {
       ? 'border-[#1a1a1a] bg-[#080808]'
       : 'border-line bg-card'}`}>
             <View className="flex-row items-start justify-between gap-3 ">
-              <View className="flex-1 gap-1.5">
+             <View className="flex-1 gap-1.5">
+              
                 <Text className={`text-[18px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{plan.name}</Text>
-                <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{plan.description}</Text>
+                  <View className="gap-1">
+              <Text className="text-[28px] font-black text-brand">{plan.price}</Text>
+              {plan.validity ? <Text className={`text-[12px] font-bold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{plan.validity}/month</Text> : null}
+            </View>
+                {plan.descriptionHtml ? (
+                    <RenderHTML
+                        contentWidth={screenWidth - 76}
+                        source={{ html: plan.descriptionHtml }}
+                        baseStyle={{
+                            color: preferences.darkMode ? '#b7aeb9' : palette.muted,
+                            fontSize: 13,
+                            lineHeight: 20,
+                        }}
+                        tagsStyles={{
+                            h1: { fontSize: 16, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 4 },
+                            h2: { fontSize: 15, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 4 },
+                            h3: { fontSize: 14, fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 3 },
+                            p: { marginVertical: 2 },
+                            li: { marginVertical: 1 },
+                            strong: { fontWeight: '800' },
+                            a: { color: palette.primary },
+                        }}
+                    />
+                ) : (
+                    <Text className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{plan.description}</Text>
+                )}
               </View>
+              
               <View className="flex-row gap-2 ">
                 {plan.recommended ? <Pill label="Recommended" tone={palette.primary} /> : null}
                 {plan.highestseller ? <Pill label="Highest Seller" tone="#f59e0b" /> : null}
               </View>
             </View>
-            <View className="gap-1">
-              <Text className="text-[28px] font-black text-brand">{plan.price}</Text>
-              {plan.validity ? <Text className={`text-[12px] font-bold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{plan.validity}</Text> : null}
-            </View>
+          
             <View className="gap-2.5 ">
               {plan.features.map((feature) => (<View key={feature} className="flex-row items-center gap-2.5">
                   <Ionicons name="checkmark-circle" size={18} color={palette.green}/>
