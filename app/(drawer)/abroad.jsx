@@ -4,13 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { createStudyAbroadConsultation, getStudyAbroadCountries } from '../../src/api/studyabroadApi';
+import { checkModuleAccess, getModules } from '../../src/api/moduleAccessApi';
 import { palette } from '../../src/careermap-data';
 import { AnimatedPressable, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
 export default function AbroadScreen() {
     const params = useLocalSearchParams();
     const { width } = useWindowDimensions();
-    const { canAccessFreeDetail, isUnlocked, preferences, registerFreeDetailAccess } = useAppState();
+    const { isUnlocked, preferences } = useAppState();
     const unlocked = isUnlocked('abroad-consultancy');
     const autoSubmitHandledRef = useRef('');
     const [countries, setCountries] = useState([]);
@@ -19,7 +20,7 @@ export default function AbroadScreen() {
     const [selected, setSelected] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    //const [showUnlockSheet, setShowUnlockSheet] = useState(false);
+    const [showUnlockSheet, setShowUnlockSheet] = useState(false);
     const [preferredCountry, setPreferredCountry] = useState('');
     const [courseInterest, setCourseInterest] = useState('');
     const [budgetRange, setBudgetRange] = useState('');
@@ -27,6 +28,8 @@ export default function AbroadScreen() {
     const [message, setMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
+    const [moduleStatus, setModuleStatus] = useState('locked');
+    const [moduleAccessResolved, setModuleAccessResolved] = useState(false);
     const selectedCountry = selected !== null ? countries[selected] : null;
     const UG_PROGRAMS = [
   'BBA', 'B.Com', 'B.Tech / Engineering', 'Computer Science', 'Artificial Intelligence',
@@ -39,7 +42,6 @@ const PG_PROGRAMS = [
   'MSc Engineering', 'MSc Finance', 'MSc Marketing','MSc Artificial Intelligence', 
   'Master of Laws (LLM)','Master of Public Health (MPH)', 'Master of Education (M.Ed.)', 'MSc Cybersecurity', 'MSc Business Analytics',
 ];
-   // const detailUnlocked = selectedCountry ? canAccessFreeDetail('abroad-consultancy', selectedCountry.countryName) : true;
     const selectedStudyAbroadId = selectedCountry?.id ? Number(selectedCountry.id) : null;
     
     const consultationPayload = useMemo(() => {
@@ -135,6 +137,45 @@ const PG_PROGRAMS = [
         }
 
         loadCountries();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+    useEffect(() => {
+        let isMounted = true;
+
+        async function loadModuleAccess() {
+            try {
+                const modules = await getModules();
+                const matchedModule = modules.find((module) => String(module?.title || '').trim().toLowerCase().includes('study abroad'));
+                const moduleId = Number(matchedModule?.id);
+
+                if (!Number.isFinite(moduleId)) {
+                    if (isMounted) {
+                        setModuleStatus('preview');
+                        setModuleAccessResolved(true);
+                    }
+                    return;
+                }
+
+                const response = await checkModuleAccess(moduleId);
+                if (!isMounted) {
+                    return;
+                }
+
+                setModuleStatus(String(response?.mode || 'locked').toLowerCase());
+                setModuleAccessResolved(true);
+            }
+            catch {
+                if (isMounted) {
+                    setModuleStatus('preview');
+                    setModuleAccessResolved(true);
+                }
+            }
+        }
+
+        loadModuleAccess();
 
         return () => {
             isMounted = false;
@@ -281,11 +322,11 @@ const PG_PROGRAMS = [
                 }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
-        {/* {!unlocked ? (<View className="self-start rounded-full px-3 py-2" style={{ backgroundColor: `${detailUnlocked ? palette.green : palette.orange}12` }}>
-            <Text className="text-[11px] font-extrabold" style={{ color: detailUnlocked ? palette.green : palette.orange }}>
-              {detailUnlocked ? '1 free country detail unlocked' : 'Subscribe to unlock more country details'}
+        {!unlocked ? (<View className="self-start rounded-full px-3 py-2" style={{ backgroundColor: `${palette.orange}12` }}>
+            <Text className="text-[11px] font-extrabold" style={{ color: palette.orange }}>
+              Subscribe to unlock more country details
             </Text>
-          </View>) : null} */}
+          </View>) : null}
         <View className="relative">
           <>
             <View className="items-center gap-2 py-1.5">
@@ -354,16 +395,28 @@ const PG_PROGRAMS = [
   </View>
 </View>
       
+      {!moduleAccessResolved ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Checking access...</Text>) : null}
       {isLoading ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading destinations...</Text>) : null}
       {!isLoading && loadError ? (<Text className="text-[13px] text-brand">{loadError}</Text>) : null}
       <View className="gap-3">
         {countries.map((country, index) => {
-            const detailOpen = unlocked || canAccessFreeDetail('abroad-consultancy', country.countryName);
+            const detailOpen = moduleStatus === 'full' || (moduleStatus === 'preview' && index < 4);
             const cardPadding = width < 420 ? 'p-[16px]' : 'p-[18px]';
             return (<Pressable key={country.id} className={`relative gap-1.5 rounded-[22px] border ${cardPadding} ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} 
              onPress={() => {
+  if (!detailOpen) {
+    setShowUnlockSheet(true);
+    return;
+  }
   setSelected(index);
 }}>
+            <View className={`absolute right-4 top-4 h-6 w-6 items-center justify-center rounded-full ${detailOpen ? 'bg-[#e4f7ed]' : 'bg-[#fdecea]'}`}>
+                <Ionicons
+                    name={detailOpen ? 'lock-open' : 'lock-closed'}
+                    size={13}
+                    color={detailOpen ? '#2f9367' : '#e53935'}
+                />
+            </View>
             {width < 520 ? (<View className="gap-3 pt-1">
                 <View className="flex-row items-start gap-3 pr-10">
                   <View className="h-11 w-11 items-center justify-center rounded-[14px]" style={{ backgroundColor: `${palette.teal}10` }}>
@@ -373,10 +426,6 @@ const PG_PROGRAMS = [
                     <Text numberOfLines={2} className={`text-[15px] font-extrabold leading-5 ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.title}</Text>
                    </View>
                 </View>
-                {/* {!unlocked ? (<View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
-                  <Ionicons name={detailOpen ? 'lock-open-outline' : 'lock-closed'} size={15} color={palette.primary}/>
-                </View>) : null} */}
-               
               </View>) : (<View className="flex-row items-start gap-3">
                 <View className="h-11 w-11 items-center justify-center rounded-[14px]" style={{ backgroundColor: `${palette.primary}10` }}>
                   <Text className="text-[11px] font-black text-brand">{country.countryName.slice(0, 3).toUpperCase()}</Text>
@@ -385,19 +434,14 @@ const PG_PROGRAMS = [
                   <Text numberOfLines={2} className={`text-[16px] font-extrabold leading-5 ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.title}</Text>
                   <Text numberOfLines={2} className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.description}</Text>
                 </View>
-                <View className="items-end gap-2">
-                  {/* {!unlocked ? (<View className={`h-8 w-8 items-center justify-center rounded-full ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
-                    <Ionicons name={detailOpen ? 'lock-open-outline' : 'lock-closed'} size={15} color={palette.primary}/>
-                  </View>) : null} */}
-                
-                </View>
+                <View className="items-end gap-2" />
               </View>)}
           </Pressable>);
         })}
       </View>
-      {/* {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Study Abroad" subtitle="Subscribe to more country details, scholarships, visa guidance, and counselling access." onClose={() => setShowUnlockSheet(false)} onPress={() => {
+      {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Study Abroad" subtitle="Subscribe to more country details, scholarships, visa guidance, and counselling access." onClose={() => setShowUnlockSheet(false)} onPress={() => {
                 setShowUnlockSheet(false);
                 openSubscriptionPrompt(showForm ? formReturnTarget : { pathname: '/(drawer)/abroad' });
-            }}/>) : null} */}
+            }}/>) : null}
     </Screen>);
 }
