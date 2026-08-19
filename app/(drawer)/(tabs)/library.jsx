@@ -1087,7 +1087,7 @@ export default function CareerLibraryScreen() {
                 }}
                 className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
               >
-                <Text className={`text-[13px] font-semibold ${selectedInstituteCountry === option ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{option}</Text>
+          <Text className={`text-[13px] font-semibold ${normalizeCountry(selectedInstituteCountry) === normalizeCountry(option) ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{option}</Text>
               </Pressable>
             ))}
           </View>
@@ -1115,7 +1115,7 @@ export default function CareerLibraryScreen() {
                   }}
                   className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
                 >
-                  <Text className={`text-[13px] font-semibold ${selectedInstituteState === option ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{option}</Text>
+                  <Text className={`text-[13px] font-semibold ${normalizeState(selectedInstituteState) === normalizeState(option) ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{option}</Text>
                 </Pressable>
               ))}
             </ScrollView>
