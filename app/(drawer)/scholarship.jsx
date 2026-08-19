@@ -291,7 +291,7 @@ const searchableTypeOptions = useMemo(() => {
                     <View className={`gap-3 rounded-[22px] border p-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
                         <View className="flex-row items-center justify-between gap-3">
                             <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Amount</Text>
-                            <Text className="text-[20px] font-black text-success">{item.amount}</Text>
+                            <Text className="text-[13px] font-black text-success">{item.amount}</Text>
                         </View>
                         <View className="flex-row items-center justify-between gap-3">
                             <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Deadline</Text>
@@ -770,7 +770,7 @@ const searchableTypeOptions = useMemo(() => {
                             <View className="flex-1 gap-1 pr-[110px]">
                                 <Text numberOfLines={2} className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</Text>
                                 <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.provider}</Text>
-                                <Text className="text-[16px] font-black text-success">{item.amount}</Text>
+                                <Text className="text-[15px] font-black text-success">{item.amount}</Text>
                             </View>
                         </View>
                     </AnimatedPressable>
