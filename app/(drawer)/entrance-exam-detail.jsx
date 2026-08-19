@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import RenderHTML from 'react-native-render-html';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getEntranceExams } from '../../src/api/entranceExamApi';
@@ -32,6 +33,7 @@ function DetailCard({ title, children }) {
 export default function EntranceExamDetailScreen() {
     const { preferences } = useAppState();
     const { examId } = useLocalSearchParams();
+    const { width: screenWidth } = useWindowDimensions();
     const [entranceExams, setEntranceExams] = useState([]);
     const [showDescriptionModal, setShowDescriptionModal] = useState(false);
 
@@ -205,9 +207,35 @@ export default function EntranceExamDetailScreen() {
                             </Pressable>
                         </View>
                         <ScrollView>
-                            <Text className={`text-[14px] leading-6 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-                                {exam.about || 'Description not available.'}
-                            </Text>
+                            {exam.aboutHtml ? (
+                                <RenderHTML
+                                    contentWidth={Math.min(screenWidth - 72, 420 - 40)}
+                                    source={{ html: exam.aboutHtml }}
+                                    baseStyle={{
+                                        color: preferences.darkMode ? '#b7aeb9' : palette.muted,
+                                        fontSize: 14,
+                                        lineHeight: 22,
+                                    }}
+                                    tagsStyles={{
+                                        h1: { fontSize: 20, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 8 },
+                                        h2: { fontSize: 18, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 8 },
+                                        h3: { fontSize: 16, fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 6 },
+                                        p: { marginVertical: 4 },
+                                        li: { marginVertical: 3 },
+                                        ul: { marginVertical: 6, paddingLeft: 18 },
+                                        ol: { marginVertical: 6, paddingLeft: 18 },
+                                        table: { marginVertical: 8 },
+                                        th: { padding: 6, borderWidth: 1, borderColor: preferences.darkMode ? '#1a1a1a' : '#e8dfda', backgroundColor: preferences.darkMode ? '#111111' : '#f7f1ed' },
+                                        td: { padding: 6, borderWidth: 1, borderColor: preferences.darkMode ? '#1a1a1a' : '#e8dfda' },
+                                        strong: { fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text },
+                                        a: { color: palette.primary },
+                                    }}
+                                />
+                            ) : (
+                                <Text className={`text-[14px] leading-6 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                                    {exam.about || 'Description not available.'}
+                                </Text>
+                            )}
                         </ScrollView>
                     </Pressable>
                 </Pressable>
