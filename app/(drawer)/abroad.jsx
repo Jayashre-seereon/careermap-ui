@@ -28,8 +28,20 @@ export default function AbroadScreen() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const selectedCountry = selected !== null ? countries[selected] : null;
+    const UG_PROGRAMS = [
+  'BBA', 'B.Com', 'B.Tech / Engineering', 'Computer Science', 'Artificial Intelligence',
+  'Data Science', 'Nursing', 'Psychology', 'Architecture', 'Hospitality Management',
+  'Media & Communication', 'Biotechnology',
+];
+
+const PG_PROGRAMS = [
+  'MBA', 'MSc Computer Science', 'MSc Data Science',
+  'MSc Engineering', 'MSc Finance', 'MSc Marketing','MSc Artificial Intelligence', 
+  'Master of Laws (LLM)','Master of Public Health (MPH)', 'Master of Education (M.Ed.)', 'MSc Cybersecurity', 'MSc Business Analytics',
+];
    // const detailUnlocked = selectedCountry ? canAccessFreeDetail('abroad-consultancy', selectedCountry.countryName) : true;
     const selectedStudyAbroadId = selectedCountry?.id ? Number(selectedCountry.id) : null;
+    
     const consultationPayload = useMemo(() => {
         if (!selectedStudyAbroadId) {
             return null;
@@ -304,6 +316,43 @@ export default function AbroadScreen() {
     return (<Screen animationKey={animationKey}>
       <SectionHeader title="Study Abroad" subtitle="Explore world-class education opportunities in the world's leading study destinations. We help students secure admission to top-ranked universities offering Undergraduate (UG) and Postgraduate (PG) programs across the UK, USA, Canada, Europe, Singapore, and Dubai.
 "/>
+<View className="gap-3">
+  <View className={`gap-3 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+    <View className="flex-row items-center gap-2">
+      <View className="h-9 w-9 items-center justify-center rounded-[12px]" style={{ backgroundColor: `${palette.primary}12` }}>
+        <Ionicons name="school-outline" size={18} color={palette.primary} />
+      </View>
+      <Text className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+        Popular Undergraduate (UG) Programs
+      </Text>
+    </View>
+    <View className="flex-row flex-wrap gap-2">
+      {UG_PROGRAMS.map((program) => (
+        <View key={program} className={`rounded-full border px-3 py-2 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-surface'}`}>
+          <Text className={`text-[12px] font-bold ${preferences.darkMode ? 'text-[#e5dfe6]' : 'text-ink'}`}>{program}</Text>
+        </View>
+      ))}
+    </View>
+  </View>
+
+  <View className={`gap-3 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+    <View className="flex-row items-center gap-2">
+      <View className="h-9 w-9 items-center justify-center rounded-[12px]" style={{ backgroundColor: `${palette.teal}12` }}>
+        <Ionicons name="ribbon-outline" size={18} color={palette.teal} />
+      </View>
+      <Text className={`text-[15px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+        Popular Postgraduate (PG) Programs
+      </Text>
+    </View>
+    <View className="flex-row flex-wrap gap-2">
+      {PG_PROGRAMS.map((program) => (
+        <View key={program} className={`rounded-full border px-3 py-2 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-surface'}`}>
+          <Text className={`text-[12px] font-bold ${preferences.darkMode ? 'text-[#e5dfe6]' : 'text-ink'}`}>{program}</Text>
+        </View>
+      ))}
+    </View>
+  </View>
+</View>
       
       {isLoading ? (<Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading destinations...</Text>) : null}
       {!isLoading && loadError ? (<Text className="text-[13px] text-brand">{loadError}</Text>) : null}
