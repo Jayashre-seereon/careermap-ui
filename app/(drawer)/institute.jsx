@@ -269,12 +269,12 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
             if (countryFilter === 'Other') {
                 source = source.filter((item) => String(item.country || '').trim().toLowerCase() !== 'india');
             } else {
-                source = source.filter((item) => String(item.country || '').trim() === countryFilter);
+                source = source.filter((item) => String(item.country || '').trim().toLowerCase() === String(countryFilter).trim().toLowerCase());
             }
         }
 
         if (typeFilter !== 'All') {
-            source = source.filter((item) => item.type === typeFilter);
+            source = source.filter((item) => String(item.type || '').trim().toLowerCase() === String(typeFilter).trim().toLowerCase());
         }
 
         if (stateFilter !== 'All') {

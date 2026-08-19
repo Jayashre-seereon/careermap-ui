@@ -90,6 +90,7 @@ function mapEntranceExam(item, index) {
     totalMarks: item?.total_mark || 'Marks not available',
     frequency: item?.frequncy || 'Frequency not available',
     about: stripHtml(item?.about) || 'About information is not available right now.',
+    aboutHtml: item?.about || '',
     examPattern: formatPattern(item?.exam_pattern),
     topColleges: formatTopColleges(item?.top_institution),
     website: item?.url || '#',

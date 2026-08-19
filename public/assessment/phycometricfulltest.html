@@ -271,29 +271,10 @@ const SEM_BLEND = {"aptitude": 0.4, "interest": 0.3, "personality": 0.15, "value
    Nothing else in the file needs to change to wire up storage.
 ============================================================ */
 
-const API_BASE_URL = localStorage.getItem("API_BASE_URL");
-function getAssessmentApiBaseUrl() {
-  const injectedBaseUrl = (window.__CAREERMAP_API_BASE_URL__ || "").trim().replace(/\/$/, "");
-  if (injectedBaseUrl) {
-    return injectedBaseUrl;
-  }
-
-  const storedBaseUrl = (API_BASE_URL || "").trim().replace(/\/$/, "");
-  if (storedBaseUrl) {
-    return storedBaseUrl;
-  }
-
-  const origin = window.location?.origin || "";
-  if (origin.includes("localhost:8081") || origin.includes("127.0.0.1:8081")) {
-    return "http://localhost:5000/api";
-  }
-
-  if (origin) {
-    return `${origin}/api`;
-  }
-
-  return "";
-}
+const API_BASE_URL =
+  localStorage.getItem("API_BASE_URL") ||
+  window.__CAREERMAP_API_BASE_URL__ ||
+  "http://localhost:5000/api";
 const APP_CONFIG = {
   // Leave empty to run with no backend (current default). Point this at your
   // own API once it exists, e.g. "https://api.yourdomain.com/career-test/submit".
@@ -340,7 +321,10 @@ function localClear(key) {
    guaranteed paths to not losing data while a backend is being built. */
 async function remoteSave(payload) {
     try {
-        const API_BASE_URL = getAssessmentApiBaseUrl();
+        const API_BASE_URL =
+          localStorage.getItem("API_BASE_URL") ||
+          window.__CAREERMAP_API_BASE_URL__ ||
+          "http://localhost:5000/api";
         const authStore = JSON.parse(
   localStorage.getItem("careermap-auth-store") || "{}"
 );
@@ -352,9 +336,8 @@ if (!token) {
   return;
 }
 
-        const submitUrl = `${API_BASE_URL}/assessment/submit`;
         const response = await fetch(
-            submitUrl,
+            `${API_BASE_URL}/assessment/submit`,
             {
                 method: "POST",
                 headers: {

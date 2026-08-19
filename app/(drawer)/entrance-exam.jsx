@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, ScrollView, Text, View, Linking, TextInput, Pressable } from 'react-native';
+import { Modal, ScrollView, Text, View, Linking, TextInput, Pressable, useWindowDimensions } from 'react-native';
+import RenderHTML from 'react-native-render-html';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getEntranceExams } from '../../src/api/entranceExamApi';
@@ -11,6 +12,7 @@ import { buildHierarchyOptions, filterByHierarchy } from '../../src/utils/hierar
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
 export default function EntranceExamScreen() {
     const { preferences } = useAppState();
+    const { width: screenWidth } = useWindowDimensions();
     const [entranceExams, setEntranceExams] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
@@ -565,7 +567,7 @@ const filtered = useMemo(() => {
                                                 setShowUnlockSheet(true);
                                                 return;
                                             }
-                                            setActiveDescription(exam.about || 'Description not available.');
+                                            setActiveDescription(exam.aboutHtml || exam.about || 'Description not available.');
                                             setShowDescriptionModal(true);
                                         }}
                                         className="rounded-full px-2 py-1.5"
@@ -620,9 +622,35 @@ const filtered = useMemo(() => {
                             </Pressable>
                         </View>
                         <ScrollView style={{ flexGrow: 0 }}>
-                            <Text className={`text-[14px] leading-6 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-                                {activeDescription}
-                            </Text>
+                            {activeDescription && /<\/?[a-z][\s\S]*>/i.test(activeDescription) ? (
+                                <RenderHTML
+                                    contentWidth={Math.min(screenWidth - 72, 360 - 40)}
+                                    source={{ html: activeDescription }}
+                                    baseStyle={{
+                                        color: preferences.darkMode ? '#b7aeb9' : palette.muted,
+                                        fontSize: 14,
+                                        lineHeight: 22,
+                                    }}
+                                    tagsStyles={{
+                                        h1: { fontSize: 20, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 8 },
+                                        h2: { fontSize: 18, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 8 },
+                                        h3: { fontSize: 16, fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 6 },
+                                        p: { marginVertical: 4 },
+                                        li: { marginVertical: 3 },
+                                        ul: { marginVertical: 6, paddingLeft: 18 },
+                                        ol: { marginVertical: 6, paddingLeft: 18 },
+                                        table: { marginVertical: 8 },
+                                        th: { padding: 6, borderWidth: 1, borderColor: preferences.darkMode ? '#1a1a1a' : '#e8dfda', backgroundColor: preferences.darkMode ? '#111111' : '#f7f1ed' },
+                                        td: { padding: 6, borderWidth: 1, borderColor: preferences.darkMode ? '#1a1a1a' : '#e8dfda' },
+                                        strong: { fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text },
+                                        a: { color: palette.primary },
+                                    }}
+                                />
+                            ) : (
+                                <Text className={`text-[14px] leading-6 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                                    {activeDescription}
+                                </Text>
+                            )}
                         </ScrollView>
                     </Pressable>
                 </Pressable>
