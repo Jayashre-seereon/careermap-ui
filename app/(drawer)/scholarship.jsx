@@ -5,7 +5,7 @@ import { Linking, Pressable, ScrollView, Text, View, TextInput, useWindowDimensi
 import RenderHTML from 'react-native-render-html';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
-import { getScholarships, startScholarshipPreview } from '../../src/api/scholarshipApi';
+import { getScholarships, startScholarshipPreview ,getCategories} from '../../src/api/scholarshipApi';
 import { checkModuleAccess } from '../../src/api/moduleAccessApi';
 import { AnimatedPressable, HierarchyFilterPanel, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { buildHierarchyOptions, filterByHierarchy } from '../../src/utils/hierarchy';
@@ -23,32 +23,37 @@ export default function ScholarshipScreen() {
     const [activeStatus, setActiveStatus] = useState('All');
     const [sortBy, setSortBy] = useState('Default');
     const [categoryFilter, setCategoryFilter] = useState('All');
-    const [secondCategoryFilter, setSecondCategoryFilter] = useState('All');
-     const [selectedId, setSelectedId] = useState(null);
+    const [selectedId, setSelectedId] = useState(null);
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
     const [previewSecondsLeft, setPreviewSecondsLeft] = useState(0);
     const [lockSheetDismissible, setLockSheetDismissible] = useState(true);
     const [expiredPreviewIds, setExpiredPreviewIds] = useState([]);
-    const [subCategoryFilter, setSubCategoryFilter] = useState('All');
-const [typeFilter, setTypeFilter] = useState('All');
-
+    const [categories, setCategories] = useState([]);
+ const [typeFilter, setTypeFilter] = useState('All');
+const [eligibilityFilter, setEligibilityFilter] = useState('All');
+const [eligibilitySearchQuery, setEligibilitySearchQuery] = useState('');
+const [showEligibilityDropdown, setShowEligibilityDropdown] = useState(false);
 const [categorySearchQuery, setCategorySearchQuery] = useState('');
 const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-const [secondCategorySearchQuery, setSecondCategorySearchQuery] = useState('');
-const [showSecondCategoryDropdown, setShowSecondCategoryDropdown] = useState(false);
-const [subCategorySearchQuery, setSubCategorySearchQuery] = useState('');
-const [showSubCategoryDropdown, setShowSubCategoryDropdown] = useState(false);
 const [typeSearchQuery, setTypeSearchQuery] = useState('');
 const [showTypeDropdown, setShowTypeDropdown] = useState(false);
     const previewTimeoutRef = useRef(null);
     const previewIntervalRef = useRef(null);
+    const eligibilityOptions = [
+    'Class 1 to 5',
+    'Class 6 to 8',
+    'Class 9 to 10',
+    'Class 11 to 12',
+    'UG',
+    'PG',
+];
     const resolvedModuleId = useMemo(() => {
         const parsed = Number(params.moduleId);
         return Number.isFinite(parsed) ? parsed : 71;
     }, [params.moduleId]);
     const animationKey = selectedId !== null
         ? `scholarship-${selectedId}`
-        : `scholarship-list-${activeStatus}-${sortBy}-${categoryFilter}-${secondCategoryFilter}-${subCategoryFilter}-${showFilters ? 'filters' : 'plain'}`;
+        : `scholarship-list-${activeStatus}-${sortBy}-${categoryFilter}-${eligibilityFilter}-${showFilters ? 'filters' : 'plain'}`;
 
     const clearPreviewTimers = useCallback(() => {
         if (previewTimeoutRef.current) {
@@ -96,7 +101,35 @@ const [showTypeDropdown, setShowTypeDropdown] = useState(false);
             setShowUnlockSheet(true);
         }, totalSeconds * 1000);
     }, [clearPreviewTimers, markPreviewExpired]);
+useEffect(() => {
+    let isMounted = true;
 
+    async function loadCategories() {
+        try {
+            const response = await getCategories();
+
+            if (!isMounted) return;
+
+            const categoryData = Array.isArray(response?.data)
+                ? response.data
+                : Array.isArray(response)
+                    ? response
+                    : [];
+
+            setCategories(categoryData);
+        } catch (error) {
+            if (isMounted) {
+                setCategories([]);
+            }
+        }
+    }
+
+    loadCategories();
+
+    return () => {
+        isMounted = false;
+    };
+}, []);
     useEffect(() => {
         let isMounted = true;
 
@@ -156,18 +189,11 @@ const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 function getOptionLabel(option) {
     return String(option?.label ?? option?.title ?? option?.name ?? option ?? '');
 }
-    const categoryOptions = useMemo(
-        () => buildHierarchyOptions(scholarships, 'category', { secondcategory: secondCategoryFilter, subcategory: subCategoryFilter }),
-        [scholarships, secondCategoryFilter, subCategoryFilter]
-    );
-    const secondCategoryOptions = useMemo(
-        () => buildHierarchyOptions(scholarships, 'secondcategory', { category: categoryFilter, subcategory: subCategoryFilter }),
-        [scholarships, categoryFilter, subCategoryFilter]
-    );
-    const subCategoryOptions = useMemo(
-        () => buildHierarchyOptions(scholarships, 'subcategory', { category: categoryFilter, secondcategory: secondCategoryFilter }),
-        [scholarships, categoryFilter, secondCategoryFilter]
-    );
+const categoryOptions = useMemo(() => {
+    return Array.isArray(categories) ? categories : [];
+}, [categories]);
+   
+   
 const typeOptions = useMemo(
     () => Array.from(new Set(scholarships.map((item) => item.tag).filter(Boolean))),
     [scholarships]
@@ -178,54 +204,99 @@ const searchableCategoryOptions = useMemo(() => {
     return categoryOptions.filter((opt) => getOptionLabel(opt).toLowerCase().includes(query));
 }, [categoryOptions, categorySearchQuery]);
 
-const searchableSecondCategoryOptions = useMemo(() => {
-    const query = secondCategorySearchQuery.trim().toLowerCase();
-    if (!query) return secondCategoryOptions;
-    return secondCategoryOptions.filter((opt) => getOptionLabel(opt).toLowerCase().includes(query));
-}, [secondCategoryOptions, secondCategorySearchQuery]);
+const searchableEligibilityOptions = useMemo(() => {
+    const query = eligibilitySearchQuery.trim().toLowerCase();
 
-const searchableSubCategoryOptions = useMemo(() => {
-    const query = subCategorySearchQuery.trim().toLowerCase();
-    if (!query) return subCategoryOptions;
-    return subCategoryOptions.filter((opt) => getOptionLabel(opt).toLowerCase().includes(query));
-}, [subCategoryOptions, subCategorySearchQuery]);
+    if (!query) {
+        return eligibilityOptions;
+    }
 
+    return eligibilityOptions.filter((item) =>
+        item.toLowerCase().includes(query)
+    );
+}, [eligibilitySearchQuery]);
 const searchableTypeOptions = useMemo(() => {
     const query = typeSearchQuery.trim().toLowerCase();
     if (!query) return typeOptions;
     return typeOptions.filter((opt) => String(opt).toLowerCase().includes(query));
 }, [typeOptions, typeSearchQuery]);
    
-   const filtered = useMemo(() => {
-    let source = filterByHierarchy(scholarships, {
-        category: categoryFilter,
-        secondcategory: secondCategoryFilter,
-        subcategory: subCategoryFilter,
-    });
+const filtered = useMemo(() => {
+    let source = [...scholarships];
 
-    source = activeStatus === 'All' ? source : source.filter((item) => item.status === activeStatus);
-    source = typeFilter === 'All' ? source : source.filter((item) => item.tag === typeFilter);
+    // Category filter
+    if (categoryFilter !== 'All') {
+        source = source.filter(
+            (item) => String(item.categoryId) === String(categoryFilter)
+        );
+    }
 
+    // Eligibility filter
+    if (eligibilityFilter !== 'All') {
+        source = source.filter((item) => {
+            const eligibility = String(item.eligibility || '').toLowerCase();
+            const selected = eligibilityFilter.toLowerCase();
+
+            if (selected === 'class 1 to 5') {
+                return /class\s*1\s*(to|-)\s*5/.test(eligibility);
+            }
+
+            if (selected === 'class 6 to 8') {
+                return /class\s*6\s*(to|-)\s*8/.test(eligibility);
+            }
+
+            if (selected === 'class 9 to 10') {
+                return /class\s*9\s*(to|-)\s*10/.test(eligibility);
+            }
+
+            if (selected === 'class 11 to 12') {
+                return /class\s*11\s*(to|-)\s*12/.test(eligibility);
+            }
+
+            if (selected === 'ug') {
+                return /\bug\b|undergraduate|graduation|bachelor/.test(eligibility);
+            }
+
+            if (selected === 'pg') {
+                return /\bpg\b|postgraduate|post-graduation|master/.test(eligibility);
+            }
+// Type filter
+if (typeFilter !== 'All') {
+    source = source.filter(
+        (item) => String(item.tag) === String(typeFilter)
+    );
+}
+            return true;
+        });
+    }
+
+    // Status filter
+    source =
+        activeStatus === 'All'
+            ? source
+            : source.filter((item) => item.status === activeStatus);
+
+    // Sorting
     if (sortBy === 'A-Z') {
-        source = [...source].sort((a, b) => a.name.localeCompare(b.name));
+        source.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === 'Z-A') {
-        source = [...source].sort((a, b) => b.name.localeCompare(a.name));
+        source.sort((a, b) => b.name.localeCompare(a.name));
     }
 
     return source;
-}, [activeStatus, categoryFilter, scholarships, secondCategoryFilter, sortBy, subCategoryFilter, typeFilter]);
-    useEffect(() => {
+}, [
+    scholarships,
+    categoryFilter,
+    eligibilityFilter,
+    typeFilter,
+    activeStatus,
+    sortBy,
+]);  useEffect(() => {
         if (categoryFilter !== 'All' && !categoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(categoryFilter))) {
             setCategoryFilter('All');
         }
-        if (!secondCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(secondCategoryFilter))) {
-            setSecondCategoryFilter('All');
-        }
-        if (!subCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(subCategoryFilter))) {
-            setSubCategoryFilter('All');
-        }
-    }, [categoryFilter, categoryOptions, secondCategoryFilter, secondCategoryOptions, subCategoryFilter, subCategoryOptions]);
-
+    }, [categoryFilter, categoryOptions]);
+   
     useEffect(() => {
         if (typeof params.selected === 'string') {
             const selectedItem = scholarships[Number(params.selected)];
@@ -423,9 +494,13 @@ const searchableTypeOptions = useMemo(() => {
                 className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
             >
                 <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                    {categoryFilter !== 'All'
-                        ? getOptionLabel(categoryOptions.find((opt) => getOptionValue(opt) === String(categoryFilter))) || 'All Categories'
-                        : 'All Categories'}
+                  {categoryFilter !== 'All'
+    ? getOptionLabel(
+        categoryOptions.find(
+            (opt) => getOptionValue(opt) === String(categoryFilter)
+        )
+    ) || 'All Domains'
+    : 'All Domains'}
                 </Text>
                 <Ionicons name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text} />
             </Pressable>
@@ -445,16 +520,14 @@ const searchableTypeOptions = useMemo(() => {
                     <ScrollView className="max-h-[220px]" keyboardShouldPersistTaps="handled">
                         {categoryFilter !== 'All' ? (
                             <Pressable
-                                onPress={() => {
-                                    setCategoryFilter('All');
-                                    setSecondCategoryFilter('All');
-                                    setSubCategoryFilter('All');
-                                    setCategorySearchQuery('');
-                                    setShowCategoryDropdown(false);
-                                }}
+                              onPress={() => {
+    setCategoryFilter('All');
+    setCategorySearchQuery('');
+    setShowCategoryDropdown(false);
+}}
                                 className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
                             >
-                                <Text className="text-[13px] font-bold text-brand">All Categories</Text>
+                                <Text className="text-[13px] font-bold text-brand">All Domains</Text>
                             </Pressable>
                         ) : null}
                         {searchableCategoryOptions.length === 0 ? (
@@ -465,13 +538,11 @@ const searchableTypeOptions = useMemo(() => {
                                 return (
                                     <Pressable
                                         key={value}
-                                        onPress={() => {
-                                            setCategoryFilter(value);
-                                            setSecondCategoryFilter('All');
-                                            setSubCategoryFilter('All');
-                                            setCategorySearchQuery('');
-                                            setShowCategoryDropdown(false);
-                                        }}
+                                       onPress={() => {
+    setCategoryFilter(value);
+    setCategorySearchQuery('');
+    setShowCategoryDropdown(false);
+}}
                                         className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
                                     >
                                         <Text numberOfLines={1} className={`text-[13px] font-semibold ${value === String(categoryFilter) ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>
@@ -486,137 +557,136 @@ const searchableTypeOptions = useMemo(() => {
             ) : null}
         </View>
 
-        <View className="relative z-10">
-            <Pressable
-                onPress={() => setShowSecondCategoryDropdown((value) => !value)}
-                className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
+       <View className="relative z-10">
+    <Pressable
+        onPress={() =>
+            setShowEligibilityDropdown((value) => !value)
+        }
+        className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${
+            preferences.darkMode
+                ? 'border-[#1a1a1a] bg-[#080808]'
+                : 'border-line bg-card'
+        }`}
+    >
+        <Text
+            numberOfLines={1}
+            className={`flex-1 text-[13px] font-semibold ${
+                preferences.darkMode ? 'text-white' : 'text-ink'
+            }`}
+        >
+            {eligibilityFilter !== 'All'
+                ? eligibilityFilter
+                : 'All Ranges'}
+        </Text>
+
+        <Ionicons
+            name={
+                showEligibilityDropdown
+                    ? 'chevron-up'
+                    : 'chevron-down'
+            }
+            size={16}
+            color={
+                preferences.darkMode
+                    ? '#ffffff'
+                    : palette.text
+            }
+        />
+    </Pressable>
+
+    {showEligibilityDropdown ? (
+        <View
+            className={`mt-2 max-h-[280px] rounded-[14px] border ${
+                preferences.darkMode
+                    ? 'border-[#1a1a1a] bg-[#080808]'
+                    : 'border-line bg-white'
+            }`}
+        >
+            <View className="p-2">
+                <TextInput
+                    value={eligibilitySearchQuery}
+                    onChangeText={setEligibilitySearchQuery}
+                    placeholder="Search eligibility..."
+                    placeholderTextColor={
+                        preferences.darkMode
+                            ? '#666666'
+                            : '#a89a94'
+                    }
+                    autoFocus
+                    className={`rounded-[10px] border px-3 py-2 text-[13px] ${
+                        preferences.darkMode
+                            ? 'border-[#1a1a1a] bg-[#111111] text-white'
+                            : 'border-line bg-[#f2ebe6] text-ink'
+                    }`}
+                />
+            </View>
+
+            <ScrollView
+                className="max-h-[220px]"
+                keyboardShouldPersistTaps="handled"
             >
-                <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                    {secondCategoryFilter !== 'All'
-                        ? getOptionLabel(secondCategoryOptions.find((opt) => getOptionValue(opt) === String(secondCategoryFilter))) || 'All Second Categories'
-                        : 'All Second Categories'}
-                </Text>
-                <Ionicons name={showSecondCategoryDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text} />
-            </Pressable>
+                {eligibilityFilter !== 'All' ? (
+                    <Pressable
+                        onPress={() => {
+                            setEligibilityFilter('All');
+                            setEligibilitySearchQuery('');
+                            setShowEligibilityDropdown(false);
+                        }}
+                        className={`border-b px-4 py-3 ${
+                            preferences.darkMode
+                                ? 'border-[#1a1a1a]'
+                                : 'border-line'
+                        }`}
+                    >
+                        <Text className="text-[13px] font-bold text-brand">
+                            All Eligibility
+                        </Text>
+                    </Pressable>
+                ) : null}
 
-            {showSecondCategoryDropdown ? (
-                <View className={`mt-2 max-h-[280px] rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
-                    <View className="p-2">
-                        <TextInput
-                            value={secondCategorySearchQuery}
-                            onChangeText={setSecondCategorySearchQuery}
-                            placeholder="Type to search..."
-                            placeholderTextColor={preferences.darkMode ? '#666666' : '#a89a94'}
-                            autoFocus
-                            className={`rounded-[10px] border px-3 py-2 text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-[#f2ebe6] text-ink'}`}
-                        />
-                    </View>
-                    <ScrollView className="max-h-[220px]" keyboardShouldPersistTaps="handled">
-                        {secondCategoryFilter !== 'All' ? (
-                            <Pressable
-                                onPress={() => {
-                                    setSecondCategoryFilter('All');
-                                    setSubCategoryFilter('All');
-                                    setSecondCategorySearchQuery('');
-                                    setShowSecondCategoryDropdown(false);
-                                }}
-                                className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
+                {searchableEligibilityOptions.length === 0 ? (
+                    <Text
+                        className={`px-4 py-4 text-center text-[13px] ${
+                            preferences.darkMode
+                                ? 'text-[#b7aeb9]'
+                                : 'text-muted'
+                        }`}
+                    >
+                        No eligibility found
+                    </Text>
+                ) : (
+                    searchableEligibilityOptions.map((item) => (
+                        <Pressable
+                            key={item}
+                            onPress={() => {
+                                setEligibilityFilter(item);
+                                setEligibilitySearchQuery('');
+                                setShowEligibilityDropdown(false);
+                            }}
+                            className={`border-b px-4 py-3 ${
+                                preferences.darkMode
+                                    ? 'border-[#1a1a1a]'
+                                    : 'border-line'
+                            }`}
+                        >
+                            <Text
+                                className={`text-[13px] font-semibold ${
+                                    item === eligibilityFilter
+                                        ? 'text-brand'
+                                        : preferences.darkMode
+                                            ? 'text-white'
+                                            : 'text-ink'
+                                }`}
                             >
-                                <Text className="text-[13px] font-bold text-brand">All Second Categories</Text>
-                            </Pressable>
-                        ) : null}
-                        {searchableSecondCategoryOptions.length === 0 ? (
-                            <Text className={`px-4 py-4 text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No results found</Text>
-                        ) : (
-                            searchableSecondCategoryOptions.map((opt) => {
-                                const value = getOptionValue(opt);
-                                return (
-                                    <Pressable
-                                        key={value}
-                                        onPress={() => {
-                                            setSecondCategoryFilter(value);
-                                            setSubCategoryFilter('All');
-                                            setSecondCategorySearchQuery('');
-                                            setShowSecondCategoryDropdown(false);
-                                        }}
-                                        className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
-                                    >
-                                        <Text numberOfLines={1} className={`text-[13px] font-semibold ${value === String(secondCategoryFilter) ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                                            {getOptionLabel(opt)}
-                                        </Text>
-                                    </Pressable>
-                                );
-                            })
-                        )}
-                    </ScrollView>
-                </View>
-            ) : null}
+                                {item}
+                            </Text>
+                        </Pressable>
+                    ))
+                )}
+            </ScrollView>
         </View>
-
-        <View className="relative z-10">
-            <Pressable
-                onPress={() => setShowSubCategoryDropdown((value) => !value)}
-                className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
-            >
-                <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                    {subCategoryFilter !== 'All'
-                        ? getOptionLabel(subCategoryOptions.find((opt) => getOptionValue(opt) === String(subCategoryFilter))) || 'All Sub Categories'
-                        : 'All Sub Categories'}
-                </Text>
-                <Ionicons name={showSubCategoryDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text} />
-            </Pressable>
-
-            {showSubCategoryDropdown ? (
-                <View className={`mt-2 max-h-[280px] rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
-                    <View className="p-2">
-                        <TextInput
-                            value={subCategorySearchQuery}
-                            onChangeText={setSubCategorySearchQuery}
-                            placeholder="Type to search..."
-                            placeholderTextColor={preferences.darkMode ? '#666666' : '#a89a94'}
-                            autoFocus
-                            className={`rounded-[10px] border px-3 py-2 text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-[#f2ebe6] text-ink'}`}
-                        />
-                    </View>
-                    <ScrollView className="max-h-[220px]" keyboardShouldPersistTaps="handled">
-                        {subCategoryFilter !== 'All' ? (
-                            <Pressable
-                                onPress={() => {
-                                    setSubCategoryFilter('All');
-                                    setSubCategorySearchQuery('');
-                                    setShowSubCategoryDropdown(false);
-                                }}
-                                className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
-                            >
-                                <Text className="text-[13px] font-bold text-brand">All Sub Categories</Text>
-                            </Pressable>
-                        ) : null}
-                        {searchableSubCategoryOptions.length === 0 ? (
-                            <Text className={`px-4 py-4 text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No results found</Text>
-                        ) : (
-                            searchableSubCategoryOptions.map((opt) => {
-                                const value = getOptionValue(opt);
-                                return (
-                                    <Pressable
-                                        key={value}
-                                        onPress={() => {
-                                            setSubCategoryFilter(value);
-                                            setSubCategorySearchQuery('');
-                                            setShowSubCategoryDropdown(false);
-                                        }}
-                                        className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
-                                    >
-                                        <Text numberOfLines={1} className={`text-[13px] font-semibold ${value === String(subCategoryFilter) ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                                            {getOptionLabel(opt)}
-                                        </Text>
-                                    </Pressable>
-                                );
-                            })
-                        )}
-                    </ScrollView>
-                </View>
-            ) : null}
-        </View>
+    ) : null}
+</View>
 
         <View className="relative z-10">
             <Pressable
@@ -678,22 +748,17 @@ const searchableTypeOptions = useMemo(() => {
             ) : null}
         </View>
 
-        {(categoryFilter !== 'All' || secondCategoryFilter !== 'All' || subCategoryFilter !== 'All' || typeFilter !== 'All') ? (
-            <Pressable
-                onPress={() => {
-                    setCategoryFilter('All');
-                    setSecondCategoryFilter('All');
-                    setSubCategoryFilter('All');
-                    setTypeFilter('All');
-                    setCategorySearchQuery('');
-                    setSecondCategorySearchQuery('');
-                    setSubCategorySearchQuery('');
-                    setTypeSearchQuery('');
-                    setShowCategoryDropdown(false);
-                    setShowSecondCategoryDropdown(false);
-                    setShowSubCategoryDropdown(false);
-                    setShowTypeDropdown(false);
-                }}
+      {(categoryFilter !== 'All' || eligibilityFilter !== 'All') ? (      <Pressable
+               onPress={() => {
+    setCategoryFilter('All');
+    setEligibilityFilter('All');
+
+    setCategorySearchQuery('');
+    setEligibilitySearchQuery('');
+
+    setShowCategoryDropdown(false);
+    setShowEligibilityDropdown(false);
+}}
                 className={`items-center rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-[#fdf0ee]'}`}
             >
                 <Text className="text-[13px] font-bold text-brand">Clear All Filters</Text>
