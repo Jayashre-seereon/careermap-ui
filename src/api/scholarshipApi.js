@@ -146,3 +146,8 @@ export async function startScholarshipPreview({ moduleId, pageType, pageId }) {
 
   return response?.data ?? null;
 }
+
+export const getCategories = async () => {
+  const res = await api.get("/categories/");
+  return res.data;
+};

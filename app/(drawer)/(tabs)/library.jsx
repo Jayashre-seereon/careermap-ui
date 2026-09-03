@@ -18,7 +18,7 @@ const fallbackStreams = [
    ];
 
 
-
+const sortTopFirst = (a, b) => Number(b.isTop) - Number(a.isTop);
 function normalizeInstituteItems(value) {
     return toList(value).map((item, index) => {
         if (typeof item === 'string') {
@@ -61,10 +61,25 @@ function normalizeState(value) {
 }
 function groupInstitutesByTopStatus(value) {
     const institutes = normalizeInstituteItems(value);
+
     const referenceState = 'Odisha';
-    const topInstitutes = institutes.filter((item) => item.state === referenceState);
-    const outsideInstitutes = institutes.filter((item) => item.state !== referenceState);
-    return { institutes, topInstitutes, outsideInstitutes, referenceState };
+
+    const topInstitutes = institutes.filter(
+        (item) =>
+            normalizeState(item.state) === normalizeState(referenceState)
+    );
+
+    const outsideInstitutes = institutes.filter(
+        (item) =>
+            normalizeState(item.state) !== normalizeState(referenceState)
+    );
+
+    return {
+        institutes,
+        topInstitutes,
+        outsideInstitutes,
+        referenceState,
+    };
 }
 
 const defaultDetail = (name) => ({
@@ -776,31 +791,31 @@ export default function CareerLibraryScreen() {
             : selectedInstituteCountry === 'Other'
                 ? ['All', ...Array.from(new Set(outsideInstitutes.filter((institution) => normalizeCountry(institution?.country || institution?.countruy) === 'other').map((institution) => institution?.state).filter(Boolean)))]
                 : ['All', ...Array.from(new Set(outsideInstitutes.map((institution) => institution?.state).filter(Boolean)))];
-        const filteredTopInstitutes = instituteGroups.topInstitutes.filter((institution) => {
-            if (!instituteTypeFilter || instituteTypeFilter === 'all') {
-                return true;
-            }
-            return String(institution?.type || '').trim().toLowerCase().includes(instituteTypeFilter);
-        });
-        const filteredOutsideInstitutes = outsideInstitutes.filter((institution) => {
-            const country = normalizeCountry(institution?.country || institution?.countruy);
-            if (selectedInstituteCountry === 'India' && country !== 'india') {
-                return false;
-            }
-            if (selectedInstituteCountry === 'Other' && country !== 'other') {
-                return false;
-            }
-            if (selectedInstituteState !== 'All' && normalizeState(institution?.state) !== normalizeState(selectedInstituteState)) {
-                return false;
-            }
-            if (!instituteTypeFilter || instituteTypeFilter === 'all') {
-                return true;
-            }
-            if (!String(institution?.type || '').trim().toLowerCase().includes(instituteTypeFilter)) {
-                return false;
-            }
-            return true;
-        });
+      const filteredTopInstitutes = instituteGroups.topInstitutes.filter((institution) => {
+    if (!instituteTypeFilter || instituteTypeFilter === 'all') {
+        return true;
+    }
+    return String(institution?.type || '').trim().toLowerCase().includes(instituteTypeFilter);
+}).sort(sortTopFirst);
+      const filteredOutsideInstitutes = outsideInstitutes.filter((institution) => {
+    const country = normalizeCountry(institution?.country || institution?.countruy);
+    if (selectedInstituteCountry === 'India' && country !== 'india') {
+        return false;
+    }
+    if (selectedInstituteCountry === 'Other' && country !== 'other') {
+        return false;
+    }
+    if (selectedInstituteState !== 'All' && normalizeState(institution?.state) !== normalizeState(selectedInstituteState)) {
+        return false;
+    }
+    if (!instituteTypeFilter || instituteTypeFilter === 'all') {
+        return true;
+    }
+    if (!String(institution?.type || '').trim().toLowerCase().includes(instituteTypeFilter)) {
+        return false;
+    }
+    return true;
+}).sort(sortTopFirst);
         const hasFilteredOutsideInstitutes = filteredOutsideInstitutes.length > 0;
         return (<StaggerFadeUpItem key={`detail-${detail?.id ?? index}`} index={index}>
           <View className="mb-4">
@@ -1039,31 +1054,7 @@ export default function CareerLibraryScreen() {
                 })}
               </View>
               <View className="gap-4">
-            {filteredTopInstitutes.length > 0 ? (<View>
-    <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
-      {instituteGroups.referenceState ? `Top Institutes of ${instituteGroups.referenceState}` : 'Top Institutes'}
-    </Text>
-    {filteredTopInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 flex-row items-center gap-3 rounded-[14px] border border-[#f0e4e2] bg-[#fdf9f9] px-3 py-3">
-        <View className="h-[48px] w-[48px] overflow-hidden rounded-[12px]" style={{ backgroundColor: `${palette.primary}12` }}>
-          {institution?.logo ? (<Image source={{ uri: institution.logo }} style={{ width: '100%', height: '100%' }} resizeMode="cover"/>) : (<View className="flex-1 items-center justify-center">
-              <Ionicons name="business-outline" size={20} color={palette.primary}/>
-            </View>)}
-        </View>
-        <View className="flex-1">
-          <View className="flex-row items-center gap-2">
-            <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
-            {institution?.type ? (<View className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${palette.primary}12` }}>
-                <Text className="text-[10px] font-bold" style={{ color: palette.primary }}>{institution.type}</Text>
-              </View>) : null}
-          </View>
-          <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{institution?.location || 'Location not available'}</Text>
-        </View>
-        {institution?.url ? (<Pressable onPress={() => Linking.openURL(institution.url)} className="h-9 w-9 items-center justify-center rounded-full" style={{ borderWidth: 1, borderColor: '#f0e4e2' }}>
-            <Ionicons name="arrow-forward" size={16} color={palette.primary}/>
-          </Pressable>) : null}
-      </View>))}
-  </View>) : null}
-             {filteredOutsideInstitutes.length > 0 ? (<View>
+                  {filteredOutsideInstitutes.length > 0 ? (<View>
     <View className="mb-3 gap-2">
       <View className="relative z-20">
         <Pressable
@@ -1124,7 +1115,7 @@ export default function CareerLibraryScreen() {
       </View>
     </View>
     <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
-      {instituteGroups.referenceState ? `Top Institutes Outside ${instituteGroups.referenceState}` : 'Top Institutes Outside State'}
+      {instituteGroups.referenceState ? `Institutes In INDIA` : 'Top Institutes Outside State'}
     </Text>
     {filteredOutsideInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 flex-row items-center gap-3 rounded-[14px] border border-[#f0e4e2] bg-white px-3 py-3">
         <View className="h-[48px] w-[48px] overflow-hidden rounded-[12px]" style={{ backgroundColor: `${palette.primary}12` }}>
@@ -1146,6 +1137,31 @@ export default function CareerLibraryScreen() {
           </Pressable>) : null}
       </View>))}
   </View>) : null}
+            {filteredTopInstitutes.length > 0 ? (<View>
+    <Text className={`mb-2 text-[12px] font-black uppercase tracking-[1px] ${preferences.darkMode ? 'text-[#f0b0aa]' : 'text-brand'}`}>
+      {instituteGroups.referenceState ? `Institutes in ${instituteGroups.referenceState}` : 'Top Institutes'}
+    </Text>
+    {filteredTopInstitutes.map((institution) => (<View key={institution?.id} className="mb-3 flex-row items-center gap-3 rounded-[14px] border border-[#f0e4e2] bg-[#fdf9f9] px-3 py-3">
+        <View className="h-[48px] w-[48px] overflow-hidden rounded-[12px]" style={{ backgroundColor: `${palette.primary}12` }}>
+          {institution?.logo ? (<Image source={{ uri: institution.logo }} style={{ width: '100%', height: '100%' }} resizeMode="cover"/>) : (<View className="flex-1 items-center justify-center">
+              <Ionicons name="business-outline" size={20} color={palette.primary}/>
+            </View>)}
+        </View>
+        <View className="flex-1">
+          <View className="flex-row items-center gap-2">
+            <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
+            {institution?.type ? (<View className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${palette.primary}12` }}>
+                <Text className="text-[10px] font-bold" style={{ color: palette.primary }}>{institution.type}</Text>
+              </View>) : null}
+          </View>
+          <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{institution?.location || 'Location not available'}</Text>
+        </View>
+        {institution?.url ? (<Pressable onPress={() => Linking.openURL(institution.url)} className="h-9 w-9 items-center justify-center rounded-full" style={{ borderWidth: 1, borderColor: '#f0e4e2' }}>
+            <Ionicons name="arrow-forward" size={16} color={palette.primary}/>
+          </Pressable>) : null}
+      </View>))}
+  </View>) : null}
+           
             {!hasFilteredOutsideInstitutes ? (<View className="items-center gap-2 rounded-[16px] border border-dashed border-[#f0e4e2] bg-[#fffaf8] px-4 py-5">
                 <Ionicons name="alert-circle-outline" size={22} color={palette.primary}/>
                 <Text className={`text-center text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>

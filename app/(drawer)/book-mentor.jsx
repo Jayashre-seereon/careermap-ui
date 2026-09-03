@@ -862,7 +862,7 @@ const searchableSubCategoryOptions = useMemo(() => {
       onPress={() => Linking.openURL(mentor.resume)}
     >
       <Text className="text-[12px] font-extrabold text-white">
-        Resume
+        Expert Profile
       </Text>
     </AnimatedPressable>
   )}
@@ -885,11 +885,7 @@ const searchableSubCategoryOptions = useMemo(() => {
                     <Text className={`text-center text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
                     <Text className="text-center text-[12px] font-bold text-brand">{mentor.designation || mentor.specialty}</Text>
                     <View className="flex-row flex-wrap justify-center gap-2.5">
-                        <View className="flex-row items-center gap-1">
-                            <Ionicons name="trophy" size={12} color={palette.secondary} />
-                            <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
-                            <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>AIR/State</Text>
-                        </View>
+                        
                         <View className="flex-row items-center gap-1">
                             <Ionicons name="star" size={12} color={palette.secondary} />
                             <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.averageRating ? mentor.averageRating.toFixed(1) : 'New'}</Text>

@@ -42,16 +42,13 @@ function formatExperience(value) {
   const numericValue = Number(value);
 
   if (Number.isFinite(numericValue)) {
-    return `${numericValue} yrs`;
+    return `${numericValue} ${numericValue === 1 ? 'yr' : 'yrs'}`;
   }
 
   const rawValue = String(value).trim();
 
-  if (/\byr(s)?\b/i.test(rawValue)) {
-    return rawValue;
-  }
-
-  return `${rawValue} yrs`;
+  // If API already sends "1 yr", "2 years", etc.
+  return rawValue;
 }
 
 function stripHtml(value) {
