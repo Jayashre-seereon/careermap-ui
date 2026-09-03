@@ -4,13 +4,13 @@ import RenderHTML from 'react-native-render-html';
 import { useWindowDimensions } from 'react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Animated, Image, Modal, Pressable, ScrollView, Text, TextInput, View, Linking } from 'react-native';
-import { createMentorOrder, getBookedMentorSlots, getMentors, verifyMentorPayment } from '../../src/api/mentorApi';
+import { createMentorOrder, getBookedMentorSlots, getMentors, verifyMentorPayment,getCategories} from '../../src/api/mentorApi';
 import { checkModuleAccess, getModules } from '../../src/api/moduleAccessApi';
 import { useAppState } from '../../src/app-state';
 import { mentors, palette } from '../../src/careermap-data';
 import { AnimatedPressable, HierarchyFilterPanel, Pill, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
-import { buildHierarchyOptions, filterByHierarchy } from '../../src/utils/hierarchy';
+
 import { openRazorpayCheckout } from '../../src/utils/razorpay';
 const getMentorInitials = (mentor) => {
     const source = String(mentor?.name || mentor?.avatar || 'M').trim();
@@ -146,14 +146,13 @@ export default function BookMentorScreen() {
     const [mentorList, setMentorList] = useState(mentors);
     const [showFilters, setShowFilters] = useState(false);
     const [categoryFilter, setCategoryFilter] = useState('All');
-const [secondCategoryFilter, setSecondCategoryFilter] = useState('All');
-const [subCategoryFilter, setSubCategoryFilter] = useState('All');
+    const [categories, setCategories] = useState([]);
+const [categoryLoading, setCategoryLoading] = useState(false);
 const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 const [categorySearchQuery, setCategorySearchQuery] = useState('');
-const [showSecondCategoryDropdown, setShowSecondCategoryDropdown] = useState(false);
-const [secondCategorySearchQuery, setSecondCategorySearchQuery] = useState('');
-const [showSubCategoryDropdown, setShowSubCategoryDropdown] = useState(false);
-const [subCategorySearchQuery, setSubCategorySearchQuery] = useState(''); const [resolvedModuleId, setResolvedModuleId] = useState(() => {
+
+
+const [resolvedModuleId, setResolvedModuleId] = useState(() => {
         const parsed = Number(params.moduleId);
         return Number.isFinite(parsed) ? parsed : null;
     });
@@ -278,19 +277,17 @@ const [subCategorySearchQuery, setSubCategorySearchQuery] = useState(''); const 
         setShowBookingPanel(true);
     };
     const closeBookingPanel = () => setShowBookingPanel(false);
-    const categoryOptions = useMemo(
-        () => buildHierarchyOptions(mentorList, 'category', { secondcategory: secondCategoryFilter, subcategory: subCategoryFilter }),
-        [mentorList, secondCategoryFilter, subCategoryFilter]
-    );
-    const secondCategoryOptions = useMemo(
-        () => buildHierarchyOptions(mentorList, 'secondcategory', { category: categoryFilter, subcategory: subCategoryFilter }),
-        [mentorList, categoryFilter, subCategoryFilter]
-    );
-  
-    const subCategoryOptions = useMemo(
-    () => buildHierarchyOptions(mentorList, 'subcategory', { category: categoryFilter, secondcategory: secondCategoryFilter }),
-    [mentorList, categoryFilter, secondCategoryFilter]
-);
+   const categoryOptions = useMemo(() => {
+    return categories.map((category) => ({
+        label: category.name || category.category_name || category.title,
+        value: String(
+            category.id ||
+            category._id ||
+            category.name
+        ),
+    }));
+}, [categories]);
+   
 
 function getOptionValue(option) {
     return String(option?.value ?? option?.id ?? option?.label ?? option ?? '');
@@ -304,25 +301,27 @@ const searchableCategoryOptions = useMemo(() => {
     if (!query) return categoryOptions;
     return categoryOptions.filter((opt) => getOptionLabel(opt).toLowerCase().includes(query));
 }, [categoryOptions, categorySearchQuery]);
-const searchableSecondCategoryOptions = useMemo(() => {
-    const query = secondCategorySearchQuery.trim().toLowerCase();
-    if (!query) return secondCategoryOptions;
-    return secondCategoryOptions.filter((opt) => getOptionLabel(opt).toLowerCase().includes(query));
-}, [secondCategoryOptions, secondCategorySearchQuery]);
-const searchableSubCategoryOptions = useMemo(() => {
-    const query = subCategorySearchQuery.trim().toLowerCase();
-    if (!query) return subCategoryOptions;
-    return subCategoryOptions.filter((opt) => getOptionLabel(opt).toLowerCase().includes(query));
-}, [subCategoryOptions, subCategorySearchQuery]);
-    const filteredMentors = useMemo(
-        () =>
-            filterByHierarchy(mentorList, {
-                category: categoryFilter,
-                secondcategory: secondCategoryFilter,
-                subcategory: subCategoryFilter,
-            }),
-        [categoryFilter, mentorList, secondCategoryFilter, subCategoryFilter]
+
+const filteredMentors = useMemo(() => {
+    if (categoryFilter === 'All') return mentorList;
+
+    const selectedOption = categoryOptions.find(
+        (opt) => String(opt.value) === String(categoryFilter)
     );
+
+    return mentorList.filter((mentor) => {
+        const mentorCategoryId =
+            mentor?.category?.id ?? mentor?.category?._id ?? mentor?.category_id ?? mentor?.categoryId;
+        const mentorCategoryName =
+            mentor?.category?.name ?? (typeof mentor?.category === 'string' ? mentor.category : null);
+
+        return (
+            String(mentorCategoryId) === String(categoryFilter) ||
+            (selectedOption && mentorCategoryName &&
+                mentorCategoryName.toLowerCase() === selectedOption.label.toLowerCase())
+        );
+    });
+}, [mentorList, categoryFilter, categoryOptions]);
     useEffect(() => {
         if (mentorList.length === 0) {
             setMentorList(mentors);
@@ -332,13 +331,8 @@ const searchableSubCategoryOptions = useMemo(() => {
         if (categoryFilter !== 'All' && !categoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(categoryFilter))) {
             setCategoryFilter('All');
         }
-        if (!secondCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(secondCategoryFilter))) {
-            setSecondCategoryFilter('All');
-        }
-        if (!subCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(subCategoryFilter))) {
-            setSubCategoryFilter('All');
-        }
-    }, [categoryFilter, categoryOptions, secondCategoryOptions, secondCategoryFilter, subCategoryOptions, subCategoryFilter]);
+    }, [categoryFilter, categoryOptions]);
+   
     useEffect(() => {
         let isMounted = true;
 
@@ -495,6 +489,35 @@ const searchableSubCategoryOptions = useMemo(() => {
         };
     }, [params.accessStatus, params.moduleId]);
     useEffect(() => {
+    const fetchCategories = async () => {
+        try {
+            setCategoryLoading(true);
+
+            const response = await getCategories();
+
+            console.log('Categories API Response:', response);
+
+            const categoryData =
+                response?.data?.results ||
+                response?.data ||
+                response?.results ||
+                [];
+
+            setCategories(
+                Array.isArray(categoryData) ? categoryData : []
+            );
+
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            setCategories([]);
+        } finally {
+            setCategoryLoading(false);
+        }
+    };
+
+    fetchCategories();
+}, []);
+    useEffect(() => {
         let isMounted = true;
 
         const resolveModuleAccess = async () => {
@@ -639,6 +662,7 @@ const searchableSubCategoryOptions = useMemo(() => {
             }
         }
     };
+
     if (!moduleAccessResolved) {
         return (<Screen animationKey="book-mentor-access-loading">
             <SectionHeader title="Book Your Mentor" subtitle="Checking your subscription access." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
@@ -862,7 +886,7 @@ const searchableSubCategoryOptions = useMemo(() => {
       onPress={() => Linking.openURL(mentor.resume)}
     >
       <Text className="text-[12px] font-extrabold text-white">
-        Resume
+        Expert Profile
       </Text>
     </AnimatedPressable>
   )}
@@ -885,11 +909,7 @@ const searchableSubCategoryOptions = useMemo(() => {
                     <Text className={`text-center text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
                     <Text className="text-center text-[12px] font-bold text-brand">{mentor.designation || mentor.specialty}</Text>
                     <View className="flex-row flex-wrap justify-center gap-2.5">
-                        <View className="flex-row items-center gap-1">
-                            <Ionicons name="trophy" size={12} color={palette.secondary} />
-                            <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.rating}</Text>
-                            <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>AIR/State</Text>
-                        </View>
+                        
                         <View className="flex-row items-center gap-1">
                             <Ionicons name="star" size={12} color={palette.secondary} />
                             <Text className={`text-[11px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.averageRating ? mentor.averageRating.toFixed(1) : 'New'}</Text>
@@ -1026,8 +1046,8 @@ const searchableSubCategoryOptions = useMemo(() => {
             >
                 <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
                     {categoryFilter !== 'All'
-                        ? getOptionLabel(categoryOptions.find((opt) => getOptionValue(opt) === String(categoryFilter))) || 'All Categories'
-                        : 'All Categories'}
+                        ? getOptionLabel(categoryOptions.find((opt) => getOptionValue(opt) === String(categoryFilter))) || 'All Domains'
+                        : 'All Domains'}
                 </Text>
                 <Ionicons name={showCategoryDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text} />
             </Pressable>
@@ -1047,20 +1067,18 @@ const searchableSubCategoryOptions = useMemo(() => {
                     <ScrollView className="max-h-[220px]" keyboardShouldPersistTaps="handled">
                         {categoryFilter !== 'All' ? (
                             <Pressable
-                                onPress={() => {
-                                    setCategoryFilter('All');
-                                    setSecondCategoryFilter('All');
-                                    setSubCategoryFilter('All');
-                                    setCategorySearchQuery('');
-                                    setShowCategoryDropdown(false);
-                                }}
+                               onPress={() => {
+    setCategoryFilter('All');
+    setCategorySearchQuery('');
+    setShowCategoryDropdown(false);
+}}
                                 className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
                             >
-                                <Text className="text-[13px] font-bold text-brand">All Categories</Text>
+                                <Text className="text-[13px] font-bold text-brand">All Domains</Text>
                             </Pressable>
                         ) : null}
                         {searchableCategoryOptions.length === 0 ? (
-                            <Text className={`px-4 py-4 text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No categories found</Text>
+                            <Text className={`px-4 py-4 text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No domains found</Text>
                         ) : (
                             searchableCategoryOptions.map((opt) => {
                                 const value = getOptionValue(opt);
@@ -1069,8 +1087,7 @@ const searchableSubCategoryOptions = useMemo(() => {
                                         key={value}
                                         onPress={() => {
                                             setCategoryFilter(value);
-                                            setSecondCategoryFilter('All');
-                                            setSubCategoryFilter('All');
+                    
                                             setCategorySearchQuery('');
                                             setShowCategoryDropdown(false);
                                         }}
@@ -1088,150 +1105,17 @@ const searchableSubCategoryOptions = useMemo(() => {
             ) : null}
         </View>
 
-        <View className="relative z-10">
-            <Pressable
-                onPress={() => setShowSecondCategoryDropdown((value) => !value)}
-                className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
-            >
-                <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                    {secondCategoryFilter !== 'All'
-                        ? getOptionLabel(secondCategoryOptions.find((opt) => getOptionValue(opt) === String(secondCategoryFilter))) || 'All Second Categories'
-                        : 'All Second Categories'}
-                </Text>
-                <Ionicons name={showSecondCategoryDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text} />
-            </Pressable>
+     
 
-            {showSecondCategoryDropdown ? (
-                <View className={`mt-2 max-h-[280px] rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
-                    <View className="p-2">
-                        <TextInput
-                            value={secondCategorySearchQuery}
-                            onChangeText={setSecondCategorySearchQuery}
-                            placeholder="Type to search..."
-                            placeholderTextColor={preferences.darkMode ? '#666666' : '#a89a94'}
-                            autoFocus
-                            className={`rounded-[10px] border px-3 py-2 text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-[#f2ebe6] text-ink'}`}
-                        />
-                    </View>
-                    <ScrollView className="max-h-[220px]" keyboardShouldPersistTaps="handled">
-                        {secondCategoryFilter !== 'All' ? (
-                            <Pressable
-                                onPress={() => {
-                                    setSecondCategoryFilter('All');
-                                    setSubCategoryFilter('All');
-                                    setSecondCategorySearchQuery('');
-                                    setShowSecondCategoryDropdown(false);
-                                }}
-                                className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
-                            >
-                                <Text className="text-[13px] font-bold text-brand">All Second Categories</Text>
-                            </Pressable>
-                        ) : null}
-                        {searchableSecondCategoryOptions.length === 0 ? (
-                            <Text className={`px-4 py-4 text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No results found</Text>
-                        ) : (
-                            searchableSecondCategoryOptions.map((opt) => {
-                                const value = getOptionValue(opt);
-                                return (
-                                    <Pressable
-                                        key={value}
-                                        onPress={() => {
-                                            setSecondCategoryFilter(value);
-                                            setSubCategoryFilter('All');
-                                            setSecondCategorySearchQuery('');
-                                            setShowSecondCategoryDropdown(false);
-                                        }}
-                                        className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
-                                    >
-                                        <Text numberOfLines={1} className={`text-[13px] font-semibold ${value === String(secondCategoryFilter) ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                                            {getOptionLabel(opt)}
-                                        </Text>
-                                    </Pressable>
-                                );
-                            })
-                        )}
-                    </ScrollView>
-                </View>
-            ) : null}
-        </View>
+      
 
-        <View className="relative z-10">
-            <Pressable
-                onPress={() => setShowSubCategoryDropdown((value) => !value)}
-                className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
-            >
-                <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                    {subCategoryFilter !== 'All'
-                        ? getOptionLabel(subCategoryOptions.find((opt) => getOptionValue(opt) === String(subCategoryFilter))) || 'All Sub Categories'
-                        : 'All Sub Categories'}
-                </Text>
-                <Ionicons name={showSubCategoryDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text} />
-            </Pressable>
-
-            {showSubCategoryDropdown ? (
-                <View className={`mt-2 max-h-[280px] rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
-                    <View className="p-2">
-                        <TextInput
-                            value={subCategorySearchQuery}
-                            onChangeText={setSubCategorySearchQuery}
-                            placeholder="Type to search..."
-                            placeholderTextColor={preferences.darkMode ? '#666666' : '#a89a94'}
-                            autoFocus
-                            className={`rounded-[10px] border px-3 py-2 text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-[#f2ebe6] text-ink'}`}
-                        />
-                    </View>
-                    <ScrollView className="max-h-[220px]" keyboardShouldPersistTaps="handled">
-                        {subCategoryFilter !== 'All' ? (
-                            <Pressable
-                                onPress={() => {
-                                    setSubCategoryFilter('All');
-                                    setSubCategorySearchQuery('');
-                                    setShowSubCategoryDropdown(false);
-                                }}
-                                className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
-                            >
-                                <Text className="text-[13px] font-bold text-brand">All Sub Categories</Text>
-                            </Pressable>
-                        ) : null}
-                        {searchableSubCategoryOptions.length === 0 ? (
-                            <Text className={`px-4 py-4 text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No results found</Text>
-                        ) : (
-                            searchableSubCategoryOptions.map((opt) => {
-                                const value = getOptionValue(opt);
-                                return (
-                                    <Pressable
-                                        key={value}
-                                        onPress={() => {
-                                            setSubCategoryFilter(value);
-                                            setSubCategorySearchQuery('');
-                                            setShowSubCategoryDropdown(false);
-                                        }}
-                                        className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}
-                                    >
-                                        <Text numberOfLines={1} className={`text-[13px] font-semibold ${value === String(subCategoryFilter) ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                                            {getOptionLabel(opt)}
-                                        </Text>
-                                    </Pressable>
-                                );
-                            })
-                        )}
-                    </ScrollView>
-                </View>
-            ) : null}
-        </View>
-
-        {(categoryFilter !== 'All' || secondCategoryFilter !== 'All' || subCategoryFilter !== 'All') ? (
+        {(categoryFilter !== 'All') ? (
             <Pressable
                 onPress={() => {
                     setCategoryFilter('All');
-                    setSecondCategoryFilter('All');
-                    setSubCategoryFilter('All');
-                    setCategorySearchQuery('');
-                    setSecondCategorySearchQuery('');
-                    setSubCategorySearchQuery('');
+                     setCategorySearchQuery('');
                     setShowCategoryDropdown(false);
-                    setShowSecondCategoryDropdown(false);
-                    setShowSubCategoryDropdown(false);
+                  
                 }}
                 className={`items-center rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-[#fdf0ee]'}`}
             >

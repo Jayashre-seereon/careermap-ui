@@ -301,6 +301,7 @@ const PG_PROGRAMS = [
                  ['Course Interest', courseInterest, setCourseInterest, 'e.g. MS in Computer Science'],
                 ['Budget Range', budgetRange, setBudgetRange, 'e.g. 20-30 LPA'],
                 ['Preferred Country', preferredCountry, setPreferredCountry, 'e.g. USA, UK, Canada'],
+                 ['Preferred Intake', preferredIntake, setPreferredIntake, 'e.g. January 2027'],
                ['Message', message, setMessage, 'I want guidance for scholarship and visa process'],
             ].map(([label, value, setter, placeholder]) => (<View key={label} className="gap-1.5">
               <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
@@ -337,8 +338,44 @@ const PG_PROGRAMS = [
 
             <View className={`gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <Text className="text-[15px] font-extrabold text-brand">Description</Text>
-              <Text className={`text-[14px] leading-[22px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.description}</Text>
-             
+             <View>
+  {country.description
+    .replace(/&nbsp;/g, ' ')
+    .split(/(<h3[\s\S]*?<\/h3>|<p[\s\S]*?<\/p>)/gi)
+    .filter(Boolean)
+    .map((part, index) => {
+      const isHeading = /<h3/i.test(part);
+
+      const text = part
+        .replace(/<[^>]*>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!text) return null;
+
+      return (
+        <Text
+          key={index}
+          className={
+            isHeading
+              ? `mt-3 text-[17px] font-black ${
+                  preferences.darkMode
+                    ? 'text-white'
+                    : 'text-ink'
+                }`
+              : `text-[14px] leading-[24px] ${
+                  preferences.darkMode
+                    ? 'text-[#b7aeb9]'
+                    : 'text-muted'
+                }`
+          }
+        >
+          {text}
+        </Text>
+      );
+    })}
+</View> 
               
             </View>
 
@@ -432,8 +469,7 @@ const PG_PROGRAMS = [
                 </View>
                 <View className="min-w-0 flex-1 gap-1 pr-2">
                   <Text numberOfLines={2} className={`text-[16px] font-extrabold leading-5 ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{country.title}</Text>
-                  <Text numberOfLines={2} className={`text-[13px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{country.description}</Text>
-                </View>
+                    </View>
                 <View className="items-end gap-2" />
               </View>)}
           </Pressable>);
