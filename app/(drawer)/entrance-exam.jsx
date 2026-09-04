@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, ScrollView, Text, View, Linking, TextInput, Pressable, useWindowDimensions } from 'react-native';
-import RenderHTML from 'react-native-render-html';
+import { ScrollView, Text, View, Linking, TextInput, Pressable } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
 import { getEntranceExams ,getCategories} from '../../src/api/entranceExamApi';
@@ -11,7 +10,6 @@ import { AnimatedPressable, Screen, SectionHeader, UnlockBottomSheet } from '../
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
 export default function EntranceExamScreen() {
     const { preferences } = useAppState();
-    const { width: screenWidth } = useWindowDimensions();
     const [entranceExams, setEntranceExams] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
@@ -28,8 +26,6 @@ const [showExamDropdown, setShowExamDropdown] = useState(false);
 const [selectedExamId, setSelectedExamId] = useState('');
 const [categorySearchQuery, setCategorySearchQuery] = useState('');
 const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-    const [showDescriptionModal, setShowDescriptionModal] = useState(false);
-    const [activeDescription, setActiveDescription] = useState('');
     useEffect(() => {
         let isMounted = true;
 
@@ -552,8 +548,10 @@ setShowCategoryDropdown(false);
                                                 setShowUnlockSheet(true);
                                                 return;
                                             }
-                                            setActiveDescription(exam.aboutHtml || exam.about || 'Description not available.');
-                                            setShowDescriptionModal(true);
+                                            router.push({
+                                                pathname: '/(drawer)/entrance-exam-detail',
+                                                params: { examId: String(exam.id) },
+                                            });
                                         }}
                                         className="rounded-full px-2 py-1.5"
                                     >
@@ -585,61 +583,6 @@ setShowCategoryDropdown(false);
                     }}
                 />
             ) : null}
-            <Modal
-                visible={showDescriptionModal}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setShowDescriptionModal(false)}
-            >
-                <Pressable
-                    onPress={() => setShowDescriptionModal(false)}
-                    className="flex-1 items-center justify-center bg-black/50 px-5"
-                >
-                    <Pressable
-                        onPress={() => {}}
-                        className={`w-full max-w-[360px] rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-[#e8dfda] bg-white'}`}
-                        style={{ maxHeight: '75%' }}
-                    >
-                        <View className="mb-4 flex-row items-center justify-between">
-                            <Text className={`text-[18px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Description</Text>
-                            <Pressable onPress={() => setShowDescriptionModal(false)} className="h-8 w-8 items-center justify-center rounded-full bg-[#f2ebe6]">
-                                <Ionicons name="close" size={18} color={palette.text}/>
-                            </Pressable>
-                        </View>
-                        <ScrollView style={{ flexGrow: 0 }}>
-                            {activeDescription && /<\/?[a-z][\s\S]*>/i.test(activeDescription) ? (
-                                <RenderHTML
-                                    contentWidth={Math.min(screenWidth - 72, 360 - 40)}
-                                    source={{ html: activeDescription }}
-                                    baseStyle={{
-                                        color: preferences.darkMode ? '#b7aeb9' : palette.muted,
-                                        fontSize: 14,
-                                        lineHeight: 22,
-                                    }}
-                                    tagsStyles={{
-                                        h1: { fontSize: 20, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 8 },
-                                        h2: { fontSize: 18, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 8 },
-                                        h3: { fontSize: 16, fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 6 },
-                                        p: { marginVertical: 4 },
-                                        li: { marginVertical: 3 },
-                                        ul: { marginVertical: 6, paddingLeft: 18 },
-                                        ol: { marginVertical: 6, paddingLeft: 18 },
-                                        table: { marginVertical: 8 },
-                                        th: { padding: 6, borderWidth: 1, borderColor: preferences.darkMode ? '#1a1a1a' : '#e8dfda', backgroundColor: preferences.darkMode ? '#111111' : '#f7f1ed' },
-                                        td: { padding: 6, borderWidth: 1, borderColor: preferences.darkMode ? '#1a1a1a' : '#e8dfda' },
-                                        strong: { fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text },
-                                        a: { color: palette.primary },
-                                    }}
-                                />
-                            ) : (
-                                <Text className={`text-[14px] leading-6 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-                                    {activeDescription}
-                                </Text>
-                            )}
-                        </ScrollView>
-                    </Pressable>
-                </Pressable>
-            </Modal>
         </Screen>
     );
 }
