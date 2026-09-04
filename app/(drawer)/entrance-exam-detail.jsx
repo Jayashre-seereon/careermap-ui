@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Text, View, useWindowDimensions } from 'react-native';
 import RenderHTML from 'react-native-render-html';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
@@ -35,7 +35,6 @@ export default function EntranceExamDetailScreen() {
     const { examId } = useLocalSearchParams();
     const { width: screenWidth } = useWindowDimensions();
     const [entranceExams, setEntranceExams] = useState([]);
-    const [showDescriptionModal, setShowDescriptionModal] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -71,16 +70,6 @@ export default function EntranceExamDetailScreen() {
         );
     }
 
-    const examDetails = [
-        { label: 'Exam Date', value: exam.date },
-        { label: 'Mode', value: exam.mode },
-        { label: 'Duration', value: exam.duration },
-        { label: 'Subjects', value: exam.subjects },
-        { label: 'Total Marks', value: exam.totalMarks },
-        { label: 'Frequency', value: exam.frequency },
-        { label: 'Eligibility', value: exam.eligibility },
-    ];
-
     return (
         <Screen contentContainerClassName="gap-[18px] px-5 py-5 pb-8">
             <View className="mb-7 flex-row items-center gap-3">
@@ -105,7 +94,7 @@ export default function EntranceExamDetailScreen() {
                     <Ionicons name="document-text-outline" size={34} color={palette.primary}/>
                 </View>
                 <Text className={`text-center text-[32px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam.name}</Text>
-                <Text className={`mt-1 text-[18px] font-medium ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{exam.authority}</Text>
+                <Text className={`mt-1 text-[18px] font-medium ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{exam.mode}</Text>
 
                 <View className="mt-4 flex-row gap-2">
                     <View className="rounded-full bg-[#fff1e8] px-3 py-1.5">
@@ -118,44 +107,43 @@ export default function EntranceExamDetailScreen() {
             </View>
 
             <View className="gap-4">
-                <DetailCard title="About">
-                    <Text className={`text-[14px] leading-6 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{exam.about}</Text>
+                <DetailCard title="">
+                    {exam.aboutHtml ? (
+                        <RenderHTML
+                            contentWidth={screenWidth - 40}
+                            source={{ html: exam.aboutHtml }}
+                            baseStyle={{
+                                color: preferences.darkMode ? '#b7aeb9' : palette.muted,
+                                fontSize: 14,
+                                lineHeight: 22,
+                            }}
+                            tagsStyles={{
+                                h1: { fontSize: 20, fontWeight: '900', color: palette.primary, marginVertical: 8 },
+                                h2: { fontSize: 18, fontWeight: '900', color: palette.primary, marginVertical: 8 },
+                                h3: { fontSize: 16, fontWeight: '800', color: palette.primary, marginVertical: 6 },
+                                h4: { fontSize: 15, fontWeight: '800', color: palette.primary, marginVertical: 6 },
+                                h5: { fontSize: 14, fontWeight: '800', color: palette.primary, marginVertical: 5 },
+                                h6: { fontSize: 13, fontWeight: '800', color: palette.primary, marginVertical: 5 },
+                                p: { marginVertical: 4 },
+                                li: { marginVertical: 3 },
+                                ul: { marginVertical: 6, paddingLeft: 18 },
+                                ol: { marginVertical: 6, paddingLeft: 18 },
+                                table: { marginVertical: 8 },
+                                th: { padding: 6, borderWidth: 1, borderColor: preferences.darkMode ? '#1a1a1a' : '#e8dfda', backgroundColor: preferences.darkMode ? '#111111' : '#f7f1ed' },
+                                td: { padding: 6, borderWidth: 1, borderColor: preferences.darkMode ? '#1a1a1a' : '#e8dfda' },
+                                strong: { fontWeight: '800' },
+                                a: { color: palette.primary },
+                            }}
+                        />
+                    ) : (
+                        <Text className={`text-[14px] leading-6 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                            {exam.about || 'Description not available.'}
+                        </Text>
+                    )}
                 </DetailCard>
 
-                <DetailCard title="Exam Details">
-                    <View className="gap-0.5">
-                        {examDetails.map((item, index) => (
-                            <View key={item.label}>
-                                <View className="flex-row items-start justify-between gap-4 py-3">
-                                    <Text className={`flex-1 text-[14px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.label}</Text>
-                                    <Text className={`max-w-[58%] text-right text-[14px] font-bold leading-5 ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.value}</Text>
-                                </View>
-                                {index < examDetails.length - 1 ? <View className={`h-px ${preferences.darkMode ? 'bg-[#1a1a1a]' : 'bg-[#f0e8e2]'}`}/> : null}
-                            </View>
-                        ))}
-                    </View>
-                </DetailCard>
 
-                <DetailCard title="Exam Pattern">
-                    <View className="gap-3">
-                        {exam.examPattern.map((item) => (
-                            <View key={item} className="flex-row items-start gap-3">
-                                <View className="mt-[7px] h-[6px] w-[6px] rounded-full bg-brand"/>
-                                <Text className={`flex-1 text-[14px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item}</Text>
-                            </View>
-                        ))}
-                    </View>
-                </DetailCard>
 
-                <DetailCard title="Top Colleges">
-                    <View className="flex-row flex-wrap gap-x-5 gap-y-3">
-                        {exam.topColleges.map((college) => (
-                            <Text key={college} className="text-[14px] font-semibold text-brand">
-                                {college}
-                            </Text>
-                        ))}
-                    </View>
-                </DetailCard>
 
                 <AnimatedPressable
                     onPress={() => {
@@ -178,68 +166,7 @@ export default function EntranceExamDetailScreen() {
                         <Text className="text-[18px] font-extrabold text-white">Visit Official Website</Text>
                     </View>
                 </AnimatedPressable>
-                <Pressable
-                    onPress={() => setShowDescriptionModal(true)}
-                    className="items-center"
-                >
-                    <Text className="text-[15px] font-extrabold text-brand">View</Text>
-                </Pressable>
             </View>
-
-            <Modal
-                visible={showDescriptionModal}
-                transparent
-                animationType="fade"
-                onRequestClose={() => setShowDescriptionModal(false)}
-            >
-                <Pressable
-                    onPress={() => setShowDescriptionModal(false)}
-                    className="flex-1 items-center justify-center bg-black/50 px-5"
-                >
-                    <Pressable
-                        onPress={() => {}}
-                        className={`w-full max-w-[420px] rounded-[24px] border p-5 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-[#e8dfda] bg-white'}`}
-                    >
-                        <View className="mb-4 flex-row items-center justify-between">
-                            <Text className={`text-[18px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Description</Text>
-                            <Pressable onPress={() => setShowDescriptionModal(false)} className="h-8 w-8 items-center justify-center rounded-full bg-[#f2ebe6]">
-                                <Ionicons name="close" size={18} color={palette.text}/>
-                            </Pressable>
-                        </View>
-                        <ScrollView>
-                            {exam.aboutHtml ? (
-                                <RenderHTML
-                                    contentWidth={Math.min(screenWidth - 72, 420 - 40)}
-                                    source={{ html: exam.aboutHtml }}
-                                    baseStyle={{
-                                        color: preferences.darkMode ? '#b7aeb9' : palette.muted,
-                                        fontSize: 14,
-                                        lineHeight: 22,
-                                    }}
-                                    tagsStyles={{
-                                        h1: { fontSize: 20, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 8 },
-                                        h2: { fontSize: 18, fontWeight: '900', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 8 },
-                                        h3: { fontSize: 16, fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text, marginVertical: 6 },
-                                        p: { marginVertical: 4 },
-                                        li: { marginVertical: 3 },
-                                        ul: { marginVertical: 6, paddingLeft: 18 },
-                                        ol: { marginVertical: 6, paddingLeft: 18 },
-                                        table: { marginVertical: 8 },
-                                        th: { padding: 6, borderWidth: 1, borderColor: preferences.darkMode ? '#1a1a1a' : '#e8dfda', backgroundColor: preferences.darkMode ? '#111111' : '#f7f1ed' },
-                                        td: { padding: 6, borderWidth: 1, borderColor: preferences.darkMode ? '#1a1a1a' : '#e8dfda' },
-                                        strong: { fontWeight: '800', color: preferences.darkMode ? '#ffffff' : palette.text },
-                                        a: { color: palette.primary },
-                                    }}
-                                />
-                            ) : (
-                                <Text className={`text-[14px] leading-6 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-                                    {exam.about || 'Description not available.'}
-                                </Text>
-                            )}
-                        </ScrollView>
-                    </Pressable>
-                </Pressable>
-            </Modal>
         </Screen>
     );
 }
