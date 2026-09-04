@@ -76,3 +76,8 @@ export async function getInstitutes() {
 
   return items.map((item, index) => mapInstituteItem(item, index));
 }
+
+export async function getCategories() {
+  const response = await api.get('/categories/');
+  return response?.data;
+}

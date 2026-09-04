@@ -4,11 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { palette } from '../../src/careermap-data';
-import { getInstitutes } from '../../src/api/instituteApi';
+import { getCategories, getInstitutes } from '../../src/api/instituteApi';
 import { checkModuleAccess, getModules } from '../../src/api/moduleAccessApi';
-import { AnimatedPressable, HierarchyFilterPanel, Pill, Screen, SectionHeader ,} from '../../src/careermap-ui';
-import { buildHierarchyOptions, filterByHierarchy } from '../../src/utils/hierarchy';
-import { UnlockBottomSheet } from '../../src/careermap-ui';
+import { AnimatedPressable, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 
 const getInstituteInitials = (name) => {
     const source = String(name || 'Institute').trim();
@@ -61,6 +59,8 @@ const INDIA_STATES = [
     'Lakshadweep',
 ];
 
+const normalizeFilterValue = (value) => String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
 const renderInstituteLogo = (item, size = 52) => {
     if (item?.logo) {
         return (<Image source={{ uri: item.logo }} resizeMode="cover" style={{
@@ -98,9 +98,7 @@ const [typeFilter, setTypeFilter] = useState('All');
 const [countryFilter, setCountryFilter] = useState('All');
 const [stateFilter, setStateFilter] = useState('All');
 const [categoryFilter, setCategoryFilter] = useState('All');
-const [secondCategoryFilter, setSecondCategoryFilter] = useState('All');
-const [subCategoryFilter, setSubCategoryFilter] = useState('All');
-const [sortAZ, setSortAZ] = useState(false);
+const [categories, setCategories] = useState([]);
 
 const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 const [typeSearchQuery, setTypeSearchQuery] = useState('');
@@ -110,10 +108,6 @@ const [showStateDropdown, setShowStateDropdown] = useState(false);
 const [stateSearchQuery, setStateSearchQuery] = useState('');
 const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 const [categorySearchQuery, setCategorySearchQuery] = useState('');
-const [showSecondCategoryDropdown, setShowSecondCategoryDropdown] = useState(false);
-const [secondCategorySearchQuery, setSecondCategorySearchQuery] = useState('');
-const [showSubCategoryDropdown, setShowSubCategoryDropdown] = useState(false);
-const [subCategorySearchQuery, setSubCategorySearchQuery] = useState('');
     const resolvedModuleId = useMemo(() => {
         const parsed = Number(params.moduleId);
         return Number.isFinite(parsed) ? parsed : null;
@@ -144,6 +138,27 @@ const [subCategorySearchQuery, setSubCategorySearchQuery] = useState('');
         }
 
         loadInstitutes();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+    useEffect(() => {
+        let isMounted = true;
+
+        getCategories()
+            .then((response) => {
+                if (!isMounted) return;
+                const items = Array.isArray(response)
+                    ? response
+                    : Array.isArray(response?.data)
+                        ? response.data
+                        : [];
+                setCategories(items);
+            })
+            .catch(() => {
+                if (isMounted) setCategories([]);
+            });
 
         return () => {
             isMounted = false;
@@ -183,32 +198,31 @@ const [subCategorySearchQuery, setSubCategorySearchQuery] = useState('');
             isMounted = false;
         };
     }, [resolvedModuleId]);
-const countryOptions = ['All', 'India', 'Other'];
+    const countryOptions = useMemo(() => {
+        const values = Array.from(new Set(institutes
+            .map((item) => String(item.country || '').trim())
+            .filter(Boolean)));
+        return ['All', ...values];
+    }, [institutes]);
     const typeOptions = useMemo(
         () => ['All', ...Array.from(new Set(institutes.map((item) => item.type).filter(Boolean)))],
         [institutes]
     );
     const stateOptions = useMemo(() => {
-        const source = countryFilter === 'India'
+        const selectedCountry = normalizeFilterValue(countryFilter);
+        const source = selectedCountry === 'india'
             ? INDIA_STATES
-            : countryFilter === 'Other'
-                ? Array.from(new Set(institutes.filter((item) => String(item.country || '').trim().toLowerCase() !== 'india').map((item) => item.state).filter(Boolean)))
-                : Array.from(new Set(institutes.map((item) => item.state).filter(Boolean)));
+            : Array.from(new Set(institutes
+                .filter((item) => countryFilter === 'All' || normalizeFilterValue(item.country) === selectedCountry)
+                .map((item) => String(item.state || '').replace(/\s+/g, ' ').trim())
+                .filter(Boolean)));
 
         return ['All', ...source];
     }, [countryFilter, institutes]);
-    const categoryOptions = useMemo(
-        () => buildHierarchyOptions(institutes, 'category', { secondcategory: secondCategoryFilter, subcategory: subCategoryFilter }),
-        [institutes, secondCategoryFilter, subCategoryFilter]
-    );
-    const secondCategoryOptions = useMemo(
-        () => buildHierarchyOptions(institutes, 'secondcategory', { category: categoryFilter, subcategory: subCategoryFilter }),
-        [institutes, categoryFilter, subCategoryFilter]
-    );
-  const subCategoryOptions = useMemo(
-    () => buildHierarchyOptions(institutes, 'subcategory', { category: categoryFilter, secondcategory: secondCategoryFilter }),
-    [institutes, categoryFilter, secondCategoryFilter]
-);
+    const categoryOptions = useMemo(() => categories.map((item) => ({
+        value: String(item?.title || item?.name || item?.id || ''),
+        label: String(item?.title || item?.name || item?.id || ''),
+    })).filter((item) => item.value), [categories]);
 
 function getOptionValue(option) {
     return String(option?.value ?? option?.id ?? option?.label ?? option ?? '');
@@ -249,85 +263,40 @@ const searchableCategoryOptions = useMemo(() => {
     return categoryOptions.filter((opt) => getOptionLabel(opt).toLowerCase().includes(query));
 }, [categoryOptions, categorySearchQuery]);
 
-const searchableSecondCategoryOptions = useMemo(() => {
-    const query = secondCategorySearchQuery.trim().toLowerCase();
-    if (!query) return secondCategoryOptions;
-    return secondCategoryOptions.filter((opt) => getOptionLabel(opt).toLowerCase().includes(query));
-}, [secondCategoryOptions, secondCategorySearchQuery]);
-
-const searchableSubCategoryOptions = useMemo(() => {
-    const query = subCategorySearchQuery.trim().toLowerCase();
-    if (!query) return subCategoryOptions;
-    return subCategoryOptions.filter((opt) => getOptionLabel(opt).toLowerCase().includes(query));
-}, [subCategoryOptions, subCategorySearchQuery]);
-const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az' : 'default'}-${showFilters ? 'filters' : 'plain'}`;
+const animationKey = `institute-list-${typeFilter}-${stateFilter}-${showFilters ? 'filters' : 'plain'}`;
    
     const filtered = useMemo(() => {
         let source = [...institutes];
 
         if (countryFilter !== 'All') {
-            if (countryFilter === 'Other') {
-                source = source.filter((item) => String(item.country || '').trim().toLowerCase() !== 'india');
-            } else {
-                source = source.filter((item) => String(item.country || '').trim().toLowerCase() === String(countryFilter).trim().toLowerCase());
-            }
+            source = source.filter((item) => normalizeFilterValue(item.country) === normalizeFilterValue(countryFilter));
         }
 
         if (typeFilter !== 'All') {
-            source = source.filter((item) => String(item.type || '').trim().toLowerCase() === String(typeFilter).trim().toLowerCase());
+            source = source.filter((item) => normalizeFilterValue(item.type) === normalizeFilterValue(typeFilter));
         }
 
         if (stateFilter !== 'All') {
-            source = source.filter((item) => item.state === stateFilter);
+            source = source.filter((item) => normalizeFilterValue(item.state) === normalizeFilterValue(stateFilter));
         }
 
-        source = filterByHierarchy(source, {
-            category: categoryFilter,
-            secondcategory: secondCategoryFilter,
-            subcategory: subCategoryFilter,
-        });
-
-        if (sortAZ) {
-            source.sort((a, b) => a.name.localeCompare(b.name));
+        if (categoryFilter !== 'All') {
+            source = source.filter((item) => {
+                const category = item.categoryObj || item.category;
+                const categoryId = item.categoryId ?? category?.id ?? category;
+                const categoryName = item.categoryName || category?.title || category?.name || category;
+                return String(categoryId) === String(categoryFilter) || normalizeFilterValue(categoryName) === normalizeFilterValue(categoryFilter);
+            });
         }
 
         return source;
-    }, [categoryFilter, institutes, secondCategoryFilter, sortAZ,countryFilter, stateFilter, subCategoryFilter, typeFilter]);
+    }, [categoryFilter, institutes, countryFilter, stateFilter, typeFilter]);
 
     useEffect(() => {
-        if (categoryFilter !== 'All' && !categoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(categoryFilter))) {
+        if (categoryFilter !== 'All' && !categoryOptions.some((option) => String(option.value) === String(categoryFilter))) {
             setCategoryFilter('All');
         }
-        if (!secondCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(secondCategoryFilter))) {
-            setSecondCategoryFilter('All');
-        }
-        if (!subCategoryOptions.some((option) => String(option?.value ?? option?.id ?? option?.label ?? option) === String(subCategoryFilter))) {
-            setSubCategoryFilter('All');
-        }
-    }, [categoryFilter, categoryOptions, secondCategoryFilter, secondCategoryOptions, subCategoryFilter, subCategoryOptions]);
-
-   const DropdownFilter = ({ label, value, options, onChange }) => {
-  return (
-    <View className="gap-1">
-      <Text className="text-[11px] font-semibold text-muted">{label}</Text>
-
-      <View className="rounded-[14px] border border-line bg-white px-3 py-2">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-transparent text-[13px] outline-none"
-        >
-          <option value="All">All</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      </View>
-    </View>
-  );
-};
+    }, [categoryFilter, categoryOptions]);
 
     return (
         <Screen animationKey={animationKey}>
@@ -509,7 +478,7 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
                     </View>
                     <ScrollView className="max-h-[220px]" keyboardShouldPersistTaps="handled">
                         {categoryFilter !== 'All' ? (
-                            <Pressable onPress={() => { setCategoryFilter('All'); setSecondCategoryFilter('All'); setSubCategoryFilter('All'); setCategorySearchQuery(''); setShowCategoryDropdown(false); }} className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
+                            <Pressable onPress={() => { setCategoryFilter('All'); setCategorySearchQuery(''); setShowCategoryDropdown(false); }} className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
                                 <Text className="text-[13px] font-bold text-brand">All Categories</Text>
                             </Pressable>
                         ) : null}
@@ -519,7 +488,7 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
                             searchableCategoryOptions.map((opt) => {
                                 const value = getOptionValue(opt);
                                 return (
-                                    <Pressable key={value} onPress={() => { setCategoryFilter(value); setSecondCategoryFilter('All'); setSubCategoryFilter('All'); setCategorySearchQuery(''); setShowCategoryDropdown(false); }} className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
+                                    <Pressable key={value} onPress={() => { setCategoryFilter(value); setCategorySearchQuery(''); setShowCategoryDropdown(false); }} className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
                                         <Text numberOfLines={1} className={`text-[13px] font-semibold ${value === String(categoryFilter) ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getOptionLabel(opt)}</Text>
                                     </Pressable>
                                 );
@@ -530,123 +499,21 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${sortAZ ? 'az
             ) : null}
         </View>
 
-        {/* Second Category */}
-        <View className="relative z-10">
-            <Pressable
-                onPress={() => setShowSecondCategoryDropdown((value) => !value)}
-                className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
-            >
-                <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                    {secondCategoryFilter !== 'All'
-                        ? getOptionLabel(secondCategoryOptions.find((opt) => getOptionValue(opt) === String(secondCategoryFilter))) || 'All Second Categories'
-                        : 'All Second Categories'}
-                </Text>
-                <Ionicons name={showSecondCategoryDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text} />
-            </Pressable>
-            {showSecondCategoryDropdown ? (
-                <View className={`mt-2 max-h-[280px] rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
-                    <View className="p-2">
-                        <TextInput
-                            value={secondCategorySearchQuery}
-                            onChangeText={setSecondCategorySearchQuery}
-                            placeholder="Type to search..."
-                            placeholderTextColor={preferences.darkMode ? '#666666' : '#a89a94'}
-                            autoFocus
-                            className={`rounded-[10px] border px-3 py-2 text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-[#f2ebe6] text-ink'}`}
-                        />
-                    </View>
-                    <ScrollView className="max-h-[220px]" keyboardShouldPersistTaps="handled">
-                        {secondCategoryFilter !== 'All' ? (
-                            <Pressable onPress={() => { setSecondCategoryFilter('All'); setSubCategoryFilter('All'); setSecondCategorySearchQuery(''); setShowSecondCategoryDropdown(false); }} className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
-                                <Text className="text-[13px] font-bold text-brand">All Second Categories</Text>
-                            </Pressable>
-                        ) : null}
-                        {searchableSecondCategoryOptions.length === 0 ? (
-                            <Text className={`px-4 py-4 text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No results found</Text>
-                        ) : (
-                            searchableSecondCategoryOptions.map((opt) => {
-                                const value = getOptionValue(opt);
-                                return (
-                                    <Pressable key={value} onPress={() => { setSecondCategoryFilter(value); setSubCategoryFilter('All'); setSecondCategorySearchQuery(''); setShowSecondCategoryDropdown(false); }} className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
-                                        <Text numberOfLines={1} className={`text-[13px] font-semibold ${value === String(secondCategoryFilter) ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getOptionLabel(opt)}</Text>
-                                    </Pressable>
-                                );
-                            })
-                        )}
-                    </ScrollView>
-                </View>
-            ) : null}
-        </View>
-
-        {/* Sub Category */}
-        <View className="relative z-10">
-            <Pressable
-                onPress={() => setShowSubCategoryDropdown((value) => !value)}
-                className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
-            >
-                <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
-                    {subCategoryFilter !== 'All'
-                        ? getOptionLabel(subCategoryOptions.find((opt) => getOptionValue(opt) === String(subCategoryFilter))) || 'All Sub Categories'
-                        : 'All Sub Categories'}
-                </Text>
-                <Ionicons name={showSubCategoryDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text} />
-            </Pressable>
-            {showSubCategoryDropdown ? (
-                <View className={`mt-2 max-h-[280px] rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
-                    <View className="p-2">
-                        <TextInput
-                            value={subCategorySearchQuery}
-                            onChangeText={setSubCategorySearchQuery}
-                            placeholder="Type to search..."
-                            placeholderTextColor={preferences.darkMode ? '#666666' : '#a89a94'}
-                            autoFocus
-                            className={`rounded-[10px] border px-3 py-2 text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-[#f2ebe6] text-ink'}`}
-                        />
-                    </View>
-                    <ScrollView className="max-h-[220px]" keyboardShouldPersistTaps="handled">
-                        {subCategoryFilter !== 'All' ? (
-                            <Pressable onPress={() => { setSubCategoryFilter('All'); setSubCategorySearchQuery(''); setShowSubCategoryDropdown(false); }} className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
-                                <Text className="text-[13px] font-bold text-brand">All Sub Categories</Text>
-                            </Pressable>
-                        ) : null}
-                        {searchableSubCategoryOptions.length === 0 ? (
-                            <Text className={`px-4 py-4 text-center text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>No results found</Text>
-                        ) : (
-                            searchableSubCategoryOptions.map((opt) => {
-                                const value = getOptionValue(opt);
-                                return (
-                                    <Pressable key={value} onPress={() => { setSubCategoryFilter(value); setSubCategorySearchQuery(''); setShowSubCategoryDropdown(false); }} className={`border-b px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a]' : 'border-line'}`}>
-                                        <Text numberOfLines={1} className={`text-[13px] font-semibold ${value === String(subCategoryFilter) ? 'text-brand' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{getOptionLabel(opt)}</Text>
-                                    </Pressable>
-                                );
-                            })
-                        )}
-                    </ScrollView>
-                </View>
-            ) : null}
-        </View>
-
-        {(typeFilter !== 'All' || stateFilter !== 'All' || countryFilter !== 'All' || categoryFilter !== 'All' || secondCategoryFilter !== 'All' || subCategoryFilter !== 'All') ? (
+        {(typeFilter !== 'All' || stateFilter !== 'All' || countryFilter !== 'All' || categoryFilter !== 'All') ? (
             <Pressable
                 onPress={() => {
                     setTypeFilter('All');
                     setStateFilter('All');
                     setCountryFilter('All');
                     setCategoryFilter('All');
-                    setSecondCategoryFilter('All');
-                    setSubCategoryFilter('All');
                     setTypeSearchQuery('');
                     setStateSearchQuery('');
                     setCountrySearchQuery('');
                     setCategorySearchQuery('');
-                    setSecondCategorySearchQuery('');
-                    setSubCategorySearchQuery('');
                     setShowTypeDropdown(false);
                     setShowStateDropdown(false);
                     setShowCountryDropdown(false);
                     setShowCategoryDropdown(false);
-                    setShowSecondCategoryDropdown(false);
-                    setShowSubCategoryDropdown(false);
                 }}
                 className={`items-center rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-[#fdf0ee]'}`}
             >
