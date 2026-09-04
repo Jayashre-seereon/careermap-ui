@@ -70,11 +70,28 @@ function mapInstituteItem(item, index) {
   };
 }
 
-export async function getInstitutes() {
-  const response = await api.get('/institutes');
+export async function getInstitutes({
+  page = 1,
+  limit = 30,
+  category = '',
+  country = '',
+  state = '',
+  type = '',
+} = {}) {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+
+  if (category && category !== 'All') params.append('category', category);
+  if (country && country !== 'All') params.append('country', country);
+  if (state && state !== 'All') params.append('state', state);
+  if (type && type !== 'All') params.append('type', type);
+
+  const response = await api.get(`/institutes/paginated?${params.toString()}`);
   const items = Array.isArray(response?.data?.data) ? response.data.data : [];
 
-  return items.map((item, index) => mapInstituteItem(item, index));
+  return {
+    items: items.map((item, index) => mapInstituteItem(item, index)),
+    pagination: response?.data?.pagination || null,
+  };
 }
 
 export async function getCategories() {

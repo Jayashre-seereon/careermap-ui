@@ -93,6 +93,8 @@ export default function InstituteScreen() {
     const [hasFullAccess, setHasFullAccess] = useState(false);
     const [moduleAccessResolved, setModuleAccessResolved] = useState(false);
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState(null);
       const [showFilters, setShowFilters] = useState(false);
 const [typeFilter, setTypeFilter] = useState('All');
 const [countryFilter, setCountryFilter] = useState('All');
@@ -120,10 +122,18 @@ const [categorySearchQuery, setCategorySearchQuery] = useState('');
             try {
                 setIsLoading(true);
                 setLoadError('');
-                const items = await getInstitutes();
+                const response = await getInstitutes({
+                    page,
+                    limit: 30,
+                    category: categoryFilter,
+                    country: countryFilter,
+                    state: stateFilter,
+                    type: typeFilter,
+                });
 
                 if (isMounted) {
-                    setInstitutes(items);
+                    setInstitutes(response?.items || []);
+                    setPagination(response?.pagination || null);
                 }
             } catch (_error) {
                 if (isMounted) {
@@ -142,7 +152,7 @@ const [categorySearchQuery, setCategorySearchQuery] = useState('');
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [categoryFilter, countryFilter, page, stateFilter, typeFilter]);
     useEffect(() => {
         let isMounted = true;
 
@@ -199,11 +209,8 @@ const [categorySearchQuery, setCategorySearchQuery] = useState('');
         };
     }, [resolvedModuleId]);
     const countryOptions = useMemo(() => {
-        const values = Array.from(new Set(institutes
-            .map((item) => String(item.country || '').trim())
-            .filter(Boolean)));
-        return ['All', ...values];
-    }, [institutes]);
+        return ['All', 'India', 'Other'];
+    }, []);
     const typeOptions = useMemo(
         () => ['All', ...Array.from(new Set(institutes.map((item) => item.type).filter(Boolean)))],
         [institutes]
@@ -213,7 +220,9 @@ const [categorySearchQuery, setCategorySearchQuery] = useState('');
         const source = selectedCountry === 'india'
             ? INDIA_STATES
             : Array.from(new Set(institutes
-                .filter((item) => countryFilter === 'All' || normalizeFilterValue(item.country) === selectedCountry)
+                .filter((item) => selectedCountry === 'other'
+                    ? normalizeFilterValue(item.country) !== 'india'
+                    : countryFilter !== 'All' && normalizeFilterValue(item.country) === selectedCountry)
                 .map((item) => String(item.state || '').replace(/\s+/g, ' ').trim())
                 .filter(Boolean)));
 
@@ -255,7 +264,12 @@ const searchableStateOptions = useMemo(() => {
 useEffect(() => {
     setStateFilter('All');
     setStateSearchQuery('');
+    setPage(1);
 }, [countryFilter]);
+
+useEffect(() => {
+    setPage(1);
+}, [categoryFilter, stateFilter, typeFilter]);
 
 const searchableCategoryOptions = useMemo(() => {
     const query = categorySearchQuery.trim().toLowerCase();
@@ -269,7 +283,9 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${showFilters 
         let source = [...institutes];
 
         if (countryFilter !== 'All') {
-            source = source.filter((item) => normalizeFilterValue(item.country) === normalizeFilterValue(countryFilter));
+            source = source.filter((item) => normalizeFilterValue(countryFilter) === 'other'
+                ? normalizeFilterValue(item.country) !== 'india'
+                : normalizeFilterValue(item.country) === normalizeFilterValue(countryFilter));
         }
 
         if (typeFilter !== 'All') {
@@ -409,15 +425,16 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${showFilters 
         {/* State */}
         <View className="relative z-20">
             <Pressable
+                disabled={countryFilter === 'All'}
                 onPress={() => setShowStateDropdown((value) => !value)}
-                className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
+                className={`flex-row items-center justify-between rounded-[14px] border px-4 py-3 ${countryFilter === 'All' ? preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] opacity-50' : 'border-line bg-[#f2ebe6] opacity-60' : preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}
             >
                 <Text numberOfLines={1} className={`flex-1 text-[13px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
                     {stateFilter !== 'All' ? stateFilter : 'All States'}
                 </Text>
                 <Ionicons name={showStateDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={preferences.darkMode ? '#ffffff' : palette.text} />
             </Pressable>
-            {showStateDropdown ? (
+            {showStateDropdown && countryFilter !== 'All' ? (
                 <View className={`mt-2 max-h-[280px] rounded-[14px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-white'}`}>
                     <View className="p-2">
                         <TextInput
@@ -590,6 +607,27 @@ const animationKey = `institute-list-${typeFilter}-${stateFilter}-${showFilters 
     </AnimatedPressable>
 );})}
             </View>
+            {pagination && pagination.totalPages > 1 ? (
+                <View className="flex-row items-center justify-center gap-3 py-3">
+                    <Pressable
+                        disabled={!pagination.hasPreviousPage || isLoading}
+                        onPress={() => setPage((value) => Math.max(value - 1, 1))}
+                        className={`rounded-full px-4 py-2 ${!pagination.hasPreviousPage || isLoading ? 'bg-[#e8e1de]' : 'bg-brand'}`}
+                    >
+                        <Text className="text-[12px] font-bold text-white">Previous</Text>
+                    </Pressable>
+                    <Text className={`text-[12px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>
+                        Page {pagination.page} of {pagination.totalPages}
+                    </Text>
+                    <Pressable
+                        disabled={!pagination.hasNextPage || isLoading}
+                        onPress={() => setPage((value) => value + 1)}
+                        className={`rounded-full px-4 py-2 ${!pagination.hasNextPage || isLoading ? 'bg-[#e8e1de]' : 'bg-brand'}`}
+                    >
+                        <Text className="text-[12px] font-bold text-white">Next</Text>
+                    </Pressable>
+                </View>
+            ) : null}
             {showUnlockSheet ? (<UnlockBottomSheet title="Unlock Institutes" subtitle="Subscribe to more institute cards and links." onClose={() => setShowUnlockSheet(false)} onPress={() => setShowUnlockSheet(false)}/>) : null}
         </Screen>
     );
