@@ -31,7 +31,7 @@ export default function NewsletterScreen() {
   const [error, setError] = useState('');
   const [items, setItems] = useState([]);
   const [previewLimit, setPreviewLimit] = useState(4);
-  // Start locked-by-default until we get a real answer, instead of trusting a stale param.
+  const [selectedType, setSelectedType] = useState("ALL");
   const [resolvedAccessStatus, setResolvedAccessStatus] = useState('locked');
   const [showUnlockSheet, setShowUnlockSheet] = useState(false);
   const accessStatus = resolvedAccessStatus;
@@ -104,7 +104,10 @@ export default function NewsletterScreen() {
       mounted = false;
     };
   }, []);
-
+const filteredItems =
+  selectedType === "ALL"
+    ? items
+    : items.filter((item) => item.type === selectedType);
   return (
     <Screen scroll animationKey="newsletter">
       <View className="flex-row items-center gap-3">
@@ -142,7 +145,33 @@ export default function NewsletterScreen() {
 
       <ScrollView className="mt-4" showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
         <View className="gap-3 pb-8">
-          {items.map((item, index) => {
+          <View className="mb-4 flex-row gap-2">
+  {["ALL", "WEEKLY", "QUARTERLY"].map((type) => (
+    <Pressable
+      key={type}
+      onPress={() => setSelectedType(type)}
+      className="rounded-full px-4 py-2"
+      style={{
+        backgroundColor:
+          selectedType === type ? palette.primary : "#f8e8d8",
+      }}
+    >
+      <Text
+        className="text-[12px] font-bold"
+        style={{
+          color: selectedType === type ? "#fff" : palette.primary,
+        }}
+      >
+        {type === "ALL"
+          ? "All"
+          : type === "WEEKLY"
+          ? "Weekly"
+          : "Quarterly"}
+      </Text>
+    </Pressable>
+  ))}
+</View>
+          {filteredItems.map((item, index) => {
             // full mode -> everything unlocked
             // preview mode -> only the first `previewLimit` items unlocked, rest locked
             // locked mode -> nothing unlocked
