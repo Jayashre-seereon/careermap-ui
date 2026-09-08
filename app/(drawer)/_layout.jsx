@@ -62,7 +62,7 @@ export default function DrawerRoot() {
             drawerIcon: renderDrawerIcon('school-outline'),
         }}/>
         <Drawer.Screen name="newsletter" options={{
-            title: 'Career News Letter',
+            title: 'Career Insights',
             drawerIcon: renderDrawerIcon('newspaper-outline'),
         }}/>
          <Drawer.Screen name="book-mentor" options={{
