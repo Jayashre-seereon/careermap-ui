@@ -102,6 +102,7 @@ function mapMasterclassItem(item, index) {
   return {
     id: String(item?.id ?? `${item?.title ?? 'masterclass'}-${index}`),
     title: item?.title || 'Untitled Career & Personality Videos',
+    image: item?.image || null,
     mentor: resolveMentorName(item),
     duration: formatMasterclassTime(item?.time || item?.duration),
     views: resolveViews(item),

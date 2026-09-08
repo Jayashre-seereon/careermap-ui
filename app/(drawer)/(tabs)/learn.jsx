@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Linking, ScrollView, Text, View } from 'react-native';
+import {Image, Linking, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
@@ -170,7 +170,9 @@ export default function LearnScreen() {
                 <Text className={`text-[12px] font-extrabold ${activeVideoType === label ? 'text-white' : preferences.darkMode ? 'text-white' : 'text-ink'}`}>{label}</Text>
               </AnimatedPressable>))}
           </ScrollView>
-      {showFilters ? (<View className="gap-3">
+      {showFilters ? 
+      (
+      <View className="gap-3">
          {hasSeparateCareerOptions ? (<>
             <Text className={` text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>career</Text>
 
@@ -181,11 +183,10 @@ export default function LearnScreen() {
             </ScrollView>
           </>) : null}
 
-         <Text className={` text-[12px] font-bold uppercase ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>sort</Text>
-
+        
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2 pr-1">
             {[
-                { id: 'views', label: 'Most Viewed' },
+                // { id: 'views', label: 'Most Viewed' },
                 { id: 'az', label: 'A-Z' },
                 { id: 'za', label: 'Z-A' },
             ].map((item) => (<AnimatedPressable key={item.id} className={`rounded-full px-3 py-2 ${sortBy === item.id ? 'bg-brand' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setSortBy(item.id)}>
@@ -205,22 +206,47 @@ export default function LearnScreen() {
           <View className={`absolute right-4 top-4 h-8 w-8 items-center justify-center rounded-full ${cardUnlocked ? 'bg-[#ecf8ef]' : preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f8e8d8]'}`}>
                 <Ionicons name={cardUnlocked ? 'lock-open-outline' : 'lock-closed'} size={15} color={cardUnlocked ? palette.green : palette.primary}/>
               </View>
-            <View className="flex-row items-start gap-3">
-             
-              <View className="flex-1 gap-1">
+         {/* Master Class Image */}
+<View className="overflow-hidden rounded-[16px]">
+  {item.image ? (
+    <Image
+      source={{ uri: item.image }}
+      className="h-[180px] w-full"
+      resizeMode="cover"
+    />
+  ) : (
+    <View
+      className={`h-[180px] w-full items-center justify-center ${
+        preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'
+      }`}
+    >
+      <Ionicons
+        name="image-outline"
+        size={32}
+        color={preferences.darkMode ? '#777777' : '#b7aeb9'}
+      />
+      <Text
+        className={`mt-2 text-[12px] ${
+          preferences.darkMode ? 'text-[#777777]' : 'text-muted'
+        }`}
+      >
+        No image available
+      </Text>
+    </View>
+  )}
+</View>
+
+<View className="flex-row items-start gap-3">
+  <View className="flex-1 gap-1">
                 <Text className={`text-[15px] font-extrabold leading-[21px] ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{item.title}</Text>
-                <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.mentor}</Text>
-                <View className="flex-row items-center justify-between gap-2.5">
-                  <View className="gap-0.5">
-                    <Text className={`text-[12px] font-bold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{item.duration}</Text>
-                    <Text className={`text-[11px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{formatViews(item.views)}</Text>
-                  </View>
+                 <View className="flex-row items-center justify-between gap-2.5">
+                 
                   <Pill label={item.career} tone={palette.primary}/>
                 </View>
               </View>
             </View>
             {!hasFullAccess && !cardUnlocked ? (<Text className={`text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-                {detailUnlocked ? 'Your first locked video is available for free.' : 'You have already used the free career & personality video preview.'}
+                {detailUnlocked ? 'Your first locked video is available for free.' : ''}
               </Text>) : null}
             <AnimatedPressable onPress={() => {
                     if (!hasFullAccess && !item.isFree && !detailUnlocked) {
