@@ -174,7 +174,7 @@ export default function HomeScreen() {
     'Book Your Mentor': 'book-mentor',
     'Scholarships': 'scholarship',
     'Study Abroad': 'abroad-consultancy',
-    'Career News Letter': 'career-news-letter',
+    'Career Insights': 'career-news-letter',
   };
   const moduleOrder = [
     'Career Archive',
@@ -186,7 +186,7 @@ export default function HomeScreen() {
     'Career & Personality Videos',
     'Study Abroad',
     'Quiz',
-    'Career News Letter',
+    'Career Insights',
   ];
   const sectionTargets = useMemo(() => ({
     mentors: {
@@ -214,10 +214,10 @@ export default function HomeScreen() {
       subtitle: 'Unlock institute listings to browse the full college catalog.',
     },
     newsletter: {
-      title: 'Career News Letter Access Locked',
-      matchers: ['career news letter', 'career newsletter', 'newsletter'],
+      title: 'Career Insights Access Locked',
+      matchers: ['career insights', 'career Insights', 'career newsletter', 'newsletter'],
       route: '/(drawer)/newsletter',
-      subtitle: 'Unlock career news letters to read the latest updates and articles.',
+      subtitle: 'Unlock career insights to read the latest updates and articles.',
     },
   }), []);
   const normalizeModuleTitle = (value) => value?.trim().toLowerCase().replace(/\s+/g, ' ');

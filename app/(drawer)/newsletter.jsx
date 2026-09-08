@@ -115,7 +115,7 @@ const filteredItems =
           <Ionicons name="newspaper-outline" size={22} color={palette.pink} />
         </View>
         <View className="flex-1">
-          <Text className={`text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Career News Letter</Text>
+          <Text className={`text-[22px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Career Insights</Text>
           <Text className={`text-[12px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Latest career updates, highlights, and links.</Text>
         </View>
         {isLocked ? (
@@ -135,7 +135,7 @@ const filteredItems =
             This module is locked.
           </Text>
           <Text className={`mt-1 text-[12px] leading-5 ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
-            Subscribe to open the newsletter module.
+            Subscribe to open the career insights module.
           </Text>
         </View>
       ) : null}
@@ -248,8 +248,8 @@ const filteredItems =
 
       {showUnlockSheet ? (
         <UnlockBottomSheet
-          title="Unlock Career News Letter"
-          subtitle="Subscribe to unlock all newsletter items and open linked files."
+          title="Unlock Career Insights"
+          subtitle="Subscribe to unlock all career insights items and open linked files."
           onClose={() => setShowUnlockSheet(false)}
           onPress={() => {
             setShowUnlockSheet(false);

@@ -94,7 +94,7 @@ export const moduleCards = [
         tone: palette.purple,
     },
     {
-        title: 'Career News Letter',
+        title: 'Career Insights',
         subtitle: 'Read the latest career updates and highlights.',
         icon: 'newspaper-outline',
         route: '/(drawer)/newsletter',
