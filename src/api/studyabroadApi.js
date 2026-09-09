@@ -61,6 +61,24 @@ export async function getStudyAbroadCountries() {
 }
 
 export async function createStudyAbroadConsultation(payload) {
-  const response = await api.post('/studyabroad/consult/create', payload);
+  const asList = (value) => Array.isArray(value) ? value : value ? [value] : [];
+  const requestBody = {
+    ...payload,
+    studyAbroadId: Number(payload?.studyAbroadId),
+    // Match the shared user-portal API contract: these are Prisma scalar lists.
+    primaryFundingSource: asList(payload?.primaryFundingSource),
+    preferredCountries: asList(payload?.preferredCountries),
+    otherEntranceExams: asList(payload?.otherEntranceExams),
+    topPriorities: asList(payload?.topPriorities),
+    documentsAvailable: asList(payload?.documentsAvailable),
+    servicesRequired: asList(payload?.servicesRequired),
+    preferredIntake: Array.isArray(payload?.preferredIntake)
+      ? payload.preferredIntake[0] || null
+      : payload?.preferredIntake || null,
+    englishTest: Array.isArray(payload?.englishTest)
+      ? payload.englishTest[0] || null
+      : payload?.englishTest || null,
+  };
+  const response = await api.post('/studyabroad/consult/create', requestBody);
   return response?.data?.data ?? null;
 }

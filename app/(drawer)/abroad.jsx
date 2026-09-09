@@ -1,13 +1,249 @@
 import { Ionicons } from '@expo/vector-icons';
+import TableRenderer, { tableModel } from '@native-html/table-plugin';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import RenderHTML from 'react-native-render-html';
+import WebView from 'react-native-webview';
 import { useAppState } from '../../src/app-state';
 import { createStudyAbroadConsultation, getStudyAbroadCountries } from '../../src/api/studyabroadApi';
 import { checkModuleAccess, getModules } from '../../src/api/moduleAccessApi';
 import { palette } from '../../src/careermap-data';
 import { AnimatedPressable, Screen, SectionHeader, UnlockBottomSheet } from '../../src/careermap-ui';
 import { openSubscriptionPrompt } from '../../src/subscription-flow';
+
+const INITIAL_CONSULT_FORM = {
+    fullName: '',
+    dateOfBirth: '',
+    gender: '',
+    email: '',
+    mobileNumber: '',
+    whatsappNumber: '',
+    currentCityState: '',
+    countryOfCitizenship: '',
+    parentGuardianName: '',
+    parentRelationship: '',
+    parentMobileNumber: '',
+    parentEmail: '',
+    parentOccupation: '',
+    primaryFundingSource: [],
+    highestQualification: '',
+    schoolCollegeUniversity: '',
+    boardUniversity: '',
+    passingYear: '',
+    class10PercentageCGPA: '',
+    class12PercentageCGPA: '',
+    intendedStudyLevel: '',
+    preferredIntake: '',
+    preferredCountries: [],
+    preferredCourseProgramme: '',
+    preferredSpecialization: '',
+    preferredUniversities: '',
+    openToAlternativeUniversities: '',
+    englishTest: '',
+    englishTestScoreDate: '',
+    otherEntranceExams: [],
+    entranceExamScoreDate: '',
+    preferredCareerDomain: '',
+    reasonToStudyAbroad: '',
+    topPriorities: [],
+    annualTuitionBudget: '',
+    totalEducationBudget: '',
+    scholarshipRequired: '',
+    educationLoanRequired: '',
+    passportStatus: '',
+    passportExpiryDate: '',
+    documentsAvailable: [],
+    servicesRequired: [],
+    message: '',
+};
+
+function SelectionGroup({ label, options, value, multiple = false, onChange, darkMode }) {
+    const selectedValues = multiple ? (Array.isArray(value) ? value : []) : [];
+    return (<View className="gap-2">
+      <Text className={`text-[12px] font-extrabold ${darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
+      <View className="flex-row flex-wrap gap-2">
+        {options.map((option) => {
+          const selected = multiple ? selectedValues.includes(option) : value === option;
+          return (<Pressable key={option} accessibilityRole={multiple ? 'checkbox' : 'radio'} accessibilityState={{ checked: selected }} onPress={() => onChange(option)} className={`flex-row items-center gap-2 rounded-full border px-3 py-2 ${selected ? 'border-brand bg-[#fff1ee]' : darkMode ? 'border-[#303030] bg-[#111111]' : 'border-line bg-surface'}`}>
+            <Ionicons name={multiple ? (selected ? 'checkbox' : 'square-outline') : (selected ? 'radio-button-on' : 'radio-button-off')} size={16} color={selected ? palette.primary : darkMode ? '#b7aeb9' : palette.muted}/>
+            <Text className={`text-[12px] font-bold ${selected ? 'text-brand' : darkMode ? 'text-[#e5dfe6]' : 'text-ink'}`}>{option}</Text>
+          </Pressable>);
+        })}
+      </View>
+    </View>);
+}
+
+function FormField({ label, value, onChangeText, placeholder, darkMode, keyboardType = 'default', maxLength, multiline = false }) {
+    return (
+        <View className="gap-1.5">
+            <Text className={`text-[12px] font-extrabold ${darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
+            <TextInput
+                value={value}
+                onChangeText={onChangeText}
+                placeholder={placeholder}
+                placeholderTextColor={darkMode ? '#7f7481' : palette.muted}
+                keyboardType={keyboardType}
+                maxLength={maxLength}
+                multiline={multiline}
+                textAlignVertical={multiline ? 'top' : 'center'}
+                className={`rounded-[16px] border px-4 py-[14px] text-[13px] ${multiline ? 'min-h-[96px]' : ''} ${darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}
+            />
+        </View>
+    );
+}
+
+function maskDateInput(raw) {
+    const digits = String(raw || '').replace(/\D/g, '').slice(0, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function pad2(value) {
+    return String(value).padStart(2, '0');
+}
+
+function HtmlContent({ html, contentWidth, darkMode }) {
+    const sourceHtml = String(html || '').trim();
+    if (!sourceHtml) {
+        return (
+            <Text className={`text-[14px] leading-[24px] ${darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                Description not available.
+            </Text>
+        );
+    }
+
+    const ink = darkMode ? '#ffffff' : palette.text;
+    const muted = darkMode ? '#b7aeb9' : palette.muted;
+    const border = darkMode ? '#303030' : '#ead9d5';
+    const headerBg = darkMode ? '#111111' : '#fdf4f2';
+
+    const hasTable = /<table/i.test(sourceHtml);
+    const content = (
+                <RenderHTML
+                    contentWidth={contentWidth}
+                    source={{ html: `<div>${sourceHtml}</div>` }}
+                    WebView={WebView}
+                    renderers={{ table: TableRenderer }}
+                    customHTMLElementModels={{ table: tableModel }}
+                    renderersProps={{
+                        table: {
+                            tableStyleSpecs: {
+                                outerBorderWidthPx: 1,
+                                rowsBorderWidthPx: 1,
+                                columnsBorderWidthPx: 1,
+                                outerBorderColor: border,
+                                rowsBorderColor: border,
+                                columnsBorderColor: border,
+                                thOddBackground: headerBg,
+                                thOddColor: ink,
+                                tdOddBackground: darkMode ? '#080808' : '#ffffff',
+                                tdOddColor: muted,
+                                fontSizePx: 13,
+                            },
+                        },
+                    }}
+                    baseStyle={{
+                        color: muted,
+                        fontSize: 14,
+                        lineHeight: 24,
+                    }}
+                    tagsStyles={{
+                        h1: { fontSize: 22, fontWeight: '900', color: palette.primary, marginTop: 12, marginBottom: 8 },
+                        h2: { fontSize: 20, fontWeight: '900', color: palette.primary, marginTop: 12, marginBottom: 8 },
+                        h3: { fontSize: 18, fontWeight: '800', color: palette.primary, marginTop: 10, marginBottom: 6 },
+                        h4: { fontSize: 16, fontWeight: '800', color: palette.primary, marginTop: 8, marginBottom: 6 },
+                        h5: { fontSize: 15, fontWeight: '800', color: palette.primary, marginTop: 8, marginBottom: 4 },
+                        h6: { fontSize: 14, fontWeight: '800', color: palette.primary, marginTop: 8, marginBottom: 4 },
+                        p: { marginTop: 4, marginBottom: 10 },
+                        strong: { fontWeight: '800', color: ink },
+                        b: { fontWeight: '800', color: ink },
+                        em: { fontStyle: 'italic' },
+                        ul: { marginTop: 4, marginBottom: 12, paddingLeft: 8 },
+                        ol: { marginTop: 4, marginBottom: 12, paddingLeft: 8 },
+                        li: { marginBottom: 6 },
+                        a: { color: palette.primary, textDecorationLine: 'underline' },
+                        blockquote: { borderLeftWidth: 3, borderLeftColor: palette.primary, paddingLeft: 10, marginVertical: 8 },
+                    }}
+                />
+    );
+
+    if (!hasTable) {
+        return content;
+    }
+
+    return (
+        <ScrollView horizontal nestedScrollEnabled showsHorizontalScrollIndicator>
+            <View style={{ minWidth: contentWidth }}>{content}</View>
+        </ScrollView>
+    );
+}
+
+function toApiDate(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+
+    const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (iso) {
+        const [, year, month, day] = iso;
+        const date = new Date(Number(year), Number(month) - 1, Number(day));
+        return date.getFullYear() === Number(year) && date.getMonth() === Number(month) - 1 && date.getDate() === Number(day)
+            ? `${year}-${month}-${day}`
+            : '';
+    }
+
+    const dmy = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+    if (!dmy) return '';
+
+    const day = pad2(dmy[1]);
+    const month = pad2(dmy[2]);
+    const year = dmy[3];
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+
+    return date.getFullYear() === Number(year) && date.getMonth() === Number(month) - 1 && date.getDate() === Number(day)
+        ? `${year}-${month}-${day}`
+        : '';
+}
+
+function formatDisplayDate(value) {
+    const apiDate = toApiDate(value);
+    if (!apiDate) return String(value || '');
+    const [year, month, day] = apiDate.split('-');
+    return `${day}/${month}/${year}`;
+}
+
+function parsePickerDate(value) {
+    const apiDate = toApiDate(value);
+    if (!apiDate) return new Date();
+    const [year, month, day] = apiDate.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return Number.isNaN(date.getTime()) ? new Date() : date;
+}
+
+function DateField({ label, value, onChangeText, placeholder, darkMode, onOpenPicker }) {
+    return (
+        <View className="gap-1.5">
+            <Text className={`text-[12px] font-extrabold ${darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
+            <View className={`flex-row items-center rounded-[16px] border ${darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-surface'}`}>
+                <TextInput
+                    value={value}
+                    onChangeText={(text) => onChangeText(maskDateInput(text))}
+                    placeholder={placeholder || 'DD/MM/YYYY'}
+                    placeholderTextColor={darkMode ? '#7f7481' : palette.muted}
+                    keyboardType="number-pad"
+                    maxLength={10}
+                    className={`min-w-0 flex-1 px-4 py-[14px] text-[13px] ${darkMode ? 'text-white' : 'text-ink'}`}
+                />
+                <Pressable onPress={onOpenPicker} hitSlop={12} className="px-3 py-[14px]">
+                    <Ionicons name="calendar-outline" size={18} color={palette.primary} />
+                </Pressable>
+            </View>
+        </View>
+    );
+}
+
 export default function AbroadScreen() {
     const params = useLocalSearchParams();
     const { width } = useWindowDimensions();
@@ -22,10 +258,14 @@ export default function AbroadScreen() {
     const [submitted, setSubmitted] = useState(false);
     const [showUnlockSheet, setShowUnlockSheet] = useState(false);
     const [preferredCountry, setPreferredCountry] = useState('');
-    const [courseInterest, setCourseInterest] = useState('');
-    const [budgetRange, setBudgetRange] = useState('');
-    const [preferredIntake, setPreferredIntake] = useState('');
-    const [message, setMessage] = useState('');
+    const [dateDraft, setDateDraft] = useState('');
+    const [datePickerField, setDatePickerField] = useState(null);
+    const [consultationDetails, setConsultationDetails] = useState(INITIAL_CONSULT_FORM);
+    const updateConsultationDetail = (field, value) => setConsultationDetails((current) => ({ ...current, [field]: value }));
+    const toggleConsultationOption = (field, option) => setConsultationDetails((current) => {
+        const currentValues = Array.isArray(current[field]) ? current[field] : [];
+        return { ...current, [field]: currentValues.includes(option) ? currentValues.filter((item) => item !== option) : [...currentValues, option] };
+    });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const [moduleStatus, setModuleStatus] = useState('locked');
@@ -49,15 +289,26 @@ const PG_PROGRAMS = [
             return null;
         }
 
+        const preferredCourseProgramme = consultationDetails.preferredCourseProgramme.trim();
+        const preferredCountries = Array.isArray(consultationDetails.preferredCountries)
+            ? consultationDetails.preferredCountries
+            : [];
+
         return {
             studyAbroadId: selectedStudyAbroadId,
+            ...consultationDetails,
+            dateOfBirth: toApiDate(consultationDetails.dateOfBirth),
+            englishTestScoreDate: toApiDate(consultationDetails.englishTestScoreDate) || consultationDetails.englishTestScoreDate.trim(),
+            entranceExamScoreDate: toApiDate(consultationDetails.entranceExamScoreDate) || consultationDetails.entranceExamScoreDate.trim(),
+            passportExpiryDate: consultationDetails.passportExpiryDate ? toApiDate(consultationDetails.passportExpiryDate) || null : null,
             preferredCountry: preferredCountry.trim(),
-            courseInterest: courseInterest.trim(),
-            budgetRange: budgetRange.trim(),
-            preferredIntake: preferredIntake.trim(),
-            message: message.trim() || 'I want guidance for scholarship and visa process',
+            preferredCountries: preferredCountries.length ? preferredCountries : (preferredCountry.trim() ? [preferredCountry.trim()] : []),
+            preferredCourseProgramme,
+            courseInterest: preferredCourseProgramme,
+            preferredIntake: consultationDetails.preferredIntake.trim(),
+            message: consultationDetails.message.trim(),
         };
-    }, [budgetRange, courseInterest, message, preferredCountry, preferredIntake, selectedStudyAbroadId]);
+    }, [consultationDetails, preferredCountry, selectedStudyAbroadId]);
 
     const encodedConsultationPayload = useMemo(() => {
         if (!consultationPayload) {
@@ -86,8 +337,48 @@ const PG_PROGRAMS = [
     }), [encodedConsultationPayload, preferredCountry, selected]);
 
     const handleSubmitConsultation = useCallback(async () => {
-        if (!consultationPayload || !consultationPayload.preferredCountry || !consultationPayload.courseInterest || !consultationPayload.budgetRange ) {
-            setSubmitError('Please complete all fields before submitting.');
+        if (!consultationDetails.fullName.trim()) {
+            setSubmitError('Please enter your full name.');
+            return;
+        }
+        if (!toApiDate(consultationDetails.dateOfBirth)) {
+            setSubmitError('Please enter or select your date of birth in DD/MM/YYYY format.');
+            return;
+        }
+        if (!consultationDetails.gender) {
+            setSubmitError('Please select your gender.');
+            return;
+        }
+        if (!consultationDetails.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(consultationDetails.email.trim())) {
+            setSubmitError('Please enter a valid email address.');
+            return;
+        }
+        if (consultationDetails.mobileNumber.replace(/\D/g, '').length !== 10) {
+            setSubmitError('Please enter a valid 10-digit mobile number.');
+            return;
+        }
+        if (!consultationDetails.currentCityState.trim()) {
+            setSubmitError('Please enter your current city / state.');
+            return;
+        }
+        if (!consultationDetails.preferredCourseProgramme.trim()) {
+            setSubmitError('Please enter your course / programme.');
+            return;
+        }
+        if (consultationDetails.englishTestScoreDate && !toApiDate(consultationDetails.englishTestScoreDate)) {
+            setSubmitError('Enter English test score date in valid DD/MM/YYYY format.');
+            return;
+        }
+        if (consultationDetails.entranceExamScoreDate && !toApiDate(consultationDetails.entranceExamScoreDate)) {
+            setSubmitError('Enter entrance exam score date in valid DD/MM/YYYY format.');
+            return;
+        }
+        if (consultationDetails.passportExpiryDate && !toApiDate(consultationDetails.passportExpiryDate)) {
+            setSubmitError('Enter passport expiry date in valid DD/MM/YYYY format.');
+            return;
+        }
+        if (!consultationPayload) {
+            setSubmitError('Please choose a study destination before submitting.');
             return;
         }
 
@@ -97,6 +388,7 @@ const PG_PROGRAMS = [
             const createdConsultation = await createStudyAbroadConsultation(consultationPayload);
 
             if (createdConsultation) {
+                setConsultationDetails(INITIAL_CONSULT_FORM);
                 setSubmitted(true);
             }
             else {
@@ -109,7 +401,7 @@ const PG_PROGRAMS = [
         finally {
             setIsSubmitting(false);
         }
-    }, [consultationPayload]);
+    }, [consultationDetails, consultationPayload]);
     useEffect(() => {
         let isMounted = true;
 
@@ -194,21 +486,23 @@ const PG_PROGRAMS = [
             try {
                 const decodedPayload = JSON.parse(decodeURIComponent(params.consultationPayload));
 
-                if (decodedPayload?.courseInterest) {
-                    setCourseInterest(String(decodedPayload.courseInterest));
-                }
-
-                if (decodedPayload?.budgetRange) {
-                    setBudgetRange(String(decodedPayload.budgetRange));
-                }
-
-                if (decodedPayload?.preferredIntake) {
-                    setPreferredIntake(String(decodedPayload.preferredIntake));
-                }
-
-                if (decodedPayload?.message) {
-                    setMessage(String(decodedPayload.message));
-                }
+                setConsultationDetails((current) => ({
+                    ...current,
+                    ...decodedPayload,
+                    preferredCourseProgramme: String(decodedPayload.preferredCourseProgramme || decodedPayload.courseInterest || current.preferredCourseProgramme || ''),
+                    preferredIntake: decodedPayload?.preferredIntake ? String(decodedPayload.preferredIntake) : current.preferredIntake,
+                    message: decodedPayload?.message ? String(decodedPayload.message) : current.message,
+                    dateOfBirth: decodedPayload?.dateOfBirth ? formatDisplayDate(decodedPayload.dateOfBirth) || String(decodedPayload.dateOfBirth) : current.dateOfBirth,
+                    englishTestScoreDate: decodedPayload?.englishTestScoreDate ? formatDisplayDate(decodedPayload.englishTestScoreDate) || String(decodedPayload.englishTestScoreDate) : current.englishTestScoreDate,
+                    entranceExamScoreDate: decodedPayload?.entranceExamScoreDate ? formatDisplayDate(decodedPayload.entranceExamScoreDate) || String(decodedPayload.entranceExamScoreDate) : current.entranceExamScoreDate,
+                    passportExpiryDate: decodedPayload?.passportExpiryDate ? formatDisplayDate(decodedPayload.passportExpiryDate) || String(decodedPayload.passportExpiryDate) : current.passportExpiryDate,
+                    primaryFundingSource: Array.isArray(decodedPayload.primaryFundingSource) ? decodedPayload.primaryFundingSource : current.primaryFundingSource,
+                    preferredCountries: Array.isArray(decodedPayload.preferredCountries) ? decodedPayload.preferredCountries : current.preferredCountries,
+                    otherEntranceExams: Array.isArray(decodedPayload.otherEntranceExams) ? decodedPayload.otherEntranceExams : current.otherEntranceExams,
+                    topPriorities: Array.isArray(decodedPayload.topPriorities) ? decodedPayload.topPriorities : current.topPriorities,
+                    documentsAvailable: Array.isArray(decodedPayload.documentsAvailable) ? decodedPayload.documentsAvailable : current.documentsAvailable,
+                    servicesRequired: Array.isArray(decodedPayload.servicesRequired) ? decodedPayload.servicesRequired : current.servicesRequired,
+                }));
 
                 if (decodedPayload?.preferredCountry) {
                     setPreferredCountry(String(decodedPayload.preferredCountry));
@@ -235,7 +529,68 @@ const PG_PROGRAMS = [
         autoSubmitHandledRef.current = autoSubmitKey;
         void handleSubmitConsultation();
     }, [consultationPayload, handleSubmitConsultation, isSubmitting, params.autoSubmitAfterReturn, params.consultationPayload, submitted, unlocked]);
+const closeDatePicker = () => setDatePickerField(null);
 
+    const openDatePicker = (field) => {
+        setDateDraft(consultationDetails[field] || '');
+        setDatePickerField(field);
+    };
+
+    const handleDateChange = (event, date) => {
+        if (Platform.OS === 'android') {
+            closeDatePicker();
+            if (event?.type === 'dismissed' || !date) {
+                return;
+            }
+        }
+
+        if (!date || Number.isNaN(date.getTime())) {
+            return;
+        }
+
+        const formattedDate = `${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}/${date.getFullYear()}`;
+        setDateDraft(formattedDate);
+
+        if (datePickerField) {
+            updateConsultationDetail(datePickerField, formattedDate);
+        }
+    };
+
+    const datePickerValue = parsePickerDate(dateDraft || (datePickerField ? consultationDetails[datePickerField] : ''));
+
+    const renderDatePicker = () => {
+        if (!datePickerField || Platform.OS === 'web') {
+            return null;
+        }
+
+        const picker = (
+            <DateTimePicker
+                value={datePickerValue}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+            />
+        );
+
+        if (Platform.OS === 'android') {
+            return picker;
+        }
+
+        return (
+            <Modal transparent animationType="fade" onRequestClose={closeDatePicker}>
+                <Pressable className="flex-1 justify-end bg-black/40" onPress={closeDatePicker}>
+                    <Pressable className={`rounded-t-[24px] px-4 pb-8 pt-4 ${preferences.darkMode ? 'bg-[#111111]' : 'bg-white'}`} onPress={() => {}}>
+                        <View className="mb-2 flex-row items-center justify-between">
+                            <Pressable onPress={closeDatePicker}><Text className="text-[14px] font-bold text-muted">Cancel</Text></Pressable>
+                            <Text className={`text-[14px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Select date</Text>
+                            <Pressable onPress={closeDatePicker}><Text className="text-[14px] font-extrabold text-brand">Done</Text></Pressable>
+                        </View>
+                        {picker}
+                    </Pressable>
+                </Pressable>
+            </Modal>
+        );
+    };
     if (selected !== null && !selectedCountry) {
         return (<Screen animationKey={animationKey}>
         <SectionHeader title="Study Abroad" subtitle="Loading destination details..." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
@@ -254,11 +609,8 @@ const PG_PROGRAMS = [
         <SectionHeader title="Submitted Successfully" subtitle="Your study abroad consultation request has been completed." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => {
                     setSubmitted(false);
                     setShowForm(false);
+                    setConsultationDetails(INITIAL_CONSULT_FORM);
                     setPreferredCountry('');
-                    setCourseInterest('');
-                    setBudgetRange('');
-                    setPreferredIntake('');
-                    setMessage('');
                     setSubmitError('');
                 }}>
               <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
@@ -279,11 +631,8 @@ const PG_PROGRAMS = [
           <AnimatedPressable className="rounded-[16px] bg-brand py-[14px] px-[16px]" onPress={() => {
                 setSubmitted(false);
                 setShowForm(false);
+                setConsultationDetails(INITIAL_CONSULT_FORM);
                 setPreferredCountry('');
-                setCourseInterest('');
-                setBudgetRange('');
-                setPreferredIntake('');
-                setMessage('');
                 setSubmitError('');
             }}>
             <Text className="text-center text-[14px] font-extrabold text-white">Done</Text>
@@ -292,28 +641,82 @@ const PG_PROGRAMS = [
         </Screen>);
     }
     if (showForm) {
-        return (<Screen animationKey={animationKey}>
-        <SectionHeader title="Get Free Consultation" subtitle="Tell us about your study plans." action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${preferences.darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowForm(false)}>
-              <Ionicons name="arrow-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text}/>
+        const darkMode = preferences.darkMode;
+        return (<>
+        <Screen animationKey={animationKey}>
+        <SectionHeader title="Foreign University Admission" subtitle="Student Registration & Free Counselling Form" action={<Pressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] ${darkMode ? 'bg-[#111111]' : 'bg-[#f2ebe6]'}`} onPress={() => setShowForm(false)}>
+              <Ionicons name="arrow-back" size={18} color={darkMode ? '#ffffff' : palette.text}/>
             </Pressable>}/>
-        <View className={`gap-[14px] rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
-          {[
-                 ['Course Interest', courseInterest, setCourseInterest, 'e.g. MS in Computer Science'],
-                ['Budget Range', budgetRange, setBudgetRange, 'e.g. 20-30 LPA'],
-                ['Preferred Country', preferredCountry, setPreferredCountry, 'e.g. USA, UK, Canada'],
-                 ['Preferred Intake', preferredIntake, setPreferredIntake, 'e.g. January 2027'],
-               ['Message', message, setMessage, 'I want guidance for scholarship and visa process'],
-            ].map(([label, value, setter, placeholder]) => (<View key={label} className="gap-1.5">
-              <Text className={`text-[12px] font-extrabold ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>{label}</Text>
-              <TextInput value={value} onChangeText={setter} placeholder={placeholder} placeholderTextColor={preferences.darkMode ? '#7f7481' : palette.muted} className={`rounded-[16px] border px-4 py-[14px] text-[13px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#111111] text-white' : 'border-line bg-surface text-ink'}`}/>
-            </View>))}
+        <View className={`gap-[14px] rounded-[24px] border p-[18px] ${darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
+          <Text className={`text-[16px] font-black ${darkMode ? 'text-white' : 'text-ink'}`}>1. Student Basic Details</Text>
+          <FormField label="Full Name *" value={consultationDetails.fullName} onChangeText={(value) => updateConsultationDetail('fullName', value)} placeholder="Full Name" darkMode={darkMode}/>
+          <DateField label="Date of Birth *" value={consultationDetails.dateOfBirth} onChangeText={(value) => updateConsultationDetail('dateOfBirth', value)} placeholder="DD/MM/YYYY" darkMode={darkMode} onOpenPicker={() => openDatePicker('dateOfBirth')}/>
+          <SelectionGroup label="Gender *" options={['Male', 'Female', 'Other', 'Prefer not to say']} value={consultationDetails.gender} onChange={(value) => updateConsultationDetail('gender', value)} darkMode={darkMode}/>
+          <FormField label="Email Address *" value={consultationDetails.email} onChangeText={(value) => updateConsultationDetail('email', value)} placeholder="Email Address" darkMode={darkMode} keyboardType="email-address"/>
+          <FormField label="Mobile Number *" value={consultationDetails.mobileNumber} onChangeText={(value) => updateConsultationDetail('mobileNumber', value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit mobile number" darkMode={darkMode} keyboardType="phone-pad" maxLength={10}/>
+          <FormField label="WhatsApp Number" value={consultationDetails.whatsappNumber} onChangeText={(value) => updateConsultationDetail('whatsappNumber', value.replace(/\D/g, '').slice(0, 10))} placeholder="WhatsApp Number" darkMode={darkMode} keyboardType="phone-pad" maxLength={10}/>
+          <FormField label="Current City / State *" value={consultationDetails.currentCityState} onChangeText={(value) => updateConsultationDetail('currentCityState', value)} placeholder="Current City / State" darkMode={darkMode}/>
+          <FormField label="Country of Citizenship" value={consultationDetails.countryOfCitizenship} onChangeText={(value) => updateConsultationDetail('countryOfCitizenship', value)} placeholder="Country of Citizenship" darkMode={darkMode}/>
+
+          <Text className={`mt-2 text-[16px] font-black ${darkMode ? 'text-white' : 'text-ink'}`}>2. Parent / Guardian Details</Text>
+          <FormField label="Parent / Guardian Name" value={consultationDetails.parentGuardianName} onChangeText={(value) => updateConsultationDetail('parentGuardianName', value)} placeholder="Parent / Guardian Name" darkMode={darkMode}/>
+          <FormField label="Relationship" value={consultationDetails.parentRelationship} onChangeText={(value) => updateConsultationDetail('parentRelationship', value)} placeholder="Relationship" darkMode={darkMode}/>
+          <FormField label="Mobile Number" value={consultationDetails.parentMobileNumber} onChangeText={(value) => updateConsultationDetail('parentMobileNumber', value.replace(/\D/g, '').slice(0, 10))} placeholder="Mobile Number" darkMode={darkMode} keyboardType="phone-pad" maxLength={10}/>
+          <FormField label="Email Address" value={consultationDetails.parentEmail} onChangeText={(value) => updateConsultationDetail('parentEmail', value)} placeholder="Email Address" darkMode={darkMode} keyboardType="email-address"/>
+          <FormField label="Occupation" value={consultationDetails.parentOccupation} onChangeText={(value) => updateConsultationDetail('parentOccupation', value)} placeholder="Occupation" darkMode={darkMode}/>
+          <SelectionGroup label="Primary Funding Source" options={['Parents/Guardian', 'Student', 'Education Loan', 'Scholarship', 'Other']} value={consultationDetails.primaryFundingSource} multiple onChange={(value) => toggleConsultationOption('primaryFundingSource', value)} darkMode={darkMode}/>
+
+          <Text className={`mt-2 text-[16px] font-black ${darkMode ? 'text-white' : 'text-ink'}`}>3. Academic Details</Text>
+          <SelectionGroup label="Current / Highest Qualification" options={['Class 10', 'Class 12', 'Diploma', "Bachelor's", "Master's", 'Other']} value={consultationDetails.highestQualification} onChange={(value) => updateConsultationDetail('highestQualification', value)} darkMode={darkMode}/>
+          <FormField label="School / College / University" value={consultationDetails.schoolCollegeUniversity} onChangeText={(value) => updateConsultationDetail('schoolCollegeUniversity', value)} placeholder="School / College / University" darkMode={darkMode}/>
+          <FormField label="Board / University" value={consultationDetails.boardUniversity} onChangeText={(value) => updateConsultationDetail('boardUniversity', value)} placeholder="Board / University" darkMode={darkMode}/>
+          <FormField label="Year of Passing / Expected Graduation" value={consultationDetails.passingYear} onChangeText={(value) => updateConsultationDetail('passingYear', value)} placeholder="Year of Passing / Expected Graduation" darkMode={darkMode}/>
+          <FormField label="Class 10 Percentage / CGPA" value={consultationDetails.class10PercentageCGPA} onChangeText={(value) => updateConsultationDetail('class10PercentageCGPA', value)} placeholder="Class 10 Percentage / CGPA" darkMode={darkMode}/>
+          <FormField label="Class 12 Percentage / CGPA" value={consultationDetails.class12PercentageCGPA} onChangeText={(value) => updateConsultationDetail('class12PercentageCGPA', value)} placeholder="Class 12 Percentage / CGPA" darkMode={darkMode}/>
+
+          <Text className={`mt-2 text-[16px] font-black ${darkMode ? 'text-white' : 'text-ink'}`}>4. Foreign Education Preferences</Text>
+          <SelectionGroup label="Intended Study Level" options={['Undergraduate', 'Postgraduate', 'PhD', 'Diploma/Certificate']} value={consultationDetails.intendedStudyLevel} onChange={(value) => updateConsultationDetail('intendedStudyLevel', value)} darkMode={darkMode}/>
+          <SelectionGroup label="Preferred Intake" options={['Jan', 'Feb', 'May', 'Sep', 'Other']} value={consultationDetails.preferredIntake} onChange={(value) => updateConsultationDetail('preferredIntake', value)} darkMode={darkMode}/>
+          <SelectionGroup label="Preferred Countries" options={['USA', 'UK', 'Canada', 'Australia', 'NZ', 'Germany', 'Ireland']} value={consultationDetails.preferredCountries} multiple onChange={(value) => toggleConsultationOption('preferredCountries', value)} darkMode={darkMode}/>
+          <FormField label="Preferred Course / Programme *" value={consultationDetails.preferredCourseProgramme} onChangeText={(value) => updateConsultationDetail('preferredCourseProgramme', value)} placeholder="Preferred Course / Programme" darkMode={darkMode}/>
+          <FormField label="Preferred Specialization" value={consultationDetails.preferredSpecialization} onChangeText={(value) => updateConsultationDetail('preferredSpecialization', value)} placeholder="Preferred Specialization" darkMode={darkMode}/>
+          <FormField label="Preferred Universities" value={consultationDetails.preferredUniversities} onChangeText={(value) => updateConsultationDetail('preferredUniversities', value)} placeholder="Preferred Universities" darkMode={darkMode}/>
+          <SelectionGroup label="Open to Alternative Universities?" options={['Yes', 'No']} value={consultationDetails.openToAlternativeUniversities} onChange={(value) => updateConsultationDetail('openToAlternativeUniversities', value)} darkMode={darkMode}/>
+
+          <Text className={`mt-2 text-[16px] font-black ${darkMode ? 'text-white' : 'text-ink'}`}>5. English & Entrance Exams</Text>
+          <SelectionGroup label="English Test" options={['IELTS', 'TOEFL', 'PTE', 'Duolingo', 'Cambridge', 'Not Yet', 'Other']} value={consultationDetails.englishTest} onChange={(value) => updateConsultationDetail('englishTest', value)} darkMode={darkMode}/>
+          <DateField label="English Test Score Date" value={consultationDetails.englishTestScoreDate} onChangeText={(value) => updateConsultationDetail('englishTestScoreDate', value)} placeholder="DD/MM/YYYY" darkMode={darkMode} onOpenPicker={() => openDatePicker('englishTestScoreDate')}/>
+          <SelectionGroup label="Other Entrance Exam" options={['SAT', 'ACT', 'GRE', 'GMAT', 'LSAT', 'MCAT', 'Other', 'None']} value={consultationDetails.otherEntranceExams} multiple onChange={(value) => toggleConsultationOption('otherEntranceExams', value)} darkMode={darkMode}/>
+          <DateField label="Entrance Exam Score Date" value={consultationDetails.entranceExamScoreDate} onChangeText={(value) => updateConsultationDetail('entranceExamScoreDate', value)} placeholder="DD/MM/YYYY" darkMode={darkMode} onOpenPicker={() => openDatePicker('entranceExamScoreDate')}/>
+
+          <Text className={`mt-2 text-[16px] font-black ${darkMode ? 'text-white' : 'text-ink'}`}>6. Career & Budget Preferences</Text>
+          <FormField label="Preferred Career / Domain" value={consultationDetails.preferredCareerDomain} onChangeText={(value) => updateConsultationDetail('preferredCareerDomain', value)} placeholder="Preferred Career / Domain" darkMode={darkMode}/>
+          <FormField label="Why do you want to study abroad?" value={consultationDetails.reasonToStudyAbroad} onChangeText={(value) => updateConsultationDetail('reasonToStudyAbroad', value)} placeholder="Why do you want to study abroad?" darkMode={darkMode} multiline/>
+          <SelectionGroup label="Top Priorities" options={['Ranking', 'Course Quality', 'Jobs', 'Fees', 'Scholarship', 'Location', 'Research', 'Other']} value={consultationDetails.topPriorities} multiple onChange={(value) => toggleConsultationOption('topPriorities', value)} darkMode={darkMode}/>
+          <SelectionGroup label="Annual Tuition Budget" options={['< ₹10L', '₹10–20L', '₹20–30L', '₹30–50L', '₹50L+', 'Not Decided']} value={consultationDetails.annualTuitionBudget} onChange={(value) => updateConsultationDetail('annualTuitionBudget', value)} darkMode={darkMode}/>
+          <SelectionGroup label="Total Education Budget" options={['< ₹20L', '₹20–40L', '₹40–60L', '₹60L–1Cr', '> ₹1Cr']} value={consultationDetails.totalEducationBudget} onChange={(value) => updateConsultationDetail('totalEducationBudget', value)} darkMode={darkMode}/>
+          <SelectionGroup label="Scholarship Required?" options={['Yes', 'No']} value={consultationDetails.scholarshipRequired} onChange={(value) => updateConsultationDetail('scholarshipRequired', value)} darkMode={darkMode}/>
+          <SelectionGroup label="Education Loan Required?" options={['Yes', 'No', 'Maybe']} value={consultationDetails.educationLoanRequired} onChange={(value) => updateConsultationDetail('educationLoanRequired', value)} darkMode={darkMode}/>
+
+          <Text className={`mt-2 text-[16px] font-black ${darkMode ? 'text-white' : 'text-ink'}`}>7. Passport & Documents</Text>
+          <SelectionGroup label="Valid Passport" options={['Yes', 'No', 'Applied', 'Renewal in Process']} value={consultationDetails.passportStatus} onChange={(value) => updateConsultationDetail('passportStatus', value)} darkMode={darkMode}/>
+          <DateField label="Passport Expiry Date" value={consultationDetails.passportExpiryDate} onChangeText={(value) => updateConsultationDetail('passportExpiryDate', value)} placeholder="DD/MM/YYYY" darkMode={darkMode} onOpenPicker={() => openDatePicker('passportExpiryDate')}/>
+          <SelectionGroup label="Documents Available" options={['Passport', '10th', '12th', 'Degree', 'Marksheets', 'English Score', 'CV', 'SOP', 'LOR', 'Financial Docs']} value={consultationDetails.documentsAvailable} multiple onChange={(value) => toggleConsultationOption('documentsAvailable', value)} darkMode={darkMode}/>
+
+          <Text className={`mt-2 text-[16px] font-black ${darkMode ? 'text-white' : 'text-ink'}`}>9. Services Required</Text>
+          <SelectionGroup label="Select Required Services" options={['Counselling / University Selection', 'Eligibility Assessment', 'Application Processing', 'SOP', 'LOR', 'CV/Resume', 'Test Guidance', 'Scholarship', 'Loan Guidance', 'Visa Guidance', 'Pre-departure', 'Accommodation', 'Complete Admission Support']} value={consultationDetails.servicesRequired} multiple onChange={(value) => toggleConsultationOption('servicesRequired', value)} darkMode={darkMode}/>
+
+          <Text className={`mt-2 text-[16px] font-black ${darkMode ? 'text-white' : 'text-ink'}`}>Additional Information</Text>
+          <FormField label="Tell us anything else about your study plans..." value={consultationDetails.message} onChangeText={(value) => updateConsultationDetail('message', value)} placeholder="Tell us anything else about your study plans..." darkMode={darkMode} multiline/>
+
           {submitError ? (<Text className="text-[13px] font-semibold text-brand">{submitError}</Text>) : null}
-          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]"
-          onPress={handleSubmitConsultation} disabled={isSubmitting}>
-            <Text className="text-center text-[14px] font-extrabold text-white"> {isSubmitting ? 'Submitting...' : 'Submit Request'}</Text>
+          <AnimatedPressable className="rounded-[16px] bg-brand py-[14px]" onPress={handleSubmitConsultation} disabled={isSubmitting}>
+            <Text className="text-center text-[14px] font-extrabold text-white">{isSubmitting ? 'Submitting...' : 'Submit Consultation'}</Text>
           </AnimatedPressable>
         </View>
-      </Screen>);
+      </Screen>
+      {renderDatePicker()}
+      </>);
     }
     if (selected !== null) {
         const country = selectedCountry;
@@ -338,44 +741,7 @@ const PG_PROGRAMS = [
 
             <View className={`gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <Text className="text-[15px] font-extrabold text-brand">Description</Text>
-             <View>
-  {country.description
-    .replace(/&nbsp;/g, ' ')
-    .split(/(<h3[\s\S]*?<\/h3>|<p[\s\S]*?<\/p>)/gi)
-    .filter(Boolean)
-    .map((part, index) => {
-      const isHeading = /<h3/i.test(part);
-
-      const text = part
-        .replace(/<[^>]*>/g, '')
-        .replace(/&amp;/g, '&')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      if (!text) return null;
-
-      return (
-        <Text
-          key={index}
-          className={
-            isHeading
-              ? `mt-3 text-[17px] font-black ${
-                  preferences.darkMode
-                    ? 'text-white'
-                    : 'text-ink'
-                }`
-              : `text-[14px] leading-[24px] ${
-                  preferences.darkMode
-                    ? 'text-[#b7aeb9]'
-                    : 'text-muted'
-                }`
-          }
-        >
-          {text}
-        </Text>
-      );
-    })}
-</View> 
+              <HtmlContent html={country.description} contentWidth={Math.max(width - 84, 260)} darkMode={preferences.darkMode} /> 
               
             </View>
 
