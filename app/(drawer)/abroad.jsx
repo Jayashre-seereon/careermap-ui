@@ -1,8 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
+import TableRenderer, { tableModel } from '@native-html/table-plugin';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, Platform, Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import RenderHTML from 'react-native-render-html';
+import WebView from 'react-native-webview';
 import { useAppState } from '../../src/app-state';
 import { createStudyAbroadConsultation, getStudyAbroadCountries } from '../../src/api/studyabroadApi';
 import { checkModuleAccess, getModules } from '../../src/api/moduleAccessApi';
@@ -91,8 +94,91 @@ function FormField({ label, value, onChangeText, placeholder, darkMode, keyboard
     );
 }
 
+function maskDateInput(raw) {
+    const digits = String(raw || '').replace(/\D/g, '').slice(0, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
 function pad2(value) {
     return String(value).padStart(2, '0');
+}
+
+function HtmlContent({ html, contentWidth, darkMode }) {
+    const sourceHtml = String(html || '').trim();
+    if (!sourceHtml) {
+        return (
+            <Text className={`text-[14px] leading-[24px] ${darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
+                Description not available.
+            </Text>
+        );
+    }
+
+    const ink = darkMode ? '#ffffff' : palette.text;
+    const muted = darkMode ? '#b7aeb9' : palette.muted;
+    const border = darkMode ? '#303030' : '#ead9d5';
+    const headerBg = darkMode ? '#111111' : '#fdf4f2';
+
+    const hasTable = /<table/i.test(sourceHtml);
+    const content = (
+                <RenderHTML
+                    contentWidth={contentWidth}
+                    source={{ html: `<div>${sourceHtml}</div>` }}
+                    WebView={WebView}
+                    renderers={{ table: TableRenderer }}
+                    customHTMLElementModels={{ table: tableModel }}
+                    renderersProps={{
+                        table: {
+                            tableStyleSpecs: {
+                                outerBorderWidthPx: 1,
+                                rowsBorderWidthPx: 1,
+                                columnsBorderWidthPx: 1,
+                                outerBorderColor: border,
+                                rowsBorderColor: border,
+                                columnsBorderColor: border,
+                                thOddBackground: headerBg,
+                                thOddColor: ink,
+                                tdOddBackground: darkMode ? '#080808' : '#ffffff',
+                                tdOddColor: muted,
+                                fontSizePx: 13,
+                            },
+                        },
+                    }}
+                    baseStyle={{
+                        color: muted,
+                        fontSize: 14,
+                        lineHeight: 24,
+                    }}
+                    tagsStyles={{
+                        h1: { fontSize: 22, fontWeight: '900', color: palette.primary, marginTop: 12, marginBottom: 8 },
+                        h2: { fontSize: 20, fontWeight: '900', color: palette.primary, marginTop: 12, marginBottom: 8 },
+                        h3: { fontSize: 18, fontWeight: '800', color: palette.primary, marginTop: 10, marginBottom: 6 },
+                        h4: { fontSize: 16, fontWeight: '800', color: palette.primary, marginTop: 8, marginBottom: 6 },
+                        h5: { fontSize: 15, fontWeight: '800', color: palette.primary, marginTop: 8, marginBottom: 4 },
+                        h6: { fontSize: 14, fontWeight: '800', color: palette.primary, marginTop: 8, marginBottom: 4 },
+                        p: { marginTop: 4, marginBottom: 10 },
+                        strong: { fontWeight: '800', color: ink },
+                        b: { fontWeight: '800', color: ink },
+                        em: { fontStyle: 'italic' },
+                        ul: { marginTop: 4, marginBottom: 12, paddingLeft: 8 },
+                        ol: { marginTop: 4, marginBottom: 12, paddingLeft: 8 },
+                        li: { marginBottom: 6 },
+                        a: { color: palette.primary, textDecorationLine: 'underline' },
+                        blockquote: { borderLeftWidth: 3, borderLeftColor: palette.primary, paddingLeft: 10, marginVertical: 8 },
+                    }}
+                />
+    );
+
+    if (!hasTable) {
+        return content;
+    }
+
+    return (
+        <ScrollView horizontal nestedScrollEnabled showsHorizontalScrollIndicator>
+            <View style={{ minWidth: contentWidth }}>{content}</View>
+        </ScrollView>
+    );
 }
 
 function toApiDate(value) {
@@ -143,10 +229,10 @@ function DateField({ label, value, onChangeText, placeholder, darkMode, onOpenPi
             <View className={`flex-row items-center rounded-[16px] border ${darkMode ? 'border-[#1a1a1a] bg-[#111111]' : 'border-line bg-surface'}`}>
                 <TextInput
                     value={value}
-                    onChangeText={onChangeText}
-                    placeholder={placeholder}
+                    onChangeText={(text) => onChangeText(maskDateInput(text))}
+                    placeholder={placeholder || 'DD/MM/YYYY'}
                     placeholderTextColor={darkMode ? '#7f7481' : palette.muted}
-                    keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
+                    keyboardType="number-pad"
                     maxLength={10}
                     className={`min-w-0 flex-1 px-4 py-[14px] text-[13px] ${darkMode ? 'text-white' : 'text-ink'}`}
                 />
@@ -655,44 +741,7 @@ const closeDatePicker = () => setDatePickerField(null);
 
             <View className={`gap-3 rounded-[26px] border p-[22px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
               <Text className="text-[15px] font-extrabold text-brand">Description</Text>
-             <View>
-  {country.description
-    .replace(/&nbsp;/g, ' ')
-    .split(/(<h3[\s\S]*?<\/h3>|<p[\s\S]*?<\/p>)/gi)
-    .filter(Boolean)
-    .map((part, index) => {
-      const isHeading = /<h3/i.test(part);
-
-      const text = part
-        .replace(/<[^>]*>/g, '')
-        .replace(/&amp;/g, '&')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      if (!text) return null;
-
-      return (
-        <Text
-          key={index}
-          className={
-            isHeading
-              ? `mt-3 text-[17px] font-black ${
-                  preferences.darkMode
-                    ? 'text-white'
-                    : 'text-ink'
-                }`
-              : `text-[14px] leading-[24px] ${
-                  preferences.darkMode
-                    ? 'text-[#b7aeb9]'
-                    : 'text-muted'
-                }`
-          }
-        >
-          {text}
-        </Text>
-      );
-    })}
-</View> 
+              <HtmlContent html={country.description} contentWidth={Math.max(width - 84, 260)} darkMode={preferences.darkMode} /> 
               
             </View>
 
