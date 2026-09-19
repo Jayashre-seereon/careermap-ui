@@ -164,7 +164,7 @@ export const LIKERT_OPTIONS = [
   },
   {
     value: 3,
-    label: "Neutral / Undecided",
+    label: "Neutral",
     shortLabel: "Neutral",
     color: "#64748b",
     bgHover: "hover:border-slate-400 hover:bg-slate-50/70",

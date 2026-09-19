@@ -18,6 +18,15 @@ export default function AssessmentPreviewScreen() {
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.localStorage.setItem('API_BASE_URL', assessmentApiBaseUrl);
+
+      const handleAssessmentMessage = (event) => {
+        if (event.origin === window.location.origin && event.data === 'GO_DASHBOARD') {
+          router.replace('/(drawer)/(tabs)');
+        }
+      };
+
+      window.addEventListener('message', handleAssessmentMessage);
+      return () => window.removeEventListener('message', handleAssessmentMessage);
     }
   }, [assessmentApiBaseUrl]);
 

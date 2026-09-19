@@ -432,7 +432,7 @@
 
     <div class="cta-block">
       <p>3 personality traits and your full career list are still locked.</p>
-      <button class="primary" onclick="window.location.href='/app/dashboard'">Unlock my full Career Map →</button>
+      <button class="primary" onclick="goToCareerMapDashboard()">Unlock my full Career Map →</button>
     </div>
 
   </div>
@@ -440,6 +440,20 @@
 </div>
 
 <script>
+function goToCareerMapDashboard() {
+  if (window.ReactNativeWebView) {
+    window.ReactNativeWebView.postMessage('GO_DASHBOARD');
+    return;
+  }
+
+  if (window.parent !== window) {
+    window.parent.postMessage('GO_DASHBOARD', window.location.origin);
+    return;
+  }
+
+  window.location.href = '/';
+}
+
 /* =========================================================
    REPOSITORY — all scoring + report content lives here.
    Swap/extend this object to change report behavior without
