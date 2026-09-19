@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Modal,
   SafeAreaView,
@@ -270,19 +269,23 @@ export default function AssessmentAttemptScreen() {
     }
   }
 
-  function handleExitConfirm() {
-    Alert.alert(
-      'Exit Assessment?',
-      'Your progress is auto-saved. You can resume anytime from the assessment dashboard.',
-      [
-        { text: 'Keep Answering', style: 'cancel' },
-        {
-          text: 'Exit to Dashboard',
-          style: 'destructive',
-          onPress: () => router.replace('/(drawer)/(tabs)/assessment'),
-        },
-      ]
-    );
+  function handleExit() {
+    try {
+      const batchList = Object.entries(answers).map(([qId, ans]) => ({
+        questionId: qId,
+        likertValue: ans.likertValue,
+        selectedOptionId: ans.selectedOptionId,
+      }));
+      if (batchList.length > 0) {
+        saveBatchAttemptAnswers(attemptId, batchList).catch(() => {});
+      }
+    } catch (_e) {}
+
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(drawer)/(tabs)/assessment');
+    }
   }
 
   const cardBg = darkMode ? '#121214' : '#ffffff';
@@ -364,19 +367,20 @@ export default function AssessmentAttemptScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <TouchableOpacity
             activeOpacity={0.7}
-            onPress={handleExitConfirm}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            onPress={handleExit}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               backgroundColor: darkMode ? '#1c1c20' : '#f1f5f9',
-              paddingHorizontal: 10,
-              paddingVertical: 5,
+              paddingHorizontal: 11,
+              paddingVertical: 6,
               borderRadius: 10,
               gap: 4,
             }}
           >
-            <Ionicons name="arrow-back" size={14} color={textColor} />
-            <Text style={{ color: textColor, fontSize: 11, fontWeight: '700' }}>Exit</Text>
+            <Ionicons name="arrow-back" size={15} color={textColor} />
+            <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>Exit</Text>
           </TouchableOpacity>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -520,14 +524,14 @@ export default function AssessmentAttemptScreen() {
             marginBottom: 14,
           }}
         >
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Text style={{ fontSize: 28 }}>{activeDomainMeta.icon}</Text>
-              <View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, flex: 1 }}>
+              <Text style={{ fontSize: 28, marginTop: 2 }}>{activeDomainMeta.icon}</Text>
+              <View style={{ flex: 1 }}>
                 <Text style={{ color: '#9a2119', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   {activeDomainMeta.subtitle}
                 </Text>
-                <Text style={{ color: textColor, fontSize: 17, fontWeight: '900' }}>
+                <Text style={{ color: textColor, fontSize: 16, fontWeight: '900' }}>
                   {activeSection.title || activeDomainMeta.title}
                 </Text>
               </View>
@@ -537,8 +541,10 @@ export default function AssessmentAttemptScreen() {
               style={{
                 backgroundColor: '#fee2e2',
                 paddingHorizontal: 8,
-                paddingVertical: 3,
+                paddingVertical: 4,
                 borderRadius: 8,
+                alignSelf: 'flex-start',
+                flexShrink: 0,
               }}
             >
               <Text style={{ color: '#9a2119', fontSize: 10, fontWeight: '800' }}>
