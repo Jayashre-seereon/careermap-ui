@@ -935,7 +935,50 @@ const contentSize = useRef({ width: 0, height: 0 });
   const maxAptScore = Math.max(...aptList.map((a) => a.val || 0), 50);
   const aptScaleMax = maxAptScore > 50 ? 100 : 50;
   const aptYAxisPoints = aptScaleMax === 100 ? [100, 80, 60, 40, 20, 0] : [50, 40, 30, 20, 10, 0];
-  const topAptName = 'VERBAL APTITUDE';
+
+  // These summary callouts must always reflect the result for this attempt.  Keep
+  // the display labels separate from the API facets so the backend can return its
+  // compact scoring keys (for example, "Rd" or "OC").
+  const rankDomainFacets = (items, definitions, fallbackScores = {}) => definitions
+    .map(({ facet, label }) => {
+      const apiItem = items.find((item) => item?.facet === facet);
+      const rawScore = apiItem?.percentage ?? apiItem?.score;
+      return {
+        facet,
+        label,
+        score: rawScore != null ? pct(rawScore) : (fallbackScores[facet] ?? 0),
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  const topInterests = rankDomainFacets(domainInterests, [
+    { facet: 'R', label: 'REALISTIC' },
+    { facet: 'I', label: 'INVESTIGATIVE' },
+    { facet: 'A', label: 'ARTISTIC' },
+    { facet: 'S', label: 'SOCIAL' },
+    { facet: 'E', label: 'ENTERPRISING' },
+    { facet: 'C', label: 'CONVENTIONAL' },
+  ], interestScoreMap).slice(0, 4);
+  const topLearningStyles = rankDomainFacets(domainVark, [
+    { facet: 'V', label: 'VISUAL' },
+    { facet: 'A', label: 'AUDITORY' },
+    { facet: 'Rd', label: 'READING / WRITING' },
+    { facet: 'K', label: 'KINAESTHETIC' },
+  ], varkScoreMap).slice(0, 2);
+  const topWorkValues = rankDomainFacets(domainValues, [
+    { facet: 'OC', label: 'OPENNESS TO CHANGE' },
+    { facet: 'SE', label: 'SELF-ENHANCEMENT' },
+    { facet: 'ST', label: 'SELF-TRANSCENDENCE' },
+    { facet: 'CO', label: 'CONSERVATION' },
+  ], valScoreMap).slice(0, 2);
+  const topAptitudes = rankDomainFacets(domainApt, [
+    { facet: 'Num', label: 'NUMERICAL APTITUDE' },
+    { facet: 'Log', label: 'LOGICAL APTITUDE' },
+    { facet: 'Verb', label: 'VERBAL APTITUDE' },
+    { facet: 'Voc', label: 'VOCABULARY APTITUDE' },
+    { facet: 'Mech', label: 'MECHANICAL APTITUDE' },
+    { facet: 'Spat', label: 'SPATIAL APTITUDE' },
+  ], aptScoreMap).filter((item) => item.score > 0).slice(0, 3);
 
   // 5 Top Fallback clusters matching the PDF
   const defaultTop5 = [
@@ -1481,10 +1524,7 @@ const contentSize = useRef({ width: 0, height: 0 });
                 <Text style={{ color: '#4B5563' }}>Class: </Text>
                 <Text style={{ fontWeight: '700', color: COLORS.dark }}>{studentClass}</Text>
               </Text>
-              <Text style={{ fontSize: 12, color: COLORS.body }}>
-                <Text style={{ color: '#4B5563' }}>School Name: </Text>
-                <Text style={{ fontWeight: '700', color: COLORS.dark }}>{studentSchool}</Text>
-              </Text>
+             
               <Text style={{ fontSize: 12, color: COLORS.body }}>
                 <Text style={{ color: '#4B5563' }}>Date: </Text>
                 <Text style={{ fontWeight: '700', color: COLORS.dark }}>{formattedDate}</Text>
@@ -1809,9 +1849,9 @@ const contentSize = useRef({ width: 0, height: 0 });
           <View style={{ marginTop: 24 }}>
             <ScoreRepBanner title="YOUR TOP CAREER INTERESTS ARE" color="red" />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-              {['ENTERPRISING', 'CONVENTIONAL', 'SOCIAL', 'REALISTIC'].map((pill) => (
+              {topInterests.map((pill) => (
                 <View
-                  key={pill}
+                  key={pill.facet}
                   style={{
                     flex: 1,
                     minWidth: '45%',
@@ -1823,7 +1863,7 @@ const contentSize = useRef({ width: 0, height: 0 });
                   }}
                 >
                   <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>
-                    {pill}
+                    {pill.label}
                   </Text>
                 </View>
               ))}
@@ -2157,28 +2197,20 @@ const contentSize = useRef({ width: 0, height: 0 });
           <View style={{ marginTop: 18 }}>
             <ScoreRepBanner title="Your Best Learning Styles are" color="lavender" />
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
-              <View
-                style={{
-                  flex: 1,
-                  paddingVertical: 9,
-                  backgroundColor: COLORS.lavender,
-                  borderRadius: 8,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>VISUAL</Text>
-              </View>
-              <View
-                style={{
-                  flex: 1,
-                  paddingVertical: 9,
-                  backgroundColor: COLORS.lavender,
-                  borderRadius: 8,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>READING</Text>
-              </View>
+              {topLearningStyles.map((style) => (
+                <View
+                  key={style.facet}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 9,
+                    backgroundColor: COLORS.lavender,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>{style.label}</Text>
+                </View>
+              ))}
             </View>
             <View
               style={{
@@ -2345,32 +2377,22 @@ const contentSize = useRef({ width: 0, height: 0 });
           <View style={{ marginTop: 20 }}>
             <ScoreRepBanner title="Your Best Work Value Fit into" color="dark-green" />
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
-              <View
-                style={{
-                  flex: 1,
-                  paddingVertical: 9,
-                  backgroundColor: COLORS.green,
-                  borderRadius: 8,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 10.5, letterSpacing: 0.4 }}>
-                  OPENNESS TO CHANGE
-                </Text>
-              </View>
-              <View
-                style={{
-                  flex: 1,
-                  paddingVertical: 9,
-                  backgroundColor: COLORS.green,
-                  borderRadius: 8,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 10.5, letterSpacing: 0.4 }}>
-                  SELF-ENHANCEMENT
-                </Text>
-              </View>
+              {topWorkValues.map((value) => (
+                <View
+                  key={value.facet}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 9,
+                    backgroundColor: COLORS.green,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 10.5, letterSpacing: 0.4 }}>
+                    {value.label}
+                  </Text>
+                </View>
+              ))}
             </View>
           </View>
 
@@ -2547,10 +2569,10 @@ const contentSize = useRef({ width: 0, height: 0 });
             In this test, we assess six types of aptitudes:
           </Text>
 
-          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 6 }}>
+                   <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 6, height: 95, overflow: 'hidden' }}>
             <Image
               source={ReportImg6}
-              style={{ width: '100%', height: 95 }}
+              style={{ width: '100%', height: '100%', transform: [{ scale: 1.9 }] }}
               resizeMode="contain"
             />
           </View>
@@ -2839,20 +2861,24 @@ const contentSize = useRef({ width: 0, height: 0 });
           {/* Top Aptitude Box */}
           <View style={{ marginTop: 24 }}>
             <ScoreRepBanner title="Your Top Aptitude are" color="red" />
-            <View
-              style={{
-                width: '70%',
-                alignSelf: 'center',
-                marginTop: 6,
-                paddingVertical: 9,
-                backgroundColor: COLORS.red,
-                borderRadius: 8,
-                alignItems: 'center',
-              }}
-            >
-              <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>
-                {topAptName}
-              </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2, justifyContent: 'center' }}>
+              {topAptitudes.map((aptitude) => (
+                <View
+                  key={aptitude.facet}
+                  style={{
+                    minWidth: '45%',
+                    paddingVertical: 9,
+                    paddingHorizontal: 8,
+                    backgroundColor: COLORS.red,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>
+                    {aptitude.label}
+                  </Text>
+                </View>
+              ))}
             </View>
           </View>
 
@@ -3027,7 +3053,7 @@ const contentSize = useRef({ width: 0, height: 0 });
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
             {[
               { label: 'HOLLAND CODE', val: hollandCode, isRed: false },
-              { label: 'TOP CLUSTER', val: 'Business & Entrepreneurship (67%)', isRed: true },
+              { label: 'TOP CLUSTER', val: 'Business & Entrepreneurship', isRed: false },
               { label: 'TOP VALUE', val: 'Openness to Change', isRed: false },
               { label: 'TOP TRAIT', val: 'Emotional Stability', isRed: false },
               { label: 'LEARNING STYLE', val: 'Visual', isRed: false },
