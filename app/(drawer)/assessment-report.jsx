@@ -2,67 +2,868 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
+  Modal,
+  Platform,
   SafeAreaView,
   ScrollView,
-  Share,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import * as Sharing from 'expo-sharing';
+import { File, Paths } from 'expo-file-system';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useAppState } from '../../src/app-state';
 import { useAuthStore } from '../../src/store/auth-store';
 import { getAttemptResult } from '../../src/api/psychometricAssessmentApi';
-import {
-  CLUSTERS,
-  CLUSTER_MAP,
-  INTERP,
-  SEM_SUB,
-  CHART_COLOR,
-  INTEREST_COLOR,
-  VALUES_COLOR,
-  PERSON_COLOR,
-  VARK_COLOR,
-  pct,
-  band,
-  bandColorHex,
-} from '../../src/features/assessment/data/careerCompassData';
-import {
-  DonutChart,
-  ColumnChart,
-  LineChart,
-  TwinBars,
-  HBarChart,
-} from '../../src/features/assessment/components/CareerCompassCharts';
+import { CLUSTERS, pct } from '../../src/features/assessment/data/careerCompassData';
+
+// Image Assets
+const Logo = require('../../assets/images/logo_white.png');
+const ReportImg1 = require('../../assets/report/report_1.png');
+const ReportImg2 = require('../../assets/report/report_2.png');
+const ReportImg3 = require('../../assets/report/report_3.png');
+const ReportImg4 = require('../../assets/report/report_4.png');
+const ReportImg5 = require('../../assets/report/report_5.png');
+const ReportImg6 = require('../../assets/report/report_6.png');
+const ReportImg7 = require('../../assets/report/report_7.png');
+const ReportImg8 = require('../../assets/report/report_8.png');
+const ReportImg9 = require('../../assets/report/report_9.png');
+
+const FeaturePsychometric = require('../../assets/report/feature_psychometric.jpg');
+const FeatureOnetoone = require('../../assets/report/feature_onetoone.jpg');
+const FeatureMentorship = require('../../assets/report/feature_mentorship.jpg');
+const FeatureCell = require('../../assets/report/feature_cell.jpg');
+const FeatureBehavioral = require('../../assets/report/feature_behavioral.jpg');
+const FeatureDashboard = require('../../assets/report/feature_dashboard.jpg');
+
+// Color Palette matching User Portal PDF Specifications
+const COLORS = {
+  red: '#8C1814',
+  redDark: '#72120F',
+  redLight: '#FDF4F3',
+  redTint: '#FBEBE9',
+  slate: '#5B7692',
+  slateDark: '#475F77',
+  slateLight: '#EBF4FA',
+  slateBorder: '#D6E7F3',
+  green: '#4D6D47',
+  greenDark: '#3B5436',
+  greenLight: '#EEF5EE',
+  greenBorder: '#D6E6D5',
+  gold: '#B98A3C',
+  goldDark: '#966E2E',
+  goldLight: '#FAF4E8',
+  goldBorder: '#EDDEC3',
+  lavender: '#5E7399',
+  lavenderLight: '#F1EFF7',
+  lavenderBorder: '#DDD7EA',
+  dark: '#1E232A',
+  body: '#374151',
+  muted: '#6B7280',
+  line: '#E5E7EB',
+  pageBg: '#EAEFF4',
+};
+
+// 31 Pages List for Jump Navigation
+const REPORT_PAGES = [
+  { id: 1, label: 'Page 1: Cover Page' },
+  { id: 2, label: 'Page 2: Declaration' },
+  { id: 3, label: 'Page 3: Introduction' },
+  { id: 4, label: 'Page 4: Interest Overview' },
+  { id: 5, label: 'Page 5: Interest Details (01-03)' },
+  { id: 6, label: 'Page 6: Interest Details (04-06)' },
+  { id: 7, label: 'Page 7: Interest Scores' },
+  { id: 8, label: 'Page 8: Personality Overview' },
+  { id: 9, label: 'Page 9: Personality Suggestions' },
+  { id: 10, label: 'Page 10: Personality Scores' },
+  { id: 11, label: 'Page 11: Learning Styles' },
+  { id: 12, label: 'Page 12: Learning Details (01-02)' },
+  { id: 13, label: 'Page 13: Learning Details (03-04)' },
+  { id: 14, label: 'Page 14: Learning Style Scores' },
+  { id: 15, label: 'Page 15: Work Values' },
+  { id: 16, label: 'Page 16: Work Values Suggestions' },
+  { id: 17, label: 'Page 17: Work Values Scores' },
+  { id: 18, label: 'Page 18: Goal Orientation (Short)' },
+  { id: 19, label: 'Page 19: Goal Orientation (Long)' },
+  { id: 20, label: 'Page 20: Aptitude Overview' },
+  { id: 21, label: 'Page 21: Aptitude (Numerical)' },
+  { id: 22, label: 'Page 22: Aptitude (Logical/Verbal)' },
+  { id: 23, label: 'Page 23: Aptitude (Voc/Mech)' },
+  { id: 24, label: 'Page 24: Aptitude (Spatial)' },
+  { id: 25, label: 'Page 25: Aptitude Scores' },
+  { id: 26, label: 'Page 26: Top Cluster #1' },
+  { id: 27, label: 'Page 27: Clusters #2 & #3' },
+  { id: 28, label: 'Page 28: Clusters #4 & #5' },
+  { id: 29, label: 'Page 29: Study & Pathway Advice' },
+  { id: 30, label: 'Page 30: Complete Career Map' },
+  { id: 31, label: 'Page 31: About Career Map' },
+];
+
+// Common Header for Pages 2 to 31
+function PageHeader({ studentFirstName }) {
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 6 }}>
+        <Text style={{ fontSize: 15, fontWeight: '700', color: COLORS.dark }}>
+          {studentFirstName || 'Aryaman'}
+        </Text>
+        <Image
+          source={Logo}
+          style={{ width: 100, height: 26, tintColor: COLORS.red }}
+          resizeMode="contain"
+        />
+      </View>
+      <View style={{ height: 2, backgroundColor: COLORS.red, width: '100%' }} />
+    </View>
+  );
+}
+
+// Common Footer for Pages 2 to 31
+function PageFooter({ pageNum }) {
+  return (
+    <View style={{ marginTop: 'auto', paddingTop: 16 }}>
+      <View style={{ height: 1, backgroundColor: COLORS.line, width: '100%', marginBottom: 8 }} />
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: COLORS.redLight, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 9 }}>📞</Text>
+            </View>
+            <Text style={{ fontSize: 9.5, color: COLORS.muted, fontWeight: '500' }}>+91 94372 08179</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: COLORS.redLight, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 9 }}>✉️</Text>
+            </View>
+            <Text style={{ fontSize: 9.5, color: COLORS.muted, fontWeight: '500' }}>careermap2016@gmail.com</Text>
+          </View>
+        </View>
+        <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.dark }}>Page No {pageNum}</Text>
+      </View>
+    </View>
+  );
+}
+
+// Section Title Pill Header
+function TitlePill({ title, colorClass = 'red' }) {
+  const isGreen = colorClass === 'green';
+  const isDarkGreen = colorClass === 'dark-green';
+  const isLavender = colorClass === 'lavender';
+  const isGold = colorClass === 'gold';
+
+  const borderColor = isDarkGreen
+    ? COLORS.greenDark
+    : isGreen
+    ? COLORS.green
+    : isLavender
+    ? COLORS.lavender
+    : isGold
+    ? COLORS.gold
+    : COLORS.red;
+
+  const bgColor = isDarkGreen
+    ? COLORS.greenLight
+    : isGreen
+    ? COLORS.greenLight
+    : isLavender
+    ? COLORS.lavenderLight
+    : isGold
+    ? COLORS.goldLight
+    : COLORS.redLight;
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        backgroundColor: bgColor,
+        borderColor: borderColor,
+        borderWidth: 1.5,
+        borderRadius: 999,
+        paddingVertical: 5,
+        paddingHorizontal: 12,
+        marginBottom: 14,
+        gap: 8,
+      }}
+    >
+      <View
+        style={{
+          width: 18,
+          height: 18,
+          borderRadius: 9,
+          borderWidth: 1.5,
+          borderColor: borderColor,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <View
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: 3.5,
+            backgroundColor: borderColor,
+          }}
+        />
+      </View>
+      <Text
+        style={{
+          color: borderColor,
+          fontWeight: '800',
+          fontSize: 11.5,
+          letterSpacing: 0.5,
+          textTransform: 'uppercase',
+        }}
+      >
+        {title}
+      </Text>
+    </View>
+  );
+}
+
+// Detail Card Row (Used in Interests, Learning Styles, Aptitudes, Goals)
+function DetailCardRow({ num, title, color = 'red', desc, traits, enjoys, environments }) {
+  const isLavender = color === 'lavender';
+  const isGold = color === 'gold';
+  const badgeBg = isLavender ? COLORS.lavender : isGold ? COLORS.gold : COLORS.red;
+  const bodyBg = isLavender ? COLORS.lavenderLight : isGold ? COLORS.goldLight : COLORS.redLight;
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: badgeBg,
+        overflow: 'hidden',
+        marginBottom: 10,
+        backgroundColor: '#ffffff',
+      }}
+    >
+      <View
+        style={{
+          width: 95,
+          backgroundColor: badgeBg,
+          padding: 8,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <View
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: 13,
+            backgroundColor: 'rgba(255, 255, 255, 0.25)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 4,
+          }}
+        >
+          <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 12 }}>{num}</Text>
+        </View>
+        <Text
+          style={{
+            color: '#ffffff',
+            fontWeight: '800',
+            fontSize: 9.5,
+            textAlign: 'center',
+            letterSpacing: 0.4,
+            textTransform: 'uppercase',
+          }}
+        >
+          {title}
+        </Text>
+      </View>
+      <View style={{ flex: 1, padding: 10, backgroundColor: bodyBg }}>
+        {desc ? (
+          <Text style={{ fontSize: 11, color: COLORS.dark, fontWeight: '500', lineHeight: 16, marginBottom: 4 }}>
+            {desc}
+          </Text>
+        ) : null}
+        {traits ? (
+          <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15, marginTop: 2 }}>
+            <Text style={{ fontWeight: '700', color: COLORS.dark }}>Key Traits: </Text>
+            {traits}
+          </Text>
+        ) : null}
+        {enjoys ? (
+          <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15, marginTop: 2 }}>
+            <Text style={{ fontWeight: '700', color: COLORS.dark }}>Enjoys: </Text>
+            {enjoys}
+          </Text>
+        ) : null}
+        {environments ? (
+          <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15, marginTop: 2 }}>
+            <Text style={{ fontWeight: '700', color: COLORS.dark }}>Ideal Environments: </Text>
+            {environments}
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+// Trait Card Row (Used in Personality & Work Values Suggestions)
+function TraitCardRow({ num, name, band, text, color = 'green' }) {
+  const isHigh = band === 'HIGH';
+  const badgeBg = color === 'green' ? COLORS.green : COLORS.greenDark;
+  const bodyBg = COLORS.greenLight;
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: badgeBg,
+        overflow: 'hidden',
+        marginBottom: 9,
+        backgroundColor: '#ffffff',
+      }}
+    >
+      <View
+        style={{
+          width: 125,
+          backgroundColor: badgeBg,
+          padding: 8,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+          <View
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 10,
+              backgroundColor: 'rgba(255, 255, 255, 0.25)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 10 }}>{num}</Text>
+          </View>
+          <Text
+            style={{
+              color: '#ffffff',
+              fontWeight: '800',
+              fontSize: 9,
+              textTransform: 'uppercase',
+              letterSpacing: 0.3,
+            }}
+          >
+            {name}
+          </Text>
+        </View>
+        <View
+          style={{
+            paddingHorizontal: 8,
+            paddingVertical: 2,
+            borderRadius: 999,
+            backgroundColor: isHigh ? '#ffffff' : 'rgba(255, 255, 255, 0.3)',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 8.5,
+              fontWeight: '800',
+              color: isHigh ? badgeBg : '#ffffff',
+              letterSpacing: 0.4,
+            }}
+          >
+            {band}
+          </Text>
+        </View>
+      </View>
+      <View style={{ flex: 1, padding: 10, backgroundColor: bodyBg, justifyContent: 'center' }}>
+        <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>{text}</Text>
+      </View>
+    </View>
+  );
+}
+
+// Banner Component for Score Representation
+function ScoreRepBanner({ title, color = 'red' }) {
+  const bg =
+    color === 'green'
+      ? COLORS.green
+      : color === 'dark-green'
+      ? COLORS.greenDark
+      : color === 'lavender'
+      ? COLORS.lavender
+      : color === 'gold'
+      ? COLORS.gold
+      : COLORS.red;
+
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        backgroundColor: bg,
+        borderRadius: 8,
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        marginBottom: 12,
+        gap: 8,
+      }}
+    >
+      <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#ffffff' }} />
+      <Text
+        style={{
+          color: '#ffffff',
+          fontWeight: '800',
+          fontSize: 10.5,
+          letterSpacing: 0.5,
+          textTransform: 'uppercase',
+        }}
+      >
+        {title}
+      </Text>
+    </View>
+  );
+}
+
+// Donut Gauge Component for Learning Styles & Goal Orientation
+function DonutGauge({ percent, color, trackColor, size = 90, strokeWidth = 8, textColor = '#1E232A' }) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percent / 100) * circumference;
+  return (
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size} style={{ transform: [{ rotate: '-90deg' }] }}>
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={trackColor}
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+        <Circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          fill="none"
+        />
+      </Svg>
+      <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ fontSize: 16, fontWeight: '900', color: textColor }}>{percent}%</Text>
+      </View>
+    </View>
+  );
+}
+
+// Cluster Match Card for Pages 26, 27, 28
+function ClusterMatchCard({ cluster, colorTheme = 'red' }) {
+  const headerBg =
+    colorTheme === 'salmon'
+      ? '#96473F'
+      : colorTheme === 'blue'
+      ? '#4B6B94'
+      : colorTheme === 'green'
+      ? COLORS.green
+      : colorTheme === 'gold'
+      ? COLORS.gold
+      : COLORS.red;
+
+  const dotColor = headerBg;
+
+  return (
+    <View
+      style={{
+        borderWidth: 1.5,
+        borderColor: headerBg,
+        borderRadius: 12,
+        overflow: 'hidden',
+        marginBottom: 12,
+        backgroundColor: '#ffffff',
+      }}
+    >
+      <View
+        style={{
+          backgroundColor: headerBg,
+          paddingVertical: 7,
+          paddingHorizontal: 12,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Text
+          style={{
+            color: '#ffffff',
+            fontWeight: '800',
+            fontSize: 11.5,
+            textTransform: 'uppercase',
+            flex: 1,
+            marginRight: 6,
+          }}
+          numberOfLines={1}
+        >
+          {cluster.rank} {cluster.name}
+        </Text>
+        <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 14 }}>
+          {cluster.matchPercentage}%
+        </Text>
+      </View>
+
+      <View style={{ padding: 11, backgroundColor: '#FFF9F8' }}>
+        {cluster.description ? (
+          <Text style={{ fontSize: 11, color: '#1E293B', fontWeight: '600', lineHeight: 16, marginBottom: 5 }}>
+            {cluster.description}
+          </Text>
+        ) : null}
+        {cluster.why_fit ? (
+          <Text style={{ fontSize: 10.5, color: '#475569', lineHeight: 15, marginBottom: 5 }}>
+            {cluster.why_fit}
+          </Text>
+        ) : null}
+        {cluster.streams_and_pathways_india ? (
+          <Text style={{ fontSize: 10.5, color: '#334155', lineHeight: 15, marginBottom: 8 }}>
+            <Text style={{ fontWeight: '700' }}>Pathway in India: </Text>
+            {cluster.streams_and_pathways_india}
+          </Text>
+        ) : null}
+
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 3 }}>
+          {(cluster.careers || []).slice(0, 11).map((c, i) => (
+            <View
+              key={i}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: '#ffffff',
+                borderWidth: 1,
+                borderColor: '#E5E7EB',
+                borderRadius: 6,
+                paddingVertical: 3,
+                paddingHorizontal: 6,
+                gap: 4,
+              }}
+            >
+              <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: dotColor }} />
+              <Text style={{ fontSize: 9.5, fontWeight: '600', color: COLORS.dark }}>{c}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function generateReportHtml(data) {
+  const {
+    studentName,
+    studentFirstName,
+    studentClass,
+    studentSchool,
+    studentEmail,
+    studentPhone,
+    formattedDate,
+    hollandCode,
+    top5Clusters,
+    interestScoreMap,
+    personScoreMap,
+    valScoreMap,
+    varkScoreMap,
+    aptList,
+    shortPct,
+    longPct,
+  } = data;
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>CareerMap Assessment Report - ${studentName}</title>
+  <style>
+    @page { size: A4; margin: 15mm 12mm 15mm 12mm; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #374151; margin: 0; padding: 0; font-size: 13px; line-height: 1.5; background: #ffffff; }
+    .pdf-page { page-break-after: always; break-after: page; padding: 10px 0; min-height: 1000px; position: relative; display: flex; flex-direction: column; }
+    .pdf-page:last-child { page-break-after: auto; break-after: auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #8C1814; padding-bottom: 6px; margin-bottom: 20px; }
+    .header-name { font-weight: 700; font-size: 15px; color: #1E232A; }
+    .header-logo { font-weight: 900; font-size: 17px; color: #8C1814; letter-spacing: 1px; }
+    .footer { margin-top: auto; border-top: 1px solid #E5E7EB; padding-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #6B7280; }
+    .pill-title { display: inline-block; padding: 5px 14px; border-radius: 20px; font-weight: 800; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 16px; border: 1.5px solid #8C1814; background: #FDF4F3; color: #8C1814; }
+    .pill-title.green { border-color: #4D6D47; background: #EEF5EE; color: #4D6D47; }
+    .pill-title.gold { border-color: #B98A3C; background: #FAF4E8; color: #B98A3C; }
+    .pill-title.lavender { border-color: #5E7399; background: #F1EFF7; color: #5E7399; }
+    .bar-row { display: flex; align-items: center; margin-bottom: 10px; font-size: 12px; }
+    .bar-label { width: 140px; font-weight: 700; color: #1E232A; }
+    .bar-track { flex: 1; height: 18px; background: #E5E7EB; border-radius: 4px; overflow: hidden; margin: 0 10px; }
+    .bar-fill { height: 100%; background: #8C1814; border-radius: 4px; }
+    .bar-fill.green { background: #4D6D47; }
+    .bar-val { width: 40px; font-weight: 800; text-align: right; }
+    .chip { display: inline-block; padding: 4px 8px; border-radius: 4px; border: 1px solid #E5E7EB; background: #ffffff; font-size: 10px; font-weight: 600; margin: 2px 4px 2px 0; }
+    .cluster-box { border: 1.5px solid #8C1814; border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+    .cluster-header { background: #8C1814; color: #ffffff; padding: 8px 12px; display: flex; justify-content: space-between; font-weight: 800; font-size: 13px; }
+    .cluster-body { padding: 12px; background: #FFF9F8; font-size: 11.5px; }
+    .cluster-header.salmon { background: #96473F; }
+    .cluster-header.blue { background: #4B6B94; }
+    .cluster-header.green { background: #4D6D47; }
+    .cluster-header.gold { background: #B98A3C; }
+    .grid-2 { display: flex; gap: 14px; }
+    .grid-2 > div { flex: 1; }
+    .metric-card { padding: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <!-- PAGE 1: COVER -->
+  <div class="pdf-page" style="justify-content: center; text-align: center; padding-top: 60px;">
+    <div style="font-size: 20px; font-weight: 900; color: #8C1814; letter-spacing: 2px; margin-bottom: 40px;">CAREERMAP</div>
+    <div style="font-size: 34px; font-weight: 900; color: #8C1814; line-height: 1.1; text-transform: uppercase;">
+      CAREER PSYCHOMETRIC<br>ASSESSMENT REPORT
+    </div>
+    <div style="margin: 24px auto; background: #F8ECE8; padding: 12px 30px; font-size: 15px; color: #2B2D33; max-width: 450px; border-radius: 6px;">
+      Discover Your True Strengths and Potential.
+    </div>
+
+    <div style="margin: 50px auto; max-width: 400px; text-align: left; background: #FAF2F0; padding: 20px; border-radius: 8px; border: 1px solid #F0DDD8;">
+      <div style="font-size: 13px; font-weight: 800; color: #8C1814; margin-bottom: 10px; text-transform: uppercase;">Student Information</div>
+      <table style="width: 100%; font-size: 12.5px; line-height: 1.8;">
+        <tr><td><strong>Name:</strong></td><td>${studentName}</td></tr>
+        <tr><td><strong>Class:</strong></td><td>${studentClass}</td></tr>
+        <tr><td><strong>School:</strong></td><td>${studentSchool}</td></tr>
+        <tr><td><strong>Date:</strong></td><td>${formattedDate}</td></tr>
+        <tr><td><strong>Email:</strong></td><td>${studentEmail}</td></tr>
+        <tr><td><strong>Phone:</strong></td><td>${studentPhone}</td></tr>
+      </table>
+    </div>
+    <div class="footer" style="margin-top: auto;">
+      <div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div>
+      <div>Page No 1</div>
+    </div>
+  </div>
+
+  <!-- PAGE 2: DECLARATION -->
+  <div class="pdf-page">
+    <div class="header"><div class="header-name">${studentFirstName}</div><div class="header-logo">CAREERMAP</div></div>
+    <div class="pill-title">DECLARATION</div>
+    <p><strong>Dear ${studentFirstName},</strong></p>
+    <p>Thank you for choosing CareerMap for your Career Psychometric Assessment.</p>
+    <p>We appreciate your trust in our assessment process and recognize the importance of making informed educational and career decisions. This report has been prepared based on your responses to scientifically designed psychometric assessments and is intended to provide meaningful insights into your <strong>aptitude, personality, interests and career preferences</strong>.</p>
+    <p>The recommendations and observations presented in this report are designed to help you better understand your strengths, explore suitable career pathways, and make well-informed academic and professional choices. While every effort has been made to ensure the reliability and accuracy of the assessment, this report should be considered a decision-support tool and not the sole basis for any educational or career decision.</p>
+    <p>CareerMap is committed to providing evidence-based career guidance that empowers individuals to achieve their goals with confidence. We encourage you to use this report as a foundation for self-discovery and future planning. For the best outcomes, we recommend discussing the report with a certified career counsellor who can help interpret the results in the context of your aspirations, abilities, and opportunities.</p>
+    <p>We sincerely thank you for placing your trust in CareerMap and wish you every success in your educational and professional journey.</p>
+    <div style="margin-top: 30px;">
+      <div>Best Wishes,</div>
+      <div style="font-weight: 800; font-size: 14px; color: #1E232A;">Team CareerMap</div>
+    </div>
+    <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 2</div></div>
+  </div>
+
+  <!-- PAGE 3: RIASEC -->
+  <div class="pdf-page">
+    <div class="header"><div class="header-name">${studentFirstName}</div><div class="header-logo">CAREERMAP</div></div>
+    <div class="pill-title">INTEREST SCORES (RIASEC)</div>
+    <p>Your Holland Profile Code is: <strong style="color: #8C1814; font-size: 14px;">${hollandCode}</strong></p>
+    <p>Your interests are the areas and activities that naturally capture your attention, curiosity, and motivation.</p>
+    <div style="margin-top: 15px;">
+      <div class="bar-row"><div class="bar-label">Enterprising</div><div class="bar-track"><div class="bar-fill" style="width: ${interestScoreMap.E}%;"></div></div><div class="bar-val">${interestScoreMap.E}%</div></div>
+      <div class="bar-row"><div class="bar-label">Conventional</div><div class="bar-track"><div class="bar-fill" style="width: ${interestScoreMap.C}%;"></div></div><div class="bar-val">${interestScoreMap.C}%</div></div>
+      <div class="bar-row"><div class="bar-label">Social</div><div class="bar-track"><div class="bar-fill" style="width: ${interestScoreMap.S}%;"></div></div><div class="bar-val">${interestScoreMap.S}%</div></div>
+      <div class="bar-row"><div class="bar-label">Realistic</div><div class="bar-track"><div class="bar-fill" style="width: ${interestScoreMap.R}%;"></div></div><div class="bar-val">${interestScoreMap.R}%</div></div>
+      <div class="bar-row"><div class="bar-label">Investigative</div><div class="bar-track"><div class="bar-fill" style="width: ${interestScoreMap.I}%;"></div></div><div class="bar-val">${interestScoreMap.I}%</div></div>
+      <div class="bar-row"><div class="bar-label">Artistic</div><div class="bar-track"><div class="bar-fill" style="width: ${interestScoreMap.A}%;"></div></div><div class="bar-val">${interestScoreMap.A}%</div></div>
+    </div>
+    <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 3</div></div>
+  </div>
+
+  <!-- PAGE 4: PERSONALITY (OCEAN) -->
+  <div class="pdf-page">
+    <div class="header"><div class="header-name">${studentFirstName}</div><div class="header-logo">CAREERMAP</div></div>
+    <div class="pill-title green">PERSONALITY PROFILE (BIG FIVE)</div>
+    <p>Your personality is the blend of traits that shape how you think, feel, and behave in academic, work, and personal settings.</p>
+    <div style="margin-top: 15px;">
+      <div class="bar-row"><div class="bar-label">Emotional Stability</div><div class="bar-track"><div class="bar-fill green" style="width: ${personScoreMap.ES}%;"></div></div><div class="bar-val">${personScoreMap.ES}%</div></div>
+      <div class="bar-row"><div class="bar-label">Openness</div><div class="bar-track"><div class="bar-fill green" style="width: ${personScoreMap.O}%;"></div></div><div class="bar-val">${personScoreMap.O}%</div></div>
+      <div class="bar-row"><div class="bar-label">Conscientiousness</div><div class="bar-track"><div class="bar-fill green" style="width: ${personScoreMap.Cn}%;"></div></div><div class="bar-val">${personScoreMap.Cn}%</div></div>
+      <div class="bar-row"><div class="bar-label">Extraversion</div><div class="bar-track"><div class="bar-fill green" style="width: ${personScoreMap.Ex}%;"></div></div><div class="bar-val">${personScoreMap.Ex}%</div></div>
+      <div class="bar-row"><div class="bar-label">Agreeableness</div><div class="bar-track"><div class="bar-fill green" style="width: ${personScoreMap.Ag}%;"></div></div><div class="bar-val">${personScoreMap.Ag}%</div></div>
+    </div>
+    <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 4</div></div>
+  </div>
+
+  <!-- PAGE 5: LEARNING STYLES & VALUES -->
+  <div class="pdf-page">
+    <div class="header"><div class="header-name">${studentFirstName}</div><div class="header-logo">CAREERMAP</div></div>
+    <div class="pill-title lavender">LEARNING STYLES (VARK)</div>
+    <div class="grid-2" style="margin-bottom: 20px;">
+      <div class="metric-card"><strong>Visual:</strong> ${varkScoreMap.V}%</div>
+      <div class="metric-card"><strong>Auditory:</strong> ${varkScoreMap.A}%</div>
+      <div class="metric-card"><strong>Reading/Writing:</strong> ${varkScoreMap.Rd}%</div>
+      <div class="metric-card"><strong>Kinesthetic:</strong> ${varkScoreMap.K}%</div>
+    </div>
+
+    <div class="pill-title green">WORK VALUES (SCHWARTZ)</div>
+    <div style="margin-top: 10px;">
+      <div class="bar-row"><div class="bar-label">Openness to Change</div><div class="bar-track"><div class="bar-fill green" style="width: ${valScoreMap.OC}%;"></div></div><div class="bar-val">${valScoreMap.OC}%</div></div>
+      <div class="bar-row"><div class="bar-label">Self-Enhancement</div><div class="bar-track"><div class="bar-fill green" style="width: ${valScoreMap.SE}%;"></div></div><div class="bar-val">${valScoreMap.SE}%</div></div>
+      <div class="bar-row"><div class="bar-label">Self-Transcendence</div><div class="bar-track"><div class="bar-fill green" style="width: ${valScoreMap.ST}%;"></div></div><div class="bar-val">${valScoreMap.ST}%</div></div>
+      <div class="bar-row"><div class="bar-label">Conservation</div><div class="bar-track"><div class="bar-fill green" style="width: ${valScoreMap.CO}%;"></div></div><div class="bar-val">${valScoreMap.CO}%</div></div>
+    </div>
+
+    <div class="pill-title gold" style="margin-top: 20px;">GOAL ORIENTATION</div>
+    <div class="grid-2">
+      <div class="metric-card"><strong>Short Term:</strong> ${shortPct}%</div>
+      <div class="metric-card"><strong>Long Term:</strong> ${longPct}%</div>
+    </div>
+    <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 5</div></div>
+  </div>
+
+  <!-- PAGE 6: APTITUDES & TOP CAREER CLUSTERS -->
+  <div class="pdf-page">
+    <div class="header"><div class="header-name">${studentFirstName}</div><div class="header-logo">CAREERMAP</div></div>
+    <div class="pill-title">6 CORE APTITUDES</div>
+    <div style="margin-bottom: 20px;">
+      ${aptList.map(a => `
+        <div class="bar-row">
+          <div class="bar-label">${a.label} Aptitude</div>
+          <div class="bar-track"><div class="bar-fill" style="width: ${Math.min(100, (a.val / 50) * 100)}%;"></div></div>
+          <div class="bar-val">${a.val}%</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="pill-title gold">TOP CAREER CLUSTER RECOMMENDATIONS</div>
+    ${top5Clusters.map(c => `
+      <div class="cluster-box">
+        <div class="cluster-header"><span>${c.rank}. ${c.name}</span><span>${c.matchPercentage}% Match</span></div>
+        <div class="cluster-body">
+          <p style="margin: 0 0 6px 0;">${c.description}</p>
+          <p style="margin: 0 0 6px 0; color: #4B5563;"><strong>Pathway:</strong> ${c.streams_and_pathways_india}</p>
+          <div>
+            ${(c.careers || []).slice(0, 8).map(career => `<span class="chip">${career}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    `).join('')}
+
+    <div style="margin-top: 15px; padding: 14px; background: #FAF2F0; border: 1px solid #F0DDD8; border-radius: 8px;">
+      <div style="font-weight: 800; font-size: 13px; color: #8C1814; text-transform: uppercase; margin-bottom: 6px;">
+        About CareerMap
+      </div>
+      <p style="margin: 0 0 8px 0; font-size: 11px;">
+        Career Map (A Unit of Identity Group) — Odisha's pioneering career counselling platform since 2016, guiding school students, graduates, and working professionals through Career Selection, Career Planning, and Career Mentorship.
+      </p>
+      <div style="font-size: 11px; font-weight: 700; color: #1E232A;">
+        🌐 www.thecareermap.in &nbsp;|&nbsp; ✉️ careermap2016@gmail.com &nbsp;|&nbsp; 📞 +91 94372 08179
+      </div>
+    </div>
+    <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 6</div></div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+// Minimal native PDF writer. Unlike the Android WebView printer, it never
+// depends on browser rendering and therefore cannot create an empty page.
+function generateReportPdf(data) {
+  const toAscii = (value) => String(value ?? '').replace(/[\\()]/g, '\\$&').replace(/[^\x20-\x7E]/g, '-');
+  const wrap = (value, length = 82) => {
+    const words = toAscii(value).replace(/\s+/g, ' ').trim().split(' ');
+    const lines = []; let line = '';
+    words.forEach((word) => {
+      if (!line || `${line} ${word}`.length <= length) line = line ? `${line} ${word}` : word;
+      else { lines.push(line); line = word; }
+    });
+    if (line) lines.push(line);
+    return lines;
+  };
+  const { studentName, studentFirstName, formattedDate, hollandCode, top5Clusters = [], interestScoreMap, personScoreMap, valScoreMap, varkScoreMap, aptList = [], shortPct, longPct } = data;
+  const scores = [
+    `Holland code: ${hollandCode}.`,
+    `Interest scores: Enterprising ${interestScoreMap.E}%, Conventional ${interestScoreMap.C}%, Social ${interestScoreMap.S}%, Realistic ${interestScoreMap.R}%, Investigative ${interestScoreMap.I}%, Artistic ${interestScoreMap.A}%.`,
+    `Personality scores: Emotional Stability ${personScoreMap.ES}%, Openness ${personScoreMap.O}%, Conscientiousness ${personScoreMap.Cn}%, Extraversion ${personScoreMap.Ex}%, Agreeableness ${personScoreMap.Ag}%.`,
+    `Learning styles: Visual ${varkScoreMap.V}%, Auditory ${varkScoreMap.A}%, Reading/Writing ${varkScoreMap.Rd}%, Kinesthetic ${varkScoreMap.K}%.`,
+    `Work values: Openness to Change ${valScoreMap.OC}%, Self-Enhancement ${valScoreMap.SE}%, Self-Transcendence ${valScoreMap.ST}%, Conservation ${valScoreMap.CO}%.`,
+    `Goal orientation: Short-term ${shortPct}%, Long-term ${longPct}%.`,
+    `Core aptitudes: ${aptList.map((item) => `${item.label} ${item.val}%`).join(', ')}.`,
+  ];
+  const clusters = top5Clusters.map((cluster) => `${cluster.rank}. ${cluster.name} - ${cluster.matchPercentage}% match. ${cluster.description || ''} Pathway: ${cluster.streams_and_pathways_india || ''}. Careers: ${(cluster.careers || []).slice(0, 8).join(', ')}.`);
+  const pageText = REPORT_PAGES.map((page, index) => {
+    if (index === 0) return [`Prepared for ${studentName || 'Student'} on ${formattedDate}.`, 'Discover your strengths, interests, learning preferences, and career possibilities.'];
+    if (index === 1) return [`Dear ${studentFirstName || studentName || 'Student'},`, 'This report is based on your assessment responses and supports informed education and career decisions. Discuss important choices with a parent, teacher, or counsellor.'];
+    if (index >= 3 && index <= 6) return [scores[0], scores[1], 'Your interest profile highlights activities and work environments that may feel motivating and rewarding.'];
+    if (index >= 7 && index <= 9) return [scores[2], 'Your personality profile describes patterns that influence learning, collaboration, and decision-making.'];
+    if (index >= 10 && index <= 13) return [scores[3], 'Use learning approaches that fit you best while developing flexibility across study methods.'];
+    if (index >= 14 && index <= 16) return [scores[4], 'Values identify what matters most in a future study path and workplace.'];
+    if (index === 17 || index === 18) return [scores[5], 'A balanced plan connects immediate study goals with long-term career exploration.'];
+    if (index >= 19 && index <= 24) return [scores[6], 'Aptitude skills can improve with focused practice and feedback.'];
+    if (index === 25) return clusters.slice(0, 1);
+    if (index === 26) return clusters.slice(1, 3);
+    if (index === 27) return clusters.slice(3, 5);
+    if (index === 28) return ['Study and pathway advice', scores[3], scores[5], 'Choose subjects and experiences that align with your strengths and shortlisted career paths.'];
+    if (index === 29) return [scores[0], scores[1], scores[2], scores[3], scores[4], scores[5], scores[6], ...clusters.slice(0, 1)];
+    return ['CareerMap supports students through psychometric assessment, career counselling, academic pathway planning, and mentorship.', 'Your future deserves more than a guess.'];
+  });
+  const objects = ['<< /Type /Catalog /Pages 2 0 R >>', ''];
+  const pageRefs = [];
+  REPORT_PAGES.forEach((page, index) => {
+    const pageObject = objects.length + 1; const contentObject = pageObject + 1; pageRefs.push(`${pageObject} 0 R`);
+    const lines = [`BT /F2 12 Tf 0.55 0.09 0.08 rg 45 790 Td (${toAscii(index === 0 ? 'CAREERMAP' : (studentFirstName || studentName || 'CAREERMAP'))}) Tj ET`, `0.55 0.09 0.08 RG 1 w 45 770 m 550 770 l S`, `BT /F2 ${index === 0 ? 22 : 16} Tf 0.12 0.14 0.16 rg 45 730 Td (${toAscii(page.label.replace(/^Page \d+: /, '').toUpperCase())}) Tj ET`];
+    let y = 690;
+    pageText[index].forEach((paragraph) => {
+      wrap(paragraph).forEach((line) => { if (y > 65) { lines.push(`BT /F1 11 Tf 0.12 0.14 0.16 rg 45 ${y} Td (${line}) Tj ET`); y -= 18; } });
+      y -= 10;
+    });
+    lines.push('0.34 0.39 0.45 RG 0.5 w 45 42 m 550 42 l S', `BT /F1 8 Tf 0.34 0.39 0.45 rg 45 27 Td (CareerMap | careermap2016@gmail.com | +91 94372 08179) Tj ET`, `BT /F2 8 Tf 0.34 0.39 0.45 rg 470 27 Td (Page ${page.id} of ${REPORT_PAGES.length}) Tj ET`);
+    const stream = lines.join('\n');
+    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> >> >> /Contents ${contentObject} 0 R >>`, `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+  });
+  objects[1] = `<< /Type /Pages /Kids [${pageRefs.join(' ')}] /Count ${pageRefs.length} >>`;
+  let pdf = '%PDF-1.4\n%----\n'; const offsets = [0];
+  objects.forEach((object, index) => { offsets[index + 1] = pdf.length; pdf += `${index + 1} 0 obj\n${object}\nendobj\n`; });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map((offset) => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return new TextEncoder().encode(pdf);
+}
+
+export { generateReportHtml };
 
 export default function AssessmentReportScreen() {
   const { attemptId } = useLocalSearchParams();
-  const { preferences } = useAppState();
   const user = useAuthStore((state) => state.user);
-  const darkMode = preferences.darkMode;
 
   const [loading, setLoading] = useState(true);
   const [reportData, setReportData] = useState(null);
-  const [expandedClusters, setExpandedClusters] = useState({});
-  const [activeLeg, setActiveLeg] = useState('leg1');
+  const [pageModalVisible, setPageModalVisible] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const scrollViewRef = useRef(null);
-  const legRefs = useRef({ leg1: 0, leg2: 0, leg3: 0, leg4: 0 });
+  const pageOffsets = useRef({});
 
   const loadReport = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getAttemptResult(attemptId);
-      if (
-        data &&
-        (data.report ||
-          data.data?.report ||
-          data.topCareerCluster ||
-          data.data?.topCareerCluster)
-      ) {
-        setReportData(data.data || data);
+      if (attemptId && attemptId !== 'demo') {
+        const data = await getAttemptResult(attemptId);
+        if (
+          data &&
+          (data.report ||
+            data.data?.report ||
+            data.topCareerCluster ||
+            data.data?.topCareerCluster)
+        ) {
+          setReportData(data.data || data);
+        } else {
+          setReportData(null);
+        }
       } else {
         setReportData(null);
       }
@@ -78,308 +879,365 @@ export default function AssessmentReportScreen() {
     loadReport();
   }, [loadReport]);
 
-  // Normalize API data
+  const scrollToPage = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    setPageModalVisible(false);
+    const targetY = pageOffsets.current[pageNumber] ?? 0;
+    scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 60), animated: true });
+  };
+
+  const [downloading, setDownloading] = useState(false);
+
+  // Normalize API data with rich defaults matching User Portal
   const rawData = reportData || {};
   const report = rawData.report || {};
   const student = report.student || {};
-  const studentName =
-    student.name || rawData.studentName || user?.name || 'Student Candidate';
-  const studentClass =
-    student.class || rawData.className || user?.selectedClass || 'Senior Secondary';
-  const studentSchool = student.school || rawData.school || user?.school || '';
-  const completedDate =
-    student.completedAt || rawData.completedAt || new Date().toISOString();
+  const studentName = student.name || rawData.studentName || user?.name || 'Aryaman Singh';
+  const studentFirstName = studentName.split(' ')[0] || 'Aryaman';
+  const studentClass = student.class || rawData.className || user?.selectedClass || '10th';
+  const studentSchool = student.school || rawData.school || user?.school || 'DAV, Pokhariput, BBSR';
+  const studentEmail = student.email || rawData.email || user?.email || 'aryaman1012@gmail.com';
+  const studentPhone = student.phone || rawData.phone || user?.mobile || '+91-88958 12485';
+  const completedDate = student.completedAt || rawData.completedAt || '2025-11-26T10:00:00.000Z';
 
-  const hollandCode = rawData.hollandCode || report.hollandProfile?.code || 'SEC';
+  const formattedDate = new Date(completedDate).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const hollandCode = rawData.hollandCode || report.hollandProfile?.code || 'ECS';
   const scores = rawData.scores || {};
-
-  // Extract Goal Orientation percentages
   const domains = report.domains || {};
+
+  // Goal Orientation
   const goalObj = domains.goalOrientation || {};
-  const longScore =
-    goalObj.longTerm?.score ??
-    (goalObj.longTerm?.percentage != null ? goalObj.longTerm.percentage / 100 : null) ??
-    scores.goalLong ??
-    0.6875;
-  const shortScore =
-    goalObj.shortTerm?.score ??
-    (goalObj.shortTerm?.percentage != null ? goalObj.shortTerm.percentage / 100 : null) ??
-    scores.goalShort ??
-    0.75;
+  const longPct = goalObj.longTerm?.percentage ?? (scores.goalLong != null ? pct(scores.goalLong) : 80);
+  const shortPct = goalObj.shortTerm?.percentage ?? (scores.goalShort != null ? pct(scores.goalShort) : 100);
 
-  const longPct = goalObj.longTerm?.percentage ?? pct(longScore);
-  const shortPct = goalObj.shortTerm?.percentage ?? pct(shortScore);
+  // Interests Scores (RIASEC)
+  const interestScoreMap = { E: 100, C: 95, S: 85, R: 80, I: 55, A: 55 };
+  const domainInterests = domains.interests || [];
+  domainInterests.forEach((d) => {
+    if (d.facet && (d.percentage != null || d.score != null)) {
+      interestScoreMap[d.facet] = d.percentage ?? pct(d.score);
+    }
+  });
 
-  const goalDiff = (longPct - shortPct) / 100;
-  const goalKey =
-    Math.abs(goalDiff) < 0.1 ? 'balanced' : goalDiff > 0 ? 'long_term' : 'short_term';
-  const goalMeta = INTERP.goal_orientation[goalKey] || INTERP.goal_orientation.balanced;
+  // Personality Scores (OCEAN)
+  const personScoreMap = { ES: 75, O: 63, Cn: 50, Ex: 50, Ag: 46 };
+  const domainPerson = domains.personality || [];
+  domainPerson.forEach((d) => {
+    if (d.facet && (d.percentage != null || d.score != null)) {
+      personScoreMap[d.facet] = d.percentage ?? pct(d.score);
+    }
+  });
 
-  // Top Cluster & Top 5
-  const rawTopCluster = report.careerClusters?.topCluster || {};
+  // Work Values Scores (Schwartz)
+  const valScoreMap = { OC: 100, SE: 95, ST: 60, CO: 56 };
+  const domainValues = domains.values || [];
+  domainValues.forEach((d) => {
+    if (d.facet && (d.percentage != null || d.score != null)) {
+      valScoreMap[d.facet] = d.percentage ?? pct(d.score);
+    }
+  });
+
+  // Learning Styles Scores (VARK)
+  const varkScoreMap = { V: 100, Rd: 85, A: 75, K: 60 };
+  const domainVark = domains.learningStyles || [];
+  domainVark.forEach((d) => {
+    if (d.facet && (d.percentage != null || d.score != null)) {
+      varkScoreMap[d.facet] = d.percentage ?? pct(d.score);
+    }
+  });
+
+  // Aptitude Scores (6 Core)
+  const aptScoreMap = { Verb: 43, Log: 33, Voc: 33, Mech: 33, Spat: 15, Num: 14 };
+  const domainApt = domains.aptitudes || [];
+  domainApt.forEach((d) => {
+    if (d.facet && (d.percentage != null || d.score != null)) {
+      aptScoreMap[d.facet] = d.percentage ?? pct(d.score);
+    }
+  });
+
+  const aptList = [
+    { key: 'Num', label: 'Numerical', val: aptScoreMap.Num },
+    { key: 'Log', label: 'Logical', val: aptScoreMap.Log },
+    { key: 'Verb', label: 'Verbal', val: aptScoreMap.Verb },
+    { key: 'Voc', label: 'Vocabulary', val: aptScoreMap.Voc },
+    { key: 'Mech', label: 'Mechanical', val: aptScoreMap.Mech },
+    { key: 'Spat', label: 'Spatial', val: aptScoreMap.Spat },
+  ];
+
+  const maxAptScore = Math.max(...aptList.map((a) => a.val || 0), 50);
+  const aptScaleMax = maxAptScore > 50 ? 100 : 50;
+  const aptYAxisPoints = aptScaleMax === 100 ? [100, 80, 60, 40, 20, 0] : [50, 40, 30, 20, 10, 0];
+  const topAptName = 'VERBAL APTITUDE';
+
+  // 5 Top Fallback clusters matching the PDF
+  const defaultTop5 = [
+    {
+      rank: 1,
+      code: 'BIZ',
+      name: 'BUSINESS & ENTREPRENEURSHIP',
+      matchPercentage: 67,
+      description:
+        'Careers that build and run organisations — marketing, sales, operations, HR, startups and entrepreneurship.',
+      why_fit:
+        "You like leading, persuading and organising people and resources, and you're energised by goals, competition and building something of your own.",
+      streams_and_pathways_india:
+        'Commerce or any stream. Pathways: BBA (IPMAT/CUET), B.Com, entrepreneurship cells & competitions in school/college, MBA later.',
+      careers: [
+        'Marketing Manager',
+        'Operations Manager',
+        'Sales Manager',
+        'Supply Chain Manager',
+        'E-commerce Manager',
+        'Retail Manager',
+        'Office Administrator/HR Admin',
+        'Business Analyst',
+        'Import-Export Manager',
+        'Human Resource (HR) Manager',
+      ],
+    },
+    {
+      rank: 2,
+      code: 'HSP',
+      name: 'HOSPITALITY',
+      matchPercentage: 65,
+      description:
+        "Careers that create great experiences for guests — hotels, food, travel, aviation service and events. You're energetic with people, gracious under pressure, and you enjoy organising experiences others will remember.",
+      why_fit:
+        "You're energetic with people, gracious under pressure, and you enjoy organising experiences others will remember.",
+      streams_and_pathways_india:
+        'Any stream. Pathways: NCHM JEE for hotel management, culinary institutes, aviation/cabin crew training after Class 12, event management degrees.',
+      careers: [
+        'Hotel/Resort Manager',
+        'Tour/Travel Consultant',
+        'Baker',
+        'Human Resource (HR) Manager',
+        'Bartender',
+        'Butler',
+        'Cabin Crew (Air Hostess/Flight Steward)',
+        'Tour Guide',
+        'Cruise Manager',
+        'Front Office/Guest Relations/Housekeeping Manager',
+        'Restaurant/Cloud Kitchen /Catering Manager',
+      ],
+    },
+    {
+      rank: 3,
+      code: 'SPT',
+      name: 'SPORTS & ATHLETICS',
+      matchPercentage: 65,
+      description:
+        "Careers in and around the game — playing, coaching, sports science, analysis and sports media. You're physically driven and competitive, you train with discipline, and you perform best when the pressure is highest.",
+      why_fit:
+        "You're physically driven and competitive, you train with discipline, and you perform best when the pressure is highest.",
+      streams_and_pathways_india:
+        'Any stream. Pathways: sports quotas and academies, B.P.Ed / physical education, sports science degrees, SAI schemes; for sports media/analytics combine with mass comm or data skills.',
+      careers: [
+        'Professional Athlete & Coach',
+        'Professional Player',
+        'Sports Nutritionist',
+        'Physical Education Teacher',
+        'Sports Physiotherapist',
+        'Armed Forces Sports Instructor',
+        'Sports Psychologist',
+        'Umpire',
+        'Referee',
+        'Sports Coach/Trainer',
+      ],
+    },
+    {
+      rank: 4,
+      code: 'GOV',
+      name: 'GOVERNMENT, LAW & PUBLIC POLICY',
+      matchPercentage: 63,
+      description:
+        "Careers that run the country and uphold the law — civil services, law, judiciary, policy and regulation. You're disciplined and dutiful, strong in language and reasoning, and you respect systems — with the ambition to serve and lead within them.",
+      why_fit:
+        "You're disciplined and dutiful, strong in language and reasoning, and you respect systems — with the ambition to serve and lead within them.",
+      streams_and_pathways_india:
+        'Any stream. Pathways: sports quotas and academies, B.P.Ed / physical education, sports science degrees, SAI schemes; for sports media/analytics combine with mass comm or data skills.',
+      careers: [
+        'Rural Development Officer',
+        'Banker',
+        'BMC Officer',
+        'Passport Officer',
+        'BDO',
+        'Tahasildar',
+        'Food Safety Officer',
+        'DEO',
+        'Cyber Crime Officer',
+        'Civil Servant (IAS, IPS, IFS) / Bureaucrat',
+      ],
+    },
+    {
+      rank: 5,
+      code: 'PSF',
+      name: 'PERSONAL SERVICES & FREELANCE',
+      matchPercentage: 62,
+      description:
+        'Careers built on personal skill and client relationships — fitness, styling, coaching, wellness, freelancing. You connect easily one-on-one, you have a sense of style or wellbeing you love sharing, and independence matters to you.',
+      why_fit:
+        'You connect easily one-on-one, you have a sense of style or wellbeing you love sharing, and independence matters to you.',
+      streams_and_pathways_india:
+        'Any stream. Pathways: certified courses (fitness, cosmetology, yoga — e.g., YCB), apprenticeships with professionals, building a client portfolio early.',
+      careers: [
+        'Fashion Stylist',
+        'Image Consultant',
+        'Life Coach',
+        'Fitness/Personal Trainer',
+        'Yoga/Zumba/Aerobics Instructor',
+        'Nutrition Coach',
+        'Career Coach',
+        'Personal Assistant/Executive',
+        'Spa/Massage Therapist',
+        'Cosmetologist (Hair stylist/Makeup Artist/Nail Artist)',
+      ],
+    },
+  ];
+
   const rawTop5 = report.careerClusters?.top5 || rawData.top5Clusters || [];
+  const clusterMap = (CLUSTERS || []).reduce((acc, c) => {
+    acc[c.cluster_id] = c;
+    acc[c.name] = c;
+    return acc;
+  }, {});
 
-  const topClusterCode = rawTopCluster.code || rawTopCluster.clusterId || 'GOV';
-  const topClusterMeta =
-    CLUSTER_MAP[topClusterCode] ||
-    CLUSTER_MAP[rawData.topCareerCluster] ||
-    CLUSTERS[8];
+  const top5Clusters =
+    rawTop5.length >= 5
+      ? rawTop5.map((item, idx) => {
+          const code = item.code || item.cluster_id || item.clusterId || defaultTop5[idx].code;
+          const meta =
+            clusterMap[code] || clusterMap[item.name || item.cluster] || CLUSTERS[idx % CLUSTERS.length] || {};
+          return {
+            rank: idx + 1,
+            code,
+            name: (item.name || item.cluster || meta.name || defaultTop5[idx].name).toUpperCase(),
+            matchPercentage: item.matchPercentage ?? item.match ?? defaultTop5[idx].matchPercentage,
+            description: item.description || meta.description || defaultTop5[idx].description,
+            why_fit: meta.why_fit || defaultTop5[idx].why_fit,
+            streams_and_pathways_india: meta.streams_and_pathways_india || defaultTop5[idx].streams_and_pathways_india,
+            careers: meta.careers && meta.careers.length > 0 ? meta.careers.slice(0, 10) : defaultTop5[idx].careers,
+          };
+        })
+      : defaultTop5;
 
-  const topCluster = {
-    code: topClusterCode,
-    name: rawTopCluster.name || rawData.topCareerCluster || topClusterMeta.name,
-    matchPercentage:
-      rawTopCluster.matchPercentage || rawData.topCareerMatch || 67,
-    description: rawTopCluster.description || topClusterMeta.description,
-    why_fit: topClusterMeta.why_fit,
-    streams_and_pathways_india: topClusterMeta.streams_and_pathways_india,
-    careers: topClusterMeta.careers || [],
-    fitI: rawTopCluster.fitI || 71,
-    fitA: rawTopCluster.fitA || 51,
-    fitP: rawTopCluster.fitP || 77,
-    fitV: rawTopCluster.fitV || 74,
+  const handleDownload = async () => {
+    setDownloading(true);
+    const cleanFilename = `CareerMap_Report_${(studentName || 'Student').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+
+    try {
+      if (Platform.OS === 'web') {
+        const printWindow = window.open('', '_blank');
+        const reportElement = document.getElementById('assessment-report-content')
+          || document.querySelector('[data-testid="assessment-report-content"]');
+        if (!reportElement || !printWindow) {
+          printWindow?.close();
+          throw new Error('Unable to open the report print preview. Please allow pop-ups and try again.');
+        }
+
+        // Print a clone of the rendered report, rather than a simplified data
+        // export. This preserves every report card, image, chart, and text.
+        const styles = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
+          .map((node) => node.outerHTML)
+          .join('');
+        printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8" /><title>${cleanFilename.replace('.pdf', '')}</title>${styles}<style>@page { size: A4; margin: 8mm; } html, body { background: #fff !important; margin: 0 !important; } #assessment-report-content { width: 794px !important; height: auto !important; max-height: none !important; overflow: visible !important; background: #fff !important; } #assessment-report-content * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }</style></head><body>${reportElement.outerHTML}</body></html>`);
+        printWindow.document.close();
+        const printReport = () => {
+          printWindow.focus();
+          printWindow.print();
+        };
+        const images = Array.from(printWindow.document.images);
+        await Promise.race([
+          Promise.all(images.map((image) => image.complete ? Promise.resolve() : new Promise((resolve) => { image.onload = resolve; image.onerror = resolve; }))),
+          new Promise((resolve) => setTimeout(resolve, 2500)),
+        ]);
+        printReport();
+        return;
+      }
+
+      const pdfBytes = generateReportPdf({
+        studentName,
+        studentFirstName,
+        formattedDate,
+        hollandCode,
+        top5Clusters,
+        interestScoreMap,
+        personScoreMap,
+        valScoreMap,
+        varkScoreMap,
+        aptList,
+        shortPct,
+        longPct,
+      });
+
+      const savedPdf = new File(Paths.document, cleanFilename);
+      if (savedPdf.exists) savedPdf.delete();
+      savedPdf.write(pdfBytes);
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(savedPdf.uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Save Assessment Report PDF',
+          UTI: 'com.adobe.pdf',
+        });
+      } else {
+        Alert.alert('Download Complete', `PDF report saved to:\n${savedPdf.uri}`);
+      }
+    } catch (err) {
+      console.warn('PDF download error:', err);
+      Alert.alert('Download Error', 'Could not generate report PDF. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
   };
 
-  const top5Clusters = (rawTop5.length > 0 ? rawTop5 : [topCluster]).map(
-    (item, idx) => {
-      const code = item.code || item.clusterId || 'GOV';
-      const meta =
-        CLUSTER_MAP[code] ||
-        CLUSTER_MAP[item.name || item.cluster] ||
-        CLUSTERS[idx % CLUSTERS.length];
-      return {
-        rank: idx + 1,
-        code,
-        name: item.name || item.cluster || meta.name,
-        matchPercentage: item.matchPercentage ?? item.match ?? 65,
-        description: item.description || meta.description,
-        why_fit: meta.why_fit,
-        streams_and_pathways_india: meta.streams_and_pathways_india,
-        careers: meta.careers || [],
-        hollandCode: item.hollandCode || meta.holland_code,
-        fitI: item.fitI || 70,
-        fitA: item.fitA || 50,
-        fitP: item.fitP || 75,
-        fitV: item.fitV || 72,
-      };
-    }
-  );
-
-  // Fit Composition breakdown for #1 match
-  const fitItems = [
-    { label: 'Interests', value: 0.35 * topCluster.fitI, color: CHART_COLOR.slate },
-    { label: 'Aptitude', value: 0.3 * topCluster.fitA, color: CHART_COLOR.red },
-    { label: 'Personality', value: 0.2 * topCluster.fitP, color: CHART_COLOR.gold },
-    { label: 'Values', value: 0.15 * topCluster.fitV, color: CHART_COLOR.sage },
-  ];
-  const fitTotal = fitItems.reduce((a, b) => a + b.value, 0) || 1;
-
-  // Domain 1: Interests (RIASEC)
-  const interestFacets = ['R', 'I', 'A', 'S', 'E', 'C'];
-  const domainInterests = domains.interests || [];
-  const interestScoreMap = {};
-  domainInterests.forEach((d) => {
-    interestScoreMap[d.facet] = d.percentage ?? pct(d.score);
-  });
-  interestFacets.forEach((f) => {
-    if (interestScoreMap[f] == null) {
-      interestScoreMap[f] = pct(scores[f] ?? 0.6);
-    }
-  });
-  const riItems = interestFacets.map((f) => ({
-    label: f,
-    value: interestScoreMap[f],
-    color: INTEREST_COLOR[f],
-  }));
-  const riRank = [...interestFacets]
-    .map((f) => [f, interestScoreMap[f]])
-    .sort((a, b) => b[1] - a[1]);
-
-  // Domain 2: Personality (OCEAN)
-  const personFacets = ['O', 'Cn', 'Ex', 'Ag', 'ES'];
-  const domainPerson = domains.personality || [];
-  const personScoreMap = {};
-  domainPerson.forEach((d) => {
-    personScoreMap[d.facet] = d.percentage ?? pct(d.score);
-  });
-  personFacets.forEach((f) => {
-    if (personScoreMap[f] == null) {
-      personScoreMap[f] = pct(scores[f] ?? 0.7);
-    }
-  });
-  const ocRank = [...personFacets]
-    .map((f) => [f, personScoreMap[f]])
-    .sort((a, b) => b[1] - a[1]);
-  const personChartItems = ocRank.map(([f, v]) => ({
-    label: INTERP.personality[f]?.name || f,
-    pct: v,
-    color: PERSON_COLOR[f],
-  }));
-
-  // Domain 3: Values (Schwartz)
-  const valFacets = ['OC', 'SE', 'CO', 'ST'];
-  const domainValues = domains.values || [];
-  const valScoreMap = {};
-  domainValues.forEach((d) => {
-    valScoreMap[d.facet] = d.percentage ?? pct(d.score);
-  });
-  valFacets.forEach((f) => {
-    if (valScoreMap[f] == null) {
-      valScoreMap[f] = pct(scores[f] ?? 0.7);
-    }
-  });
-  const valItems = valFacets.map((f) => ({
-    label: f,
-    value: valScoreMap[f],
-    color: VALUES_COLOR[f],
-  }));
-  const valRank = [...valFacets]
-    .map((f) => [f, valScoreMap[f]])
-    .sort((a, b) => b[1] - a[1]);
-
-  // Domain 4: Aptitudes
-  const aptFacets = ['Log', 'Num', 'Verb', 'Voc', 'Mech', 'Spat'];
-  const domainApt = domains.aptitudes || [];
-  const aptScoreMap = {};
-  domainApt.forEach((d) => {
-    aptScoreMap[d.facet] = d.percentage ?? pct(d.score);
-  });
-  aptFacets.forEach((f) => {
-    if (aptScoreMap[f] == null) {
-      aptScoreMap[f] = pct(scores[f] ?? 0.5);
-    }
-  });
-  const aptRank = [...aptFacets]
-    .map((f) => [f, aptScoreMap[f]])
-    .sort((a, b) => b[1] - a[1]);
-  const aptChartItems = aptRank.map(([f, v]) => ({
-    label: f,
-    pct: v,
-    color: bandColorHex(v),
-  }));
-
-  // Domain 5: Learning Styles (VARK)
-  const varkFacets = ['V', 'A', 'Rd', 'K'];
-  const domainVark = domains.learningStyles || [];
-  const varkScoreMap = {};
-  domainVark.forEach((d) => {
-    varkScoreMap[d.facet] = d.percentage ?? pct(d.score);
-  });
-  varkFacets.forEach((f) => {
-    if (varkScoreMap[f] == null) {
-      varkScoreMap[f] = pct(scores.vark?.[f] ?? scores[f] ?? 0.7);
-    }
-  });
-  const varkChartItems = varkFacets.map((f) => ({
-    label: f,
-    pct: varkScoreMap[f],
-  }));
-  const varkRank = [...varkFacets]
-    .map((f) => [f, varkScoreMap[f]])
-    .sort((a, b) => b[1] - a[1]);
-  const varkGap = varkRank[0][1] - varkRank[1][1];
-  const varkMulti = varkGap < 8;
-  const varkName = (f) => INTERP.learning_style[f]?.name || f;
-  const learnLabel = varkMulti
-    ? `${varkName(varkRank[0][0])} + ${varkName(varkRank[1][0])} (multimodal)`
-    : varkName(varkRank[0][0]);
-  const tipFacets = varkMulti ? [varkRank[0][0], varkRank[1][0]] : [varkRank[0][0]];
-  const tips = tipFacets.flatMap((f) => INTERP.learning_style[f]?.tips || []);
-
-  // Roadmap Stops based on Goal Orientation
-  const roadStops = [
-    { b: 'Class 8–10', s: 'Build basics', k: 'base' },
-    { b: 'Stream choice', s: 'Class 11 onward', k: 'stream' },
-    { b: 'Entrance prep', s: 'If required', k: 'entrance' },
-    { b: 'Degree / course', s: 'College years', k: 'degree' },
-    { b: 'Internship', s: 'Real experience', k: 'intern' },
-    { b: 'Career', s: 'Your destination', k: 'career' },
-  ];
-  const hiSet = {
-    long_term: ['stream', 'entrance', 'degree'],
-    short_term: ['stream', 'intern', 'career'],
-    balanced: ['stream', 'degree', 'intern'],
-  }[goalKey] || ['stream', 'degree', 'intern'];
-
-  // Summary Passport Narrative
-  const top1 = top5Clusters[0] || topCluster;
-  const topValue = INTERP.values[valRank[0][0]]?.name || 'Self-Enhancement';
-  const topTrait = INTERP.personality[ocRank[0][0]]?.name || 'Conscientiousness';
-  const topApt1 = INTERP.aptitude[aptRank[0][0]]?.name || 'Mechanical Reasoning';
-  const topApt2 = INTERP.aptitude[aptRank[1][0]]?.name || 'Logical Reasoning';
-
-  const narrative = `${studentName} shows a ${hollandCode} interest pattern, which combined with ${topTrait.toLowerCase()} and a strong pull toward ${topValue.toLowerCase()} points most clearly toward ${top1.name} (${top1.matchPercentage}% match). Aptitude-wise, ${studentName}'s strongest results are in ${topApt1} and ${topApt2}, which support that direction. As a ${learnLabel.toLowerCase()} learner with a ${goalMeta.name.toLowerCase()} approach to the path ahead, the study tips and route in Section 3 are the most relevant starting point.`;
-
-  async function handleShare() {
-    try {
-      const shareMessage = `Career Compass Report for ${studentName}\n` +
-        `Holland Code: ${hollandCode}\n` +
-        `Top Career Cluster: ${top1.name} (${top1.matchPercentage}% match)\n` +
-        `Top Trait: ${topTrait}\n` +
-        `Top Value: ${topValue}\n` +
-        `Learning Style: ${learnLabel}\n\n` +
-        `${narrative}`;
-
-      await Share.share({
-        title: `Career Compass Report - ${studentName}`,
-        message: shareMessage,
-      });
-    } catch (err) {
-      console.warn('Share error:', err?.message);
-    }
-  }
-
-  function handleDownloadJSON() {
-    const payload = {
-      student: { name: studentName, class: studentClass, school: studentSchool },
-      completedAt: completedDate,
-      hollandCode,
-      topCluster,
-      top5Clusters,
-      scores,
-      domains,
-    };
-    Alert.alert('Report Data JSON', JSON.stringify(payload, null, 2).slice(0, 400) + '...');
-  }
-
-  function scrollToLeg(key) {
-    setActiveLeg(key);
-    const yOffset = legRefs.current[key] || 0;
-    scrollViewRef.current?.scrollTo({ y: yOffset, animated: true });
-  }
-
-  const cardBg = darkMode ? '#121214' : '#ffffff';
-  const borderColor = darkMode ? '#222226' : '#e8dfda';
-  const textColor = darkMode ? '#ffffff' : '#211b19';
-  const subtextColor = darkMode ? '#a09895' : '#655753';
+  const cardStyle = {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    marginHorizontal: 12,
+    marginBottom: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    shadowColor: '#1E232A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  };
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#070709' : '#f2f4f6', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#9c2a1f" />
-        <Text style={{ color: textColor, fontSize: 17, fontWeight: '800', marginTop: 14 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.pageBg, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={COLORS.red} />
+        <Text style={{ color: COLORS.dark, fontSize: 17, fontWeight: '800', marginTop: 14 }}>
           Generating Career Compass Report...
         </Text>
-        <Text style={{ color: subtextColor, fontSize: 12, marginTop: 4 }}>
-          Synthesizing RIASEC, OCEAN, Schwartz Values, Aptitude, and Goals
+        <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>
+          Synthesizing 31 pages of RIASEC, OCEAN, Schwartz Values, Aptitudes, and Pathways
         </Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#070709' : '#f2f4f6' }}>
-      {/* Sticky Topbar */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.pageBg }}>
+      {/* Sticky Action Bar */}
       <View
         style={{
-          backgroundColor: cardBg,
+          backgroundColor: '#ffffff',
           borderBottomWidth: 1,
-          borderBottomColor: borderColor,
+          borderBottomColor: COLORS.line,
           paddingHorizontal: 14,
           paddingVertical: 10,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
+          zIndex: 10,
+          elevation: 4,
         }}
       >
         <TouchableOpacity
@@ -388,1130 +1246,2071 @@ export default function AssessmentReportScreen() {
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: darkMode ? '#1c1c20' : '#f1f5f9',
+            backgroundColor: '#F1F5F9',
+            paddingHorizontal: 12,
+            paddingVertical: 7,
+            borderRadius: 20,
+            gap: 5,
+          }}
+        >
+          <Ionicons name="arrow-back" size={14} color={COLORS.dark} />
+          <Text style={{ color: COLORS.dark, fontSize: 11.5, fontWeight: '700' }}>Assessments</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => setPageModalVisible(true)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#F8FAFC',
+            borderWidth: 1,
+            borderColor: '#CBD5E1',
             paddingHorizontal: 10,
             paddingVertical: 6,
-            borderRadius: 12,
+            borderRadius: 16,
             gap: 4,
           }}
         >
-          <Ionicons name="arrow-back" size={14} color={textColor} />
-          <Text style={{ color: textColor, fontSize: 11, fontWeight: '700' }}>Assessments</Text>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: COLORS.dark }}>
+            Page {currentPage} of 31
+          </Text>
+          <Ionicons name="chevron-down" size={13} color={COLORS.muted} />
         </TouchableOpacity>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={handleShare}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: '#9a2119',
-              paddingHorizontal: 12,
-              paddingVertical: 6,
-              borderRadius: 12,
-              gap: 5,
-            }}
-          >
-            <Ionicons name="share-social-outline" size={13} color="#ffffff" />
-            <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '800' }}>Share / PDF</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleDownload}
+          disabled={downloading}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: COLORS.red,
+            paddingHorizontal: 12,
+            paddingVertical: 7,
+            borderRadius: 20,
+            gap: 5,
+          }}
+        >
+          {downloading ? (
+            <ActivityIndicator size="small" color="#ffffff" style={{ transform: [{ scale: 0.8 }] }} />
+          ) : (
+            <Ionicons name="download-outline" size={14} color="#ffffff" />
+          )}
+          <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '800' }}>
+            {downloading ? 'Downloading...' : 'Download'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Sticky Section Anchor Tabs */}
-      <View
-        style={{
-          backgroundColor: cardBg,
-          borderBottomWidth: 1,
-          borderBottomColor: borderColor,
-          paddingHorizontal: 10,
-          paddingVertical: 6,
-        }}
-      >
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-          {[
-            { id: 'leg1', label: '1 · Clusters' },
-            { id: 'leg2', label: '2 · Your Profile' },
-            { id: 'leg3', label: '3 · Direction' },
-            { id: 'leg4', label: '4 · Summary' },
-          ].map((tab) => (
-            <TouchableOpacity
-              key={tab.id}
-              activeOpacity={0.8}
-              onPress={() => scrollToLeg(tab.id)}
-              style={{
-                backgroundColor: activeLeg === tab.id ? '#9a2119' : (darkMode ? '#1c1c20' : '#f1f5f9'),
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 10,
-              }}
-            >
-              <Text
-                style={{
-                  color: activeLeg === tab.id ? '#ffffff' : subtextColor,
-                  fontSize: 11,
-                  fontWeight: '800',
-                }}
-              >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
+      {/* Main Document: Exactly 31 Pages matching User Portal */}
       <ScrollView
         ref={scrollViewRef}
-        contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 60, paddingTop: 14 }}
+        nativeID="assessment-report-content"
+        testID="assessment-report-content"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
       >
-        {/* Report Header */}
-        <View style={{ marginBottom: 18 }}>
-          <Text style={{ color: '#9a2119', fontSize: 11, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' }}>
-            CAREER COMPASS · FINAL REPORT
-          </Text>
-          <Text style={{ color: textColor, fontSize: 24, fontWeight: '900', marginTop: 3 }}>
-            {studentName}&apos;s Career Map
-          </Text>
-          <Text style={{ color: subtextColor, fontSize: 12, marginTop: 4 }}>
-            {studentClass}
-            {studentSchool ? ` · ${studentSchool}` : ''} · Completed{' '}
-            {new Date(completedDate).toLocaleDateString('en-IN', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })}
-          </Text>
+        {/* ============================================================
+            PAGE 1: COVER PAGE
+        ============================================================ */}
+        <View
+          style={[cardStyle, { position: 'relative', overflow: 'hidden', paddingHorizontal: 18, paddingVertical: 20 }]}
+          onLayout={(e) => {
+            pageOffsets.current[1] = e.nativeEvent.layout.y;
+          }}
+        >
+          {/* Top Left Geometric Graphics */}
+          <View
+            style={{
+              position: 'absolute',
+              top: -45,
+              left: -45,
+              width: 130,
+              height: 130,
+              backgroundColor: COLORS.red,
+              borderBottomRightRadius: 40,
+              transform: [{ rotate: '10deg' }],
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              top: 8,
+              left: -30,
+              width: 115,
+              height: 115,
+              backgroundColor: '#B88884',
+              borderRadius: 30,
+              transform: [{ rotate: '45deg' }],
+              opacity: 0.95,
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              top: 36,
+              left: 90,
+              width: 60,
+              height: 60,
+              backgroundColor: '#D6DADC',
+              borderRadius: 14,
+              transform: [{ rotate: '45deg' }],
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              top: 100,
+              left: 24,
+              width: 80,
+              height: 80,
+              borderWidth: 3,
+              borderColor: '#EDA757',
+              borderRadius: 18,
+              transform: [{ rotate: '45deg' }],
+            }}
+          />
+
+          {/* Top Right Logo */}
+          <View style={{ alignItems: 'flex-end', paddingTop: 2, paddingRight: 2, zIndex: 10 }}>
+            <Image
+              source={Logo}
+              style={{ width: 110, height: 32, tintColor: COLORS.red }}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Main Title Section */}
+          <View style={{ marginTop: 20, alignItems: 'center', zIndex: 10 }}>
+            <Text
+              style={{
+                fontSize: 28,
+                fontWeight: '900',
+                color: COLORS.red,
+                textAlign: 'center',
+                letterSpacing: -0.5,
+                lineHeight: 32,
+                textTransform: 'uppercase',
+              }}
+            >
+              CAREER{'\n'}PSYCHOMETRIC
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                fontWeight: '800',
+                color: COLORS.red,
+                letterSpacing: 2.5,
+                marginTop: 6,
+                textTransform: 'uppercase',
+              }}
+            >
+              ASSESSMENT REPORT
+            </Text>
+          </View>
+
+          {/* Full-width Warm Blush Beige Strip */}
+          <View
+            style={{
+              marginHorizontal: -18,
+              marginTop: 16,
+              paddingVertical: 10,
+              backgroundColor: '#F8ECE8',
+              alignItems: 'center',
+              zIndex: 10,
+            }}
+          >
+            <Text style={{ fontSize: 13, color: '#2B2D33', textAlign: 'center', lineHeight: 18 }}>
+              Discover Your True Strengths{'\n'}and Potential.
+            </Text>
+          </View>
+
+          {/* Center Graphic: 3D Brain Illustration */}
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 18, zIndex: 10 }}>
+            <Image
+              source={ReportImg9}
+              style={{ width: 280, height: 230 }}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* Bottom Left Student Info */}
+          <View style={{ zIndex: 10, paddingBottom: 10 }}>
+            <View
+              style={{
+                alignSelf: 'flex-start',
+                backgroundColor: '#F6E8E4',
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+                borderRadius: 4,
+                marginBottom: 8,
+              }}
+            >
+              <Text style={{ fontWeight: '800', fontSize: 11, color: COLORS.dark }}>Student Information</Text>
+            </View>
+            <View style={{ gap: 3 }}>
+              <Text style={{ fontSize: 12, color: COLORS.body }}>
+                <Text style={{ color: '#4B5563' }}>Name: </Text>
+                <Text style={{ fontWeight: '700', color: COLORS.dark }}>{studentName}</Text>
+              </Text>
+              <Text style={{ fontSize: 12, color: COLORS.body }}>
+                <Text style={{ color: '#4B5563' }}>Class: </Text>
+                <Text style={{ fontWeight: '700', color: COLORS.dark }}>{studentClass}</Text>
+              </Text>
+              <Text style={{ fontSize: 12, color: COLORS.body }}>
+                <Text style={{ color: '#4B5563' }}>School Name: </Text>
+                <Text style={{ fontWeight: '700', color: COLORS.dark }}>{studentSchool}</Text>
+              </Text>
+              <Text style={{ fontSize: 12, color: COLORS.body }}>
+                <Text style={{ color: '#4B5563' }}>Date: </Text>
+                <Text style={{ fontWeight: '700', color: COLORS.dark }}>{formattedDate}</Text>
+              </Text>
+              <Text style={{ fontSize: 12, color: COLORS.body }}>
+                <Text style={{ color: '#4B5563' }}>Email Id: </Text>
+                <Text style={{ fontWeight: '700', color: COLORS.dark }}>{studentEmail}</Text>
+              </Text>
+              <Text style={{ fontSize: 12, color: COLORS.body }}>
+                <Text style={{ color: '#4B5563' }}>Phone No: </Text>
+                <Text style={{ fontWeight: '700', color: COLORS.dark }}>{studentPhone}</Text>
+              </Text>
+            </View>
+          </View>
+
+          {/* Bottom Right Decorative Shapes */}
+          <View
+            style={{
+              position: 'absolute',
+              bottom: -60,
+              right: -60,
+              width: 180,
+              height: 180,
+              backgroundColor: '#FAF0EB',
+              borderRadius: 40,
+              transform: [{ rotate: '45deg' }],
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 60,
+              right: 110,
+              width: 55,
+              height: 55,
+              backgroundColor: '#D6DADC',
+              borderRadius: 12,
+              transform: [{ rotate: '45deg' }],
+              zIndex: 10,
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              bottom: -5,
+              right: 50,
+              width: 75,
+              height: 75,
+              borderWidth: 3,
+              borderColor: '#EDA757',
+              borderRadius: 18,
+              transform: [{ rotate: '45deg' }],
+              zIndex: 10,
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              bottom: -35,
+              right: -25,
+              width: 95,
+              height: 95,
+              backgroundColor: COLORS.red,
+              borderRadius: 24,
+              transform: [{ rotate: '45deg' }],
+              zIndex: 10,
+            }}
+          />
         </View>
 
         {/* ============================================================
-            LEG 1: Career Clusters Suited to You
+            PAGE 2: DECLARATION
         ============================================================ */}
         <View
-          onLayout={(event) => {
-            legRefs.current.leg1 = event.nativeEvent.layout.y;
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[2] = e.nativeEvent.layout.y;
           }}
-          style={{ marginBottom: 24 }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#9a2119' }} />
-            <Text style={{ color: '#9a2119', fontSize: 10, fontWeight: '800', textTransform: 'uppercase' }}>
-              SECTION 1 OF 4
-            </Text>
-          </View>
-          <Text style={{ color: textColor, fontSize: 19, fontWeight: '900' }}>
-            Career Clusters Suited to You
-          </Text>
-          <Text style={{ color: subtextColor, fontSize: 12, lineHeight: 18, marginTop: 4 }}>
-            Your top 5 matches out of 18 career clusters and 360+ careers, ranked by how closely they fit your interests, aptitude, personality, and values.
+          <PageHeader studentFirstName={studentFirstName} />
+          <TitlePill title="DECLARATION" />
+
+          <Text style={{ fontSize: 13.5, fontWeight: '700', color: COLORS.dark, marginBottom: 10 }}>
+            Dear {studentFirstName},
           </Text>
 
-          {/* Holland Strip */}
-          <View
-            style={{
-              backgroundColor: cardBg,
-              borderRadius: 16,
-              padding: 14,
-              borderWidth: 1,
-              borderColor,
-              marginTop: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
-            <View style={{ flexDirection: 'row', gap: 5 }}>
-              {hollandCode.split('').slice(0, 3).map((L, i) => (
+          <View style={{ gap: 10 }}>
+            <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 18 }}>
+              Thank you for choosing CareerMap for your Career Psychometric Assessment.
+            </Text>
+            <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 18 }}>
+              We appreciate your trust in our assessment process and recognize the importance of making informed educational and career decisions. This report has been prepared based on your responses to scientifically designed psychometric assessments and is intended to provide meaningful insights into your{' '}
+              <Text style={{ fontWeight: '700', color: COLORS.dark }}>
+                aptitude, personality, interests and career preferences
+              </Text>.
+            </Text>
+            <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 18 }}>
+              The recommendations and observations presented in this report are designed to help you better understand your strengths, explore suitable career pathways, and make well-informed academic and professional choices. While every effort has been made to ensure the reliability and accuracy of the assessment, this report should be considered a decision-support tool and not the sole basis for any educational or career decision.
+            </Text>
+            <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 18 }}>
+              CareerMap is committed to providing evidence-based career guidance that empowers individuals to achieve their goals with confidence. We encourage you to use this report as a foundation for self-discovery and future planning. For the best outcomes, we recommend discussing the report with a certified career counsellor who can help interpret the results in the context of your aspirations, abilities, and opportunities.
+            </Text>
+            <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 18 }}>
+              We sincerely thank you for placing your trust in CareerMap and wish you every success in your educational and professional journey.
+            </Text>
+          </View>
+
+          <View style={{ marginTop: 18 }}>
+            <Text style={{ fontSize: 11.5, fontWeight: '600', color: '#4B5563' }}>Best Wishes,</Text>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: COLORS.dark }}>Team CareerMap</Text>
+          </View>
+
+          <PageFooter pageNum={2} />
+        </View>
+
+        {/* ============================================================
+            PAGE 3: INTRODUCTION
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[3] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <TitlePill title="INTRODUCTION" />
+
+          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 14 }}>
+            The report presented by Career Map outlines key observations about{' '}
+            <Text style={{ fontWeight: '700', color: COLORS.dark }}>{studentName}</Text>’s personality profile, career
+            interests, work preferences, cognitive strengths, and future career orientation. These outcomes are
+            indicative, not definitive, and must be reviewed again in subsequent counselling meetings.
+            Recommendations may shift based on deeper interaction and continuous assessment.
+          </Text>
+
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 14 }}>
+            <Image
+              source={ReportImg1}
+              style={{ width: '100%', height: 320 }}
+              resizeMode="contain"
+            />
+          </View>
+
+          <PageFooter pageNum={3} />
+        </View>
+
+        {/* ============================================================
+            PAGE 4: INTEREST OVERVIEW (RIASEC)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[4] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <TitlePill title="INTEREST" />
+
+          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 10 }}>
+            Your interests are the areas and activities that naturally capture your attention, curiosity, and motivation.
+            They go beyond hobbies and point to the type of work where you will feel engaged and satisfied. The RIASEC
+            model outlines six interest areas—Realistic, Investigative, Artistic, Social, Enterprising, and
+            Conventional—each reflecting different strengths and preferences. Most individuals show a combination of
+            these. Understanding your interest profile helps you explore careers that align with what inspires you, making
+            work more enjoyable, learning more natural, and success more fulfilling.
+          </Text>
+
+          <Text style={{ textAlign: 'center', fontWeight: '800', fontSize: 13, color: COLORS.dark, marginBottom: 6 }}>
+            RIASEC Model
+          </Text>
+
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 10 }}>
+            <Image
+              source={ReportImg2}
+              style={{ width: '100%', height: 300 }}
+              resizeMode="contain"
+            />
+          </View>
+
+          <PageFooter pageNum={4} />
+        </View>
+
+        {/* ============================================================
+            PAGE 5: INTEREST DETAILS (01 - 03)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[5] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <DetailCardRow
+            num="01"
+            title="ENTERPRISING"
+            color="red"
+            desc="You are naturally confident, assertive, and persuasive. You enjoy leadership roles and are driven by goals, success, and influence. You're often seen as energetic, ambitious, and socially bold."
+            traits="Leadership, persuasion, risk-taking, initiative."
+            enjoys="Selling, managing people, public speaking, leading projects."
+            environments="Fast-paced, entrepreneurial, competitive, leadership-driven."
+          />
+
+          <DetailCardRow
+            num="02"
+            title="CONVENTIONAL"
+            color="red"
+            desc="You're an organizer — you like order, accuracy, records, plans and numbers, and people can rely on you to keep things on track."
+            traits="Organized, systematic, reliable, efficient, detail-oriented."
+            enjoys="Managing records, organising information, maintaining schedules, accounting, clerical work, following procedures."
+            environments="Structured, orderly, rule-based, organized, administrative."
+          />
+
+          <DetailCardRow
+            num="03"
+            title="SOCIAL"
+            color="red"
+            desc="You care deeply about helping others and building meaningful interpersonal relationships. You are empathetic, cooperative, and emotionally intelligent."
+            traits="Caring, supportive, trustworthy, socially responsible."
+            enjoys="Teaching, counselling, mentoring, serving others."
+            environments="Collaborative, service-oriented, people-focused."
+          />
+
+          <PageFooter pageNum={5} />
+        </View>
+
+        {/* ============================================================
+            PAGE 6: INTEREST DETAILS (04 - 06)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[6] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <DetailCardRow
+            num="04"
+            title="REALISTIC"
+            color="red"
+            desc="You are action-oriented, practical, and grounded. You prefer working with your hands, tools, and tangible objects rather than abstract ideas. You find satisfaction in seeing concrete results from your efforts."
+            traits="Practical, reliable, hands-on, straightforward, persistent."
+            enjoys="Building, repairing, operating machinery, working outdoors."
+            environments="Structured, physical, outdoorsy, task-focused."
+          />
+
+          <DetailCardRow
+            num="05"
+            title="INVESTIGATIVE"
+            color="red"
+            desc="You are curious, analytical, and intellectually driven. You enjoy exploring ideas, solving complex problems, and understanding how things work through observation, research, and critical thinking."
+            traits="Analytical, curious, logical, observant, independent."
+            enjoys="Research, experimentation, data analysis, solving puzzles, scientific inquiry, learning new concepts."
+            environments="Research-oriented, intellectually stimulating, independent, evidence-based, problem-solving focused."
+          />
+
+          <DetailCardRow
+            num="06"
+            title="ARTISTIC"
+            color="red"
+            desc="You enjoy creative activities from time to time and appreciate originality, even if creating isn't your central passion."
+            traits="Creative, imaginative, expressive, original, intuitive."
+            enjoys="Drawing, writing, music, performing arts, designing, storytelling, photography."
+            environments="Creative, flexible, open-minded, innovative, self-directed."
+          />
+
+          <PageFooter pageNum={6} />
+        </View>
+
+        {/* ============================================================
+            PAGE 7: VISUAL REPRESENTATION (INTERESTS)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[7] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="red" />
+
+          {/* H-Bar Chart */}
+          <View style={{ marginVertical: 12 }}>
+            {[
+              { label: 'Enterprising', val: interestScoreMap.E },
+              { label: 'Conventional', val: interestScoreMap.C },
+              { label: 'Social', val: interestScoreMap.S },
+              { label: 'Realistic', val: interestScoreMap.R },
+              { label: 'Investigative', val: interestScoreMap.I },
+              { label: 'Artistic', val: interestScoreMap.A },
+            ].map((item) => (
+              <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                <Text style={{ width: 95, fontSize: 11, fontWeight: '700', color: COLORS.dark }} numberOfLines={1}>
+                  {item.label}
+                </Text>
                 <View
-                  key={i}
                   style={{
-                    backgroundColor: '#9a2119',
-                    width: 32,
-                    height: 32,
+                    flex: 1,
+                    height: 18,
+                    backgroundColor: '#F3F4F6',
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    marginHorizontal: 8,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: `${item.val}%`,
+                      height: '100%',
+                      backgroundColor: COLORS.red,
+                      borderRadius: 4,
+                    }}
+                  />
+                </View>
+                <Text style={{ width: 38, fontSize: 11, fontWeight: '800', color: COLORS.dark, textAlign: 'right' }}>
+                  {item.val}%
+                </Text>
+              </View>
+            ))}
+
+            {/* Bottom X-Axis Numbers */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingLeft: 103, paddingRight: 46, marginTop: 4 }}>
+              {[0, 20, 40, 60, 80, 100].map((pt) => (
+                <Text key={pt} style={{ fontSize: 9, color: COLORS.muted, fontWeight: '600' }}>
+                  {pt}
+                </Text>
+              ))}
+            </View>
+          </View>
+
+          {/* Top Career Interests Box */}
+          <View style={{ marginTop: 24 }}>
+            <ScoreRepBanner title="YOUR TOP CAREER INTERESTS ARE" color="red" />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+              {['ENTERPRISING', 'CONVENTIONAL', 'SOCIAL', 'REALISTIC'].map((pill) => (
+                <View
+                  key={pill}
+                  style={{
+                    flex: 1,
+                    minWidth: '45%',
+                    paddingVertical: 9,
+                    backgroundColor: COLORS.red,
                     borderRadius: 8,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '900' }}>
-                    {L}
+                  <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>
+                    {pill}
                   </Text>
                 </View>
               ))}
             </View>
-            <Text style={{ flex: 1, color: textColor, fontSize: 12, lineHeight: 17 }}>
-              Your <Text style={{ fontWeight: '800' }}>Holland Code: {hollandCode}</Text> — your three strongest interest types, used worldwide to describe career fit.
+          </View>
+
+          <PageFooter pageNum={7} />
+        </View>
+
+        {/* ============================================================
+            PAGE 8: PERSONALITY OVERVIEW
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[8] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <TitlePill title="PERSONALITY" colorClass="green" />
+
+          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 8 }}>
+            Your personality is the blend of traits that shape how you think, feel, and behave. It influences how you solve
+            problems, build relationships, manage stress, and respond to opportunities. The Big Five model describes
+            personality through five dimensions: Openness (curiosity and creativity), Conscientiousness (discipline and
+            responsibility), Extraversion (energy and sociability), Agreeableness (cooperation and empathy), and
+            Emotional Stability (resilience under pressure). Each trait offers strengths, and different careers may suit
+            different combinations.
+          </Text>
+          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 12 }}>
+            For example, conscientious individuals may excel in structured roles, while those high in openness may
+            thrive in creative or innovative environments. Understanding your personality helps you choose careers that
+            align with your natural style and identify areas for growth, making it easier to collaborate effectively and
+            feel at ease in your work.
+          </Text>
+
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 10 }}>
+            <Image
+              source={ReportImg3}
+              style={{ width: '100%', height: 260 }}
+              resizeMode="contain"
+            />
+          </View>
+
+          <PageFooter pageNum={8} />
+        </View>
+
+        {/* ============================================================
+            PAGE 9: PERSONALITY SUGGESTIONS
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[9] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          {[
+            {
+              num: '01',
+              name: 'EMOTIONAL STABILITY',
+              band: 'HIGH',
+              text: 'You stay calm and steady under pressure a major asset for high-stakes fields like defence, medicine, aviation and competitive exams.',
+            },
+            {
+              num: '02',
+              name: 'OPENNESS',
+              band: 'MODERATE',
+              text: 'You balance curiosity with practicality open to new ideas, while valuing what already works.',
+            },
+            {
+              num: '03',
+              name: 'CONSCIENTIOUSNESS',
+              band: 'MODERATE',
+              text: "You're reasonably organised and dependable, finishing what matters even if some tasks slip.",
+            },
+            {
+              num: '04',
+              name: 'EXTRAVERSION',
+              band: 'MODERATE',
+              text: "You're an ambivert — comfortable both in groups and working alone, adapting to what the situation needs.",
+            },
+            {
+              num: '05',
+              name: 'AGREEABLENESS',
+              band: 'MODERATE',
+              text: 'You cooperate well while still holding your own views — a healthy balance for teamwork and fair decisions.',
+            },
+          ].map((item) => (
+            <TraitCardRow
+              key={item.num}
+              num={item.num}
+              name={item.name}
+              band={item.band}
+              text={item.text}
+              color="green"
+            />
+          ))}
+
+          <PageFooter pageNum={9} />
+        </View>
+
+        {/* ============================================================
+            PAGE 10: VISUAL REPRESENTATION (PERSONALITY)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[10] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="green" />
+
+          {/* Green Bar Chart */}
+          <View style={{ marginVertical: 12 }}>
+            {[
+              { label: 'EMOTIONAL STABILITY', val: personScoreMap.ES },
+              { label: 'OPENNESS', val: personScoreMap.O },
+              { label: 'CONSCIENTIOUSNESS', val: personScoreMap.Cn },
+              { label: 'EXTRAVERSION', val: personScoreMap.Ex },
+              { label: 'AGREEABLENESS', val: personScoreMap.Ag },
+            ].map((item) => (
+              <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                <Text style={{ width: 110, fontSize: 9.5, fontWeight: '700', color: COLORS.dark }} numberOfLines={1}>
+                  {item.label}
+                </Text>
+                <View
+                  style={{
+                    flex: 1,
+                    height: 18,
+                    backgroundColor: '#F3F4F6',
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    marginHorizontal: 8,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: `${item.val}%`,
+                      height: '100%',
+                      backgroundColor: COLORS.green,
+                      borderRadius: 4,
+                    }}
+                  />
+                </View>
+                <Text style={{ width: 36, fontSize: 11, fontWeight: '800', color: COLORS.dark, textAlign: 'right' }}>
+                  {item.val}%
+                </Text>
+              </View>
+            ))}
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingLeft: 118, paddingRight: 44, marginTop: 4 }}>
+              {[0, 20, 40, 60, 80].map((pt) => (
+                <Text key={pt} style={{ fontSize: 9, color: COLORS.muted, fontWeight: '600' }}>
+                  {pt}
+                </Text>
+              ))}
+            </View>
+          </View>
+
+          {/* Callout Box */}
+          <View
+            style={{
+              marginTop: 20,
+              padding: 12,
+              backgroundColor: '#CFE0CB',
+              borderWidth: 1,
+              borderColor: '#BAD0B5',
+              borderRadius: 10,
+            }}
+          >
+            <Text style={{ fontSize: 11.5, lineHeight: 17, color: COLORS.dark, fontWeight: '500' }}>
+              Emotional Stability is the positive side of the Neuroticism scale — a higher score means you stay calmer
+              under pressure.
             </Text>
           </View>
 
-          {/* Top 5 Clusters Cards */}
-          <View style={{ marginTop: 14, gap: 14 }}>
-            {top5Clusters.map((cluster) => {
-              const careers = cluster.careers || [];
-              const isExpanded = Boolean(expandedClusters[cluster.code]);
-              const shownCareers = isExpanded ? careers : careers.slice(0, 10);
-              const isSem =
-                cluster.code === 'SEM' || cluster.name.includes('Science, Engineering');
+          <PageFooter pageNum={10} />
+        </View>
 
-              return (
-                <View
-                  key={cluster.code}
-                  style={{
-                    backgroundColor: cardBg,
-                    borderRadius: 18,
-                    padding: 16,
-                    borderWidth: 1,
-                    borderColor,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: darkMode ? 0 : 0.04,
-                    shadowRadius: 6,
-                    elevation: 2,
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                      <View
-                        style={{
-                          backgroundColor: '#fee2e2',
-                          width: 24,
-                          height: 24,
-                          borderRadius: 8,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Text style={{ color: '#9a2119', fontSize: 12, fontWeight: '900' }}>
-                          {cluster.rank}
-                        </Text>
-                      </View>
-                      <Text style={{ color: textColor, fontSize: 15, fontWeight: '800', flex: 1 }}>
-                        {cluster.name}
-                      </Text>
-                    </View>
-                    <Text style={{ color: '#9a2119', fontSize: 16, fontWeight: '900' }}>
-                      {cluster.matchPercentage}%
-                    </Text>
-                  </View>
+        {/* ============================================================
+            PAGE 11: LEARNING STYLES OVERVIEW
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[11] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <TitlePill title="LEARNING STYLE" colorClass="lavender" />
 
-                  {/* Match Bar */}
+          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 8 }}>
+            Everyone has a preferred way of learning, and knowing your style can make studying, training, and working
+            much more effective. The VARK model highlights four main preferences: Visual learners understand best
+            through charts, diagrams, and images; Auditory learners grasp information by listening, discussing, and
+            explaining; Reading/Writing learners prefer text, lists, and notes; and Kinesthetic learners learn by doing,
+            experiencing, and applying knowledge practically.
+          </Text>
+          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 8 }}>
+            While everyone can learn in all ways, most people have one or two stronger preferences. Recognizing your
+            learning style helps you study smarter, prepare better for exams, and even choose careers that align with how
+            you absorb and process information.
+          </Text>
+          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 12 }}>
+            Knowing your learning style empowers you to adapt your strategies in school and at work, making learning
+            feel more natural and less stressful.
+          </Text>
+
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 8 }}>
+            <Image
+              source={ReportImg4}
+              style={{ width: '100%', height: 260 }}
+              resizeMode="contain"
+            />
+          </View>
+
+          <PageFooter pageNum={11} />
+        </View>
+
+        {/* ============================================================
+            PAGE 12: LEARNING STYLE DETAILS (01 - 02)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[12] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <DetailCardRow
+            num="01"
+            title="VISUAL"
+            color="lavender"
+            desc="You prefer to learn via images, diagrams, flow charts, maps, symbolic representations. You benefit from seeing the structure, patterns, shapes, relationships."
+            traits="Grasping spatial or structural relationships; memory aided by imagery; organising information visually."
+            enjoys="Using flowcharts, infographics, videos, colorcoded notes, visual organizers, and symbolic representations to study or plan."
+            environments="Learning spaces that use visual aids, presentations, digital whiteboards, concept maps, and multimedia tools — classrooms or workplaces where design, structure, and visual clarity are valued."
+          />
+
+          <DetailCardRow
+            num="02"
+            title="AUDITORY"
+            color="lavender"
+            desc="You learn through listening and speaking. Explaining ideas aloud helps you process them deeply. You benefit from discussions, storytelling, and audio recordings. You thrive in environments where oral communication is valued — such as teaching, counselling, performing, or team collaboration."
+            traits="Expressive, articulate, and sensitive to tone and rhythm. You learn best through listening, discussion, and verbal explanation. You may remember information better when it’s heard rather than read."
+            enjoys="Participating in group discussions, lectures, podcasts, debates, or reading aloud. You often recall not just what was said, but how it was said."
+            environments="Interactive classrooms, seminars, or workplaces that encourage open conversation, brainstorming, and verbal feedback."
+          />
+
+          <PageFooter pageNum={12} />
+        </View>
+
+        {/* ============================================================
+            PAGE 13: LEARNING STYLE DETAILS (03 - 04)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[13] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <DetailCardRow
+            num="03"
+            title="READING/WRITING"
+            color="lavender"
+            desc="You learn through reading texts, writing detailed notes, and synthesizing written information. You prefer structure, definitions, glossaries, and comprehensive documents."
+            traits="Methodical reader, articulate in written expression, precise in taking notes and absorbing textbooks."
+            enjoys="Taking extensive notes, reading articles, writing essays, creating lists, organizing information via bullet points."
+            environments="Libraries, research-driven workspaces, policy analysis, academic institutions, and settings that value thorough documentation."
+          />
+
+          <DetailCardRow
+            num="04"
+            title="KINAESTHETIC"
+            color="lavender"
+            desc="You learn through experience. Abstract ideas make sense when you can do something with them. You thrive when allowed to experiment, observe, and apply. This learning style supports success in applied fields like engineering, design, healthcare, sports, and performing arts anywhere learning connects mind and body."
+            traits="Hands-on, practical, and experiential. You grasp concepts through physical movement, real-life examples, and direct engagement. You like “learning by doing” rather than only reading or listening."
+            enjoys="Experiments, demonstrations, simulations, field visits, role plays, or building and testing ideas. You prefer tactile engagement and movement during learning."
+            environments="Interactive, activity-based settings workshops, labs, studios, or outdoor spaces - where theory connects directly with practice."
+          />
+
+          <PageFooter pageNum={13} />
+        </View>
+
+        {/* ============================================================
+            PAGE 14: VISUAL REPRESENTATION (LEARNING STYLES)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[14] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="lavender" />
+
+          {/* 4 Donut Gauges */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', marginVertical: 14, gap: 16 }}>
+            {/* Visual 100% */}
+            <View style={{ alignItems: 'center' }}>
+              <DonutGauge percent={100} color="#466CA3" trackColor="#DDE7F3" textColor="#1E3A8A" />
+              <Text style={{ marginTop: 6, fontWeight: '800', fontSize: 11, color: COLORS.dark }}>VISUAL</Text>
+            </View>
+
+            {/* Auditory 75% */}
+            <View style={{ alignItems: 'center' }}>
+              <DonutGauge percent={75} color={COLORS.green} trackColor="#E2EBE0" textColor="#154512" />
+              <Text style={{ marginTop: 6, fontWeight: '800', fontSize: 11, color: COLORS.dark }}>AUDITORY</Text>
+            </View>
+
+            {/* Reading 85% */}
+            <View style={{ alignItems: 'center' }}>
+              <DonutGauge percent={85} color="#B58E2E" trackColor="#F3EDE0" textColor="#5C450A" />
+              <Text style={{ marginTop: 6, fontWeight: '800', fontSize: 11, color: COLORS.dark }}>READING</Text>
+            </View>
+
+            {/* Kinesthetic 60% */}
+            <View style={{ alignItems: 'center' }}>
+              <DonutGauge percent={60} color="#9A4235" trackColor="#F6E7E5" textColor="#691811" />
+              <Text style={{ marginTop: 6, fontWeight: '800', fontSize: 11, color: COLORS.dark }}>KINAESTHETIC</Text>
+            </View>
+          </View>
+
+          {/* Best Learning Styles */}
+          <View style={{ marginTop: 18 }}>
+            <ScoreRepBanner title="Your Best Learning Styles are" color="lavender" />
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+              <View
+                style={{
+                  flex: 1,
+                  paddingVertical: 9,
+                  backgroundColor: COLORS.lavender,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>VISUAL</Text>
+              </View>
+              <View
+                style={{
+                  flex: 1,
+                  paddingVertical: 9,
+                  backgroundColor: COLORS.lavender,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>READING</Text>
+              </View>
+            </View>
+            <View
+              style={{
+                width: '60%',
+                alignSelf: 'center',
+                marginTop: 8,
+                paddingVertical: 9,
+                backgroundColor: COLORS.lavender,
+                borderRadius: 8,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>AUDITORY</Text>
+            </View>
+          </View>
+
+          <PageFooter pageNum={14} />
+        </View>
+
+        {/* ============================================================
+            PAGE 15: WORK VALUES OVERVIEW
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[15] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <TitlePill title="WORK VALUES" colorClass="green" />
+
+          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 8 }}>
+            Work values are the core principles and priorities that define what matters most to you in a professional
+            environment. They reflect what you seek from your career — whether that is achievement, recognition,
+            security, autonomy, relationships, or making a meaningful impact. Unlike interests (what you enjoy) or
+            personality (how you behave), work values reveal why certain careers feel more fulfilling than others.
+          </Text>
+          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 10 }}>
+            Understanding your work values helps you evaluate job opportunities beyond salary and title. When your work
+            aligns with your values, you feel more motivated, satisfied, and committed. Identifying your core values
+            early helps you make career choices that bring long-term fulfilment.
+          </Text>
+
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 8 }}>
+            <Image
+              source={ReportImg5}
+              style={{ width: '100%', height: 220 }}
+              resizeMode="contain"
+            />
+          </View>
+
+          <Text style={{ fontSize: 10.5, color: '#4A5568', lineHeight: 15, marginTop: 4 }}>
+            Each trait brings strengths, and different careers suit different combinations. For example, highly
+            conscientious individuals may excel in structured roles, while those high in openness may thrive in
+            creative or innovative environments.
+          </Text>
+
+          <PageFooter pageNum={15} />
+        </View>
+
+        {/* ============================================================
+            PAGE 16: WORK VALUES SUGGESTIONS
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[16] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <TitlePill title="HERE ARE THE SUGGESTIONS AS PER VALUES" colorClass="dark-green" />
+
+          {[
+            {
+              num: '01',
+              name: 'OPENNESS TO CHANGE',
+              band: 'HIGH',
+              text: "Freedom, creativity and new experiences drive you — you'll thrive where you can decide how you work and what you explore.",
+            },
+            {
+              num: '02',
+              name: 'SELF-ENHANCEMENT',
+              band: 'HIGH',
+              text: "Achievement, success and recognition strongly drive you — you'll thrive with clear goals, competition, growth ladders and visible results.",
+            },
+            {
+              num: '03',
+              name: 'SELF-TRANSCENDENCE',
+              band: 'MODERATE',
+              text: 'You care about fairness and helping others as part of a balanced set of motivations.',
+            },
+            {
+              num: '04',
+              name: 'CONSERVATION',
+              band: 'MODERATE',
+              text: 'You value a reasonable amount of stability and order while staying flexible when things shift.',
+            },
+          ].map((item) => (
+            <TraitCardRow
+              key={item.num}
+              num={item.num}
+              name={item.name}
+              band={item.band}
+              text={item.text}
+              color="dark-green"
+            />
+          ))}
+
+          <PageFooter pageNum={16} />
+        </View>
+
+        {/* ============================================================
+            PAGE 17: VISUAL REPRESENTATION (WORK VALUES)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[17] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="green" />
+
+          {/* Capsule Progress Bars */}
+          <View style={{ marginVertical: 14, gap: 14 }}>
+            {[
+              { label: 'OPENNESS TO CHANGE', val: valScoreMap.OC, fillColor: '#46633E', trackColor: '#C8D7C4' },
+              { label: 'SELF-ENHANCEMENT', val: valScoreMap.SE, fillColor: '#5279A8', trackColor: '#C4D5EB' },
+              { label: 'SELF-TRANSCENDENCE', val: valScoreMap.ST, fillColor: '#6978B4', trackColor: '#CCD2E8' },
+              { label: 'CONSERVATION', val: valScoreMap.CO, fillColor: '#9E7B1D', trackColor: '#F5E9CC' },
+            ].map((item) => (
+              <View key={item.label}>
+                <Text style={{ fontWeight: '800', fontSize: 11, color: COLORS.dark, marginBottom: 4 }}>
+                  {item.label}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <View
                     style={{
-                      height: 6,
-                      backgroundColor: darkMode ? '#222226' : '#e2e8f0',
-                      borderRadius: 3,
-                      marginTop: 10,
+                      flex: 1,
+                      height: 22,
+                      borderRadius: 11,
+                      backgroundColor: item.trackColor,
                       overflow: 'hidden',
                     }}
                   >
                     <View
                       style={{
+                        width: `${item.val}%`,
                         height: '100%',
-                        width: `${cluster.matchPercentage}%`,
-                        backgroundColor: '#9a2119',
-                        borderRadius: 3,
+                        borderRadius: 11,
+                        backgroundColor: item.fillColor,
                       }}
                     />
                   </View>
-
-                  <Text style={{ color: textColor, fontSize: 12, lineHeight: 18, marginTop: 10 }}>
-                    {cluster.description}
+                  <Text style={{ width: 44, fontSize: 13, fontWeight: '900', color: COLORS.dark, textAlign: 'right' }}>
+                    {item.val}%
                   </Text>
-
-                  {cluster.why_fit ? (
-                    <Text style={{ color: subtextColor, fontSize: 12, lineHeight: 17, marginTop: 8 }}>
-                      <Text style={{ fontWeight: '700', color: textColor }}>Why it suits you: </Text>
-                      {cluster.why_fit}
-                    </Text>
-                  ) : null}
-
-                  {cluster.streams_and_pathways_india ? (
-                    <Text style={{ color: subtextColor, fontSize: 12, lineHeight: 17, marginTop: 8 }}>
-                      <Text style={{ fontWeight: '700', color: textColor }}>Pathway in India: </Text>
-                      {cluster.streams_and_pathways_india}
-                    </Text>
-                  ) : null}
-
-                  {/* Career Chips */}
-                  {shownCareers.length > 0 && (
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
-                      {shownCareers.map((c, ci) => (
-                        <View
-                          key={ci}
-                          style={{
-                            backgroundColor: darkMode ? '#1c1c20' : '#f1f5f9',
-                            paddingHorizontal: 8,
-                            paddingVertical: 4,
-                            borderRadius: 8,
-                          }}
-                        >
-                          <Text style={{ color: textColor, fontSize: 11, fontWeight: '600' }}>
-                            {c}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-
-                  {careers.length > 10 && (
-                    <TouchableOpacity
-                      activeOpacity={0.7}
-                      onPress={() =>
-                        setExpandedClusters((prev) => ({
-                          ...prev,
-                          [cluster.code]: !prev[cluster.code],
-                        }))
-                      }
-                      style={{ marginTop: 10 }}
-                    >
-                      <Text style={{ color: '#9a2119', fontSize: 11, fontWeight: '800' }}>
-                        {isExpanded
-                          ? 'Show fewer careers'
-                          : `+ ${careers.length - 10} more careers in this cluster`}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-
-                  {/* SEM sub-clusters */}
-                  {isSem && (
-                    <View
-                      style={{
-                        backgroundColor: darkMode ? '#18181c' : '#f8fafc',
-                        borderRadius: 14,
-                        padding: 12,
-                        marginTop: 12,
-                        borderWidth: 1,
-                        borderColor,
-                      }}
-                    >
-                      <Text style={{ color: textColor, fontSize: 12, fontWeight: '800', marginBottom: 8 }}>
-                        Top Science & Engineering Fields:
-                      </Text>
-                      {SEM_SUB.slice(0, 3).map((sub, si) => (
-                        <View key={sub.sub_id} style={{ marginBottom: 6 }}>
-                          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                            <Text style={{ color: textColor, fontSize: 11, fontWeight: '700' }}>
-                              {si + 1}. {sub.name}
-                            </Text>
-                            <Text style={{ color: '#9a2119', fontSize: 11, fontWeight: '800' }}>
-                              {cluster.matchPercentage - si * 2}%
-                            </Text>
-                          </View>
-                          <Text style={{ color: subtextColor, fontSize: 10, marginTop: 2 }}>
-                            {sub.signature} Ex: {sub.careers_hint}
-                          </Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
                 </View>
-              );
-            })}
+              </View>
+            ))}
           </View>
 
-          {/* Fit Composition Card */}
-          <View
-            style={{
-              backgroundColor: cardBg,
-              borderRadius: 18,
-              padding: 16,
-              borderWidth: 1,
-              borderColor,
-              marginTop: 16,
-            }}
-          >
-            <Text style={{ color: textColor, fontSize: 16, fontWeight: '800' }}>
-              What&apos;s Driving Your #1 Match
-            </Text>
-            <Text style={{ color: subtextColor, fontSize: 12, marginTop: 2 }}>
-              {topCluster.name} — {topCluster.matchPercentage}% overall match, built from four parts of your profile.
-            </Text>
+          {/* Best Value Fit */}
+          <View style={{ marginTop: 20 }}>
+            <ScoreRepBanner title="Your Best Work Value Fit into" color="dark-green" />
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+              <View
+                style={{
+                  flex: 1,
+                  paddingVertical: 9,
+                  backgroundColor: COLORS.green,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 10.5, letterSpacing: 0.4 }}>
+                  OPENNESS TO CHANGE
+                </Text>
+              </View>
+              <View
+                style={{
+                  flex: 1,
+                  paddingVertical: 9,
+                  backgroundColor: COLORS.green,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 10.5, letterSpacing: 0.4 }}>
+                  SELF-ENHANCEMENT
+                </Text>
+              </View>
+            </View>
+          </View>
 
-            <View style={{ alignItems: 'center', marginTop: 16 }}>
-              <DonutChart items={fitItems} size={160} thickness={24} />
+          <PageFooter pageNum={17} />
+        </View>
+
+        {/* ============================================================
+            PAGE 18: GOAL ORIENTATION (OVERVIEW & SHORT TERM)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[18] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <TitlePill title="GOAL ORIENTATION" colorClass="gold" />
+
+          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 8 }}>
+            Goals guide your direction in studies, work, and personal growth. Your goal orientation reflects how you view
+            success and what motivates you to achieve it. Some people focus on short-term goals—completing tasks, gaining
+            quick skills, or achieving immediate results—while others are driven by long-term goals, such as building
+            expertise, reaching leadership roles, or creating lasting impact. Both are important: short-term goals keep
+            you motivated daily, while long-term goals provide vision and persistence.
+          </Text>
+          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 12 }}>
+            Understanding your orientation helps you balance present actions with future ambitions. Knowing your goal
+            orientation helps you use your energy effectively and stay aligned with your personal and career goals.
+          </Text>
+
+          <DetailCardRow
+            num="01"
+            title="SHORT TERM"
+            color="gold"
+            desc="You are oriented toward goals that can be achieved in the relatively near future, often within months to a year. You seek more immediate feedback, micromilestones, and concrete progress."
+            traits="Action-oriented, results-focused, responsive, task-driven, motivated by immediate feedback."
+            enjoys="Completing tasks quickly, achieving daily or weekly targets, gaining visible and prompt results."
+            environments="Fast-paced workplaces with clear, measurable short-cycle goals and regular performance check-ins."
+          />
+
+          <PageFooter pageNum={18} />
+        </View>
+
+        {/* ============================================================
+            PAGE 19: GOAL ORIENTATION (LONG TERM & VISUAL)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[19] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <DetailCardRow
+            num="02"
+            title="LONG TERM"
+            color="gold"
+            desc="You are oriented toward broader, strategic, future-oriented outcomes that may take several years to achieve and often involve many steps. You hold a vision and work progressively toward it."
+            traits="Vision, persistence, planning, stability, commitment."
+            enjoys="Career ambition, major life objectives, mastering a field, long projects, cumulative growth."
+            environments="Long-range planning, supportive structure, milestone expectations, clarity of desired destination."
+          />
+
+          {/* Comparison Strategy Cards */}
+          <View style={{ flexDirection: 'row', gap: 10, marginVertical: 8 }}>
+            <View
+              style={{
+                flex: 1,
+                padding: 10,
+                borderRadius: 10,
+                backgroundColor: '#FDF8EE',
+                borderWidth: 1,
+                borderColor: '#E8D39E',
+              }}
+            >
+              <View
+                style={{
+                  alignSelf: 'flex-start',
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                  backgroundColor: '#F5E6C3',
+                  borderRadius: 4,
+                  marginBottom: 4,
+                }}
+              >
+                <Text style={{ fontSize: 9.5, fontWeight: '900', color: '#4D370A' }}>SHORT TERM</Text>
+              </View>
+              <Text style={{ fontSize: 10, color: '#78540B', lineHeight: 14 }}>
+                Aim for short milestones and rewards. Match with roles needing daily targets.
+              </Text>
             </View>
 
-            <View style={{ marginTop: 14, gap: 8 }}>
-              {fitItems.map((it) => (
-                <View
-                  key={it.label}
+            <View
+              style={{
+                flex: 1,
+                padding: 10,
+                borderRadius: 10,
+                backgroundColor: '#FDF8EE',
+                borderWidth: 1,
+                borderColor: '#E8D39E',
+              }}
+            >
+              <View
+                style={{
+                  alignSelf: 'flex-start',
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                  backgroundColor: '#F5E6C3',
+                  borderRadius: 4,
+                  marginBottom: 4,
+                }}
+              >
+                <Text style={{ fontSize: 9.5, fontWeight: '900', color: '#4D370A' }}>LONG TERM</Text>
+              </View>
+              <Text style={{ fontSize: 10, color: '#78540B', lineHeight: 14 }}>
+                Use Vision boards, planning tools, long-term mentorship. Ideal for research, entrepreneurship, civil
+                services.
+              </Text>
+            </View>
+          </View>
+
+          {/* Visual Representation */}
+          <View style={{ marginTop: 10 }}>
+            <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="gold" />
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 32, marginVertical: 10 }}>
+              <View style={{ alignItems: 'center' }}>
+                <DonutGauge percent={shortPct} color="#94751E" trackColor="#F3EDE0" textColor="#5C450A" />
+                <Text style={{ marginTop: 4, fontWeight: '800', fontSize: 10.5, color: '#5C450A' }}>SHORT TERM</Text>
+              </View>
+              <View style={{ alignItems: 'center' }}>
+                <DonutGauge percent={longPct} color="#94751E" trackColor="#F3EDE0" textColor="#5C450A" />
+                <Text style={{ marginTop: 4, fontWeight: '800', fontSize: 10.5, color: '#5C450A' }}>LONG TERM</Text>
+              </View>
+            </View>
+
+            <View
+              style={{
+                marginTop: 6,
+                paddingVertical: 9,
+                backgroundColor: '#94721C',
+                borderRadius: 10,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11.5, letterSpacing: 0.5 }}>
+                Most Inclined towards : SHORT TERM
+              </Text>
+            </View>
+          </View>
+
+          <PageFooter pageNum={19} />
+        </View>
+
+        {/* ============================================================
+            PAGE 20: APTITUDE (OVERVIEW)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[20] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <TitlePill title="APTITUDE" colorClass="red" />
+
+          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 6 }}>
+            Your aptitude reflects your natural ability to learn, understand, and apply different skills. While
+            interests show what you enjoy, aptitudes indicate what you can do well with practice. They are not fixed and
+            can improve with training, but knowing your strongest aptitudes helps you identify areas where success may
+            come more easily.
+          </Text>
+          <Text style={{ fontWeight: '700', fontSize: 11.5, color: COLORS.dark, marginBottom: 8 }}>
+            In this test, we assess six types of aptitudes:
+          </Text>
+
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 6 }}>
+            <Image
+              source={ReportImg6}
+              style={{ width: '100%', height: 95 }}
+              resizeMode="contain"
+            />
+          </View>
+
+          {/* 4 Summary Cards */}
+          <View style={{ gap: 8, marginTop: 6 }}>
+            {[
+              {
+                title: 'MECHANICAL APTITUDE',
+                desc: 'This shows how easily you understand machines, tools, and physical systems. If strong here, you may enjoy careers in engineering, mechanics, or technology where practical problem-solving is needed.',
+              },
+              {
+                title: 'LOGICAL APTITUDE',
+                desc: 'This reflects your ability to think critically, recognize patterns, and solve problems step by step. Strong logical reasoning is valuable in coding, mathematics, law, and research careers.',
+              },
+              {
+                title: 'VERBAL APTITUDE',
+                desc: 'This measures how well you can express ideas, understand language, and communicate clearly. Strong verbal skills are useful in teaching, law, media, and leadership roles.',
+              },
+              {
+                title: 'VOCABULARY APTITUDE',
+                desc: 'This shows the strength of your word knowledge and ability to use language effectively. It supports careers that rely on reading, writing, public speaking, or persuasion.',
+              },
+            ].map((card) => (
+              <View
+                key={card.title}
+                style={{
+                  borderWidth: 1,
+                  borderColor: COLORS.red,
+                  borderRadius: 10,
+                  overflow: 'hidden',
+                  backgroundColor: COLORS.redLight,
+                }}
+              >
+                <View style={{ backgroundColor: COLORS.red, paddingVertical: 4, alignItems: 'center' }}>
+                  <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 10, letterSpacing: 0.4 }}>
+                    {card.title}
+                  </Text>
+                </View>
+                <Text style={{ padding: 8, fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>{card.desc}</Text>
+              </View>
+            ))}
+          </View>
+
+          <PageFooter pageNum={20} />
+        </View>
+
+        {/* ============================================================
+            PAGE 21: APTITUDE (NUMERICAL & SPATIAL)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[21] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <View style={{ gap: 8, marginBottom: 12 }}>
+            <View
+              style={{
+                borderWidth: 1,
+                borderColor: COLORS.red,
+                borderRadius: 10,
+                overflow: 'hidden',
+                backgroundColor: COLORS.redLight,
+              }}
+            >
+              <View style={{ backgroundColor: COLORS.red, paddingVertical: 4, alignItems: 'center' }}>
+                <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 10, letterSpacing: 0.4 }}>
+                  NUMERICAL APTITUDE
+                </Text>
+              </View>
+              <Text style={{ padding: 8, fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>
+                This measures comfort with numbers, calculations, and quantitative reasoning. It is crucial in careers
+                related to finance, data science, economics, and technology.
+              </Text>
+            </View>
+
+            <View
+              style={{
+                borderWidth: 1,
+                borderColor: COLORS.red,
+                borderRadius: 10,
+                overflow: 'hidden',
+                backgroundColor: COLORS.redLight,
+              }}
+            >
+              <View style={{ backgroundColor: COLORS.red, paddingVertical: 4, alignItems: 'center' }}>
+                <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 10, letterSpacing: 0.4 }}>
+                  SPATIAL APTITUDE
+                </Text>
+              </View>
+              <Text style={{ padding: 8, fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>
+                This reflects your ability to imagine shapes, designs, and objects in space. Strong spatial skills are
+                important for architecture, design, surgery, engineering, and visual arts.
+              </Text>
+            </View>
+          </View>
+
+          <DetailCardRow
+            num="01"
+            title="NUMERICAL"
+            color="red"
+            desc="You think in structured, analytical ways and are comfortable dealing with quantities, formulas, and logic. You enjoy the clarity that numbers provide and are skilled at identifying relationships and trends in data."
+            traits="Logical, detail-oriented, and comfortable working with numbers and quantitative data. Strong in mathematical reasoning, pattern recognition, and data interpretation."
+            enjoys="Working with statistics, solving quantitative problems, budgeting, coding, logical puzzles, or analyzing data."
+            environments="Finance, data analysis, research, science, engineering, or technology-driven spaces that rely on precision and logic."
+          />
+
+          <PageFooter pageNum={21} />
+        </View>
+
+        {/* ============================================================
+            PAGE 22: APTITUDE DETAILS (LOGICAL & VERBAL)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[22] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <DetailCardRow
+            num="02"
+            title="LOGICAL REASONING"
+            color="red"
+            desc="You have a natural ability to think clearly, reason objectively, and identify the most logical pathway to a solution. You approach challenges methodically, preferring to understand why and how something works rather than just what happens."
+            traits="Analytical, systematic, and conceptually clear thinker. You are skilled at recognizing patterns, making inferences, and drawing conclusions from abstract or structured information."
+            enjoys="You enjoy situations where reasoning matters more than rote learning — for example, decoding clues, troubleshooting systems, or analyzing cause-and-effect relationships."
+            environments="You thrive in spaces that reward rational thought — such as research, analytics, data science, technology, law, mathematics, or strategic planning."
+          />
+
+          <DetailCardRow
+            num="03"
+            title="VERBAL APTITUDE"
+            color="red"
+            desc="You have a strong ability to understand, interpret, and communicate ideas through language. You are comfortable processing written information and expressing thoughts clearly."
+            traits="Strong comprehension, articulate expression, attention to language details, and the ability to interpret written information accurately. Skilled in reasoning with words and explaining concepts clearly."
+            enjoys="Reading, writing, debating ideas, storytelling, analyzing written material, presenting ideas, or communicating information clearly to others."
+            environments="Communication-focused fields such as media, journalism, education, law, marketing, public relations, and roles that involve presenting, writing, or explaining ideas."
+          />
+
+          <PageFooter pageNum={22} />
+        </View>
+
+        {/* ============================================================
+            PAGE 23: APTITUDE DETAILS (VOCABULARY & MECHANICAL)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[23] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <DetailCardRow
+            num="04"
+            title="VOCABULARY APTITUDE"
+            color="red"
+            desc="You demonstrate a strong understanding of word meanings, language nuances, and how words can be used effectively in different contexts. This aptitude helps you grasp complex ideas through language and communicate with clarity and precision."
+            traits="Strong word knowledge, language awareness, comprehension of subtle differences in meaning, and the ability to use language effectively."
+            enjoys="Learning new words, reading diverse material, writing, language-based quizzes or puzzles, editing content, and refining communication."
+            environments="Language-rich environments such as publishing, media, education, writing, communication strategy, and roles that require strong language and articulation skills."
+          />
+
+          <DetailCardRow
+            num="05"
+            title="MECHANICAL APTITUDE"
+            color="red"
+            desc="You are able to understand how physical systems, machines, and mechanical processes work. You tend to think in practical and functional ways, recognizing how components interact and how systems operate in real-world environments."
+            traits="Practical thinker, strong problem-solving ability, understanding of mechanical systems, and an interest in how machines or tools function."
+            enjoys="Building, fixing, assembling, experimenting with tools or devices, understanding how machines operate, and solving practical technical problems."
+            environments="Engineering workshops, manufacturing, technical industries, robotics, automotive environments, or hands-on technical fields that involve machinery and systems."
+          />
+
+          <PageFooter pageNum={23} />
+        </View>
+
+        {/* ============================================================
+            PAGE 24: APTITUDE DETAILS (SPATIAL)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[24] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <DetailCardRow
+            num="06"
+            title="SPATIAL APTITUDE"
+            color="red"
+            desc="You have the ability to visualize objects, shapes, and structures in three-dimensional space. You can mentally manipulate visual information, understand patterns, and imagine how different components fit together. This aptitude supports creativity, design thinking, and structural understanding."
+            traits="Strong visual imagination, pattern recognition, spatial awareness, and the ability to mentally rotate or visualize objects."
+            enjoys="Situations where reasoning matters more than rote learning — for example, decoding clues, troubleshooting systems, or analyzing cause-and-effect relationships."
+            environments="Design, architecture, engineering, animation, product design, construction planning, and fields that require visual thinking and spatial planning."
+          />
+
+          <PageFooter pageNum={24} />
+        </View>
+
+        {/* ============================================================
+            PAGE 25: VISUAL REPRESENTATION (APTITUDE COLUMN CHART)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[25] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+          <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="red" />
+
+          {/* Vertical Column Chart */}
+          <View style={{ marginVertical: 14 }}>
+            <View style={{ height: 170, position: 'relative', borderBottomWidth: 1, borderBottomColor: '#94A3B8' }}>
+              {/* Guidelines */}
+              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'space-between' }}>
+                {aptYAxisPoints.map((pt, i) => (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ width: 24, textAlign: 'right', paddingRight: 4, fontSize: 9, color: '#64748B', fontWeight: '700' }}>
+                      {pt}
+                    </Text>
+                    <View style={{ flex: 1, height: 1, backgroundColor: pt === 0 ? '#94A3B8' : '#E2E8F0' }} />
+                  </View>
+                ))}
+              </View>
+
+              {/* Columns */}
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 28,
+                  right: 8,
+                  top: 0,
+                  bottom: 0,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-end',
+                }}
+              >
+                {aptList.map((item) => (
+                  <View key={item.key} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                    <Text style={{ fontSize: 9.5, fontWeight: '800', color: '#1E293B', marginBottom: 2 }}>
+                      {item.val}%
+                    </Text>
+                    <View
+                      style={{
+                        width: '65%',
+                        maxWidth: 32,
+                        height: `${Math.max(item.val > 0 ? 5 : 0, (item.val / aptScaleMax) * 100)}%`,
+                        backgroundColor: '#963E34',
+                        borderTopLeftRadius: 4,
+                        borderTopRightRadius: 4,
+                      }}
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* Column Labels */}
+            <View style={{ flexDirection: 'row', paddingLeft: 28, paddingRight: 8, marginTop: 6 }}>
+              {aptList.map((item) => (
+                <Text
+                  key={item.key}
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
+                    flex: 1,
+                    textAlign: 'center',
+                    fontSize: 8.5,
+                    fontWeight: '700',
+                    color: '#334155',
                   }}
+                  numberOfLines={1}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: 5,
-                        backgroundColor: it.color,
-                      }}
-                    />
-                    <Text style={{ color: textColor, fontSize: 12, fontWeight: '600' }}>
-                      {it.label}
-                    </Text>
-                  </View>
-                  <Text style={{ color: textColor, fontSize: 12, fontWeight: '800' }}>
-                    {Math.round((it.value / fitTotal) * 100)}%
-                  </Text>
-                </View>
+                  {item.label}
+                </Text>
               ))}
             </View>
           </View>
+
+          {/* Top Aptitude Box */}
+          <View style={{ marginTop: 24 }}>
+            <ScoreRepBanner title="Your Top Aptitude are" color="red" />
+            <View
+              style={{
+                width: '70%',
+                alignSelf: 'center',
+                marginTop: 6,
+                paddingVertical: 9,
+                backgroundColor: COLORS.red,
+                borderRadius: 8,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>
+                {topAptName}
+              </Text>
+            </View>
+          </View>
+
+          <PageFooter pageNum={25} />
         </View>
 
         {/* ============================================================
-            LEG 2: Your Profile, In Detail (6 Domains + Charts)
+            PAGE 26: INTEGRATED ANALYSIS & CLUSTER #1
         ============================================================ */}
         <View
-          onLayout={(event) => {
-            legRefs.current.leg2 = event.nativeEvent.layout.y;
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[26] = e.nativeEvent.layout.y;
           }}
-          style={{ marginBottom: 24 }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#9a2119' }} />
-            <Text style={{ color: '#9a2119', fontSize: 10, fontWeight: '800', textTransform: 'uppercase' }}>
-              SECTION 2 OF 4
-            </Text>
-          </View>
-          <Text style={{ color: textColor, fontSize: 19, fontWeight: '900' }}>
-            Your Profile, In Detail
+          <PageHeader studentFirstName={studentFirstName} />
+          <TitlePill title="INTEGRATED ANALYSIS" colorClass="gold" />
+
+          <Text style={{ fontSize: 14, fontWeight: '900', color: COLORS.dark, textTransform: 'uppercase' }}>
+            YOUR TOP CLUSTERS
           </Text>
-          <Text style={{ color: subtextColor, fontSize: 12, lineHeight: 18, marginTop: 4 }}>
-            Six results from the assessment, each with its own native chart. Bands (developing / moderate / high) describe relative standing.
+          <Text style={{ fontSize: 10.5, color: COLORS.muted, marginBottom: 8 }}>
+            Each card shows what the field involves, why it suits you, how to get there, and list of careers
           </Text>
 
-          {/* 1. Interests (RIASEC) */}
-          <View
-            style={{
-              backgroundColor: cardBg,
-              borderRadius: 18,
-              padding: 16,
-              borderWidth: 1,
-              borderColor,
-              marginTop: 14,
-            }}
-          >
-            <Text style={{ color: textColor, fontSize: 16, fontWeight: '800' }}>
-              Interests · RIASEC
-            </Text>
-            <Text style={{ color: subtextColor, fontSize: 11, marginTop: 2 }}>
-              These six types describe what activities energise you — together they form your Holland Code.
-            </Text>
-
-            <View style={{ alignItems: 'center', marginVertical: 14 }}>
-              <DonutChart items={riItems} size={160} thickness={26} />
-            </View>
-
-            <View style={{ gap: 10 }}>
-              {riRank.map(([f, val]) => {
-                const bd = band(val);
-                const meta = INTERP.interest[f] || {};
-                return (
-                  <View
-                    key={f}
-                    style={{
-                      borderTopWidth: 1,
-                      borderTopColor: borderColor,
-                      paddingTop: 8,
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <View style={{ width: 9, height: 9, borderRadius: 4.5, backgroundColor: INTEREST_COLOR[f] }} />
-                        <Text style={{ color: textColor, fontSize: 13, fontWeight: '700' }}>
-                          {meta.name || f}
-                        </Text>
-                        <View
-                          style={{
-                            backgroundColor: bd === 'high' ? '#fee2e2' : bd === 'moderate' ? '#fef3c7' : '#f1f5f9',
-                            paddingHorizontal: 6,
-                            paddingVertical: 1,
-                            borderRadius: 6,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: bd === 'high' ? '#9a2119' : bd === 'moderate' ? '#b45309' : '#475569',
-                              fontSize: 9,
-                              fontWeight: '800',
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            {bd}
-                          </Text>
-                        </View>
-                      </View>
-                      <Text style={{ color: textColor, fontSize: 13, fontWeight: '800' }}>
-                        {val}%
-                      </Text>
-                    </View>
-                    <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 4 }}>
-                      {meta.blurbs?.[bd] || ''}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 6 }}>
+            <Image
+              source={ReportImg7}
+              style={{ width: '100%', height: 180 }}
+              resizeMode="contain"
+            />
           </View>
 
-          {/* 2. Personality (OCEAN) */}
-          <View
-            style={{
-              backgroundColor: cardBg,
-              borderRadius: 18,
-              padding: 16,
-              borderWidth: 1,
-              borderColor,
-              marginTop: 14,
-            }}
-          >
-            <Text style={{ color: textColor, fontSize: 16, fontWeight: '800' }}>
-              Personality · OCEAN
-            </Text>
-            <Text style={{ color: subtextColor, fontSize: 11, marginTop: 2 }}>
-              Five broad traits that describe how you typically think, feel, and act.
-            </Text>
+          <ClusterMatchCard cluster={top5Clusters[0]} colorTheme="red" />
 
-            <View style={{ alignItems: 'center', marginVertical: 14 }}>
-              <HBarChart items={personChartItems} width={320} />
-            </View>
-
-            <View style={{ gap: 10 }}>
-              {ocRank.map(([f, val]) => {
-                const bd = band(val);
-                const meta = INTERP.personality[f] || {};
-                return (
-                  <View
-                    key={f}
-                    style={{
-                      borderTopWidth: 1,
-                      borderTopColor: borderColor,
-                      paddingTop: 8,
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <View style={{ width: 9, height: 9, borderRadius: 4.5, backgroundColor: PERSON_COLOR[f] }} />
-                        <Text style={{ color: textColor, fontSize: 13, fontWeight: '700' }}>
-                          {meta.name || f}
-                        </Text>
-                        <View
-                          style={{
-                            backgroundColor: bd === 'high' ? '#fee2e2' : bd === 'moderate' ? '#fef3c7' : '#f1f5f9',
-                            paddingHorizontal: 6,
-                            paddingVertical: 1,
-                            borderRadius: 6,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: bd === 'high' ? '#9a2119' : bd === 'moderate' ? '#b45309' : '#475569',
-                              fontSize: 9,
-                              fontWeight: '800',
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            {bd}
-                          </Text>
-                        </View>
-                      </View>
-                      <Text style={{ color: textColor, fontSize: 13, fontWeight: '800' }}>
-                        {val}%
-                      </Text>
-                    </View>
-                    <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 4 }}>
-                      {meta.blurbs?.[bd] || ''}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-            <Text style={{ color: subtextColor, fontSize: 10, marginTop: 10, fontStyle: 'italic' }}>
-              {INTERP.report_disclaimers.es_note}
-            </Text>
-          </View>
-
-          {/* 3. Values · Schwartz Values */}
-          <View
-            style={{
-              backgroundColor: cardBg,
-              borderRadius: 18,
-              padding: 16,
-              borderWidth: 1,
-              borderColor,
-              marginTop: 14,
-            }}
-          >
-            <Text style={{ color: textColor, fontSize: 16, fontWeight: '800' }}>
-              What You Value · Schwartz Values
-            </Text>
-            <Text style={{ color: subtextColor, fontSize: 11, marginTop: 2 }}>
-              What matters to you when you imagine your work and your life.
-            </Text>
-
-            <View style={{ alignItems: 'center', marginVertical: 14 }}>
-              <DonutChart items={valItems} size={160} thickness={26} />
-            </View>
-
-            <View style={{ gap: 10 }}>
-              {valRank.map(([f, val]) => {
-                const bd = band(val);
-                const meta = INTERP.values[f] || {};
-                return (
-                  <View
-                    key={f}
-                    style={{
-                      borderTopWidth: 1,
-                      borderTopColor: borderColor,
-                      paddingTop: 8,
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <View style={{ width: 9, height: 9, borderRadius: 4.5, backgroundColor: VALUES_COLOR[f] }} />
-                        <Text style={{ color: textColor, fontSize: 13, fontWeight: '700' }}>
-                          {meta.name || f}
-                        </Text>
-                        <View
-                          style={{
-                            backgroundColor: bd === 'high' ? '#fee2e2' : bd === 'moderate' ? '#fef3c7' : '#f1f5f9',
-                            paddingHorizontal: 6,
-                            paddingVertical: 1,
-                            borderRadius: 6,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: bd === 'high' ? '#9a2119' : bd === 'moderate' ? '#b45309' : '#475569',
-                              fontSize: 9,
-                              fontWeight: '800',
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            {bd}
-                          </Text>
-                        </View>
-                      </View>
-                      <Text style={{ color: textColor, fontSize: 13, fontWeight: '800' }}>
-                        {val}%
-                      </Text>
-                    </View>
-                    <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 4 }}>
-                      {meta.blurbs?.[bd] || ''}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* 4. Aptitude */}
-          <View
-            style={{
-              backgroundColor: cardBg,
-              borderRadius: 18,
-              padding: 16,
-              borderWidth: 1,
-              borderColor,
-              marginTop: 14,
-            }}
-          >
-            <Text style={{ color: textColor, fontSize: 16, fontWeight: '800' }}>
-              Aptitude & Cognitive Reasoning
-            </Text>
-            <Text style={{ color: subtextColor, fontSize: 11, marginTop: 2 }}>
-              How you performed on six kinds of reasoning — these are skills that build with practice.
-            </Text>
-
-            <View style={{ alignItems: 'center', marginVertical: 14 }}>
-              <ColumnChart items={aptChartItems} width={320} height={190} />
-            </View>
-
-            <View style={{ gap: 10 }}>
-              {aptRank.map(([f, val]) => {
-                const bd = band(val);
-                const meta = INTERP.aptitude[f] || {};
-                return (
-                  <View
-                    key={f}
-                    style={{
-                      borderTopWidth: 1,
-                      borderTopColor: borderColor,
-                      paddingTop: 8,
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <View style={{ width: 9, height: 9, borderRadius: 4.5, backgroundColor: bandColorHex(val) }} />
-                        <Text style={{ color: textColor, fontSize: 13, fontWeight: '700' }}>
-                          {meta.name || f}
-                        </Text>
-                        <View
-                          style={{
-                            backgroundColor: bd === 'high' ? '#fee2e2' : bd === 'moderate' ? '#fef3c7' : '#f1f5f9',
-                            paddingHorizontal: 6,
-                            paddingVertical: 1,
-                            borderRadius: 6,
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: bd === 'high' ? '#9a2119' : bd === 'moderate' ? '#b45309' : '#475569',
-                              fontSize: 9,
-                              fontWeight: '800',
-                              textTransform: 'uppercase',
-                            }}
-                          >
-                            {bd}
-                          </Text>
-                        </View>
-                      </View>
-                      <Text style={{ color: textColor, fontSize: 13, fontWeight: '800' }}>
-                        {val}%
-                      </Text>
-                    </View>
-                    <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 4 }}>
-                      {meta.blurbs?.[bd] || ''}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-            <Text style={{ color: subtextColor, fontSize: 10, marginTop: 10, fontStyle: 'italic' }}>
-              {INTERP.report_disclaimers.apt_note}
-            </Text>
-          </View>
-
-          {/* 5. Learning Style · VARK */}
-          <View
-            style={{
-              backgroundColor: cardBg,
-              borderRadius: 18,
-              padding: 16,
-              borderWidth: 1,
-              borderColor,
-              marginTop: 14,
-            }}
-          >
-            <Text style={{ color: textColor, fontSize: 16, fontWeight: '800' }}>
-              Learning Style · VARK
-            </Text>
-            <Text style={{ color: subtextColor, fontSize: 11, marginTop: 2 }}>
-              How information tends to stick best for you when you&apos;re studying.
-            </Text>
-
-            <View style={{ alignItems: 'center', marginVertical: 14 }}>
-              <LineChart items={varkChartItems} width={320} height={180} color={CHART_COLOR.slate} />
-            </View>
-
-            <View style={{ gap: 10 }}>
-              {varkFacets.map((f) => {
-                const meta = INTERP.learning_style[f] || {};
-                return (
-                  <View
-                    key={f}
-                    style={{
-                      borderTopWidth: 1,
-                      borderTopColor: borderColor,
-                      paddingTop: 8,
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <View style={{ width: 9, height: 9, borderRadius: 4.5, backgroundColor: VARK_COLOR[f] }} />
-                        <Text style={{ color: textColor, fontSize: 13, fontWeight: '700' }}>
-                          {meta.name || f}
-                        </Text>
-                      </View>
-                      <Text style={{ color: textColor, fontSize: 13, fontWeight: '800' }}>
-                        {varkScoreMap[f]}%
-                      </Text>
-                    </View>
-                    <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 4 }}>
-                      {meta.description || ''}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* 6. Goal Orientation */}
-          <View
-            style={{
-              backgroundColor: cardBg,
-              borderRadius: 18,
-              padding: 16,
-              borderWidth: 1,
-              borderColor,
-              marginTop: 14,
-            }}
-          >
-            <Text style={{ color: textColor, fontSize: 16, fontWeight: '800' }}>
-              Goal Orientation
-            </Text>
-            <Text style={{ color: subtextColor, fontSize: 11, marginTop: 2 }}>
-              How you&apos;re currently weighing more years of study against starting work sooner.
-            </Text>
-
-            <View style={{ alignItems: 'center', marginVertical: 14 }}>
-              <TwinBars longPct={longPct} shortPct={shortPct} width={320} height={100} />
-            </View>
-
-            <View style={{ gap: 10 }}>
-              <View style={{ borderTopWidth: 1, borderTopColor: borderColor, paddingTop: 8 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={{ color: textColor, fontSize: 13, fontWeight: '700' }}>
-                    Long-term orientation
-                  </Text>
-                  <Text style={{ color: '#9a2119', fontSize: 13, fontWeight: '800' }}>
-                    {longPct}%
-                  </Text>
-                </View>
-                <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 3 }}>
-                  Comfort with investing several more years in education before starting a career.
-                </Text>
-              </View>
-
-              <View style={{ borderTopWidth: 1, borderTopColor: borderColor, paddingTop: 8 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={{ color: textColor, fontSize: 13, fontWeight: '700' }}>
-                    Short-term orientation
-                  </Text>
-                  <Text style={{ color: CHART_COLOR.slate, fontSize: 13, fontWeight: '800' }}>
-                    {shortPct}%
-                  </Text>
-                </View>
-                <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 3 }}>
-                  Preference for entering work or skill-based training sooner.
-                </Text>
-              </View>
-            </View>
-          </View>
+          <PageFooter pageNum={26} />
         </View>
 
         {/* ============================================================
-            LEG 3: Your Direction: Study & Pathway Advice
+            PAGE 27: CLUSTERS #2 & #3
         ============================================================ */}
         <View
-          onLayout={(event) => {
-            legRefs.current.leg3 = event.nativeEvent.layout.y;
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[27] = e.nativeEvent.layout.y;
           }}
-          style={{ marginBottom: 24 }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#9a2119' }} />
-            <Text style={{ color: '#9a2119', fontSize: 10, fontWeight: '800', textTransform: 'uppercase' }}>
-              SECTION 3 OF 4
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <ClusterMatchCard cluster={top5Clusters[1]} colorTheme="salmon" />
+          <ClusterMatchCard cluster={top5Clusters[2]} colorTheme="blue" />
+
+          <PageFooter pageNum={27} />
+        </View>
+
+        {/* ============================================================
+            PAGE 28: CLUSTERS #4 & #5
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[28] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <ClusterMatchCard cluster={top5Clusters[3]} colorTheme="green" />
+          <ClusterMatchCard cluster={top5Clusters[4]} colorTheme="gold" />
+
+          <PageFooter pageNum={28} />
+        </View>
+
+        {/* ============================================================
+            PAGE 29: STUDY & PATHWAY ADVICE
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[29] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <View style={{ backgroundColor: '#F3ECE2', borderRadius: 10, padding: 10, marginBottom: 10 }}>
+            <Text style={{ fontSize: 12.5, fontWeight: '800', textTransform: 'uppercase', color: COLORS.dark }}>
+              YOUR DIRECTION: STUDY & PATHWAY ADVICE
+            </Text>
+            <Text style={{ fontSize: 10.5, color: '#475569', marginTop: 2 }}>
+              Turning your learning style and goal orientation into concrete next steps.
             </Text>
           </View>
-          <Text style={{ color: textColor, fontSize: 19, fontWeight: '900' }}>
-            Your Direction: Study &amp; Pathway Advice
-          </Text>
-          <Text style={{ color: subtextColor, fontSize: 12, lineHeight: 18, marginTop: 4 }}>
-            Turning your learning style and goal orientation into concrete next steps.
-          </Text>
 
-          <View
-            style={{
-              backgroundColor: cardBg,
-              borderRadius: 18,
-              padding: 16,
-              borderWidth: 1,
-              borderColor,
-              marginTop: 14,
-            }}
-          >
-            {/* Recap chips */}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
-              <View
-                style={{
-                  backgroundColor: darkMode ? '#1c1c20' : '#f1f5f9',
-                  paddingHorizontal: 10,
-                  paddingVertical: 5,
-                  borderRadius: 10,
-                }}
-              >
-                <Text style={{ color: subtextColor, fontSize: 11 }}>
-                  Learning style: <Text style={{ fontWeight: '800', color: textColor }}>{learnLabel}</Text>
-                </Text>
-              </View>
-              <View
-                style={{
-                  backgroundColor: darkMode ? '#1c1c20' : '#f1f5f9',
-                  paddingHorizontal: 10,
-                  paddingVertical: 5,
-                  borderRadius: 10,
-                }}
-              >
-                <Text style={{ color: subtextColor, fontSize: 11 }}>
-                  Goal orientation: <Text style={{ fontWeight: '800', color: textColor }}>{goalMeta.name}</Text>
-                </Text>
-              </View>
+          <View style={{ flexDirection: 'row', gap: 14, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', marginBottom: 10 }}>
+            <Text style={{ fontSize: 11, color: '#334155' }}>
+              Learning style: <Text style={{ fontWeight: '800', color: COLORS.dark }}>Visual</Text>
+            </Text>
+            <Text style={{ fontSize: 11, color: '#334155' }}>
+              Goal orientation: <Text style={{ fontWeight: '800', color: COLORS.dark }}>Balanced Planner</Text>
+            </Text>
+          </View>
+
+          <View style={{ gap: 8 }}>
+            <View>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase', marginBottom: 3 }}>
+                HOW TO STUDY, BASED ON HOW YOU LEARN
+              </Text>
+              <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>
+                • Convert chapters into mind-maps, flowcharts and labelled diagrams.{'\n'}
+                • Use colour-coding for formulas, dates and key terms.{'\n'}
+                • Watch good video explanations, then redraw the idea from memory.{'\n'}
+                • Sit where you can clearly see the board and the teacher&apos;s demonstrations.
+              </Text>
             </View>
 
-            {/* Study Tips */}
-            <Text style={{ color: textColor, fontSize: 14, fontWeight: '800' }}>
-              How to study, based on how you learn
-            </Text>
-            <View style={{ marginTop: 8, gap: 6 }}>
-              {tips.map((tip, idx) => (
-                <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                  <Text style={{ color: '#9a2119', fontSize: 13, fontWeight: '900' }}>•</Text>
-                  <Text style={{ color: textColor, fontSize: 12, lineHeight: 18, flex: 1 }}>
-                    {tip}
-                  </Text>
-                </View>
-              ))}
+            <View>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase', marginBottom: 3 }}>
+                YOUR PATHWAY APPROACH
+              </Text>
+              <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>
+                • You&apos;re balanced between studying further and starting work early.{'\n'}
+                • A smart path: choose degree courses that include internships, apprenticeships or placement years — you
+                earn experience while keeping the door open to higher studies.
+              </Text>
             </View>
+          </View>
 
-            {/* Pathway approach */}
-            <Text style={{ color: textColor, fontSize: 14, fontWeight: '800', marginTop: 16 }}>
-              Your pathway approach
+          <Text style={{ fontWeight: '700', fontSize: 11.5, color: COLORS.dark, marginTop: 10, marginBottom: 6 }}>
+            A general route from where you are now
+          </Text>
+
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 6 }}>
+            <Image
+              source={ReportImg8}
+              style={{ width: '100%', height: 130 }}
+              resizeMode="contain"
+            />
+          </View>
+
+          <View style={{ padding: 8, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, marginTop: 6 }}>
+            <Text style={{ fontSize: 9.5, color: '#64748B', lineHeight: 14 }}>
+              Highlighted stops are where your current goal orientation matters most — this is a general route, not a
+              fixed plan. Talk it through with a teacher, counsellor or parent before locking in big decisions.
             </Text>
-            <Text style={{ color: subtextColor, fontSize: 12, lineHeight: 18, marginTop: 4 }}>
-              {goalMeta.text}
+          </View>
+
+          <PageFooter pageNum={29} />
+        </View>
+
+        {/* ============================================================
+            PAGE 30: YOUR COMPLETE CAREER MAP
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[30] = e.nativeEvent.layout.y;
+          }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <Text style={{ fontSize: 14, fontWeight: '900', color: COLORS.dark, textTransform: 'uppercase' }}>
+            YOUR COMPLETE CAREER MAP
+          </Text>
+          <Text style={{ fontSize: 10.5, color: COLORS.muted, marginBottom: 4 }}>
+            Everything above, brought together into one summary
+          </Text>
+
+          <Text style={{ fontSize: 17, fontWeight: '900', color: COLORS.red, textTransform: 'uppercase', marginBottom: 12 }}>
+            {studentName}
+          </Text>
+
+          {/* 6 Summary Metric Cards */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+            {[
+              { label: 'HOLLAND CODE', val: hollandCode, isRed: false },
+              { label: 'TOP CLUSTER', val: 'Business & Entrepreneurship (67%)', isRed: true },
+              { label: 'TOP VALUE', val: 'Openness to Change', isRed: false },
+              { label: 'TOP TRAIT', val: 'Emotional Stability', isRed: false },
+              { label: 'LEARNING STYLE', val: 'Visual', isRed: false },
+              { label: 'GOAL ORIENTATION', val: 'Balanced Planner', isRed: false },
+            ].map((m) => (
+              <View
+                key={m.label}
+                style={{
+                  width: '48%',
+                  padding: 8,
+                  backgroundColor: '#F8FAFC',
+                  borderWidth: 1,
+                  borderColor: '#E2E8F0',
+                  borderRadius: 8,
+                }}
+              >
+                <Text style={{ fontSize: 8.5, fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>
+                  {m.label}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '800',
+                    color: m.isRed ? COLORS.red : COLORS.dark,
+                    marginTop: 2,
+                  }}
+                  numberOfLines={2}
+                >
+                  {m.val}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <Text style={{ fontSize: 11, color: COLORS.body, lineHeight: 16, marginBottom: 10 }}>
+            {studentName} shows an {hollandCode} interest pattern, which combined with emotional stability and a strong
+            pull toward openness to change points most clearly toward Business & Entrepreneurship (67% match).
+            Aptitude-wise, {studentName}’s strongest results are in Verbal Reasoning and Logical Reasoning, which support
+            that direction. As a visual learner with a balanced planner approach to the path ahead, the study tips and
+            route in Section 3 are the most relevant starting point.
+          </Text>
+
+          {/* What to do next */}
+          <View style={{ padding: 10, backgroundColor: '#E6EFF6', borderWidth: 1, borderColor: '#D2DFEB', borderRadius: 10, gap: 4, marginBottom: 8 }}>
+            <Text style={{ fontSize: 11, fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase' }}>
+              WHAT TO DO NEXT
+            </Text>
+            <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>
+              • Read through your top 5 clusters in Section 1 with a parent, teacher or counsellor.{'\n'}
+              • Shortlist 2–3 clusters and look up their stream/subject requirements for your class.{'\n'}
+              • Use the study tips in Section 3 for the next exam cycle.{'\n'}
+              • Retake this assessment in 6–12 months — interests and skills develop, especially in these years.
+            </Text>
+          </View>
+
+          <Text style={{ fontSize: 9.5, color: COLORS.muted, lineHeight: 14 }}>
+            Match percentages compare clusters with each other — a lower score doesn&apos;t mean you can&apos;t succeed there,
+            only that other clusters fit your current profile more naturally.
+          </Text>
+
+          <PageFooter pageNum={30} />
+        </View>
+
+        {/* ============================================================
+            PAGE 31: ABOUT CAREER MAP (BACK COVER)
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[31] = e.nativeEvent.layout.y;
+          }}
+        >
+          {/* Header */}
+          <View style={{ alignItems: 'flex-end', paddingTop: 2, paddingRight: 2, marginBottom: 6 }}>
+            <Image
+              source={Logo}
+              style={{ width: 100, height: 28, tintColor: COLORS.red }}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={{ height: 2, backgroundColor: COLORS.red, width: '100%', marginBottom: 14 }} />
+
+          {/* Hero Banner with SVG Airplane trajectory */}
+          <View style={{ position: 'relative', marginBottom: 12 }}>
+            <Text style={{ fontSize: 20, fontWeight: '900', textTransform: 'uppercase', lineHeight: 24 }}>
+              <Text style={{ color: COLORS.dark }}>DISCOVER YOUR </Text>
+              <Text style={{ color: COLORS.red }}>DIRECTION.{'\n'}</Text>
+              <Text style={{ color: COLORS.dark }}>DESIGN YOUR </Text>
+              <Text style={{ color: COLORS.red }}>FUTURE.</Text>
+            </Text>
+            <View style={{ position: 'absolute', top: 0, right: 0 }}>
+              <Svg width={90} height={45} viewBox="0 0 140 80" fill="none">
+                <Path d="M10 65 Q 45 10, 75 45 T 120 18" stroke={COLORS.red} strokeWidth={2.5} strokeDasharray="4 4" />
+                <Circle cx={120} cy={18} r={3} fill={COLORS.red} />
+              </Svg>
+            </View>
+          </View>
+
+          {/* About Box */}
+          <View style={{ marginBottom: 12 }}>
+            <View
+              style={{
+                alignSelf: 'flex-start',
+                backgroundColor: COLORS.red,
+                paddingHorizontal: 10,
+                paddingVertical: 3,
+                borderRadius: 4,
+                marginBottom: 6,
+              }}
+            >
+              <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>
+                ABOUT CAREER MAP
+              </Text>
+            </View>
+            <View style={{ padding: 10, backgroundColor: '#FAF2F0', borderWidth: 1, borderColor: '#F0DDD8', borderRadius: 8 }}>
+              <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>
+                Career Map (A Unit of Identity Group) — Odisha&apos;s pioneering career counselling platform since 2016,
+                guiding school students, graduates, and working professionals through Career Selection, Career Planning,
+                and Career Mentorship.
+              </Text>
+            </View>
+          </View>
+
+          {/* Why Career Map */}
+          <View style={{ marginBottom: 12 }}>
+            <Text style={{ fontSize: 12, fontWeight: '900', color: COLORS.red, textTransform: 'uppercase', marginBottom: 8 }}>
+              WHY CAREER MAP?
             </Text>
 
-            {/* 6-step Roadmap */}
-            <Text style={{ color: textColor, fontSize: 14, fontWeight: '800', marginTop: 16 }}>
-              A general route from where you are now
-            </Text>
-            <View style={{ marginTop: 12, gap: 8 }}>
-              {roadStops.map((st, sIdx) => {
-                const isHighlighted = hiSet.includes(st.k);
-                return (
+            {/* 2 Columns with Road Divider */}
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              {/* Left Column */}
+              <View style={{ flex: 1, gap: 6 }}>
+                {[
+                  { img: FeaturePsychometric, label: 'PSYCHOMETRIC-BASED COUNSELLING' },
+                  { img: FeatureOnetoone, label: 'ONE-TO-ONE CAREER COUNSELLING' },
+                  { img: FeatureMentorship, label: 'MULTIDIMENSIONAL STUDENT MENTORSHIP' },
+                ].map((f, i) => (
                   <View
-                    key={st.k}
+                    key={i}
                     style={{
+                      padding: 6,
+                      backgroundColor: '#FAF2F0',
+                      borderWidth: 1,
+                      borderColor: '#F0DDD8',
+                      borderRadius: 8,
                       flexDirection: 'row',
                       alignItems: 'center',
-                      backgroundColor: isHighlighted
-                        ? (darkMode ? '#9a211925' : '#fee2e2')
-                        : (darkMode ? '#18181c' : '#f8fafc'),
-                      borderRadius: 12,
-                      padding: 10,
-                      borderWidth: 1,
-                      borderColor: isHighlighted ? '#9a2119' : borderColor,
-                      gap: 10,
+                      gap: 6,
                     }}
                   >
-                    <View
-                      style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: 11,
-                        backgroundColor: isHighlighted ? '#9a2119' : (darkMode ? '#222226' : '#e2e8f0'),
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text style={{ color: isHighlighted ? '#ffffff' : subtextColor, fontSize: 10, fontWeight: '800' }}>
-                        {sIdx + 1}
-                      </Text>
-                    </View>
-                    <View>
-                      <Text style={{ color: textColor, fontSize: 12, fontWeight: '800' }}>
-                        {st.b}
-                      </Text>
-                      <Text style={{ color: subtextColor, fontSize: 11 }}>
-                        {st.s}
-                      </Text>
-                    </View>
+                    <Image source={f.img} style={{ width: 44, height: 32, borderRadius: 4 }} resizeMode="cover" />
+                    <Text style={{ flex: 1, fontSize: 8.5, fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase', lineHeight: 11 }}>
+                      {f.label}
+                    </Text>
                   </View>
-                );
-              })}
-            </View>
+                ))}
+              </View>
 
-            <Text style={{ color: subtextColor, fontSize: 10, marginTop: 12, fontStyle: 'italic' }}>
-              Highlighted stops are where your current goal orientation matters most — this is a general route, not a fixed plan.
-            </Text>
+              {/* Road Divider */}
+              <View style={{ width: 10, backgroundColor: '#5A636E', borderRadius: 2, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 2, height: '90%', borderWidth: 1, borderColor: '#ffffff', borderStyle: 'dashed' }} />
+              </View>
+
+              {/* Right Column */}
+              <View style={{ flex: 1, gap: 6 }}>
+                {[
+                  { img: FeatureCell, label: 'CAREER COUNSELING CELL' },
+                  { img: FeatureBehavioral, label: 'BEHAVIORAL & PSYCHOLOGICAL COUNSELLING' },
+                  { img: FeatureDashboard, label: 'INFORMATION DASHBOARD & APP' },
+                ].map((f, i) => (
+                  <View
+                    key={i}
+                    style={{
+                      padding: 6,
+                      backgroundColor: '#FAF2F0',
+                      borderWidth: 1,
+                      borderColor: '#F0DDD8',
+                      borderRadius: 8,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <Image source={f.img} style={{ width: 44, height: 32, borderRadius: 4 }} resizeMode="cover" />
+                    <Text style={{ flex: 1, fontSize: 8.5, fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase', lineHeight: 11 }}>
+                      {f.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
           </View>
-        </View>
 
-        {/* ============================================================
-            LEG 4: Your Complete Career Map (Summary & Passport)
-        ============================================================ */}
-        <View
-          onLayout={(event) => {
-            legRefs.current.leg4 = event.nativeEvent.layout.y;
-          }}
-          style={{ marginBottom: 20 }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#9a2119' }} />
-            <Text style={{ color: '#9a2119', fontSize: 10, fontWeight: '800', textTransform: 'uppercase' }}>
-              SECTION 4 OF 4
-            </Text>
-          </View>
-          <Text style={{ color: textColor, fontSize: 19, fontWeight: '900' }}>
-            Your Complete Career Map
-          </Text>
-          <Text style={{ color: subtextColor, fontSize: 12, lineHeight: 18, marginTop: 4 }}>
-            Everything above, brought together into one summary.
-          </Text>
-
-          {/* Career Passport Card */}
-          <LinearGradient
-            colors={['#801812', '#9a2119', '#b32b21']}
-            style={{
-              borderRadius: 20,
-              padding: 18,
-              marginTop: 14,
-              shadowColor: '#801812',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.2,
-              shadowRadius: 10,
-              elevation: 4,
-            }}
-          >
-            <Text style={{ color: '#fef08a', fontSize: 11, fontWeight: '800', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-              CAREER COMPASS · COMPREHENSIVE REPORT
-            </Text>
-            <Text style={{ color: '#ffffff', fontSize: 22, fontWeight: '900', marginTop: 2 }}>
-              {studentName}
-            </Text>
-
-            {/* Stats Grid */}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-              {[
-                { k: 'Holland Code', v: hollandCode },
-                { k: 'Top Cluster', v: top1.name },
-                { k: 'Match', v: `${top1.matchPercentage}%` },
-                { k: 'Top Value', v: topValue },
-                { k: 'Top Trait', v: topTrait },
-                { k: 'Learning Style', v: learnLabel },
-                { k: 'Goal Orientation', v: goalMeta.name },
-              ].map((st) => (
-                <View
-                  key={st.k}
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.12)',
-                    borderRadius: 10,
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
-                    minWidth: '47%',
-                    flex: 1,
-                  }}
-                >
-                  <Text style={{ color: '#fecdd3', fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>
-                    {st.k}
-                  </Text>
-                  <Text style={{ color: '#ffffff', fontSize: 13, fontWeight: '900', marginTop: 2 }}>
-                    {st.v}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            <Text style={{ color: '#ffe4e6', fontSize: 12, lineHeight: 18, marginTop: 14 }}>
-              {narrative}
-            </Text>
-          </LinearGradient>
-
-          {/* Actionable Next Steps */}
-          <View
-            style={{
-              backgroundColor: cardBg,
-              borderRadius: 18,
-              padding: 16,
-              borderWidth: 1,
-              borderColor,
-              marginTop: 14,
-            }}
-          >
-            <Text style={{ color: textColor, fontSize: 15, fontWeight: '800' }}>
-              What to do next
-            </Text>
-            <View style={{ marginTop: 10, gap: 8 }}>
-              {[
-                'Read through your top 5 clusters in Section 1 with a parent, teacher, or counsellor.',
-                'Shortlist 2–3 clusters and look up their stream/subject requirements for your class.',
-                'Use the study tips in Section 3 for the next exam cycle.',
-                'Retake this assessment in 6–12 months — interests and skills develop as you grow.',
-              ].map((step, idx) => (
-                <View key={idx} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-                  <Ionicons name="checkmark-circle" size={16} color="#10b981" style={{ marginTop: 1 }} />
-                  <Text style={{ color: textColor, fontSize: 12, lineHeight: 17, flex: 1 }}>
-                    {step}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            <Text style={{ color: subtextColor, fontSize: 10, marginTop: 12, fontStyle: 'italic' }}>
-              {INTERP.report_disclaimers.match_note} {INTERP.report_disclaimers.retest_note}
+          {/* Partnerships badge */}
+          <View style={{ padding: 8, backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginBottom: 12 }}>
+            <Text style={{ fontSize: 9.5, color: '#4B5563', lineHeight: 14 }}>
+              Career Guidance Partner to the Government of Odisha, in association with UNICEF, OSEPA & DHSE. Present
+              across 10,000+ students in CBSE, ICSE & residential schools.
             </Text>
           </View>
 
-          {/* Action Buttons */}
-          <View style={{ gap: 10, marginTop: 16 }}>
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={handleShare}
+          {/* CTA Box */}
+          <View style={{ alignItems: 'center', marginBottom: 4 }}>
+            <View
               style={{
-                backgroundColor: '#9a2119',
-                borderRadius: 14,
-                paddingVertical: 12,
-                flexDirection: 'row',
+                width: '100%',
+                paddingVertical: 9,
+                backgroundColor: COLORS.red,
+                borderRadius: 10,
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
+                marginBottom: 6,
               }}
             >
-              <Ionicons name="share-social" size={16} color="#ffffff" />
-              <Text style={{ color: '#ffffff', fontSize: 13, fontWeight: '800' }}>
-                Share / Save as PDF
+              <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 12, letterSpacing: 0.4 }}>
+                Your Future Deserves More Than a Guess.
               </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={handleDownloadJSON}
-              style={{
-                backgroundColor: cardBg,
-                borderWidth: 1,
-                borderColor,
-                borderRadius: 14,
-                paddingVertical: 11,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-              }}
-            >
-              <Ionicons name="download-outline" size={16} color={textColor} />
-              <Text style={{ color: textColor, fontSize: 13, fontWeight: '700' }}>
-                Download Report (JSON)
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() => router.push('/(drawer)/(tabs)/library')}
-              style={{
-                backgroundColor: darkMode ? '#1c1c20' : '#f1f5f9',
-                borderRadius: 14,
-                paddingVertical: 11,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-              }}
-            >
-              <Ionicons name="book-outline" size={16} color="#9a2119" />
-              <Text style={{ color: '#9a2119', fontSize: 13, fontWeight: '800' }}>
-                Explore Careers Library
-              </Text>
-            </TouchableOpacity>
+            </View>
+            <Text style={{ fontSize: 10.5, fontWeight: '600', color: '#4B5563', marginBottom: 6 }}>
+              Schedule your counselling session today.
+            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 14, marginBottom: 4 }}>
+              <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.dark }}>🌐 www.thecareermap.in</Text>
+              <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.dark }}>✉️ careermap2016@gmail.com</Text>
+            </View>
+            <Text style={{ fontSize: 10, fontWeight: '800', color: COLORS.dark }}>
+              📞 +91 94372 08179, +91 97768 08179
+            </Text>
           </View>
+
+          <PageFooter pageNum={31} />
         </View>
       </ScrollView>
+
+      {/* Page Jump Selector Modal */}
+      <Modal
+        visible={pageModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPageModalVisible(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' }}>
+          <View
+            style={{
+              backgroundColor: '#ffffff',
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              maxHeight: '75%',
+              paddingTop: 16,
+              paddingBottom: 24,
+            }}
+          >
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 18, marginBottom: 12 }}>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: COLORS.dark }}>Jump to Page</Text>
+              <TouchableOpacity onPress={() => setPageModalVisible(false)}>
+                <Ionicons name="close-circle" size={24} color={COLORS.muted} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 6 }}>
+              {REPORT_PAGES.map((p) => {
+                const isSelected = currentPage === p.id;
+                return (
+                  <TouchableOpacity
+                    key={p.id}
+                    onPress={() => scrollToPage(p.id)}
+                    style={{
+                      paddingVertical: 10,
+                      paddingHorizontal: 14,
+                      borderRadius: 10,
+                      backgroundColor: isSelected ? COLORS.redLight : '#F8FAFC',
+                      borderWidth: 1,
+                      borderColor: isSelected ? COLORS.red : '#E2E8F0',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12.5,
+                        fontWeight: isSelected ? '800' : '600',
+                        color: isSelected ? COLORS.red : COLORS.dark,
+                      }}
+                    >
+                      {p.label}
+                    </Text>
+                    {isSelected && <Ionicons name="checkmark-circle" size={18} color={COLORS.red} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
