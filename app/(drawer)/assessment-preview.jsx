@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { ActivityIndicator, Platform, SafeAreaView, Text, View } from 'react-native';
 import { Asset } from 'expo-asset';
 import { router } from 'expo-router';
@@ -18,6 +18,15 @@ export default function AssessmentPreviewScreen() {
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.localStorage.setItem('API_BASE_URL', assessmentApiBaseUrl);
+
+      const handleAssessmentMessage = (event) => {
+        if (event.origin === window.location.origin && event.data === 'GO_DASHBOARD') {
+          router.replace('/(drawer)/(tabs)');
+        }
+      };
+
+      window.addEventListener('message', handleAssessmentMessage);
+      return () => window.removeEventListener('message', handleAssessmentMessage);
     }
   }, [assessmentApiBaseUrl]);
 
@@ -27,7 +36,7 @@ export default function AssessmentPreviewScreen() {
         <View style={{ flex: 1 }}>
           <iframe
             title="Psychometric Assessment"
-            src={htmlAsset.uri}
+            src="/assessment/phycometrichalftest.html"
             style={{ border: 0, width: '100%', height: '100%' }}
           />
         </View>
@@ -37,18 +46,18 @@ export default function AssessmentPreviewScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: preferences.darkMode ? '#050505' : palette.background }}>
-        <WebView
-          originWhitelist={['*']}
-          source={{ uri: htmlAsset.uri }}
-          injectedJavaScriptBeforeContentLoaded={`
-            (function () {
-              try {
+      <WebView
+        originWhitelist={['*']}
+        source={{ uri: htmlAsset.uri }}
+        injectedJavaScriptBeforeContentLoaded={`
+          (function () {
+            try {
               window.__CAREERMAP_API_BASE_URL__ = ${JSON.stringify(assessmentApiBaseUrl)};
               localStorage.setItem("API_BASE_URL", ${JSON.stringify(assessmentApiBaseUrl)});
-              } catch (error) {}
-            })();
-            true;
-          `}
+            } catch (error) {}
+          })();
+          true;
+        `}
         onMessage={(event) => {
           if (event.nativeEvent.data === 'GO_DASHBOARD') {
             router.replace('/(drawer)/(tabs)');

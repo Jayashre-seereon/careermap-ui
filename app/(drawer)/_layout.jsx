@@ -80,6 +80,14 @@ export default function DrawerRoot() {
         <Drawer.Screen name="assessment-preview" options={{
             drawerItemStyle: { display: 'none' },
         }}/>
+        <Drawer.Screen name="assessment-attempt" options={{
+            drawerItemStyle: { display: 'none' },
+            headerShown: false,
+        }}/>
+        <Drawer.Screen name="assessment-report" options={{
+            drawerItemStyle: { display: 'none' },
+            headerShown: false,
+        }}/>
         <Drawer.Screen name="entrance-exam-detail" options={{
             drawerItemStyle: { display: 'none' },
         }}/>
