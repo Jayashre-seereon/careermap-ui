@@ -17,7 +17,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../../src/store/auth-store';
@@ -566,6 +566,83 @@ function ClusterMatchCard({ cluster, colorTheme = 'red' }) {
   );
 }
 
+// The counsellor art is decorative; this map makes the five recommendations
+// next to it readable and data-driven for the current assessment attempt.
+function TopClustersMap({ clusters }) {
+  const colors = ['#70B86B', '#4D95D7', '#9A76CA', '#DC984F', '#47B9B9'];
+
+  return (
+    <View
+      accessible
+      accessibilityLabel="Your five top career clusters"
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        minHeight: 184,
+        marginVertical: 6,
+      }}
+    >
+      <View style={{ width: '52%', alignItems: 'center', justifyContent: 'center' }}>
+        <Image source={ReportImg7} style={{ width: '100%', height: 210 }} resizeMode="contain" />
+      </View>
+
+   <View style={{ width: 20, height: 164, marginLeft: -40, justifyContent: 'center' }} pointerEvents="none">
+  <Svg width="20" height="164" viewBox="0 0 20 164">
+    <Line x1="2" y1="82" x2="8" y2="82" stroke="#64748B" strokeWidth="1.75" strokeDasharray="3 2" />
+    <Circle cx="2" cy="82" r="2.8" fill="#17467F" />
+    {[16, 49, 82, 115, 148].map((y) => (
+      <Line key={y} x1="8" y1="82" x2="20" y2={y} stroke="#64748B" strokeWidth="1.75" strokeDasharray="3 2" />
+    ))}
+  </Svg>
+</View>
+
+      <View style={{ flex: 1, gap: 5 }}>
+        {clusters.slice(0, 5).map((cluster, index) => {
+          const color = colors[index];
+          return (
+            <View
+              key={`${cluster.code || cluster.name}-${index}`}
+              style={{
+                minHeight: 28,
+                flexDirection: 'row',
+                alignItems: 'center',
+                borderWidth: 1.5,
+                borderColor: color,
+                borderRadius: 16,
+                backgroundColor: '#FFFFFF',
+                paddingVertical: 4,
+                paddingHorizontal: 5,
+              }}
+            >
+              <View
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 9,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: color,
+                  marginRight: 5,
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '900' }}>{index + 1}</Text>
+              </View>
+              <Text
+                style={{ flex: 1, color: '#102A54', fontSize: 8.5, lineHeight: 10.5, fontWeight: '800' }}
+                numberOfLines={2}
+              >
+                {cluster.name}
+              </Text>
+              <Text style={{ color, fontSize: 10, fontWeight: '900', marginLeft: 4 }}>
+                {cluster.matchPercentage}%
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
 function generateReportHtml(data) {
   const {
     studentName,
@@ -1112,24 +1189,23 @@ const contentSize = useRef({ width: 0, height: 0 });
     return acc;
   }, {});
 
-  const top5Clusters =
-    rawTop5.length >= 5
-      ? rawTop5.map((item, idx) => {
-          const code = item.code || item.cluster_id || item.clusterId || defaultTop5[idx].code;
+  const top5Clusters = Array.from({ length: 5 }, (_, idx) => {
+          const fallback = defaultTop5[idx];
+          const item = rawTop5[idx] || {};
+          const code = item.code || item.cluster_id || item.clusterId || fallback.code;
           const meta =
             clusterMap[code] || clusterMap[item.name || item.cluster] || CLUSTERS[idx % CLUSTERS.length] || {};
           return {
             rank: idx + 1,
             code,
-            name: (item.name || item.cluster || meta.name || defaultTop5[idx].name).toUpperCase(),
-            matchPercentage: item.matchPercentage ?? item.match ?? defaultTop5[idx].matchPercentage,
-            description: item.description || meta.description || defaultTop5[idx].description,
-            why_fit: meta.why_fit || defaultTop5[idx].why_fit,
-            streams_and_pathways_india: meta.streams_and_pathways_india || defaultTop5[idx].streams_and_pathways_india,
-            careers: meta.careers && meta.careers.length > 0 ? meta.careers.slice(0, 10) : defaultTop5[idx].careers,
+            name: (item.name || item.cluster || meta.name || fallback.name).toUpperCase(),
+            matchPercentage: item.matchPercentage ?? item.match ?? item.percentage ?? fallback.matchPercentage,
+            description: item.description || meta.description || fallback.description,
+            why_fit: item.why_fit || item.whyFit || meta.why_fit || fallback.why_fit,
+            streams_and_pathways_india: item.streams_and_pathways_india || item.pathway || meta.streams_and_pathways_india || fallback.streams_and_pathways_india,
+            careers: Array.isArray(item.careers) && item.careers.length > 0 ? item.careers.slice(0, 10) : (meta.careers && meta.careers.length > 0 ? meta.careers.slice(0, 10) : fallback.careers),
           };
-        })
-      : defaultTop5;
+        });
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -2904,13 +2980,7 @@ const contentSize = useRef({ width: 0, height: 0 });
             Each card shows what the field involves, why it suits you, how to get there, and list of careers
           </Text>
 
-          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 6 }}>
-            <Image
-              source={ReportImg7}
-              style={{ width: '100%', height: 180 }}
-              resizeMode="contain"
-            />
-          </View>
+          <TopClustersMap clusters={top5Clusters} />
 
           <ClusterMatchCard cluster={top5Clusters[0]} colorTheme="red" />
 
