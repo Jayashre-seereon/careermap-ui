@@ -949,19 +949,26 @@ export default function AssessmentAttemptScreen() {
                 </ScrollView>
 
                 <View style={{ gap: 8, marginTop: 6 }}>
-                  <TouchableOpacity
-                    onPress={handleSubmitTest}
-                    style={{
-                      backgroundColor: '#9a2119',
-                      borderRadius: 14,
-                      paddingVertical: 12,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text style={{ color: '#ffffff', fontSize: 13, fontWeight: '800' }}>
-                      Submit Anyway & Generate Report
-                    </Text>
-                  </TouchableOpacity>
+                 <TouchableOpacity
+  disabled={unansweredQuestions.length > 0}
+  style={{
+    backgroundColor: unansweredQuestions.length > 0 ? '#d1d5db' : '#9a2119',
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+    opacity: unansweredQuestions.length > 0 ? 0.6 : 1,
+  }}
+>
+  <Text
+    style={{
+      color: unansweredQuestions.length > 0 ? '#6b7280' : '#ffffff',
+      fontSize: 13,
+      fontWeight: '800',
+    }}
+  >
+    Submit
+  </Text>
+</TouchableOpacity>
 
                   <TouchableOpacity
                     onPress={() => setIsSubmitModalVisible(false)}
@@ -973,8 +980,7 @@ export default function AssessmentAttemptScreen() {
                     }}
                   >
                     <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>
-                      Continue Answering
-                    </Text>
+Review                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>

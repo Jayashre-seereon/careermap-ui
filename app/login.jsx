@@ -84,20 +84,49 @@ export default function LoginScreen() {
       setIsSendingOtp(true);
       setStatus({ type: 'idle', message: '' });
 
-      if (isExistingUser) {
-        await sendOtp(formattedMobile, 'login');
+      // if (isExistingUser) {
+      //   await sendOtp(formattedMobile, 'login');
+      //   router.push({
+      //     pathname: '/otp-verify',
+      //     params: {
+      //       next: '/(drawer)/(tabs)',
+      //       identifier: formattedMobile,
+      //       otpType: 'login',
+      //     },
+      //   });
+      //   return;
+      // }
+
+      // await sendOtp(formattedMobile, 'signup');
+      // setOnboardingData(onboarding);
+      // setSignupForm({ mobile: normalizedMobile });
+      // router.push({
+      //   pathname: '/otp-verify',
+      //   params: {
+      //     next: '/profile-setup',
+      //     identifier: formattedMobile,
+      //     otpType: 'signup',
+      //   },
+      // });
+            if (isExistingUser) {
+        const loginOtpResponse = await sendOtp(formattedMobile, 'login');
+        // TEMP-DEBUG: remove before production
+        const devOtp = loginOtpResponse?.otp || loginOtpResponse?.data?.otp;
         router.push({
           pathname: '/otp-verify',
           params: {
             next: '/(drawer)/(tabs)',
             identifier: formattedMobile,
             otpType: 'login',
+            devOtp: devOtp || '',
           },
         });
         return;
       }
 
-      await sendOtp(formattedMobile, 'signup');
+      const signupOtpResponse = await sendOtp(formattedMobile, 'signup');
+      // TEMP-DEBUG: remove before production
+      const devOtpSignup = signupOtpResponse?.otp || signupOtpResponse?.data?.otp;
       setOnboardingData(onboarding);
       setSignupForm({ mobile: normalizedMobile });
       router.push({
@@ -106,6 +135,7 @@ export default function LoginScreen() {
           next: '/profile-setup',
           identifier: formattedMobile,
           otpType: 'signup',
+          devOtp: devOtpSignup || '',
         },
       });
     } catch (error) {

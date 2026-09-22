@@ -10,7 +10,11 @@ import {
   Text,
   TouchableOpacity,
   View,
+  PixelRatio
 } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -771,71 +775,29 @@ function generateReportHtml(data) {
   `;
 }
 
-// Minimal native PDF writer. Unlike the Android WebView printer, it never
-// depends on browser rendering and therefore cannot create an empty page.
-function generateReportPdf(data) {
-  const toAscii = (value) => String(value ?? '').replace(/[\\()]/g, '\\$&').replace(/[^\x20-\x7E]/g, '-');
-  const wrap = (value, length = 82) => {
-    const words = toAscii(value).replace(/\s+/g, ' ').trim().split(' ');
-    const lines = []; let line = '';
-    words.forEach((word) => {
-      if (!line || `${line} ${word}`.length <= length) line = line ? `${line} ${word}` : word;
-      else { lines.push(line); line = word; }
-    });
-    if (line) lines.push(line);
-    return lines;
-  };
-  const { studentName, studentFirstName, formattedDate, hollandCode, top5Clusters = [], interestScoreMap, personScoreMap, valScoreMap, varkScoreMap, aptList = [], shortPct, longPct } = data;
-  const scores = [
-    `Holland code: ${hollandCode}.`,
-    `Interest scores: Enterprising ${interestScoreMap.E}%, Conventional ${interestScoreMap.C}%, Social ${interestScoreMap.S}%, Realistic ${interestScoreMap.R}%, Investigative ${interestScoreMap.I}%, Artistic ${interestScoreMap.A}%.`,
-    `Personality scores: Emotional Stability ${personScoreMap.ES}%, Openness ${personScoreMap.O}%, Conscientiousness ${personScoreMap.Cn}%, Extraversion ${personScoreMap.Ex}%, Agreeableness ${personScoreMap.Ag}%.`,
-    `Learning styles: Visual ${varkScoreMap.V}%, Auditory ${varkScoreMap.A}%, Reading/Writing ${varkScoreMap.Rd}%, Kinesthetic ${varkScoreMap.K}%.`,
-    `Work values: Openness to Change ${valScoreMap.OC}%, Self-Enhancement ${valScoreMap.SE}%, Self-Transcendence ${valScoreMap.ST}%, Conservation ${valScoreMap.CO}%.`,
-    `Goal orientation: Short-term ${shortPct}%, Long-term ${longPct}%.`,
-    `Core aptitudes: ${aptList.map((item) => `${item.label} ${item.val}%`).join(', ')}.`,
-  ];
-  const clusters = top5Clusters.map((cluster) => `${cluster.rank}. ${cluster.name} - ${cluster.matchPercentage}% match. ${cluster.description || ''} Pathway: ${cluster.streams_and_pathways_india || ''}. Careers: ${(cluster.careers || []).slice(0, 8).join(', ')}.`);
-  const pageText = REPORT_PAGES.map((page, index) => {
-    if (index === 0) return [`Prepared for ${studentName || 'Student'} on ${formattedDate}.`, 'Discover your strengths, interests, learning preferences, and career possibilities.'];
-    if (index === 1) return [`Dear ${studentFirstName || studentName || 'Student'},`, 'This report is based on your assessment responses and supports informed education and career decisions. Discuss important choices with a parent, teacher, or counsellor.'];
-    if (index >= 3 && index <= 6) return [scores[0], scores[1], 'Your interest profile highlights activities and work environments that may feel motivating and rewarding.'];
-    if (index >= 7 && index <= 9) return [scores[2], 'Your personality profile describes patterns that influence learning, collaboration, and decision-making.'];
-    if (index >= 10 && index <= 13) return [scores[3], 'Use learning approaches that fit you best while developing flexibility across study methods.'];
-    if (index >= 14 && index <= 16) return [scores[4], 'Values identify what matters most in a future study path and workplace.'];
-    if (index === 17 || index === 18) return [scores[5], 'A balanced plan connects immediate study goals with long-term career exploration.'];
-    if (index >= 19 && index <= 24) return [scores[6], 'Aptitude skills can improve with focused practice and feedback.'];
-    if (index === 25) return clusters.slice(0, 1);
-    if (index === 26) return clusters.slice(1, 3);
-    if (index === 27) return clusters.slice(3, 5);
-    if (index === 28) return ['Study and pathway advice', scores[3], scores[5], 'Choose subjects and experiences that align with your strengths and shortlisted career paths.'];
-    if (index === 29) return [scores[0], scores[1], scores[2], scores[3], scores[4], scores[5], scores[6], ...clusters.slice(0, 1)];
-    return ['CareerMap supports students through psychometric assessment, career counselling, academic pathway planning, and mentorship.', 'Your future deserves more than a guess.'];
-  });
-  const objects = ['<< /Type /Catalog /Pages 2 0 R >>', ''];
-  const pageRefs = [];
-  REPORT_PAGES.forEach((page, index) => {
-    const pageObject = objects.length + 1; const contentObject = pageObject + 1; pageRefs.push(`${pageObject} 0 R`);
-    const lines = [`BT /F2 12 Tf 0.55 0.09 0.08 rg 45 790 Td (${toAscii(index === 0 ? 'CAREERMAP' : (studentFirstName || studentName || 'CAREERMAP'))}) Tj ET`, `0.55 0.09 0.08 RG 1 w 45 770 m 550 770 l S`, `BT /F2 ${index === 0 ? 22 : 16} Tf 0.12 0.14 0.16 rg 45 730 Td (${toAscii(page.label.replace(/^Page \d+: /, '').toUpperCase())}) Tj ET`];
-    let y = 690;
-    pageText[index].forEach((paragraph) => {
-      wrap(paragraph).forEach((line) => { if (y > 65) { lines.push(`BT /F1 11 Tf 0.12 0.14 0.16 rg 45 ${y} Td (${line}) Tj ET`); y -= 18; } });
-      y -= 10;
-    });
-    lines.push('0.34 0.39 0.45 RG 0.5 w 45 42 m 550 42 l S', `BT /F1 8 Tf 0.34 0.39 0.45 rg 45 27 Td (CareerMap | careermap2016@gmail.com | +91 94372 08179) Tj ET`, `BT /F2 8 Tf 0.34 0.39 0.45 rg 470 27 Td (Page ${page.id} of ${REPORT_PAGES.length}) Tj ET`);
-    const stream = lines.join('\n');
-    objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> >> >> /Contents ${contentObject} 0 R >>`, `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
-  });
-  objects[1] = `<< /Type /Pages /Kids [${pageRefs.join(' ')}] /Count ${pageRefs.length} >>`;
-  let pdf = '%PDF-1.4\n%----\n'; const offsets = [0];
-  objects.forEach((object, index) => { offsets[index + 1] = pdf.length; pdf += `${index + 1} 0 obj\n${object}\nendobj\n`; });
-  const xref = pdf.length;
-  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.slice(1).map((offset) => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
-  return new TextEncoder().encode(pdf);
-}
+
 
 export { generateReportHtml };
-
+function loadScriptOnce(src, globalCheck) {
+  return new Promise((resolve, reject) => {
+    if (globalCheck()) {
+      resolve();
+      return;
+    }
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => reject(new Error(`Failed to load ${src}`)));
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+    document.head.appendChild(script);
+  });
+}
 export default function AssessmentReportScreen() {
   const { attemptId } = useLocalSearchParams();
   const user = useAuthStore((state) => state.user);
@@ -847,7 +809,8 @@ export default function AssessmentReportScreen() {
 
   const scrollViewRef = useRef(null);
   const pageOffsets = useRef({});
-
+  const contentRef = useRef(null);
+const contentSize = useRef({ width: 0, height: 0 });
   const loadReport = useCallback(async () => {
     setLoading(true);
     try {
@@ -1130,53 +1093,110 @@ export default function AssessmentReportScreen() {
     const cleanFilename = `CareerMap_Report_${(studentName || 'Student').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
 
     try {
-      if (Platform.OS === 'web') {
-        const printWindow = window.open('', '_blank');
+            if (Platform.OS === 'web') {
+        await loadScriptOnce(
+          'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+          () => !!window.html2canvas
+        );
+        await loadScriptOnce(
+          'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+          () => !!(window.jspdf && window.jspdf.jsPDF)
+        );
+
+        const html2canvasFn = window.html2canvas;
+        const JsPdfCtor = window.jspdf.jsPDF;
+
         const reportElement = document.getElementById('assessment-report-content')
           || document.querySelector('[data-testid="assessment-report-content"]');
-        if (!reportElement || !printWindow) {
-          printWindow?.close();
-          throw new Error('Unable to open the report print preview. Please allow pop-ups and try again.');
+        if (!reportElement) {
+          throw new Error('Could not find the report content to export.');
         }
 
-        // Print a clone of the rendered report, rather than a simplified data
-        // export. This preserves every report card, image, chart, and text.
-        const styles = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
-          .map((node) => node.outerHTML)
-          .join('');
-        printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8" /><title>${cleanFilename.replace('.pdf', '')}</title>${styles}<style>@page { size: A4; margin: 8mm; } html, body { background: #fff !important; margin: 0 !important; } #assessment-report-content { width: 794px !important; height: auto !important; max-height: none !important; overflow: visible !important; background: #fff !important; } #assessment-report-content * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }</style></head><body>${reportElement.outerHTML}</body></html>`);
-        printWindow.document.close();
-        const printReport = () => {
-          printWindow.focus();
-          printWindow.print();
-        };
-        const images = Array.from(printWindow.document.images);
-        await Promise.race([
-          Promise.all(images.map((image) => image.complete ? Promise.resolve() : new Promise((resolve) => { image.onload = resolve; image.onerror = resolve; }))),
-          new Promise((resolve) => setTimeout(resolve, 2500)),
-        ]);
-        printReport();
+        const canvas = await html2canvasFn(reportElement, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          windowWidth: reportElement.scrollWidth,
+        });
+
+        const pdf = new JsPdfCtor({ unit: 'pt', format: 'a4' });
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        const pageNums = REPORT_PAGES.map((p) => p.id);
+        const scale = canvas.width / reportElement.scrollWidth;
+
+        pageNums.forEach((pageNum, i) => {
+          const startY = (pageOffsets.current[pageNum] ?? 0) * scale;
+          const endY = (pageOffsets.current[pageNum + 1] ?? reportElement.scrollHeight) * scale;
+          const sliceHeight = Math.max(1, endY - startY);
+
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sliceHeight;
+          const ctx = pageCanvas.getContext('2d');
+          ctx.drawImage(canvas, 0, startY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+
+          const imgData = pageCanvas.toDataURL('image/png', 1.0);
+          const imgHeightOnPdf = (sliceHeight / canvas.width) * pdfWidth;
+
+          if (i > 0) pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, Math.min(imgHeightOnPdf, pdfHeight));
+        });
+
+        pdf.save(cleanFilename);
         return;
       }
-
-      const pdfBytes = generateReportPdf({
-        studentName,
-        studentFirstName,
-        formattedDate,
-        hollandCode,
-        top5Clusters,
-        interestScoreMap,
-        personScoreMap,
-        valScoreMap,
-        varkScoreMap,
-        aptList,
-        shortPct,
-        longPct,
+      const fullUri = await captureRef(contentRef, {
+        format: 'png',
+        quality: 1,
+        result: 'tmpfile',
       });
+
+      const ratio = PixelRatio.get();
+      const pageNums = REPORT_PAGES.map((p) => p.id);
+      const htmlPages = [];
+
+      for (let i = 0; i < pageNums.length; i++) {
+        const pageNum = pageNums[i];
+        const startY = pageOffsets.current[pageNum] ?? 0;
+        const endY = pageOffsets.current[pageNum + 1] ?? contentSize.current.height;
+        const cropHeight = Math.max(1, endY - startY);
+
+        const cropped = await ImageManipulator.manipulateAsync(
+          fullUri,
+          [{
+            crop: {
+              originX: 0,
+              originY: startY * ratio,
+              width: contentSize.current.width * ratio,
+              height: cropHeight * ratio,
+            },
+          }],
+          { compress: 1, format: ImageManipulator.SaveFormat.PNG, base64: true }
+        );
+
+        htmlPages.push(`
+          <div style="page-break-after: ${pageNum === REPORT_PAGES.length ? 'auto' : 'always'};">
+            <img src="data:image/png;base64,${cropped.base64}" style="width:100%; display:block;" />
+          </div>
+        `);
+      }
+
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8" />
+        <style>
+          @page { size: A4; margin: 0; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body { margin: 0; padding: 0; }
+          img { width: 100%; height: auto; }
+        </style>
+      </head><body>${htmlPages.join('')}</body></html>`;
+
+      const { uri: pdfUri } = await Print.printToFileAsync({ html, base64: false });
 
       const savedPdf = new File(Paths.document, cleanFilename);
       if (savedPdf.exists) savedPdf.delete();
-      savedPdf.write(pdfBytes);
+      new File(pdfUri).copy(savedPdf);
 
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(savedPdf.uri, {
@@ -1194,7 +1214,6 @@ export default function AssessmentReportScreen() {
       setDownloading(false);
     }
   };
-
   const cardStyle = {
     backgroundColor: '#ffffff',
     borderRadius: 8,
@@ -1305,12 +1324,16 @@ export default function AssessmentReportScreen() {
 
       {/* Main Document: Exactly 31 Pages matching User Portal */}
       <ScrollView
-        ref={scrollViewRef}
-        nativeID="assessment-report-content"
-        testID="assessment-report-content"
+         ref={scrollViewRef}
+  nativeID="assessment-report-content"
+  testID="assessment-report-content"
+  onContentSizeChange={(w, h) => { contentSize.current = { width: w, height: h }; }}
+  
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
       >
+        <View ref={contentRef} collapsable={false}>
+
         {/* ============================================================
             PAGE 1: COVER PAGE
         ============================================================ */}
@@ -1326,8 +1349,8 @@ export default function AssessmentReportScreen() {
               position: 'absolute',
               top: -45,
               left: -45,
-              width: 130,
-              height: 130,
+              width: 100,
+              height: 100,
               backgroundColor: COLORS.red,
               borderBottomRightRadius: 40,
               transform: [{ rotate: '10deg' }],
@@ -1338,8 +1361,8 @@ export default function AssessmentReportScreen() {
               position: 'absolute',
               top: 8,
               left: -30,
-              width: 115,
-              height: 115,
+              width: 90,
+              height: 90,
               backgroundColor: '#B88884',
               borderRadius: 30,
               transform: [{ rotate: '45deg' }],
@@ -1350,9 +1373,9 @@ export default function AssessmentReportScreen() {
             style={{
               position: 'absolute',
               top: 36,
-              left: 90,
-              width: 60,
-              height: 60,
+              left: 60,
+              width: 50,
+              height: 50,
               backgroundColor: '#D6DADC',
               borderRadius: 14,
               transform: [{ rotate: '45deg' }],
@@ -1362,9 +1385,9 @@ export default function AssessmentReportScreen() {
             style={{
               position: 'absolute',
               top: 100,
-              left: 24,
-              width: 80,
-              height: 80,
+              left: 14,
+              width: 50,
+              height: 50,
               borderWidth: 3,
               borderColor: '#EDA757',
               borderRadius: 18,
@@ -1478,38 +1501,27 @@ export default function AssessmentReportScreen() {
           </View>
 
           {/* Bottom Right Decorative Shapes */}
-          <View
+          {/* <View
             style={{
               position: 'absolute',
-              bottom: -60,
-              right: -60,
-              width: 180,
-              height: 180,
-              backgroundColor: '#FAF0EB',
+              bottom: -20,
+              right: -20,
+              width: 100,
+              height: 100,
+               backgroundColor: COLORS.red,
+            
               borderRadius: 40,
               transform: [{ rotate: '45deg' }],
             }}
-          />
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 60,
-              right: 110,
-              width: 55,
-              height: 55,
-              backgroundColor: '#D6DADC',
-              borderRadius: 12,
-              transform: [{ rotate: '45deg' }],
-              zIndex: 10,
-            }}
-          />
+          /> */}
+         
           <View
             style={{
               position: 'absolute',
               bottom: -5,
               right: 50,
-              width: 75,
-              height: 75,
+              width: 70,
+              height: 70,
               borderWidth: 3,
               borderColor: '#EDA757',
               borderRadius: 18,
@@ -1524,7 +1536,7 @@ export default function AssessmentReportScreen() {
               right: -25,
               width: 95,
               height: 95,
-              backgroundColor: COLORS.red,
+              backgroundColor: '#B88884',
               borderRadius: 24,
               transform: [{ rotate: '45deg' }],
               zIndex: 10,
@@ -3247,6 +3259,7 @@ export default function AssessmentReportScreen() {
           </View>
 
           <PageFooter pageNum={31} />
+        </View>
         </View>
       </ScrollView>
 

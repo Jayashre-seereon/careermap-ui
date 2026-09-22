@@ -14,8 +14,7 @@ import { formatOtpMobile, mapApiUserToProfile } from '../src/utils/auth';
 
 export default function OtpVerifyScreen() {
   const { preferences, saveUserProfile } = useAppState();
-  const { next, identifier, otpType } = useLocalSearchParams();
-  const signupForm = useAuthStore((state) => state.signupForm);
+  const { next, identifier, otpType, devOtp } = useLocalSearchParams();  const signupForm = useAuthStore((state) => state.signupForm);
   const setTempToken = useAuthStore((state) => state.setTempToken);
   const setAccessToken = useAuthStore((state) => state.setAccessToken);
   const setRefreshToken = useAuthStore((state) => state.setRefreshToken);
@@ -94,8 +93,15 @@ export default function OtpVerifyScreen() {
     try {
       setIsResending(true);
       setStatus({ type: 'idle', message: '' });
-      const response = await sendOtp(mobileNumber, flowType);
-      setStatus({ type: 'success', message: response.message });
+      // const response = await sendOtp(mobileNumber, flowType);
+      // setStatus({ type: 'success', message: response.message });
+            const response = await sendOtp(mobileNumber, flowType);
+      // TEMP-DEBUG: remove before production
+      const resendOtp = response?.otp || response?.data?.otp;
+      setStatus({
+        type: 'success',
+        message: resendOtp ? `${response.message} (DEV OTP: ${resendOtp})` : response.message,
+      });
     } catch (error) {
       setStatus({
         type: 'error',
@@ -121,6 +127,10 @@ export default function OtpVerifyScreen() {
           <Text className={`max-w-[260px] text-center text-[14px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>
             Enter the 6-digit code sent to {mobileNumber || 'your phone'}.
           </Text>
+                    {/* TEMP-DEBUG: remove before production */}
+          {devOtp ? (
+            <Text className="text-[13px] font-extrabold text-brand">DEV OTP: {devOtp}</Text>
+          ) : null}
           <TextInput
             value={otp}
             onChangeText={(value) => {
