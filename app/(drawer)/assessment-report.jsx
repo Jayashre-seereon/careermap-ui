@@ -12,6 +12,7 @@ import {
   View,
   PixelRatio
 } from 'react-native';
+import { Dimensions } from 'react-native'; 
 import { captureRef } from 'react-native-view-shot';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Print from 'expo-print';
@@ -888,6 +889,7 @@ export default function AssessmentReportScreen() {
   const pageOffsets = useRef({});
   const contentRef = useRef(null);
 const contentSize = useRef({ width: 0, height: 0 });
+const [cardWidth, setCardWidth] = useState(null);
   const loadReport = useCallback(async () => {
     setLoading(true);
     try {
@@ -1225,43 +1227,72 @@ const contentSize = useRef({ width: 0, height: 0 });
         const html2canvasFn = window.html2canvas;
         const JsPdfCtor = window.jspdf.jsPDF;
 
-        const reportElement = document.getElementById('assessment-report-content')
-          || document.querySelector('[data-testid="assessment-report-content"]');
-        if (!reportElement) {
-          throw new Error('Could not find the report content to export.');
-        }
+    const reportElement = document.getElementById('assessment-report-page-content');
+if (!reportElement) {
+  throw new Error('Could not find the report content to export.');
+}
 
-        const canvas = await html2canvasFn(reportElement, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          windowWidth: reportElement.scrollWidth,
-        });
+const canvas = await html2canvasFn(reportElement, {
+  scale: 2,
+  useCORS: true,
+  backgroundColor: '#ffffff',
+  windowWidth: reportElement.scrollWidth,
+  windowHeight: reportElement.scrollHeight,
+  scrollX: 0,
+  scrollY: 0,
+});
 
         const pdf = new JsPdfCtor({ unit: 'pt', format: 'a4' });
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
 
-        const pageNums = REPORT_PAGES.map((p) => p.id);
-        const scale = canvas.width / reportElement.scrollWidth;
+      const pageNums = REPORT_PAGES.map((p) => p.id);
+const scale = canvas.width / reportElement.scrollWidth;
+const maxSliceHeightPx = Math.max(1, Math.floor((pdfHeight / pdfWidth) * canvas.width));
+let pdfPageIndex = 0;
 
-        pageNums.forEach((pageNum, i) => {
-          const startY = (pageOffsets.current[pageNum] ?? 0) * scale;
-          const endY = (pageOffsets.current[pageNum + 1] ?? reportElement.scrollHeight) * scale;
-          const sliceHeight = Math.max(1, endY - startY);
+const drawSlice = (sliceStart, sliceHeight) => {
+  const pageCanvas = document.createElement('canvas');
+  pageCanvas.width = canvas.width;
+  pageCanvas.height = sliceHeight;
+  const ctx = pageCanvas.getContext('2d');
+  ctx.drawImage(canvas, 0, sliceStart, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
 
-          const pageCanvas = document.createElement('canvas');
-          pageCanvas.width = canvas.width;
-          pageCanvas.height = sliceHeight;
-          const ctx = pageCanvas.getContext('2d');
-          ctx.drawImage(canvas, 0, startY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+  if (pdfPageIndex > 0) pdf.addPage();
+  pdf.addImage(
+    pageCanvas.toDataURL('image/png', 1.0),
+    'PNG',
+    0,
+    0,
+    pdfWidth,
+    (sliceHeight / canvas.width) * pdfWidth
+  );
+  pdfPageIndex += 1;
+};
 
-          const imgData = pageCanvas.toDataURL('image/png', 1.0);
-          const imgHeightOnPdf = (sliceHeight / canvas.width) * pdfWidth;
+pageNums.forEach((pageNum) => {
+  const startY = (pageOffsets.current[pageNum] ?? 0) * scale;
+  const endY = (pageOffsets.current[pageNum + 1] ?? reportElement.scrollHeight) * scale;
+  const sliceStart = Math.max(0, Math.floor(startY));
+  const sectionEnd = Math.min(canvas.height, Math.ceil(endY));
+  const sectionHeightPx = sectionEnd - sliceStart;
 
-          if (i > 0) pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, Math.min(imgHeightOnPdf, pdfHeight));
-        });
+  if (sectionHeightPx <= 0) return;
+
+  if (sectionHeightPx <= maxSliceHeightPx) {
+    // Page's real content fits on one A4 sheet — draw it exactly as-is,
+    // no padding into a fixed chunk size.
+    drawSlice(sliceStart, sectionHeightPx);
+  } else {
+    // Genuinely long page — split it across consecutive A4 sheets.
+    let cursor = sliceStart;
+    while (cursor < sectionEnd) {
+      const sliceHeight = Math.min(maxSliceHeightPx, sectionEnd - cursor);
+      drawSlice(cursor, sliceHeight);
+      cursor += sliceHeight;
+    }
+  }
+});
 
         pdf.save(cleanFilename);
         return;
@@ -1275,31 +1306,46 @@ const contentSize = useRef({ width: 0, height: 0 });
       const ratio = PixelRatio.get();
       const pageNums = REPORT_PAGES.map((p) => p.id);
       const htmlPages = [];
+      // Keep each captured image within one A4 page. A full report section can
+      // be taller than A4, and a print engine may otherwise cut off its bottom.
+      const cropWidth = Math.round(contentSize.current.width * ratio);
+      const maxCropHeight = Math.max(1, Math.floor(cropWidth * (842 / 595)));
 
       for (let i = 0; i < pageNums.length; i++) {
         const pageNum = pageNums[i];
         const startY = pageOffsets.current[pageNum] ?? 0;
         const endY = pageOffsets.current[pageNum + 1] ?? contentSize.current.height;
-        const cropHeight = Math.max(1, endY - startY);
+        const sectionEnd = Math.ceil(endY * ratio);
+        let cropStart = Math.max(0, Math.floor(startY * ratio));
 
-        const cropped = await ImageManipulator.manipulateAsync(
-          fullUri,
-          [{
-            crop: {
-              originX: 0,
-              originY: startY * ratio,
-              width: contentSize.current.width * ratio,
-              height: cropHeight * ratio,
-            },
-          }],
-          { compress: 1, format: ImageManipulator.SaveFormat.PNG, base64: true }
-        );
+        while (cropStart < sectionEnd) {
+          const cropHeight = Math.min(maxCropHeight, sectionEnd - cropStart);
+          const cropped = await ImageManipulator.manipulateAsync(
+            fullUri,
+            [{
+              crop: {
+                originX: 0,
+                originY: cropStart,
+                width: cropWidth,
+                height: cropHeight,
+              },
+            }],
+            { compress: 1, format: ImageManipulator.SaveFormat.PNG, base64: true }
+          );
 
-        htmlPages.push(`
-          <div style="page-break-after: ${pageNum === REPORT_PAGES.length ? 'auto' : 'always'};">
-            <img src="data:image/png;base64,${cropped.base64}" style="width:100%; display:block;" />
-          </div>
-        `);
+          htmlPages.push(`
+            <div style="page-break-after: always; break-after: page;">
+              <img src="data:image/png;base64,${cropped.base64}" style="width:100%; display:block;" />
+            </div>
+          `);
+          cropStart += cropHeight;
+        }
+      }
+
+      // The final image must not force a blank trailing page.
+      if (htmlPages.length) {
+        htmlPages[htmlPages.length - 1] = htmlPages[htmlPages.length - 1]
+          .replace('page-break-after: always; break-after: page;', 'page-break-after: auto; break-after: auto;');
       }
 
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8" />
@@ -1333,19 +1379,23 @@ const contentSize = useRef({ width: 0, height: 0 });
       setDownloading(false);
     }
   };
-  const cardStyle = {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    marginHorizontal: 12,
-    marginBottom: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 18,
-    shadowColor: '#1E232A',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  };
+const A4_ASPECT = 297 / 210; // height / width
+const pageMinHeight = cardWidth ? Math.round(cardWidth * A4_ASPECT) : undefined;
+
+const cardStyle = {
+  backgroundColor: '#ffffff',
+  borderRadius: 8,
+  marginHorizontal: 12,
+  marginBottom: 20,
+  paddingHorizontal: 16,
+  paddingVertical: 18,
+  shadowColor: '#1E232A',
+  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 0.08,
+  shadowRadius: 8,
+  elevation: 3,
+};
+
 
   if (loading) {
     return (
@@ -1451,8 +1501,7 @@ const contentSize = useRef({ width: 0, height: 0 });
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
       >
-        <View ref={contentRef} collapsable={false}>
-
+   <View ref={contentRef} nativeID="assessment-report-page-content" collapsable={false}>
         {/* ============================================================
             PAGE 1: COVER PAGE
         ============================================================ */}
@@ -1663,14 +1712,17 @@ const contentSize = useRef({ width: 0, height: 0 });
         {/* ============================================================
             PAGE 2: DECLARATION
         ============================================================ */}
-        <View
-          style={cardStyle}
-          onLayout={(e) => {
-            pageOffsets.current[2] = e.nativeEvent.layout.y;
-          }}
-        >
-          <PageHeader studentFirstName={studentFirstName} />
-          <TitlePill title="DECLARATION" />
+       <View
+  style={cardStyle}
+  onLayout={(e) => {
+    pageOffsets.current[2] = e.nativeEvent.layout.y;
+    if (!cardWidth) {
+      setCardWidth(e.nativeEvent.layout.width);
+    }
+  }}
+>
+  <PageHeader studentFirstName={studentFirstName} />
+  <TitlePill title="DECLARATION" />
 
           <Text style={{ fontSize: 13.5, fontWeight: '700', color: COLORS.dark, marginBottom: 10 }}>
             Dear {studentFirstName},
