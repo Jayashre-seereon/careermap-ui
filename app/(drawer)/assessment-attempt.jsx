@@ -43,6 +43,11 @@ export default function AssessmentAttemptScreen() {
   const [isSubmitModalVisible, setIsSubmitModalVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitStepText, setSubmitStepText] = useState('');
+  const [accessBlockedInfo, setAccessBlockedInfo] = useState({
+    visible: false,
+    reason: '',
+    message: '',
+  });
 
   const pendingSavesRef = useRef({});
   const saveTimeoutRef = useRef(null);
@@ -87,7 +92,23 @@ export default function AssessmentAttemptScreen() {
       setSections(loadedSections);
       setAnswers(initialAnswers);
     } catch (err) {
-      console.warn('Could not fetch remote questions, initializing question engine:', err?.message);
+      console.warn('Could not fetch remote questions:', err?.message);
+      const data = err.response?.data;
+      if (
+        data?.requiresNewPlan ||
+        err.response?.status === 403 ||
+        data?.reason === 'ALREADY_COMPLETED' ||
+        data?.reason === 'NO_ACTIVE_PLAN'
+      ) {
+        setAccessBlockedInfo({
+          visible: true,
+          reason: data?.reason || '',
+          message:
+            data?.message ||
+            'You have already completed your assessment under your current plan or need a subscription.',
+        });
+        return;
+      }
       setSections(FALLBACK_SECTIONS);
     } finally {
       setLoading(false);
@@ -303,6 +324,100 @@ export default function AssessmentAttemptScreen() {
         <Text style={{ color: subtextColor, fontSize: 12, marginTop: 4 }}>
           Preparing questions and pre-saved responses
         </Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (accessBlockedInfo.visible) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#070709' : '#faf6f3', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <View
+          style={{
+            backgroundColor: cardBg,
+            borderRadius: 24,
+            padding: 24,
+            width: '100%',
+            maxWidth: 380,
+            borderWidth: 1,
+            borderColor,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.2,
+            shadowRadius: 16,
+            elevation: 8,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <View
+              style={{
+                backgroundColor: '#fee2e2',
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name="lock-closed" size={24} color="#8C1814" />
+            </View>
+            <Text style={{ color: textColor, fontSize: 18, fontWeight: '800', flex: 1 }}>
+              Assessment Plan Required
+            </Text>
+          </View>
+
+          <Text style={{ color: textColor, fontSize: 13, lineHeight: 20, marginTop: 4 }}>
+            {accessBlockedInfo.message ||
+              'You have already completed your assessment under your current plan or need a subscription.'}
+          </Text>
+
+          <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 10, fontWeight: '500' }}>
+            Each subscription plan unlocks a fresh comprehensive evaluation and an updated Career Compass Report.
+          </Text>
+
+          <View style={{ marginTop: 22, gap: 10 }}>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => {
+                if (accessBlockedInfo.reason === 'ALREADY_COMPLETED') {
+                  router.replace({
+                    pathname: '/(drawer)/assessment-report',
+                    params: { attemptId: String(attemptId) },
+                  });
+                } else {
+                  router.replace({
+                    pathname: '/(drawer)/subscription',
+                    params: { returnTo: '/(drawer)/(tabs)/assessment' },
+                  });
+                }
+              }}
+              style={{
+                backgroundColor: '#8C1814',
+                borderRadius: 14,
+                paddingVertical: 13,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '800' }}>
+                {accessBlockedInfo.reason === 'ALREADY_COMPLETED' ? 'View Report' : 'View Plans'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => router.replace('/(drawer)/(tabs)/assessment')}
+              style={{
+                backgroundColor: darkMode ? '#1c1c20' : '#f1f5f9',
+                borderRadius: 14,
+                paddingVertical: 12,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: subtextColor, fontSize: 13, fontWeight: '700' }}>
+                Back to Assessment
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </SafeAreaView>
     );
   }
