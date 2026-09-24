@@ -1043,7 +1043,7 @@ const [cardWidth, setCardWidth] = useState(null);
     { facet: 'A', label: 'AUDITORY' },
     { facet: 'Rd', label: 'READING / WRITING' },
     { facet: 'K', label: 'KINAESTHETIC' },
-  ], varkScoreMap).slice(0, 2);
+  ], varkScoreMap).slice(0, 3);
   const topWorkValues = rankDomainFacets(domainValues, [
     { facet: 'OC', label: 'OPENNESS TO CHANGE' },
     { facet: 'SE', label: 'SELF-ENHANCEMENT' },
@@ -1058,7 +1058,24 @@ const [cardWidth, setCardWidth] = useState(null);
     { facet: 'Mech', label: 'MECHANICAL APTITUDE' },
     { facet: 'Spat', label: 'SPATIAL APTITUDE' },
   ], aptScoreMap).filter((item) => item.score > 0).slice(0, 3);
+const topPersonalityTraits = rankDomainFacets(domainPerson, [
+  { facet: 'ES', label: 'EMOTIONAL STABILITY' },
+  { facet: 'O', label: 'OPENNESS' },
+  { facet: 'Cn', label: 'CONSCIENTIOUSNESS' },
+  { facet: 'Ex', label: 'EXTRAVERSION' },
+  { facet: 'Ag', label: 'AGREEABLENESS' },
+], personScoreMap);
+const topPersonalityTrait = topPersonalityTraits[0];
 
+const goalOrientationLabel = shortPct >= longPct ? 'SHORT TERM' : 'LONG TERM';
+const goalOrientationSummary = Math.abs(longPct - shortPct) <= 10
+  ? 'Balanced Planner'
+  : (longPct > shortPct ? 'Long-Term Visionary' : 'Short-Term Achiever');
+
+const bandLabelFor = (arr, facet, fallback = 'Moderate') => {
+  const found = (arr || []).find((x) => x.facet === facet);
+  return (found?.bandLabel || fallback).toUpperCase();
+};
   // 5 Top Fallback clusters matching the PDF
   const defaultTop5 = [
     {
@@ -2049,48 +2066,21 @@ const cardStyle = {
           }}
         >
           <PageHeader studentFirstName={studentFirstName} />
-
-          {[
-            {
-              num: '01',
-              name: 'EMOTIONAL STABILITY',
-              band: 'HIGH',
-              text: 'You stay calm and steady under pressure a major asset for high-stakes fields like defence, medicine, aviation and competitive exams.',
-            },
-            {
-              num: '02',
-              name: 'OPENNESS',
-              band: 'MODERATE',
-              text: 'You balance curiosity with practicality open to new ideas, while valuing what already works.',
-            },
-            {
-              num: '03',
-              name: 'CONSCIENTIOUSNESS',
-              band: 'MODERATE',
-              text: "You're reasonably organised and dependable, finishing what matters even if some tasks slip.",
-            },
-            {
-              num: '04',
-              name: 'EXTRAVERSION',
-              band: 'MODERATE',
-              text: "You're an ambivert — comfortable both in groups and working alone, adapting to what the situation needs.",
-            },
-            {
-              num: '05',
-              name: 'AGREEABLENESS',
-              band: 'MODERATE',
-              text: 'You cooperate well while still holding your own views — a healthy balance for teamwork and fair decisions.',
-            },
-          ].map((item) => (
-            <TraitCardRow
-              key={item.num}
-              num={item.num}
-              name={item.name}
-              band={item.band}
-              text={item.text}
-              color="green"
-            />
-          ))}
+{[
+  { num: '01', facet: 'ES', name: 'EMOTIONAL STABILITY', highText: 'You stay calm and steady under pressure a major asset for high-stakes fields like defence, medicine, aviation and competitive exams.', devText: 'Pressure situations tend to affect you more than most — building calming routines before high-stakes moments (exams, interviews) can help a lot.' },
+  { num: '02', facet: 'O', name: 'OPENNESS', modText: 'You balance curiosity with practicality open to new ideas, while valuing what already works.' },
+  { num: '03', facet: 'Cn', name: 'CONSCIENTIOUSNESS', modText: "You're reasonably organised and dependable, finishing what matters even if some tasks slip." },
+  { num: '04', facet: 'Ex', name: 'EXTRAVERSION', modText: "You're an ambivert — comfortable both in groups and working alone, adapting to what the situation needs.", devText: "You tend to recharge better alone or in small groups than in large social settings — that's a strength in focused, independent work." },
+  { num: '05', facet: 'Ag', name: 'AGREEABLENESS', modText: 'You cooperate well while still holding your own views — a healthy balance for teamwork and fair decisions.' },
+].map((item) => {
+  const band = bandLabelFor(domainPerson, item.facet);
+  const text = band === 'HIGH' && item.highText ? item.highText
+    : band === 'DEVELOPING' && item.devText ? item.devText
+    : item.modText || item.highText;
+  return (
+    <TraitCardRow key={item.num} num={item.num} name={item.name} band={band} text={text} color="green" />
+  );
+})}
 
           <PageFooter pageNum={9} />
         </View>
@@ -2295,31 +2285,20 @@ const cardStyle = {
           <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="lavender" />
 
           {/* 4 Donut Gauges */}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', marginVertical: 14, gap: 16 }}>
-            {/* Visual 100% */}
-            <View style={{ alignItems: 'center' }}>
-              <DonutGauge percent={100} color="#466CA3" trackColor="#DDE7F3" textColor="#1E3A8A" />
-              <Text style={{ marginTop: 6, fontWeight: '800', fontSize: 11, color: COLORS.dark }}>VISUAL</Text>
-            </View>
-
-            {/* Auditory 75% */}
-            <View style={{ alignItems: 'center' }}>
-              <DonutGauge percent={75} color={COLORS.green} trackColor="#E2EBE0" textColor="#154512" />
-              <Text style={{ marginTop: 6, fontWeight: '800', fontSize: 11, color: COLORS.dark }}>AUDITORY</Text>
-            </View>
-
-            {/* Reading 85% */}
-            <View style={{ alignItems: 'center' }}>
-              <DonutGauge percent={85} color="#B58E2E" trackColor="#F3EDE0" textColor="#5C450A" />
-              <Text style={{ marginTop: 6, fontWeight: '800', fontSize: 11, color: COLORS.dark }}>READING</Text>
-            </View>
-
-            {/* Kinesthetic 60% */}
-            <View style={{ alignItems: 'center' }}>
-              <DonutGauge percent={60} color="#9A4235" trackColor="#F6E7E5" textColor="#691811" />
-              <Text style={{ marginTop: 6, fontWeight: '800', fontSize: 11, color: COLORS.dark }}>KINAESTHETIC</Text>
-            </View>
-          </View>
+       {/* 4 Donut Gauges — driven by varkScoreMap */}
+<View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around', marginVertical: 14, gap: 16 }}>
+  {[
+    { key: 'V', label: 'VISUAL', val: varkScoreMap.V, color: '#466CA3', track: '#DDE7F3', text: '#1E3A8A' },
+    { key: 'A', label: 'AUDITORY', val: varkScoreMap.A, color: COLORS.green, track: '#E2EBE0', text: '#154512' },
+    { key: 'Rd', label: 'READING', val: varkScoreMap.Rd, color: '#B58E2E', track: '#F3EDE0', text: '#5C450A' },
+    { key: 'K', label: 'KINAESTHETIC', val: varkScoreMap.K, color: '#9A4235', track: '#F6E7E5', text: '#691811' },
+  ].map((item) => (
+    <View key={item.key} style={{ alignItems: 'center' }}>
+      <DonutGauge percent={item.val} color={item.color} trackColor={item.track} textColor={item.text} />
+      <Text style={{ marginTop: 6, fontWeight: '800', fontSize: 11, color: COLORS.dark }}>{item.label}</Text>
+    </View>
+  ))}
+</View>
 
           {/* Best Learning Styles */}
           <View style={{ marginTop: 18 }}>
@@ -2340,19 +2319,7 @@ const cardStyle = {
                 </View>
               ))}
             </View>
-            <View
-              style={{
-                width: '60%',
-                alignSelf: 'center',
-                marginTop: 8,
-                paddingVertical: 9,
-                backgroundColor: COLORS.lavender,
-                borderRadius: 8,
-                alignItems: 'center',
-              }}
-            >
-              <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>AUDITORY</Text>
-            </View>
+           
           </View>
 
           <PageFooter pageNum={14} />
@@ -2411,41 +2378,20 @@ const cardStyle = {
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="HERE ARE THE SUGGESTIONS AS PER VALUES" colorClass="dark-green" />
 
-          {[
-            {
-              num: '01',
-              name: 'OPENNESS TO CHANGE',
-              band: 'HIGH',
-              text: "Freedom, creativity and new experiences drive you — you'll thrive where you can decide how you work and what you explore.",
-            },
-            {
-              num: '02',
-              name: 'SELF-ENHANCEMENT',
-              band: 'HIGH',
-              text: "Achievement, success and recognition strongly drive you — you'll thrive with clear goals, competition, growth ladders and visible results.",
-            },
-            {
-              num: '03',
-              name: 'SELF-TRANSCENDENCE',
-              band: 'MODERATE',
-              text: 'You care about fairness and helping others as part of a balanced set of motivations.',
-            },
-            {
-              num: '04',
-              name: 'CONSERVATION',
-              band: 'MODERATE',
-              text: 'You value a reasonable amount of stability and order while staying flexible when things shift.',
-            },
-          ].map((item) => (
-            <TraitCardRow
-              key={item.num}
-              num={item.num}
-              name={item.name}
-              band={item.band}
-              text={item.text}
-              color="dark-green"
-            />
-          ))}
+        {[
+  { num: '01', facet: 'OC', name: 'OPENNESS TO CHANGE', highText: "Freedom, creativity and new experiences drive you — you'll thrive where you can decide how you work and what you explore.", modText: 'You appreciate some freedom and variety in how you work, while still valuing a degree of structure.' },
+  { num: '02', facet: 'SE', name: 'SELF-ENHANCEMENT', highText: "Achievement, success and recognition strongly drive you — you'll thrive with clear goals, competition, growth ladders and visible results.", modText: 'Achievement and recognition matter to you, alongside other motivations like stability or purpose.' },
+  { num: '03', facet: 'ST', name: 'SELF-TRANSCENDENCE', modText: 'You care about fairness and helping others as part of a balanced set of motivations.' },
+  { num: '04', facet: 'CO', name: 'CONSERVATION', modText: 'You value a reasonable amount of stability and order while staying flexible when things shift.', devText: "Stability and predictability aren't your main drivers — you're comfortable with change and less tied to fixed routines." },
+].map((item) => {
+  const band = bandLabelFor(domainValues, item.facet);
+  const text = band === 'HIGH' && item.highText ? item.highText
+    : band === 'DEVELOPING' && item.devText ? item.devText
+    : item.modText;
+  return (
+    <TraitCardRow key={item.num} num={item.num} name={item.name} band={band} text={text} color="dark-green" />
+  );
+})}
 
           <PageFooter pageNum={16} />
         </View>
@@ -2667,8 +2613,8 @@ const cardStyle = {
               }}
             >
               <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11.5, letterSpacing: 0.5 }}>
-                Most Inclined towards : SHORT TERM
-              </Text>
+  Most Inclined towards : {goalOrientationLabel}
+</Text>
             </View>
           </View>
 
@@ -3093,14 +3039,12 @@ const cardStyle = {
             </Text>
           </View>
 
-          <View style={{ flexDirection: 'row', gap: 14, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#E2E8F0', marginBottom: 10 }}>
-            <Text style={{ fontSize: 11, color: '#334155' }}>
-              Learning style: <Text style={{ fontWeight: '800', color: COLORS.dark }}>Visual</Text>
-            </Text>
-            <Text style={{ fontSize: 11, color: '#334155' }}>
-              Goal orientation: <Text style={{ fontWeight: '800', color: COLORS.dark }}>Balanced Planner</Text>
-            </Text>
-          </View>
+         <Text style={{ fontSize: 11, color: '#334155' }}>
+  Learning style: <Text style={{ fontWeight: '800', color: COLORS.dark }}>{topLearningStyles[0]?.label}</Text>
+</Text>
+<Text style={{ fontSize: 11, color: '#334155' }}>
+  Goal orientation: <Text style={{ fontWeight: '800', color: COLORS.dark }}>{goalOrientationSummary}</Text>
+</Text>
 
           <View style={{ gap: 8 }}>
             <View>
@@ -3173,50 +3117,28 @@ const cardStyle = {
 
           {/* 6 Summary Metric Cards */}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-            {[
-              { label: 'HOLLAND CODE', val: hollandCode, isRed: false },
-              { label: 'TOP CLUSTER', val: 'Business & Entrepreneurship', isRed: false },
-              { label: 'TOP VALUE', val: 'Openness to Change', isRed: false },
-              { label: 'TOP TRAIT', val: 'Emotional Stability', isRed: false },
-              { label: 'LEARNING STYLE', val: 'Visual', isRed: false },
-              { label: 'GOAL ORIENTATION', val: 'Balanced Planner', isRed: false },
-            ].map((m) => (
-              <View
-                key={m.label}
-                style={{
-                  width: '48%',
-                  padding: 8,
-                  backgroundColor: '#F8FAFC',
-                  borderWidth: 1,
-                  borderColor: '#E2E8F0',
-                  borderRadius: 8,
-                }}
-              >
-                <Text style={{ fontSize: 8.5, fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>
-                  {m.label}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 11,
-                    fontWeight: '800',
-                    color: m.isRed ? COLORS.red : COLORS.dark,
-                    marginTop: 2,
-                  }}
-                  numberOfLines={2}
-                >
-                  {m.val}
-                </Text>
-              </View>
-            ))}
+           {[
+  { label: 'HOLLAND CODE', val: hollandCode },
+  { label: 'TOP CLUSTER', val: `${top5Clusters[0]?.name} (${top5Clusters[0]?.matchPercentage}%)` },
+  { label: 'TOP VALUE', val: topWorkValues[0]?.label },
+  { label: 'TOP TRAIT', val: topPersonalityTrait?.label },
+  { label: 'LEARNING STYLE', val: topLearningStyles[0]?.label },
+  { label: 'GOAL ORIENTATION', val: goalOrientationSummary },
+].map((m) => (
+  <View key={m.label} style={{ width: '48%', padding: 8, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8 }}>
+    <Text style={{ fontSize: 8.5, fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>{m.label}</Text>
+    <Text style={{ fontSize: 11, fontWeight: '800', color: COLORS.dark, marginTop: 2 }} numberOfLines={2}>{m.val}</Text>
+  </View>
+))}
           </View>
 
-          <Text style={{ fontSize: 11, color: COLORS.body, lineHeight: 16, marginBottom: 10 }}>
-            {studentName} shows an {hollandCode} interest pattern, which combined with emotional stability and a strong
-            pull toward openness to change points most clearly toward Business & Entrepreneurship (67% match).
-            Aptitude-wise, {studentName}’s strongest results are in Verbal Reasoning and Logical Reasoning, which support
-            that direction. As a visual learner with a balanced planner approach to the path ahead, the study tips and
-            route in Section 3 are the most relevant starting point.
-          </Text>
+        <Text style={{ fontSize: 11, color: COLORS.body, lineHeight: 16, marginBottom: 10 }}>
+  {studentName} shows an {hollandCode} interest pattern, which combined with {topPersonalityTrait?.label?.toLowerCase()} and a strong
+  pull toward {topWorkValues[0]?.label?.toLowerCase()} points most clearly toward {top5Clusters[0]?.name} ({top5Clusters[0]?.matchPercentage}% match).
+  Aptitude-wise, {studentName}'s strongest results are in {topAptitudes[0]?.label} and {topAptitudes[1]?.label}, which support
+  that direction. As a {topLearningStyles[0]?.label?.toLowerCase()} learner with a {goalOrientationSummary.toLowerCase()} approach to
+  the path ahead, the study tips and route in Section 3 are the most relevant starting point.
+</Text>
 
           {/* What to do next */}
           <View style={{ padding: 10, backgroundColor: '#E6EFF6', borderWidth: 1, borderColor: '#D2DFEB', borderRadius: 10, gap: 4, marginBottom: 8 }}>
