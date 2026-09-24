@@ -1030,48 +1030,66 @@ const [cardWidth, setCardWidth] = useState(null);
     })
     .sort((a, b) => b.score - a.score);
 
-  const topInterests = rankDomainFacets(domainInterests, [
+    const MIN_SCORE = 45; // change this number to change the cut-off
+  // Only items ABOVE MIN_SCORE. If none pass, show the single highest one.
+  const aboveMin = (list) => {
+    const passed = list.filter((item) => item.score > MIN_SCORE);
+    return passed.length ? passed : list.slice(0, 1);
+  };
+
+  const topInterests = aboveMin(rankDomainFacets(domainInterests, [
     { facet: 'R', label: 'REALISTIC' },
     { facet: 'I', label: 'INVESTIGATIVE' },
     { facet: 'A', label: 'ARTISTIC' },
     { facet: 'S', label: 'SOCIAL' },
     { facet: 'E', label: 'ENTERPRISING' },
     { facet: 'C', label: 'CONVENTIONAL' },
-  ], interestScoreMap).slice(0, 4);
-  const topLearningStyles = rankDomainFacets(domainVark, [
+  ], interestScoreMap));
+
+  const topLearningStyles = aboveMin(rankDomainFacets(domainVark, [
     { facet: 'V', label: 'VISUAL' },
     { facet: 'A', label: 'AUDITORY' },
     { facet: 'Rd', label: 'READING / WRITING' },
     { facet: 'K', label: 'KINAESTHETIC' },
-  ], varkScoreMap).slice(0, 3);
-  const topWorkValues = rankDomainFacets(domainValues, [
+  ], varkScoreMap));
+
+  const topWorkValues = aboveMin(rankDomainFacets(domainValues, [
     { facet: 'OC', label: 'OPENNESS TO CHANGE' },
     { facet: 'SE', label: 'SELF-ENHANCEMENT' },
     { facet: 'ST', label: 'SELF-TRANSCENDENCE' },
     { facet: 'CO', label: 'CONSERVATION' },
-  ], valScoreMap).slice(0, 2);
-  const topAptitudes = rankDomainFacets(domainApt, [
+  ], valScoreMap));
+
+  const topAptitudes = aboveMin(rankDomainFacets(domainApt, [
     { facet: 'Num', label: 'NUMERICAL APTITUDE' },
     { facet: 'Log', label: 'LOGICAL APTITUDE' },
     { facet: 'Verb', label: 'VERBAL APTITUDE' },
     { facet: 'Voc', label: 'VOCABULARY APTITUDE' },
     { facet: 'Mech', label: 'MECHANICAL APTITUDE' },
     { facet: 'Spat', label: 'SPATIAL APTITUDE' },
-  ], aptScoreMap).filter((item) => item.score > 0).slice(0, 3);
-const topPersonalityTraits = rankDomainFacets(domainPerson, [
-  { facet: 'ES', label: 'EMOTIONAL STABILITY' },
-  { facet: 'O', label: 'OPENNESS' },
-  { facet: 'Cn', label: 'CONSCIENTIOUSNESS' },
-  { facet: 'Ex', label: 'EXTRAVERSION' },
-  { facet: 'Ag', label: 'AGREEABLENESS' },
-], personScoreMap);
-const topPersonalityTrait = topPersonalityTraits[0];
+  ], aptScoreMap).filter((item) => item.score > 0));
 
-const goalOrientationLabel = shortPct >= longPct ? 'SHORT TERM' : 'LONG TERM';
-const goalOrientationSummary = Math.abs(longPct - shortPct) <= 10
-  ? 'Balanced Planner'
-  : (longPct > shortPct ? 'Long-Term Visionary' : 'Short-Term Achiever');
+  // Personality: only the single highest trait
+  const topPersonalityTraits = rankDomainFacets(domainPerson, [
+    { facet: 'ES', label: 'EMOTIONAL STABILITY' },
+    { facet: 'O', label: 'OPENNESS' },
+    { facet: 'Cn', label: 'CONSCIENTIOUSNESS' },
+    { facet: 'Ex', label: 'EXTRAVERSION' },
+    { facet: 'Ag', label: 'AGREEABLENESS' },
+  ], personScoreMap).slice(0, 1);
+  const topPersonalityTrait = topPersonalityTraits[0];
 
+  const personalityNotes = {
+    ES: 'Emotional Stability is the positive side of the Neuroticism scale — a higher score means you stay calmer under pressure.',
+    O: 'Openness reflects curiosity and willingness to try new ideas — a higher score means you enjoy variety, creativity and fresh approaches.',
+    Cn: 'Conscientiousness reflects discipline and reliability — a higher score means you plan ahead, stay organised and finish what you start.',
+    Ex: 'Extraversion reflects your social energy — a higher score means you feel energised around people and are comfortable in groups.',
+    Ag: 'Agreeableness reflects warmth and cooperation — a higher score means you are empathetic, trusting and good at teamwork.',
+  };
+
+  // Goal orientation: only the higher one
+  const goalOrientationLabel = shortPct >= longPct ? 'SHORT TERM' : 'LONG TERM';
+  const goalOrientationSummary = shortPct >= longPct ? 'Short-Term Achiever' : 'Long-Term Visionary';
 const bandLabelFor = (arr, facet, fallback = 'Moderate') => {
   const found = (arr || []).find((x) => x.facet === facet);
   return (found?.bandLabel || fallback).toUpperCase();
@@ -2155,10 +2173,9 @@ const cardStyle = {
               borderRadius: 10,
             }}
           >
-            <Text style={{ fontSize: 11.5, lineHeight: 17, color: COLORS.dark, fontWeight: '500' }}>
-              Emotional Stability is the positive side of the Neuroticism scale — a higher score means you stay calmer
-              under pressure.
-            </Text>
+           <Text style={{ fontSize: 11.5, lineHeight: 17, color: COLORS.dark, fontWeight: '500' }}>
+  {personalityNotes[topPersonalityTrait?.facet]}
+</Text>
           </View>
 
           <PageFooter pageNum={10} />
@@ -2301,26 +2318,55 @@ const cardStyle = {
 </View>
 
           {/* Best Learning Styles */}
-          <View style={{ marginTop: 18 }}>
-            <ScoreRepBanner title="Your Best Learning Styles are" color="lavender" />
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
-              {topLearningStyles.map((style) => (
-                <View
-                  key={style.facet}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 9,
-                    backgroundColor: COLORS.lavender,
-                    borderRadius: 8,
-                    alignItems: 'center',
-                  }}
-                >
-                  <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>{style.label}</Text>
-                </View>
-              ))}
-            </View>
-           
-          </View>
+         {/* Best Learning Styles */}
+<View style={{ marginTop: 18 }}>
+  <ScoreRepBanner
+    title="YOUR BEST LEARNING STYLES ARE"
+    color="lavender"
+  />
+
+  <View
+    style={{
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'stretch',
+      marginTop: 4,
+      width: '100%',
+    }}
+  >
+    {topLearningStyles.slice(0, 4).map((style) => (
+      <View
+        key={style.facet}
+        style={{
+          width: '23.5%',
+          minHeight: 42,
+          paddingHorizontal: 4,
+          paddingVertical: 8,
+          backgroundColor: COLORS.lavender,
+          borderRadius: 7,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text
+          style={{
+            color: '#ffffff',
+            fontWeight: '800',
+            fontSize: 9.5,
+            letterSpacing: 0.2,
+            textAlign: 'center',
+            lineHeight: 11,
+          }}
+          numberOfLines={2}
+          adjustsFontSizeToFit
+          minimumFontScale={0.8}
+        >
+          {style.label}
+        </Text>
+      </View>
+    ))}
+  </View>
+</View>
 
           <PageFooter pageNum={14} />
         </View>
@@ -2448,27 +2494,55 @@ const cardStyle = {
           </View>
 
           {/* Best Value Fit */}
-          <View style={{ marginTop: 20 }}>
-            <ScoreRepBanner title="Your Best Work Value Fit into" color="dark-green" />
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
-              {topWorkValues.map((value) => (
-                <View
-                  key={value.facet}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 9,
-                    backgroundColor: COLORS.green,
-                    borderRadius: 8,
-                    alignItems: 'center',
-                  }}
-                >
-                  <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 10.5, letterSpacing: 0.4 }}>
-                    {value.label}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
+        {/* Best Value Fit */}
+<View style={{ marginTop: 20 }}>
+  <ScoreRepBanner
+    title="YOUR BEST WORK VALUE FIT INTO"
+    color="dark-green"
+  />
+
+  <View
+    style={{
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'stretch',
+      marginTop: 4,
+      width: '100%',
+    }}
+  >
+    {topWorkValues.slice(0, 4).map((value) => (
+      <View
+        key={value.facet}
+        style={{
+          width: '23.5%',
+          minHeight: 42,
+          paddingHorizontal: 4,
+          paddingVertical: 8,
+          backgroundColor: COLORS.green,
+          borderRadius: 7,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text
+          style={{
+            color: '#ffffff',
+            fontWeight: '800',
+            fontSize: 9,
+            letterSpacing: 0.15,
+            textAlign: 'center',
+            lineHeight: 11,
+          }}
+          numberOfLines={2}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+        >
+          {value.label}
+        </Text>
+      </View>
+    ))}
+  </View>
+</View>
 
           <PageFooter pageNum={17} />
         </View>
@@ -3135,7 +3209,7 @@ const cardStyle = {
         <Text style={{ fontSize: 11, color: COLORS.body, lineHeight: 16, marginBottom: 10 }}>
   {studentName} shows an {hollandCode} interest pattern, which combined with {topPersonalityTrait?.label?.toLowerCase()} and a strong
   pull toward {topWorkValues[0]?.label?.toLowerCase()} points most clearly toward {top5Clusters[0]?.name} ({top5Clusters[0]?.matchPercentage}% match).
-  Aptitude-wise, {studentName}'s strongest results are in {topAptitudes[0]?.label} and {topAptitudes[1]?.label}, which support
+  Aptitude-wise, {studentName}'s strongest results are in {topAptitudes.slice(0, 2).map((a) => a.label).join(' and ')}, which support
   that direction. As a {topLearningStyles[0]?.label?.toLowerCase()} learner with a {goalOrientationSummary.toLowerCase()} approach to
   the path ahead, the study tips and route in Section 3 are the most relevant starting point.
 </Text>
