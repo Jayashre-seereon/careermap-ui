@@ -16,6 +16,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAppState } from '../../../src/app-state';
 import {
+  getAssessmentAccessStatus,
   getMyAttempts,
   getPublishedAssessments,
   startAssessmentAttempt,
@@ -33,18 +34,28 @@ export default function AssessmentLandingScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [accessStatus, setAccessStatus] = useState(null);
   const [publishedAssessments, setPublishedAssessments] = useState([]);
   const [myAttempts, setMyAttempts] = useState([]);
   const [activeAttempt, setActiveAttempt] = useState(null);
   const [latestCompletedAttempt, setLatestCompletedAttempt] = useState(null);
   const [showRetakeModal, setShowRetakeModal] = useState(false);
+  const [showPlanRequiredModal, setShowPlanRequiredModal] = useState(false);
+  const [planRequiredMessage, setPlanRequiredMessage] = useState('');
 
   const loadData = useCallback(async () => {
     try {
-      const [assessmentsRes, attemptsRes] = await Promise.allSettled([
+      const [accessRes, assessmentsRes, attemptsRes] = await Promise.allSettled([
+        getAssessmentAccessStatus(),
         getPublishedAssessments(),
         getMyAttempts(),
       ]);
+
+      if (accessRes.status === 'fulfilled' && accessRes.value) {
+        setAccessStatus(accessRes.value);
+      } else {
+        setAccessStatus(null);
+      }
 
       const assessments =
         assessmentsRes.status === 'fulfilled' && Array.isArray(assessmentsRes.value)
@@ -94,7 +105,16 @@ export default function AssessmentLandingScreen() {
     }, [loadData])
   );
 
+  function triggerPlanRequiredModal(customMessage) {
+    const msg =
+      customMessage ||
+      'You have already completed your Psychometric Assessment and generated your 31-page Career Compass Report under your current plan. To retake the assessment and track your new score, please subscribe to an assessment plan.';
+    setPlanRequiredMessage(msg);
+    setShowPlanRequiredModal(true);
+  }
+
   async function handleStartTest(forceNew = false) {
+    // If in-progress test exists and not forcing new: resume directly
     if (activeAttempt && !forceNew) {
       const attemptId =
         activeAttempt.id || activeAttempt.attemptId || activeAttempt._id;
@@ -102,6 +122,22 @@ export default function AssessmentLandingScreen() {
         pathname: '/(drawer)/assessment-attempt',
         params: { attemptId: String(attemptId) },
       });
+      return;
+    }
+
+    // If accessStatus specifically marks user as blocked:
+    if (accessStatus && accessStatus.allowed === false) {
+      if (accessStatus.reason === 'ALREADY_COMPLETED') {
+        triggerPlanRequiredModal(
+          accessStatus.message ||
+            'You have already completed your assessment under your current plan. Please subscribe to a new assessment plan to retake the test.'
+        );
+      } else {
+        triggerPlanRequiredModal(
+          accessStatus.message ||
+            'Assessment is locked. Please purchase an assessment plan to unlock access.'
+        );
+      }
       return;
     }
 
@@ -127,18 +163,39 @@ export default function AssessmentLandingScreen() {
         params: { attemptId: String(attemptId) },
       });
     } catch (err) {
-      console.warn('Start assessment error, proceeding with local attempt:', err?.message);
-      const fallbackId = `att_${Date.now()}`;
-      router.push({
-        pathname: '/(drawer)/assessment-attempt',
-        params: { attemptId: fallbackId },
-      });
+      console.warn('Start assessment error:', err?.message);
+      const data = err.response?.data;
+      if (
+        data?.requiresNewPlan ||
+        err.response?.status === 403 ||
+        data?.reason === 'ALREADY_COMPLETED' ||
+        data?.reason === 'NO_ACTIVE_PLAN'
+      ) {
+        triggerPlanRequiredModal(
+          data?.message || 'Please purchase an assessment plan to take or retake the assessment.'
+        );
+        loadData();
+      } else {
+        Alert.alert(
+          'Assessment Error',
+          data?.message || err?.message || 'Could not start assessment. Please try again.'
+        );
+      }
     } finally {
       setStarting(false);
     }
   }
 
   function handleRetakeConfirm() {
+    if (accessStatus && accessStatus.allowed === false) {
+      triggerPlanRequiredModal(
+        accessStatus.reason === 'ALREADY_COMPLETED'
+          ? 'You have already completed your Psychometric Assessment and generated your 31-page Career Compass Report. To retake the assessment and track your new score, please subscribe to an assessment plan.'
+          : (accessStatus.message || 'Please purchase a plan to retake the assessment.')
+      );
+      return;
+    }
+
     if (Platform.OS === 'web') {
       setShowRetakeModal(true);
     } else {
@@ -156,6 +213,35 @@ export default function AssessmentLandingScreen() {
       );
     }
   }
+
+  // Determine current access and completion state matching user portal
+  const isAllowed = accessStatus
+    ? accessStatus.allowed === true
+    : !latestCompletedAttempt || !!activeAttempt;
+
+  const isAlreadyCompleted = accessStatus
+    ? accessStatus.allowed === false &&
+      (accessStatus.reason === 'ALREADY_COMPLETED' || !!accessStatus.completedAttemptId)
+    : Boolean(latestCompletedAttempt) && !activeAttempt;
+
+  const isNoActivePlan = accessStatus
+    ? accessStatus.allowed === false && accessStatus.reason === 'NO_ACTIVE_PLAN'
+    : false;
+
+  const completedAttemptId =
+    accessStatus?.completedAttemptId ||
+    latestCompletedAttempt?.id ||
+    latestCompletedAttempt?.attemptId ||
+    latestCompletedAttempt?._id ||
+    'latest';
+
+  const formattedCompletedDate =
+    accessStatus?.completedAt || latestCompletedAttempt?.completedAt
+      ? new Date(
+          accessStatus?.completedAt || latestCompletedAttempt?.completedAt
+        ).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      : 'Recently';
+
 
   const cardBg = darkMode ? '#121214' : '#ffffff';
   const borderColor = darkMode ? '#222226' : '#e8dfda';
@@ -209,7 +295,7 @@ export default function AssessmentLandingScreen() {
           >
             <Ionicons name="shield-checkmark" size={14} color="#fde047" />
             <Text style={{ color: '#fef08a', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>
-              6-DOMAIN EVALUATION
+              6-DOMAIN EVALUATION • 1-PLAN = 1-ATTEMPT
             </Text>
           </View>
 
@@ -218,7 +304,7 @@ export default function AssessmentLandingScreen() {
           </Text>
 
           <Text style={{ color: '#ffe4e6', fontSize: 13, lineHeight: 19, marginTop: 8 }}>
-            Discover your interests, strengths, learning style, and career preferences to unlock your top 5 best-match career pathways.
+            Discover your interests, personality strengths, learning style, work values, and cognitive aptitudes to unlock your top 5 best-fit career pathways in a 31-page Career Compass Report.
           </Text>
 
           {/* Badges */}
@@ -275,7 +361,7 @@ export default function AssessmentLandingScreen() {
             </View>
           </View>
 
-          {/* Quick Action Box */}
+          {/* Quick Action Box / Dynamic 3-State Quick Status Box */}
           <View
             style={{
               marginTop: 18,
@@ -290,10 +376,11 @@ export default function AssessmentLandingScreen() {
               <View style={{ paddingVertical: 14, alignItems: 'center' }}>
                 <ActivityIndicator color="#ffffff" />
                 <Text style={{ color: '#ffe4e6', fontSize: 12, marginTop: 8 }}>
-                  Loading your assessment status...
+                  Checking assessment access...
                 </Text>
               </View>
             ) : activeAttempt ? (
+              /* STATE 1A: In-Progress Attempt Found */
               <View>
                 <View
                   style={{
@@ -350,7 +437,8 @@ export default function AssessmentLandingScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
-            ) : latestCompletedAttempt ? (
+            ) : isAlreadyCompleted ? (
+              /* STATE 2: Test Completed (Locked for Retake under 1-Plan = 1-Attempt Rule) */
               <View>
                 <View
                   style={{
@@ -371,12 +459,12 @@ export default function AssessmentLandingScreen() {
                 </View>
 
                 <Text style={{ color: '#ffffff', fontSize: 17, fontWeight: '800', marginTop: 6 }}>
-                  Top Match: {latestCompletedAttempt.topCareerCluster || 'IT & Computers'}
+                  Career Compass Ready
                 </Text>
                 <Text style={{ color: '#ffe4e6', fontSize: 12, marginTop: 2 }}>
-                  Holland Code:{' '}
-                  <Text style={{ fontWeight: '800', color: '#fde047' }}>
-                    {latestCompletedAttempt.hollandCode || 'ICR'}
+                  Completed on:{' '}
+                  <Text style={{ fontWeight: '700', color: '#ffffff' }}>
+                    {formattedCompletedDate}
                   </Text>
                 </Text>
 
@@ -384,25 +472,20 @@ export default function AssessmentLandingScreen() {
                   <TouchableOpacity
                     activeOpacity={0.85}
                     onPress={() => {
-                      const attemptId =
-                        latestCompletedAttempt.id ||
-                        latestCompletedAttempt.attemptId ||
-                        latestCompletedAttempt._id ||
-                        'latest';
                       router.push({
                         pathname: '/(drawer)/assessment-report',
-                        params: { attemptId: String(attemptId) },
+                        params: { attemptId: String(completedAttemptId) },
                       });
                     }}
                     style={{
-                      backgroundColor: '#facc15',
+                      backgroundColor: '#34d399',
                       borderRadius: 14,
                       paddingVertical: 12,
                       alignItems: 'center',
                     }}
                   >
-                    <Text style={{ color: '#1e293b', fontSize: 13, fontWeight: '900' }}>
-                      📊 View Career Compass Report
+                    <Text style={{ color: '#064e3b', fontSize: 13, fontWeight: '900' }}>
+                      📄 View Career Compass Report
                     </Text>
                   </TouchableOpacity>
 
@@ -412,21 +495,93 @@ export default function AssessmentLandingScreen() {
                     style={{
                       backgroundColor: 'transparent',
                       borderWidth: 1,
-                      borderColor: 'rgba(255,255,255,0.4)',
+                      borderColor: '#fde047',
                       borderRadius: 14,
                       paddingVertical: 10,
                       alignItems: 'center',
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      gap: 6,
                     }}
                   >
-                    <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '700' }}>
-                      ↻ Retake Assessment
+                    <Ionicons name="lock-closed" size={13} color="#fde047" />
+                    <Text style={{ color: '#fde047', fontSize: 12, fontWeight: '700' }}>
+                      Retake Test 
                     </Text>
                   </TouchableOpacity>
                 </View>
               </View>
+            ) : isNoActivePlan ? (
+              /* STATE 3: No Active Plan (Locked) */
+              <View>
+                <View
+                  style={{
+                    alignSelf: 'flex-start',
+                    backgroundColor: 'rgba(239,68,68,0.25)',
+                    paddingHorizontal: 9,
+                    paddingVertical: 3,
+                    borderRadius: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <Ionicons name="lock-closed" size={12} color="#fca5a5" />
+                  <Text style={{ color: '#fca5a5', fontSize: 11, fontWeight: '800' }}>
+                    Assessment Locked
+                  </Text>
+                </View>
+
+                <Text style={{ color: '#ffffff', fontSize: 17, fontWeight: '800', marginTop: 6 }}>
+                  Assessment Plan Required
+                </Text>
+                <Text style={{ color: '#ffe4e6', fontSize: 12, marginTop: 4, lineHeight: 17 }}>
+                  {accessStatus?.message ||
+                    'Subscribe to an assessment plan to unlock your evaluation and 31-page report.'}
+                </Text>
+
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    router.push({
+                      pathname: '/(drawer)/subscription',
+                      params: { returnTo: '/(drawer)/(tabs)/assessment' },
+                    });
+                  }}
+                  style={{
+                    backgroundColor: '#facc15',
+                    borderRadius: 14,
+                    paddingVertical: 12,
+                    alignItems: 'center',
+                    marginTop: 14,
+                  }}
+                >
+                  <Text style={{ color: '#1e293b', fontSize: 14, fontWeight: '900' }}>
+                    🔒 Unlock Assessment (View Plans)
+                  </Text>
+                </TouchableOpacity>
+              </View>
             ) : (
+              /* STATE 1B: Allowed & Ready for New Attempt */
               <View style={{ alignItems: 'center', paddingVertical: 6 }}>
                 <Text style={{ fontSize: 32 }}>🚀</Text>
+                <View
+                  style={{
+                    backgroundColor: 'rgba(52,211,153,0.25)',
+                    paddingHorizontal: 9,
+                    paddingVertical: 3,
+                    borderRadius: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    marginTop: 4,
+                  }}
+                >
+                  <Ionicons name="lock-open" size={12} color="#34d399" />
+                  <Text style={{ color: '#a7f3d0', fontSize: 11, fontWeight: '800' }}>
+                    {accessStatus?.planTitle || 'Assessment Unlocked'}
+                  </Text>
+                </View>
                 <Text
                   style={{
                     color: '#ffffff',
@@ -708,14 +863,26 @@ export default function AssessmentLandingScreen() {
                 activeOpacity={0.8}
                 onPress={handleRetakeConfirm}
                 style={{
-                  backgroundColor: '#9a2119',
+                  backgroundColor: isAllowed ? '#9a2119' : 'transparent',
+                  borderWidth: isAllowed ? 0 : 1,
+                  borderColor: '#d97706',
                   borderRadius: 10,
                   paddingHorizontal: 10,
                   paddingVertical: 6,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 4,
                 }}
               >
-                <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '800' }}>
-                  + New Test
+                {!isAllowed && <Ionicons name="lock-closed" size={12} color="#d97706" />}
+                <Text
+                  style={{
+                    color: isAllowed ? '#ffffff' : '#d97706',
+                    fontSize: 11,
+                    fontWeight: '800',
+                  }}
+                >
+                  {isAllowed ? '+ New Test' : 'Retake Test'}
                 </Text>
               </TouchableOpacity>
             )}
@@ -756,7 +923,16 @@ export default function AssessmentLandingScreen() {
 
               <TouchableOpacity
                 activeOpacity={0.85}
-                onPress={() => handleStartTest(false)}
+                onPress={() => {
+                  if (isNoActivePlan) {
+                    router.push({
+                      pathname: '/(drawer)/subscription',
+                      params: { returnTo: '/(drawer)/(tabs)/assessment' },
+                    });
+                  } else {
+                    handleStartTest(false);
+                  }
+                }}
                 style={{
                   backgroundColor: '#9a2119',
                   borderRadius: 12,
@@ -766,7 +942,7 @@ export default function AssessmentLandingScreen() {
                 }}
               >
                 <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '800' }}>
-                  🚀 Start Your First Assessment
+                  {isNoActivePlan ? '🔒 Unlock Assessment Plan' : '🚀 Start Your First Assessment'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -866,6 +1042,109 @@ export default function AssessmentLandingScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Assessment Plan Required Modal */}
+      <Modal
+        visible={showPlanRequiredModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPlanRequiredModal(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: cardBg,
+              borderRadius: 24,
+              padding: 22,
+              width: '100%',
+              maxWidth: 380,
+              borderWidth: 1,
+              borderColor,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.25,
+              shadowRadius: 16,
+              elevation: 10,
+            }}
+          >
+            {/* Modal Header */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <View
+                style={{
+                  backgroundColor: '#fee2e2',
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="lock-closed" size={22} color="#8C1814" />
+              </View>
+              <Text style={{ color: textColor, fontSize: 18, fontWeight: '800', flex: 1 }}>
+                Assessment Plan Required
+              </Text>
+            </View>
+
+            {/* Modal Content */}
+            <Text style={{ color: textColor, fontSize: 13, lineHeight: 20, marginTop: 4 }}>
+              {planRequiredMessage ||
+                'You have already completed your Psychometric Assessment and generated your 31-page Career Compass Report under your current plan. To retake the assessment and track your new score, please subscribe to an assessment plan.'}
+            </Text>
+
+            <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 10, fontWeight: '500' }}>
+              Each subscription plan unlocks a fresh comprehensive evaluation and an updated Career Compass Report.
+            </Text>
+
+            {/* Buttons */}
+            <View style={{ marginTop: 20, gap: 10 }}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => {
+                  setShowPlanRequiredModal(false);
+                  router.push({
+                    pathname: '/(drawer)/subscription',
+                    params: { returnTo: '/(drawer)/(tabs)/assessment' },
+                  });
+                }}
+                style={{
+                  backgroundColor: '#8C1814',
+                  borderRadius: 14,
+                  paddingVertical: 13,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '800' }}>
+                  View Plans & Pricing
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setShowPlanRequiredModal(false)}
+                style={{
+                  backgroundColor: darkMode ? '#1c1c20' : '#f1f5f9',
+                  borderRadius: 14,
+                  paddingVertical: 12,
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ color: subtextColor, fontSize: 13, fontWeight: '700' }}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Web fallback modal for confirmation */}
       <Modal visible={showRetakeModal} transparent animationType="fade">
