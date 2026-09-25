@@ -65,28 +65,6 @@ const AppStateContext = createContext(null);
 
 const APP_STATE_STORAGE_KEY = 'careermap-app-state';
 
-function readPersistedAppState() {
-    if (typeof window === 'undefined' || !window.localStorage) {
-        return {};
-    }
-
-    try {
-        const raw = window.localStorage.getItem(APP_STATE_STORAGE_KEY);
-        if (!raw) {
-            return {};
-        }
-
-        const parsed = JSON.parse(raw);
-        return {
-            activePlanId: parsed?.activePlanId ?? null,
-            freeAccessUsage: parsed?.freeAccessUsage ?? initialFreeAccessUsage,
-        };
-    }
-    catch {
-        return {};
-    }
-}
-
 function persistAppState(nextState) {
     if (typeof window === 'undefined' || !window.localStorage) {
         return;
@@ -100,6 +78,17 @@ function persistAppState(nextState) {
     }
     catch {
         // Ignore storage failures in restricted browser modes.
+    }
+}
+
+function clearPersistedAppState() {
+    if (typeof window === 'undefined') return;
+    try {
+        window.localStorage?.removeItem(APP_STATE_STORAGE_KEY);
+        window.localStorage?.removeItem('userPortalData');
+        window.sessionStorage?.clear();
+    } catch {
+        // In-memory state is still reset when storage is unavailable.
     }
 }
 
@@ -119,6 +108,11 @@ function extractResponseItems(response) {
     }
 
     return [];
+}
+
+function extractDashboardUser(response) {
+    const data = response?.data?.data ?? response?.data ?? response;
+    return data?.user ?? data?.profile ?? data?.userProfile ?? (data && (data.id || data._id || data.email) ? data : null);
 }
 
 function formatDateLabel(value) {
@@ -294,8 +288,7 @@ function resolveActiveSubscriptionPlanIds(items = []) {
 }
 
 export function AppStateProvider({ children }) {
-    const persistedAppState = readPersistedAppState();
-    const [activePlanId, setActivePlanIdState] = useState(persistedAppState.activePlanId ?? null);
+    const [activePlanId, setActivePlanIdState] = useState(null);
     const [profileEditRequestKey, setProfileEditRequestKey] = useState(0);
     const [promoMessage, setPromoMessage] = useState('');
     const [onboarding, setOnboarding] = useState(initialOnboardingState);
@@ -304,36 +297,13 @@ export function AppStateProvider({ children }) {
     const [savedCareers, setSavedCareers] = useState(initialSavedCareers);
     const [testHistory, setTestHistory] = useState(initialTestHistory);
     const [bookings, setBookings] = useState(initialBookings);
-    const [subscriptionRecords, setSubscriptionRecords] = useState(
-        persistedAppState.activePlanId
-            ? [
-                {
-                    id: persistedAppState.activePlanId,
-                    planName: persistedAppState.activePlanId === 'psychometric'
-                        ? 'Psychometric Test'
-                        : persistedAppState.activePlanId === 'premium'
-                            ? 'Psychometric + Counselling'
-                            : persistedAppState.activePlanId === 'infocentre'
-                                ? 'Infocentre Access'
-                                : 'Study Abroad Access',
-                    price: persistedAppState.activePlanId === 'psychometric'
-                        ? 'Rs 1,500'
-                        : persistedAppState.activePlanId === 'premium'
-                            ? 'Rs 3,000'
-                            : persistedAppState.activePlanId === 'infocentre'
-                                ? 'Rs 5,000'
-                                : 'Rs 2,500',
-                    expiryDate: '10 Apr 2027',
-                    transactionId: `TXN-${String(persistedAppState.activePlanId).toUpperCase()}-2401`,
-                },
-            ]
-            : []
-    );
-    const [freeAccessUsage, setFreeAccessUsageState] = useState(persistedAppState.freeAccessUsage ?? initialFreeAccessUsage);
+    const [subscriptionRecords, setSubscriptionRecords] = useState([]);
+    const [freeAccessUsage, setFreeAccessUsageState] = useState(initialFreeAccessUsage);
     const [activeSubscriptionPlanIds, setActiveSubscriptionPlanIds] = useState([]);
     const accessToken = useAuthStore((state) => state.accessToken);
     const refreshToken = useAuthStore((state) => state.refreshToken);
     const hasAuthenticatedSession = useAuthStore((state) => state.hasAuthenticatedSession);
+    const user = useAuthStore((state) => state.user);
     const markAuthenticatedSession = useAuthStore((state) => state.markAuthenticatedSession);
     const [notifications, setNotifications] = useState(notificationItems);
     const [notificationsLoadFailed, setNotificationsLoadFailed] = useState(false);
@@ -384,82 +354,85 @@ export function AppStateProvider({ children }) {
 
     useEffect(() => {
         if (!accessToken || !hasAuthenticatedSession) {
+            clearPersistedAppState();
+            setActivePlanIdState(null);
+            setActiveSubscriptionPlanIds([]);
+            setSubscriptionRecords([]);
             setTestHistory(initialTestHistory);
             setBookings(initialBookings);
+            setUserProfile(initialUserProfile);
+            setOnboarding(initialOnboardingState);
+            setSavedCareers(initialSavedCareers);
+            setFreeAccessUsageState(initialFreeAccessUsage);
+            setNotifications(notificationItems);
+            setNotificationsLoadFailed(false);
             return undefined;
         }
 
         let isMounted = true;
+        const requestUserId = String(user?.id ?? user?._id ?? '');
+        setActivePlanIdState(null);
+        setActiveSubscriptionPlanIds([]);
+        setSubscriptionRecords([]);
+        setTestHistory(initialTestHistory);
+        setBookings(initialBookings);
 
         async function loadProfileSections() {
             try {
-                const [testResponse, bookingResponse, subscriptionResponse] = await Promise.all([
+                const [testResponse, bookingResponse, subscriptionResponse, dashboardResponse] = await Promise.all([
                     getTestHistory().catch(() => null),
                     getMentorBookings().catch(() => null),
                     getSubscriptions().catch(() => null),
+                    import('./api/authApi').then(({ getUserDashboard }) => getUserDashboard().catch(() => null)),
                 ]);
 
                 if (!isMounted) {
                     return;
                 }
 
+                const currentAuth = useAuthStore.getState();
+                const currentUserId = String(currentAuth.user?.id ?? currentAuth.user?._id ?? '');
+                if (currentAuth.accessToken !== accessToken || currentUserId !== requestUserId) return;
+
                 const testItems = extractResponseItems(testResponse);
                 const bookingItems = extractResponseItems(bookingResponse);
                 const subscriptionItems = extractResponseItems(subscriptionResponse);
 
+                const userSubscriptionItems = subscriptionItems.filter((item) => {
+                    const itemUserId = item?.userId ?? item?.user_id ?? item?.user?.id ?? item?.user?._id;
+                    return !itemUserId || !currentUserId || String(itemUserId) === currentUserId;
+                });
+                const dashboardUser = extractDashboardUser(dashboardResponse);
+                if (dashboardUser) {
+                    setUserProfile((current) => ({ ...current, ...dashboardUser }));
+                }
+
                 setTestHistory(testItems.length > 0 ? normalizeTestHistoryItems(testItems) : initialTestHistory);
                 setBookings(bookingItems.length > 0 ? normalizeBookingItems(bookingItems) : initialBookings);
 
-                if (subscriptionItems.length > 0) {
-                    const normalizedSubscriptions = normalizeSubscriptionItems(subscriptionItems);
-                    setSubscriptionRecords(normalizedSubscriptions);
-                    setActiveSubscriptionPlanIds(resolveActiveSubscriptionPlanIds(normalizedSubscriptions));
-                    const activeSubscriptionIndex = subscriptionItems.findIndex((item) => String(item?.status || '').toLowerCase() === 'active');
-                    const activeSubscription = activeSubscriptionIndex >= 0 ? normalizedSubscriptions[activeSubscriptionIndex] : normalizedSubscriptions[0];
-
-                    if (activeSubscription && !activePlanId) {
-                        const derivedPlanId = getPlanIdFromSubscription(activeSubscription);
-                        if (derivedPlanId) {
-                            setActivePlanIdState(derivedPlanId);
-                        }
-                    }
-
-                    if (activeSubscription && activeSubscriptionIndex >= 0 && !activePlanId) {
-                        const derivedPlanId = getPlanIdFromSubscription(subscriptionItems[activeSubscriptionIndex]);
-                        if (derivedPlanId) {
-                            setActivePlanIdState(derivedPlanId);
-                        }
+                const activeSubscriptions = userSubscriptionItems.filter((item) => String(item?.status || '').toLowerCase() === 'active');
+                const normalizedSubscriptions = normalizeSubscriptionItems(userSubscriptionItems);
+                const planIds = resolveActiveSubscriptionPlanIds(activeSubscriptions.map((item) => ({
+                    ...item,
+                    backendPlanId: item?.planId ?? item?.plan_id ?? item?.plan?.id ?? item?.plan?.planId ?? item?.plan?.plan_id ?? '',
+                })));
+                if (!planIds.length && activeSubscriptions.length) {
+                    for (const item of activeSubscriptions) {
+                        const nameId = getPlanIdFromSubscription(item);
+                        if (nameId && !planIds.includes(nameId)) planIds.push(nameId);
                     }
                 }
+                setSubscriptionRecords(normalizedSubscriptions);
+                setActiveSubscriptionPlanIds(planIds);
+                setActivePlanIdState(planIds[0] || null);
             }
             catch {
                 if (isMounted) {
                     setTestHistory(initialTestHistory);
                     setBookings(initialBookings);
-                    setActiveSubscriptionPlanIds(activePlanId ? [String(activePlanId)] : []);
-                    setSubscriptionRecords(activePlanId
-                        ? [
-                            {
-                                id: activePlanId,
-                                planName: activePlanId === 'psychometric'
-                                    ? 'Psychometric Test'
-                                    : activePlanId === 'premium'
-                                        ? 'Psychometric + Counselling'
-                                        : activePlanId === 'infocentre'
-                                            ? 'Infocentre Access'
-                                            : 'Study Abroad Access',
-                                price: activePlanId === 'psychometric'
-                                    ? 'Rs 1,500'
-                                    : activePlanId === 'premium'
-                                        ? 'Rs 3,000'
-                                        : activePlanId === 'infocentre'
-                                            ? 'Rs 5,000'
-                                            : 'Rs 2,500',
-                                expiryDate: '10 Apr 2027',
-                                transactionId: `TXN-${String(activePlanId).toUpperCase()}-2401`,
-                            },
-                        ]
-                        : []);
+                    setActivePlanIdState(null);
+                    setActiveSubscriptionPlanIds([]);
+                    setSubscriptionRecords([]);
                 }
             }
         }
@@ -469,7 +442,7 @@ export function AppStateProvider({ children }) {
         return () => {
             isMounted = false;
         };
-    }, [accessToken, activePlanId, hasAuthenticatedSession]);
+    }, [accessToken, hasAuthenticatedSession, user?.id, user?._id]);
 
     const value = useMemo(() => ({
         activePlanId,
@@ -492,6 +465,7 @@ export function AppStateProvider({ children }) {
             ]
                 .map((value) => (value === null || value === undefined ? '' : String(value).trim()))
                 .filter(Boolean);
+            const currentCandidateIds = candidateIds.filter((id) => activeSubscriptionPlanIds.includes(id));
             const candidateNames = [
                 plan.name,
                 plan.planName,
@@ -501,9 +475,8 @@ export function AppStateProvider({ children }) {
                 .map((value) => String(value || '').trim().toLowerCase())
                 .filter(Boolean);
 
-            return candidateIds.some((id) => activeSubscriptionPlanIds.includes(id)) ||
-                candidateNames.some((name) => activeSubscriptionPlanIds.includes(name)) ||
-                candidateNames.some((name) => name === String(activePlanId || '').toLowerCase());
+            return currentCandidateIds.length > 0 ||
+                candidateNames.some((name) => activeSubscriptionPlanIds.some((id) => String(id).trim().toLowerCase() === name));
         },
         onboarding,
        isUnlocked: (feature) => {
@@ -512,11 +485,36 @@ export function AppStateProvider({ children }) {
             return (planFeatures[activePlanId] || []).includes(feature);
         },
         activatePlan: (planId) => {
-            setActivePlanIdState(planId);
-            persistAppState({
-                activePlanId: planId,
-                freeAccessUsage,
+            // Active plan status comes only from the authenticated subscriptions API.
+            // Payment completion triggers a fresh profile/subscription load.
+        },
+        refreshSubscriptionData: async () => {
+            const tokenAtStart = useAuthStore.getState().accessToken;
+            const userAtStart = useAuthStore.getState().user;
+            if (!tokenAtStart) return;
+            const userIdAtStart = String(userAtStart?.id ?? userAtStart?._id ?? '');
+            const response = await getSubscriptions();
+            const authNow = useAuthStore.getState();
+            const userIdNow = String(authNow.user?.id ?? authNow.user?._id ?? '');
+            if (authNow.accessToken !== tokenAtStart || userIdNow !== userIdAtStart) return;
+            const items = extractResponseItems(response).filter((item) => {
+                const itemUserId = item?.userId ?? item?.user_id ?? item?.user?.id ?? item?.user?._id;
+                return !itemUserId || !userIdAtStart || String(itemUserId) === userIdAtStart;
             });
+            const activeItems = items.filter((item) => String(item?.status || '').toLowerCase() === 'active');
+            const ids = resolveActiveSubscriptionPlanIds(activeItems.map((item) => ({
+                ...item,
+                backendPlanId: item?.planId ?? item?.plan_id ?? item?.plan?.id ?? item?.plan?.planId ?? item?.plan?.plan_id ?? '',
+            })));
+            if (!ids.length && activeItems.length) {
+                for (const item of activeItems) {
+                    const nameId = getPlanIdFromSubscription(item);
+                    if (nameId && !ids.includes(nameId)) ids.push(nameId);
+                }
+            }
+            setSubscriptionRecords(normalizeSubscriptionItems(items));
+            setActiveSubscriptionPlanIds(ids);
+            setActivePlanIdState(ids[0] || null);
         },
         canAccessFreeDetail: (feature, itemKey) => {
             if (activePlanId && planFeatures[activePlanId]?.includes(feature)) {

@@ -13,7 +13,7 @@ import { decodeReturnTarget } from '../src/subscription-flow';
 
 export default function PaymentSuccessScreen() {
   const { planId, transactionId, returnTo } = useLocalSearchParams();
-  const { activatePlan, preferences } = useAppState();
+  const { refreshSubscriptionData, preferences } = useAppState();
   const celebration = useRef(new Animated.Value(0)).current;
   const [plans, setPlans] = useState(fallbackSubscriptions);
 
@@ -46,12 +46,9 @@ export default function PaymentSuccessScreen() {
     heroSurface: preferences.darkMode ? 'rgba(8, 8, 8, 0.94)' : 'rgba(246, 239, 235, 0.9)',
   };
 
-  // activate plan
   useEffect(() => {
-    if (plan?.id) {
-      activatePlan(plan.id);
-    }
-  }, [activatePlan, plan?.id]);
+    void refreshSubscriptionData().catch(() => {});
+  }, [refreshSubscriptionData]);
 
   useEffect(() => {
     let isMounted = true;

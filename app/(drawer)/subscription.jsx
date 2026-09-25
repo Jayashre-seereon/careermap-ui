@@ -4,17 +4,36 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, View,useWindowDimensions } from 'react-native';
 import { useAppState } from '../../src/app-state';
 import { createOrder, getPlans, verifyPayment } from '../../src/api/planApi';
+import { getAssessmentAccessStatus } from '../../src/api/psychometricAssessmentApi';
 import { palette, subscriptions as fallbackSubscriptions } from '../../src/careermap-data';
 import { AnimatedPressable, Pill, Screen, SectionHeader } from '../../src/careermap-ui';
 import { openRazorpayCheckout } from '../../src/utils/razorpay';
 import RenderHTML from 'react-native-render-html';
 export default function SubscriptionScreen() {
-    const { isCurrentSubscriptionPlan, preferences, userProfile } = useAppState();
+    const { activeSubscriptionPlanIds, preferences, userProfile } = useAppState();
     const { width: screenWidth } = useWindowDimensions();
     const { returnTo } = useLocalSearchParams();
     const [plans, setPlans] = useState(fallbackSubscriptions);
     const [isLoading, setIsLoading] = useState(true);
     const [isProcessingPlan, setIsProcessingPlan] = useState('');
+    const [isAssessmentLockedOrCompleted, setIsAssessmentLockedOrCompleted] = useState(false);
+
+    const hasAssessmentModule = (plan) => {
+        const modules = Array.isArray(plan?.modules) ? plan.modules : Array.isArray(plan?.raw?.modules) ? plan.raw.modules : [];
+        const text = [plan?.name, plan?.description, ...modules.map((module) => typeof module === 'string' ? module : module?.title)]
+            .filter(Boolean).join(' ').toLowerCase();
+        return /assessment|psychometric|\btest\b/.test(text);
+    };
+
+    const isCurrentPlan = (plan) => {
+        const planIds = (activeSubscriptionPlanIds || []).map((id) => String(id).trim().toLowerCase());
+        const candidateIds = [plan?.apiId, plan?.raw?.id, plan?.raw?.planId, plan?.id]
+            .filter((id) => id !== null && id !== undefined && id !== '')
+            .map((id) => String(id).trim().toLowerCase());
+        const candidateNames = [plan?.name, plan?.raw?.name]
+            .filter(Boolean).map((name) => String(name).trim().toLowerCase());
+        return candidateIds.some((id) => planIds.includes(id)) || candidateNames.some((name) => planIds.includes(name));
+    };
 
     const comparePlans = [
         {
@@ -63,6 +82,13 @@ export default function SubscriptionScreen() {
     ];
     useEffect(() => {
         let isMounted = true;
+        void getAssessmentAccessStatus().then((status) => {
+            if (isMounted) {
+                setIsAssessmentLockedOrCompleted(status?.allowed === false || Boolean(status?.requiresNewPlan));
+            }
+        }).catch(() => {
+            if (isMounted) setIsAssessmentLockedOrCompleted(false);
+        });
         const loadPlans = async () => {
             try {
                 const response = await getPlans();
@@ -162,7 +188,16 @@ export default function SubscriptionScreen() {
           <ActivityIndicator size="large" color={palette.primary}/>
           <Text className={`text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading plans...</Text>
         </View>) : (<View className="gap-[14px] ">
-        {plans.map((plan) => (<View key={plan.id} className={`gap-3 rounded-[24px] border p-[18px] ${plan.recommended || plan.highestseller
+        {plans.map((plan) => {
+          const currentPlan = isCurrentPlan(plan);
+          const allowRetake = currentPlan && hasAssessmentModule(plan);
+          const buttonDisabled = Boolean(isProcessingPlan);
+          const buttonLabel = currentPlan
+            ? (allowRetake ? 'Buy Retake / Subscribe Again' : 'Renew / Subscribe Again')
+            : 'Choose Plan';
+          const statusLabel = !currentPlan ? '' : allowRetake && isAssessmentLockedOrCompleted ? 'Assessment Completed' : 'Active Plan';
+          const statusTone = statusLabel === 'Assessment Completed' ? '#ea872e' : palette.green;
+          return (<View key={plan.id} className={`gap-3 rounded-[24px] border p-[18px] ${plan.recommended || plan.highestseller
   ? preferences.darkMode
       ? 'border-[#3a2028] bg-[#080808]'
       : 'border-[#dcb3a3] bg-card shadow-card'
@@ -204,6 +239,7 @@ export default function SubscriptionScreen() {
               <View className="flex-row gap-2 ">
                 {plan.recommended ? <Pill label="Recommended" tone={palette.primary} /> : null}
                 {plan.highestseller ? <Pill label="Highest Seller" tone="#f59e0b" /> : null}
+                {statusLabel ? <Pill label={statusLabel} tone={statusTone} /> : null}
               </View>
             </View>
           
@@ -215,19 +251,16 @@ export default function SubscriptionScreen() {
             </View>
             <AnimatedPressable
               className="mt-1 rounded-[14px] py-3"
-              onPress={() => {
-                if (!isCurrentSubscriptionPlan(plan)) {
-                  void handleSelectPlan(plan);
-                }
-              }}
-              disabled={isCurrentSubscriptionPlan(plan)}
-              style={{ backgroundColor: isCurrentSubscriptionPlan(plan) ? `${palette.green}14` : palette.primary }}
+              onPress={() => void handleSelectPlan(plan)}
+              disabled={buttonDisabled}
+              style={{ backgroundColor: palette.primary }}
             >
-              <Text className="text-center text-[14px] font-extrabold" style={{ color: isCurrentSubscriptionPlan(plan) ? palette.green : '#fff' }}>
-                {isProcessingPlan === plan.id ? 'Processing...' : isCurrentSubscriptionPlan(plan) ? 'Current Plan' : 'Choose Plan'}
+              <Text className="text-center text-[14px] font-extrabold" style={{ color: '#fff' }}>
+                {isProcessingPlan === plan.id ? 'Processing...' : buttonLabel}
               </Text>
             </AnimatedPressable>
-          </View>))}
+          </View>);
+        })}
 
         <View className={`mt-2 gap-4 rounded-[24px] border p-[18px] ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`}>
           <View className="gap-1">
