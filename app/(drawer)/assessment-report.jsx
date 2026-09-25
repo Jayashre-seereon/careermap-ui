@@ -1384,7 +1384,7 @@ return;
 
   const cardStyle = {
     width: cardWidth,
-    minHeight: 1123,
+    minHeight: 700,
     alignSelf: 'center',
     backgroundColor: '#ffffff',
     borderRadius: 6,
