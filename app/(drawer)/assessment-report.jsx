@@ -10,9 +10,9 @@ import {
   Text,
   TouchableOpacity,
   View,
-  PixelRatio
-} from 'react-native';
-import { Dimensions } from 'react-native'; 
+  PixelRatio,
+  useWindowDimensions,
+} from 'react-native'; 
 import { captureRef } from 'react-native-view-shot';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Print from 'expo-print';
@@ -470,7 +470,7 @@ function DonutGauge({ percent, color, trackColor, size = 90, strokeWidth = 8, te
 }
 
 // Cluster Match Card for Pages 26, 27, 28
-function ClusterMatchCard({ cluster, colorTheme = 'red' }) {
+function ClusterMatchCard({ cluster, colorTheme = 'red', showWhyFit = true }) {
   const headerBg =
     colorTheme === 'salmon'
       ? '#96473F'
@@ -491,7 +491,7 @@ function ClusterMatchCard({ cluster, colorTheme = 'red' }) {
         borderColor: headerBg,
         borderRadius: 12,
         overflow: 'hidden',
-        marginBottom: 12,
+        marginBottom: 10,
         backgroundColor: '#ffffff',
       }}
     >
@@ -523,19 +523,19 @@ function ClusterMatchCard({ cluster, colorTheme = 'red' }) {
         </Text>
       </View>
 
-      <View style={{ padding: 11, backgroundColor: '#FFF9F8' }}>
+      <View style={{ padding: 10, backgroundColor: '#FFF9F8' }}>
         {cluster.description ? (
-          <Text style={{ fontSize: 11, color: '#1E293B', fontWeight: '600', lineHeight: 16, marginBottom: 5 }}>
+          <Text style={{ fontSize: 10.5, color: '#1E293B', fontWeight: '600', lineHeight: 15, marginBottom: 4 }}>
             {cluster.description}
           </Text>
         ) : null}
-        {cluster.why_fit ? (
-          <Text style={{ fontSize: 10.5, color: '#475569', lineHeight: 15, marginBottom: 5 }}>
+        {showWhyFit && cluster.why_fit ? (
+          <Text style={{ fontSize: 10, color: '#475569', lineHeight: 14, marginBottom: 4 }}>
             {cluster.why_fit}
           </Text>
         ) : null}
         {cluster.streams_and_pathways_india ? (
-          <Text style={{ fontSize: 10.5, color: '#334155', lineHeight: 15, marginBottom: 8 }}>
+          <Text style={{ fontSize: 10, color: '#334155', lineHeight: 14, marginBottom: 6 }}>
             <Text style={{ fontWeight: '700' }}>Pathway in India: </Text>
             {cluster.streams_and_pathways_india}
           </Text>
@@ -887,9 +887,19 @@ export default function AssessmentReportScreen() {
 
   const scrollViewRef = useRef(null);
   const pageOffsets = useRef({});
+  const pageHeights = useRef({});
   const contentRef = useRef(null);
-const contentSize = useRef({ width: 0, height: 0 });
-const [cardWidth, setCardWidth] = useState(null);
+  const contentSize = useRef({ width: 0, height: 0 });
+  const pageRefs = useRef({});
+  const { width: windowWidth } = useWindowDimensions();
+  // Standard A4 aspect ratio 210mm x 297mm (1.4142). Max width 794 matching User Portal desktop A4 specs.
+  const cardWidth = Math.min(Math.max(windowWidth - 24, 320), 794);
+  const cardHeight = Math.round(cardWidth * (297 / 210));
+
+  const recordPageLayout = (pageNum, e) => {
+    pageOffsets.current[pageNum] = e.nativeEvent.layout.y;
+    pageHeights.current[pageNum] = e.nativeEvent.layout.height;
+  };
   const loadReport = useCallback(async () => {
     setLoading(true);
     try {
@@ -1249,7 +1259,7 @@ const bandLabelFor = (arr, facet, fallback = 'Moderate') => {
     const cleanFilename = `CareerMap_Report_${(studentName || 'Student').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
 
     try {
-            if (Platform.OS === 'web') {
+      if (Platform.OS === 'web') {
         await loadScriptOnce(
           'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
           () => !!window.html2canvas
@@ -1262,36 +1272,23 @@ const bandLabelFor = (arr, facet, fallback = 'Moderate') => {
         const html2canvasFn = window.html2canvas;
         const JsPdfCtor = window.jspdf.jsPDF;
 
-    const reportElement = document.getElementById('assessment-report-page-content');
-if (!reportElement) {
-  throw new Error('Could not find the report content to export.');
-}
+      
 
-const canvas = await html2canvasFn(reportElement, {
-  scale: 2,
-  useCORS: true,
-  backgroundColor: '#ffffff',
-  windowWidth: reportElement.scrollWidth,
-  windowHeight: reportElement.scrollHeight,
-  scrollX: 0,
-  scrollY: 0,
-});
+       const pdf = new JsPdfCtor({ unit: 'pt', format: 'a4' });
+const pdfWidth = pdf.internal.pageSize.getWidth();
+const pdfHeight = pdf.internal.pageSize.getHeight();
 
-        const pdf = new JsPdfCtor({ unit: 'pt', format: 'a4' });
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      const pageNums = REPORT_PAGES.map((p) => p.id);
-const scale = canvas.width / reportElement.scrollWidth;
-const maxSliceHeightPx = Math.max(1, Math.floor((pdfHeight / pdfWidth) * canvas.width));
 let pdfPageIndex = 0;
 
-const drawSlice = (sliceStart, sliceHeight) => {
-  const pageCanvas = document.createElement('canvas');
-  pageCanvas.width = canvas.width;
-  pageCanvas.height = sliceHeight;
-  const ctx = pageCanvas.getContext('2d');
-  ctx.drawImage(canvas, 0, sliceStart, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+for (const p of REPORT_PAGES) {
+  const node = pageRefs.current[p.id];
+  if (!node) continue;
+
+  const pageCanvas = await html2canvasFn(node, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#ffffff',
+  });
 
   if (pdfPageIndex > 0) pdf.addPage();
   pdf.addImage(
@@ -1300,38 +1297,15 @@ const drawSlice = (sliceStart, sliceHeight) => {
     0,
     0,
     pdfWidth,
-    (sliceHeight / canvas.width) * pdfWidth
+    pdfHeight
   );
   pdfPageIndex += 1;
-};
+}
 
-pageNums.forEach((pageNum) => {
-  const startY = (pageOffsets.current[pageNum] ?? 0) * scale;
-  const endY = (pageOffsets.current[pageNum + 1] ?? reportElement.scrollHeight) * scale;
-  const sliceStart = Math.max(0, Math.floor(startY));
-  const sectionEnd = Math.min(canvas.height, Math.ceil(endY));
-  const sectionHeightPx = sectionEnd - sliceStart;
-
-  if (sectionHeightPx <= 0) return;
-
-  if (sectionHeightPx <= maxSliceHeightPx) {
-    // Page's real content fits on one A4 sheet — draw it exactly as-is,
-    // no padding into a fixed chunk size.
-    drawSlice(sliceStart, sectionHeightPx);
-  } else {
-    // Genuinely long page — split it across consecutive A4 sheets.
-    let cursor = sliceStart;
-    while (cursor < sectionEnd) {
-      const sliceHeight = Math.min(maxSliceHeightPx, sectionEnd - cursor);
-      drawSlice(cursor, sliceHeight);
-      cursor += sliceHeight;
-    }
-  }
-});
-
-        pdf.save(cleanFilename);
-        return;
+pdf.save(cleanFilename);
+return;
       }
+
       const fullUri = await captureRef(contentRef, {
         format: 'png',
         quality: 1,
@@ -1341,43 +1315,37 @@ pageNums.forEach((pageNum) => {
       const ratio = PixelRatio.get();
       const pageNums = REPORT_PAGES.map((p) => p.id);
       const htmlPages = [];
-      // Keep each captured image within one A4 page. A full report section can
-      // be taller than A4, and a print engine may otherwise cut off its bottom.
-      const cropWidth = Math.round(contentSize.current.width * ratio);
-      const maxCropHeight = Math.max(1, Math.floor(cropWidth * (842 / 595)));
+      const cropWidth = Math.round(cardWidth * ratio);
 
       for (let i = 0; i < pageNums.length; i++) {
         const pageNum = pageNums[i];
-        const startY = pageOffsets.current[pageNum] ?? 0;
-        const endY = pageOffsets.current[pageNum + 1] ?? contentSize.current.height;
-        const sectionEnd = Math.ceil(endY * ratio);
-        let cropStart = Math.max(0, Math.floor(startY * ratio));
+        const startY = pageOffsets.current[pageNum] ?? (i * (cardHeight + 24));
+        const pHeight = pageHeights.current[pageNum] ?? cardHeight;
+        const cropStart = Math.max(0, Math.floor(startY * ratio));
+        const cropH = Math.round(pHeight * ratio);
 
-        while (cropStart < sectionEnd) {
-          const cropHeight = Math.min(maxCropHeight, sectionEnd - cropStart);
-          const cropped = await ImageManipulator.manipulateAsync(
-            fullUri,
-            [{
-              crop: {
-                originX: 0,
-                originY: cropStart,
-                width: cropWidth,
-                height: cropHeight,
-              },
-            }],
-            { compress: 1, format: ImageManipulator.SaveFormat.PNG, base64: true }
-          );
+        if (cropH <= 0) continue;
 
-          htmlPages.push(`
-            <div style="page-break-after: always; break-after: page;">
-              <img src="data:image/png;base64,${cropped.base64}" style="width:100%; display:block;" />
-            </div>
-          `);
-          cropStart += cropHeight;
-        }
+        const cropped = await ImageManipulator.manipulateAsync(
+          fullUri,
+          [{
+            crop: {
+              originX: 0,
+              originY: cropStart,
+              width: cropWidth,
+              height: cropH,
+            },
+          }],
+          { compress: 1, format: ImageManipulator.SaveFormat.PNG, base64: true }
+        );
+
+        htmlPages.push(`
+          <div style="page-break-after: always; break-after: page; width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden;">
+            <img src="data:image/png;base64,${cropped.base64}" style="width: 100%; height: 100%; object-fit: fill; display: block;" />
+          </div>
+        `);
       }
 
-      // The final image must not force a blank trailing page.
       if (htmlPages.length) {
         htmlPages[htmlPages.length - 1] = htmlPages[htmlPages.length - 1]
           .replace('page-break-after: always; break-after: page;', 'page-break-after: auto; break-after: auto;');
@@ -1385,10 +1353,9 @@ pageNums.forEach((pageNum) => {
 
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8" />
         <style>
-          @page { size: A4; margin: 0; }
+          @page { size: A4 portrait; margin: 0; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          body { margin: 0; padding: 0; }
-          img { width: 100%; height: auto; }
+          html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #ffffff; }
         </style>
       </head><body>${htmlPages.join('')}</body></html>`;
 
@@ -1414,22 +1381,26 @@ pageNums.forEach((pageNum) => {
       setDownloading(false);
     }
   };
-const A4_ASPECT = 297 / 210; // height / width
-const pageMinHeight = cardWidth ? Math.round(cardWidth * A4_ASPECT) : undefined;
 
-const cardStyle = {
-  backgroundColor: '#ffffff',
-  borderRadius: 8,
-  marginHorizontal: 12,
-  marginBottom: 20,
-  paddingHorizontal: 16,
-  paddingVertical: 18,
-  shadowColor: '#1E232A',
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.08,
-  shadowRadius: 8,
-  elevation: 3,
-};
+  const cardStyle = {
+    width: cardWidth,
+    minHeight: 1123,
+    alignSelf: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 6,
+    marginHorizontal: 'auto',
+    marginBottom: 24,
+    paddingHorizontal: cardWidth > 600 ? 40 : 16,
+    paddingVertical: cardWidth > 600 ? 32 : 18,
+    shadowColor: '#1E232A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  };
 
 
   if (loading) {
@@ -1528,23 +1499,21 @@ const cardStyle = {
 
       {/* Main Document: Exactly 31 Pages matching User Portal */}
       <ScrollView
-         ref={scrollViewRef}
-  nativeID="assessment-report-content"
-  testID="assessment-report-content"
-  onContentSizeChange={(w, h) => { contentSize.current = { width: w, height: h }; }}
-  
+        ref={scrollViewRef}
+        nativeID="assessment-report-content"
+        testID="assessment-report-content"
+        onContentSizeChange={(w, h) => { contentSize.current = { width: w, height: h }; }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: 40, alignItems: 'center' }}
       >
-   <View ref={contentRef} nativeID="assessment-report-page-content" collapsable={false}>
+        <View ref={contentRef} nativeID="assessment-report-page-content" collapsable={false} style={{ width: cardWidth, alignItems: 'center' }}>
         {/* ============================================================
             PAGE 1: COVER PAGE
         ============================================================ */}
         <View
-          style={[cardStyle, { position: 'relative', overflow: 'hidden', paddingHorizontal: 18, paddingVertical: 20 }]}
-          onLayout={(e) => {
-            pageOffsets.current[1] = e.nativeEvent.layout.y;
-          }}
+           ref={(el) => { pageRefs.current[1] = el; }}
+          style={[cardStyle, { position: 'relative', overflow: 'hidden', paddingHorizontal: cardWidth > 600 ? 36 : 18, paddingVertical: cardWidth > 600 ? 30 : 18 }]}
+          onLayout={(e) => recordPageLayout(1, e)}
         >
           {/* Top Left Geometric Graphics */}
           <View
@@ -1653,10 +1622,10 @@ const cardStyle = {
           </View>
 
           {/* Center Graphic: 3D Brain Illustration */}
-          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 18, zIndex: 10 }}>
+          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: cardWidth > 600 ? 18 : 10, zIndex: 10 }}>
             <Image
               source={ReportImg9}
-              style={{ width: 280, height: 230 }}
+              style={{ width: cardWidth > 600 ? 340 : 250, height: cardWidth > 600 ? 280 : 190 }}
               resizeMode="contain"
             />
           </View>
@@ -1747,15 +1716,11 @@ const cardStyle = {
         {/* ============================================================
             PAGE 2: DECLARATION
         ============================================================ */}
-       <View
-  style={cardStyle}
-  onLayout={(e) => {
-    pageOffsets.current[2] = e.nativeEvent.layout.y;
-    if (!cardWidth) {
-      setCardWidth(e.nativeEvent.layout.width);
-    }
-  }}
->
+        <View
+         ref={(el) => { pageRefs.current[2] = el; }}
+          style={cardStyle}
+          onLayout={(e) => recordPageLayout(2, e)}
+        >
   <PageHeader studentFirstName={studentFirstName} />
   <TitlePill title="DECLARATION" />
 
@@ -1796,10 +1761,9 @@ const cardStyle = {
             PAGE 3: INTRODUCTION
         ============================================================ */}
         <View
+           ref={(el) => { pageRefs.current[3] = el; }}
           style={cardStyle}
-          onLayout={(e) => {
-            pageOffsets.current[3] = e.nativeEvent.layout.y;
-          }}
+          onLayout={(e) => recordPageLayout(3, e)}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="INTRODUCTION" />
@@ -1815,7 +1779,7 @@ const cardStyle = {
           <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 14 }}>
             <Image
               source={ReportImg1}
-              style={{ width: '100%', height: 320 }}
+              style={{ width: '100%', height: cardWidth > 600 ? 350 : 230 }}
               resizeMode="contain"
             />
           </View>
@@ -1827,10 +1791,9 @@ const cardStyle = {
             PAGE 4: INTEREST OVERVIEW (RIASEC)
         ============================================================ */}
         <View
+          ref={(el) => { pageRefs.current[4] = el; }}
           style={cardStyle}
-          onLayout={(e) => {
-            pageOffsets.current[4] = e.nativeEvent.layout.y;
-          }}
+          onLayout={(e) => recordPageLayout(4, e)}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="INTEREST" />
@@ -1851,7 +1814,7 @@ const cardStyle = {
           <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: 10 }}>
             <Image
               source={ReportImg2}
-              style={{ width: '100%', height: 300 }}
+              style={{ width: '100%', height: cardWidth > 600 ? 330 : 220 }}
               resizeMode="contain"
             />
           </View>
@@ -1863,6 +1826,7 @@ const cardStyle = {
             PAGE 5: INTEREST DETAILS (01 - 03)
         ============================================================ */}
         <View
+         ref={(el) => { pageRefs.current[5] = el; }}
           style={cardStyle}
           onLayout={(e) => {
             pageOffsets.current[5] = e.nativeEvent.layout.y;
@@ -1907,6 +1871,7 @@ const cardStyle = {
             PAGE 6: INTEREST DETAILS (04 - 06)
         ============================================================ */}
         <View
+          ref={(el) => { pageRefs.current[6] = el; }}
           style={cardStyle}
           onLayout={(e) => {
             pageOffsets.current[6] = e.nativeEvent.layout.y;
@@ -1952,6 +1917,7 @@ const cardStyle = {
         ============================================================ */}
         <View
           style={cardStyle}
+          ref={(el) => { pageRefs.current[7] = el; }}
           onLayout={(e) => {
             pageOffsets.current[7] = e.nativeEvent.layout.y;
           }}
@@ -2040,6 +2006,7 @@ const cardStyle = {
             PAGE 8: PERSONALITY OVERVIEW
         ============================================================ */}
         <View
+          ref={(el) => { pageRefs.current[8] = el; }}
           style={cardStyle}
           onLayout={(e) => {
             pageOffsets.current[8] = e.nativeEvent.layout.y;
@@ -2078,6 +2045,7 @@ const cardStyle = {
             PAGE 9: PERSONALITY SUGGESTIONS
         ============================================================ */}
         <View
+          ref={(el) => { pageRefs.current[9] = el; }}
           style={cardStyle}
           onLayout={(e) => {
             pageOffsets.current[9] = e.nativeEvent.layout.y;
@@ -2111,6 +2079,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[10] = e.nativeEvent.layout.y;
           }}
+          ref={(el) => { pageRefs.current[10] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="green" />
@@ -2185,6 +2154,7 @@ const cardStyle = {
             PAGE 11: LEARNING STYLES OVERVIEW
         ============================================================ */}
         <View
+          ref={(el) => { pageRefs.current[11] = el; }}
           style={cardStyle}
           onLayout={(e) => {
             pageOffsets.current[11] = e.nativeEvent.layout.y;
@@ -2229,6 +2199,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[12] = e.nativeEvent.layout.y;
           }}
+          ref={(el) => { pageRefs.current[12] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2263,6 +2234,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[13] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[13] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2297,6 +2269,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[14] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[14] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="lavender" />
@@ -2379,6 +2352,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[15] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[15] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="WORK VALUES" colorClass="green" />
@@ -2420,6 +2394,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[16] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[16] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="HERE ARE THE SUGGESTIONS AS PER VALUES" colorClass="dark-green" />
@@ -2450,6 +2425,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[17] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[17] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="green" />
@@ -2555,6 +2531,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[18] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[18] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="GOAL ORIENTATION" colorClass="gold" />
@@ -2592,6 +2569,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[19] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[19] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2703,6 +2681,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[20] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[20] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="APTITUDE" colorClass="red" />
@@ -2776,6 +2755,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[21] = e.nativeEvent.layout.y;
           }}
+          ref={(el) => { pageRefs.current[21] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2842,6 +2822,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[22] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[22] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2876,6 +2857,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[23] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[23] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2910,6 +2892,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[24] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[24] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2934,6 +2917,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[25] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[25] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="red" />
@@ -3041,6 +3025,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[26] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[26] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="INTEGRATED ANALYSIS" colorClass="gold" />
@@ -3054,7 +3039,7 @@ const cardStyle = {
 
           <TopClustersMap clusters={top5Clusters} />
 
-          <ClusterMatchCard cluster={top5Clusters[0]} colorTheme="red" />
+          <ClusterMatchCard cluster={top5Clusters[0]} colorTheme="red" showWhyFit={true} />
 
           <PageFooter pageNum={26} />
         </View>
@@ -3067,11 +3052,12 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[27] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[27] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
-          <ClusterMatchCard cluster={top5Clusters[1]} colorTheme="salmon" />
-          <ClusterMatchCard cluster={top5Clusters[2]} colorTheme="blue" />
+          <ClusterMatchCard cluster={top5Clusters[1]} colorTheme="salmon" showWhyFit={false} />
+          <ClusterMatchCard cluster={top5Clusters[2]} colorTheme="blue" showWhyFit={false} />
 
           <PageFooter pageNum={27} />
         </View>
@@ -3084,11 +3070,12 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[28] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[28] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
-          <ClusterMatchCard cluster={top5Clusters[3]} colorTheme="green" />
-          <ClusterMatchCard cluster={top5Clusters[4]} colorTheme="gold" />
+          <ClusterMatchCard cluster={top5Clusters[3]} colorTheme="green" showWhyFit={false} />
+          <ClusterMatchCard cluster={top5Clusters[4]} colorTheme="gold" showWhyFit={false} />
 
           <PageFooter pageNum={28} />
         </View>
@@ -3101,6 +3088,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[29] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[29] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -3175,6 +3163,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[30] = e.nativeEvent.layout.y;
           }}
+           ref={(el) => { pageRefs.current[30] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -3209,7 +3198,7 @@ const cardStyle = {
         <Text style={{ fontSize: 11, color: COLORS.body, lineHeight: 16, marginBottom: 10 }}>
   {studentName} shows an {hollandCode} interest pattern, which combined with {topPersonalityTrait?.label?.toLowerCase()} and a strong
   pull toward {topWorkValues[0]?.label?.toLowerCase()} points most clearly toward {top5Clusters[0]?.name} ({top5Clusters[0]?.matchPercentage}% match).
-  Aptitude-wise, {studentName}'s strongest results are in {topAptitudes.slice(0, 2).map((a) => a.label).join(' and ')}, which support
+  Aptitude-wise, {studentName}&apos;s strongest results are in {topAptitudes.slice(0, 2).map((a) => a.label).join(' and ')}, which support
   that direction. As a {topLearningStyles[0]?.label?.toLowerCase()} learner with a {goalOrientationSummary.toLowerCase()} approach to
   the path ahead, the study tips and route in Section 3 are the most relevant starting point.
 </Text>
@@ -3243,6 +3232,7 @@ const cardStyle = {
           onLayout={(e) => {
             pageOffsets.current[31] = e.nativeEvent.layout.y;
           }}
+          ref={(el) => { pageRefs.current[31] = el; }}
         >
           {/* Header */}
           <View style={{ alignItems: 'flex-end', paddingTop: 2, paddingRight: 2, marginBottom: 6 }}>
