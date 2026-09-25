@@ -1399,7 +1399,7 @@ return;
     elevation: 3,
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between',
+    
   };
 
 
@@ -1642,7 +1642,7 @@ return;
                 marginBottom: 8,
               }}
             >
-              <Text style={{ fontWeight: '800', fontSize: 11, color: COLORS.dark }}>Student Information</Text>
+              <Text style={{ fontWeight: '800', fontSize: 11, color: COLORS.dark ,marginBottom: 10 ,marginTop: 0 }}>Student Information</Text>
             </View>
             <View style={{ gap: 3 }}>
               <Text style={{ fontSize: 12, color: COLORS.body }}>
@@ -1722,7 +1722,7 @@ return;
           onLayout={(e) => recordPageLayout(2, e)}
         >
   <PageHeader studentFirstName={studentFirstName} />
-  <TitlePill title="DECLARATION" />
+  <TitlePill  title="DECLARATION" />
 
           <Text style={{ fontSize: 13.5, fontWeight: '700', color: COLORS.dark, marginBottom: 10 }}>
             Dear {studentFirstName},
