@@ -24,6 +24,27 @@ const initialOnboardingData = {
 };
 
 const AUTH_STORAGE_KEY = 'careermap-auth-store';
+const USER_DATA_STORAGE_KEYS = [
+  AUTH_STORAGE_KEY,
+  'careermap-app-state',
+  'careermap-userportal-state',
+  'careermap-reviewed-mentor-bookings',
+  'userPortalData',
+  'token',
+  'user',
+  'accessToken',
+  'refreshToken',
+];
+
+function clearPersistedUserData() {
+  if (typeof window === 'undefined') return;
+  try {
+    for (const key of USER_DATA_STORAGE_KEYS) window.localStorage?.removeItem(key);
+    window.sessionStorage?.clear();
+  } catch {
+    // Continue the in-memory logout if browser storage is unavailable.
+  }
+}
 
 function readPersistedAuth() {
   if (typeof window === 'undefined' || !window.localStorage) {
@@ -146,13 +167,11 @@ export const useAuthStore = create((set) => ({
       tempToken: '',
     })),
 
-  logout: () =>
-    set(() => {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.removeItem(AUTH_STORAGE_KEY);
-      }
-
-      return {
+  logout: () => {
+    clearPersistedUserData();
+    set(() => ({
+        signupForm: initialSignupForm,
+        onboardingData: initialOnboardingData,
         tempToken: '',
         accessToken: '',
         refreshToken: '',
@@ -160,6 +179,6 @@ export const useAuthStore = create((set) => ({
         profileIncomplete: false,
         pendingInstituteOnboarding: false,
         hasAuthenticatedSession: false,
-      };
-    }),
+      }));
+  },
 }));
