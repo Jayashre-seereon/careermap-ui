@@ -16,6 +16,7 @@
     "build:preview:android": "npx eas-cli build --platform android --profile preview"
   },
   "dependencies": {
+    "@expo-google-fonts/poppins": "^0.4.1",
     "@expo/vector-icons": "^15.0.3",
     "@native-html/table-plugin": "^5.3.1",
     "@react-native-community/datetimepicker": "8.4.4",

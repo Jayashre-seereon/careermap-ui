@@ -318,7 +318,7 @@ export default function AssessmentAttemptScreen() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#070709' : '#faf6f3', justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#9a2119" />
-        <Text style={{ color: textColor, fontSize: 16, fontWeight: '800', marginTop: 14 }}>
+        <Text style={{ color: textColor, fontSize: 16, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', marginTop: 14 }}>
           Loading Assessment Engine...
         </Text>
         <Text style={{ color: subtextColor, fontSize: 12, marginTop: 4 }}>
@@ -360,7 +360,7 @@ export default function AssessmentAttemptScreen() {
             >
               <Ionicons name="lock-closed" size={24} color="#8C1814" />
             </View>
-            <Text style={{ color: textColor, fontSize: 18, fontWeight: '800', flex: 1 }}>
+            <Text style={{ color: textColor, fontSize: 18, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', flex: 1 }}>
               Assessment Plan Required
             </Text>
           </View>
@@ -370,7 +370,7 @@ export default function AssessmentAttemptScreen() {
               'You have already completed your assessment under your current plan or need a subscription.'}
           </Text>
 
-          <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 10, fontWeight: '500' }}>
+          <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 10, fontFamily: 'Poppins_500Medium', fontWeight: '500' }}>
             Each subscription plan unlocks a fresh comprehensive evaluation and an updated Career Compass Report.
           </Text>
 
@@ -397,7 +397,7 @@ export default function AssessmentAttemptScreen() {
                 alignItems: 'center',
               }}
             >
-              <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '800' }}>
+              <Text style={{ color: '#ffffff', fontSize: 14, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                 {accessBlockedInfo.reason === 'ALREADY_COMPLETED' ? 'View Report' : 'View Plans'}
               </Text>
             </TouchableOpacity>
@@ -412,7 +412,7 @@ export default function AssessmentAttemptScreen() {
                 alignItems: 'center',
               }}
             >
-              <Text style={{ color: subtextColor, fontSize: 13, fontWeight: '700' }}>
+              <Text style={{ color: subtextColor, fontSize: 13, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                 Back to Assessment
               </Text>
             </TouchableOpacity>
@@ -439,7 +439,7 @@ export default function AssessmentAttemptScreen() {
           }}
         >
           <ActivityIndicator size="large" color="#facc15" />
-          <Text style={{ color: '#ffffff', fontSize: 20, fontWeight: '900', marginTop: 16 }}>
+          <Text style={{ color: '#ffffff', fontSize: 20, fontFamily: 'Poppins_900Black', fontWeight: '900', marginTop: 16 }}>
             Scoring Assessment
           </Text>
           <Text style={{ color: '#ffe4e6', fontSize: 13, marginTop: 8, textAlign: 'center' }}>
@@ -467,7 +467,7 @@ export default function AssessmentAttemptScreen() {
   const currentSectionQuestions = activeSection?.questions || [];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#070709' : '#faf6f3' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#070709' : '#faf6f3', fontFamily: 'Poppins_400Regular' }}>
       {/* Top Header */}
       <View
         style={{
@@ -495,7 +495,7 @@ export default function AssessmentAttemptScreen() {
             }}
           >
             <Ionicons name="arrow-back" size={15} color={textColor} />
-            <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>Exit</Text>
+            <Text style={{ color: textColor, fontSize: 12, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>Exit</Text>
           </TouchableOpacity>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -504,12 +504,12 @@ export default function AssessmentAttemptScreen() {
               {saveStatus === 'saving' ? (
                 <>
                   <ActivityIndicator size="small" color="#f59e0b" />
-                  <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: '700' }}>Saving...</Text>
+                  <Text style={{ color: '#f59e0b', fontSize: 10, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>Saving...</Text>
                 </>
               ) : (
                 <>
                   <Ionicons name="checkmark-circle" size={13} color="#10b981" />
-                  <Text style={{ color: '#10b981', fontSize: 10, fontWeight: '700' }}>Saved</Text>
+                  <Text style={{ color: '#10b981', fontSize: 10, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>Saved</Text>
                 </>
               )}
             </View>
@@ -525,7 +525,7 @@ export default function AssessmentAttemptScreen() {
                 borderColor,
               }}
             >
-              <Text style={{ color: textColor, fontSize: 11, fontWeight: '800' }}>
+              <Text style={{ color: textColor, fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                 {totalAnsweredCount}/{totalQuestionsCount} ({overallPercent}%)
               </Text>
             </View>
@@ -570,7 +570,7 @@ export default function AssessmentAttemptScreen() {
                       ? (darkMode ? '#a7f3d0' : '#047857')
                       : subtextColor,
                     fontSize: 11,
-                    fontWeight: '800',
+                    fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
                   }}
                 >
                   {ASSESSMENT_DOMAINS[idx]?.shortCode || `Sec ${idx + 1}`}
@@ -591,7 +591,7 @@ export default function AssessmentAttemptScreen() {
                     style={{
                       color: isCurrent ? '#ffffff' : stat.isComplete ? '#047857' : subtextColor,
                       fontSize: 9,
-                      fontWeight: '800',
+                      fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
                     }}
                   >
                     {stat.answered}/{stat.total}
@@ -625,6 +625,7 @@ export default function AssessmentAttemptScreen() {
 
       {/* Questions ScrollView */}
       <ScrollView
+        style={{ flex: 1, fontFamily: 'Poppins_400Regular' }}
         ref={scrollViewRef}
         contentContainerStyle={{ padding: 14, paddingBottom: 110 }}
       >
@@ -643,10 +644,10 @@ export default function AssessmentAttemptScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, flex: 1 }}>
               <Text style={{ fontSize: 28, marginTop: 2 }}>{activeDomainMeta.icon}</Text>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#9a2119', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                <Text style={{ color: '#9a2119', fontSize: 10, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   {activeDomainMeta.subtitle}
                 </Text>
-                <Text style={{ color: textColor, fontSize: 16, fontWeight: '900' }}>
+                <Text style={{ color: textColor, fontSize: 16, fontFamily: 'Poppins_900Black', fontWeight: '900' }}>
                   {activeSection.title || activeDomainMeta.title}
                 </Text>
               </View>
@@ -662,7 +663,7 @@ export default function AssessmentAttemptScreen() {
                 flexShrink: 0,
               }}
             >
-              <Text style={{ color: '#9a2119', fontSize: 10, fontWeight: '800' }}>
+              <Text style={{ color: '#9a2119', fontSize: 10, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                 {currentSectionQuestions.length} Questions
               </Text>
             </View>
@@ -715,7 +716,7 @@ export default function AssessmentAttemptScreen() {
                       style={{
                         color: isAnswered ? '#ffffff' : subtextColor,
                         fontSize: 11,
-                        fontWeight: '800',
+                        fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
                       }}
                     >
                       {questionNumber}
@@ -727,7 +728,7 @@ export default function AssessmentAttemptScreen() {
                       flex: 1,
                       color: textColor,
                       fontSize: 14,
-                      fontWeight: '700',
+                      fontFamily: 'Poppins_700Bold', fontWeight: '700',
                       lineHeight: 20,
                     }}
                   >
@@ -797,7 +798,7 @@ export default function AssessmentAttemptScreen() {
                               {isSelected ? (
                                 <Ionicons name="checkmark" size={13} color="#ffffff" />
                               ) : (
-                                <Text style={{ color: subtextColor, fontSize: 10, fontWeight: '700' }}>
+                                <Text style={{ color: subtextColor, fontSize: 10, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                                   {opt.value}
                                 </Text>
                               )}
@@ -866,7 +867,7 @@ export default function AssessmentAttemptScreen() {
                                 style={{
                                   color: isSelected ? '#ffffff' : subtextColor,
                                   fontSize: 11,
-                                  fontWeight: '800',
+                                  fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
                                 }}
                               >
                                 {optionLetter}
@@ -938,13 +939,13 @@ export default function AssessmentAttemptScreen() {
             opacity: currentSectionIndex === 0 ? 0.4 : 1,
           }}
         >
-          <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>
+          <Text style={{ color: textColor, fontSize: 12, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
             ← Prev
           </Text>
         </TouchableOpacity>
 
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ color: subtextColor, fontSize: 11, fontWeight: '600' }}>
+          <Text style={{ color: subtextColor, fontSize: 11, fontFamily: 'Poppins_600SemiBold', fontWeight: '600' }}>
             {sectionStats[currentSectionIndex]?.answered} of {sectionStats[currentSectionIndex]?.total} answered
           </Text>
         </View>
@@ -960,7 +961,7 @@ export default function AssessmentAttemptScreen() {
               borderRadius: 12,
             }}
           >
-            <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '800' }}>
+            <Text style={{ color: '#ffffff', fontSize: 12, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
               Submit 🎉
             </Text>
           </TouchableOpacity>
@@ -975,7 +976,7 @@ export default function AssessmentAttemptScreen() {
               borderRadius: 12,
             }}
           >
-            <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '800' }}>
+            <Text style={{ color: '#ffffff', fontSize: 12, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
               Next Section →
             </Text>
           </TouchableOpacity>
@@ -1003,7 +1004,7 @@ export default function AssessmentAttemptScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ color: textColor, fontSize: 17, fontWeight: '900' }}>
+              <Text style={{ color: textColor, fontSize: 17, fontFamily: 'Poppins_900Black', fontWeight: '900' }}>
                 {unansweredQuestions.length > 0
                   ? '⚠️ Unanswered Questions Detected'
                   : '🎉 Ready for Submission'}
@@ -1017,7 +1018,7 @@ export default function AssessmentAttemptScreen() {
               <View>
                 <Text style={{ color: subtextColor, fontSize: 13, lineHeight: 18 }}>
                   You have{' '}
-                  <Text style={{ color: '#f59e0b', fontWeight: '800' }}>
+                  <Text style={{ color: '#f59e0b', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                     {unansweredQuestions.length} unanswered questions
                   </Text>{' '}
                   out of {totalQuestionsCount}. Answering all questions ensures highest accuracy.
@@ -1039,7 +1040,7 @@ export default function AssessmentAttemptScreen() {
                           borderColor,
                         }}
                       >
-                        <Text style={{ color: textColor, fontSize: 12, fontWeight: '600', flex: 1 }}>
+                        <Text style={{ color: textColor, fontSize: 12, fontFamily: 'Poppins_600SemiBold', fontWeight: '600', flex: 1 }}>
                           {u.sectionTitle} — Q{u.questionNumber}
                         </Text>
                         <TouchableOpacity
@@ -1049,7 +1050,7 @@ export default function AssessmentAttemptScreen() {
                           }}
                           style={{ paddingLeft: 10 }}
                         >
-                          <Text style={{ color: '#9a2119', fontSize: 11, fontWeight: '800' }}>
+                          <Text style={{ color: '#9a2119', fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                             Jump →
                           </Text>
                         </TouchableOpacity>
@@ -1078,7 +1079,7 @@ export default function AssessmentAttemptScreen() {
     style={{
       color: unansweredQuestions.length > 0 ? '#6b7280' : '#ffffff',
       fontSize: 13,
-      fontWeight: '800',
+      fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
     }}
   >
     Submit
@@ -1094,7 +1095,7 @@ export default function AssessmentAttemptScreen() {
                       alignItems: 'center',
                     }}
                   >
-                    <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>
+                    <Text style={{ color: textColor, fontSize: 12, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
 Review                    </Text>
                   </TouchableOpacity>
                 </View>
@@ -1102,7 +1103,7 @@ Review                    </Text>
             ) : (
               <View style={{ alignItems: 'center', paddingVertical: 10 }}>
                 <Text style={{ fontSize: 36 }}>🌟</Text>
-                <Text style={{ color: textColor, fontSize: 16, fontWeight: '800', marginTop: 8 }}>
+                <Text style={{ color: textColor, fontSize: 16, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', marginTop: 8 }}>
                   All 163 Questions Answered!
                 </Text>
                 <Text style={{ color: subtextColor, fontSize: 12, textAlign: 'center', marginTop: 4 }}>
@@ -1120,7 +1121,7 @@ Review                    </Text>
                     marginTop: 16,
                   }}
                 >
-                  <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '800' }}>
+                  <Text style={{ color: '#ffffff', fontSize: 14, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                     Confirm & View Career Report
                   </Text>
                 </TouchableOpacity>

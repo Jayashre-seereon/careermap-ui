@@ -1,6 +1,15 @@
 import '../global.css';
 import { Stack, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  Poppins_800ExtraBold,
+  Poppins_900Black,
+} from '@expo-google-fonts/poppins';
 import { AppStateProvider, useAppState } from '../src/app-state';
 import { CareerBeeAssistant } from '../src/career-bee-assistant';
 function RootNavigator() {
@@ -28,6 +37,15 @@ function RootNavigator() {
     </>);
 }
 export default function RootLayout() {
+    const [fontsLoaded] = useFonts({
+      Poppins_400Regular,
+      Poppins_500Medium,
+      Poppins_600SemiBold,
+      Poppins_700Bold,
+      Poppins_800ExtraBold,
+      Poppins_900Black,
+    });
+    if (!fontsLoaded) return null;
     return (<AppStateProvider>
       <RootNavigator />
     </AppStateProvider>);

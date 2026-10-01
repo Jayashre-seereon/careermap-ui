@@ -249,8 +249,9 @@ export default function AssessmentLandingScreen() {
   const subtextColor = darkMode ? '#a09895' : '#655753';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#070709' : '#faf6f3' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#070709' : '#faf6f3', fontFamily: 'Poppins_400Regular' }}>
       <ScrollView
+        style={{ flex: 1, fontFamily: 'Poppins_400Regular' }}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40, paddingTop: 10 }}
         refreshControl={
           <RefreshControl
@@ -294,12 +295,12 @@ export default function AssessmentLandingScreen() {
             }}
           >
             <Ionicons name="shield-checkmark" size={14} color="#fde047" />
-            <Text style={{ color: '#fef08a', fontSize: 11, fontWeight: '800', letterSpacing: 0.5 }}>
+            <Text style={{ color: '#fef08a', fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', letterSpacing: 0.5 }}>
               6-DOMAIN EVALUATION • 1-PLAN = 1-ATTEMPT
             </Text>
           </View>
 
-          <Text style={{ color: '#ffffff', fontSize: 24, fontWeight: '900', lineHeight: 30 }}>
+          <Text style={{ color: '#ffffff', fontSize: 24, fontFamily: 'Poppins_900Black', fontWeight: '900', lineHeight: 30 }}>
             Psychometric Career Assessment
           </Text>
 
@@ -321,7 +322,7 @@ export default function AssessmentLandingScreen() {
               }}
             >
               <Ionicons name="document-text-outline" size={13} color="#fde047" />
-              <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '700' }}>
+              <Text style={{ color: '#ffffff', fontSize: 11, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                 {TOTAL_ASSESSMENT_QUESTIONS} Questions
               </Text>
             </View>
@@ -338,7 +339,7 @@ export default function AssessmentLandingScreen() {
               }}
             >
               <Ionicons name="time-outline" size={13} color="#fde047" />
-              <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '700' }}>
+              <Text style={{ color: '#ffffff', fontSize: 11, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                 ~{ESTIMATED_DURATION_MINS} Mins
               </Text>
             </View>
@@ -355,7 +356,7 @@ export default function AssessmentLandingScreen() {
               }}
             >
               <Ionicons name="trophy-outline" size={13} color="#fde047" />
-              <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: '700' }}>
+              <Text style={{ color: '#ffffff', fontSize: 11, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                 6 Domains · 18 Clusters
               </Text>
             </View>
@@ -391,11 +392,11 @@ export default function AssessmentLandingScreen() {
                     borderRadius: 12,
                   }}
                 >
-                  <Text style={{ color: '#fef08a', fontSize: 11, fontWeight: '800' }}>
+                  <Text style={{ color: '#fef08a', fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                     In-Progress Test Found
                   </Text>
                 </View>
-                <Text style={{ color: '#ffffff', fontSize: 17, fontWeight: '800', marginTop: 6 }}>
+                <Text style={{ color: '#ffffff', fontSize: 17, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', marginTop: 6 }}>
                   Continue Your Assessment
                 </Text>
                 <Text style={{ color: '#ffe4e6', fontSize: 12, marginTop: 2 }}>
@@ -421,7 +422,7 @@ export default function AssessmentLandingScreen() {
                   {starting ? (
                     <ActivityIndicator color="#9a2119" size="small" />
                   ) : (
-                    <Text style={{ color: '#1e293b', fontSize: 14, fontWeight: '800' }}>
+                    <Text style={{ color: '#1e293b', fontSize: 14, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                       ▶ Resume Assessment
                     </Text>
                   )}
@@ -453,17 +454,17 @@ export default function AssessmentLandingScreen() {
                   }}
                 >
                   <Ionicons name="checkmark-circle" size={12} color="#34d399" />
-                  <Text style={{ color: '#a7f3d0', fontSize: 11, fontWeight: '800' }}>
+                  <Text style={{ color: '#a7f3d0', fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                     Assessment Completed
                   </Text>
                 </View>
 
-                <Text style={{ color: '#ffffff', fontSize: 17, fontWeight: '800', marginTop: 6 }}>
+                <Text style={{ color: '#ffffff', fontSize: 17, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', marginTop: 6 }}>
                   Career Compass Ready
                 </Text>
                 <Text style={{ color: '#ffe4e6', fontSize: 12, marginTop: 2 }}>
                   Completed on:{' '}
-                  <Text style={{ fontWeight: '700', color: '#ffffff' }}>
+                  <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: '#ffffff' }}>
                     {formattedCompletedDate}
                   </Text>
                 </Text>
@@ -484,7 +485,7 @@ export default function AssessmentLandingScreen() {
                       alignItems: 'center',
                     }}
                   >
-                    <Text style={{ color: '#064e3b', fontSize: 13, fontWeight: '900' }}>
+                    <Text style={{ color: '#064e3b', fontSize: 13, fontFamily: 'Poppins_900Black', fontWeight: '900' }}>
                       📄 View Career Compass Report
                     </Text>
                   </TouchableOpacity>
@@ -505,7 +506,7 @@ export default function AssessmentLandingScreen() {
                     }}
                   >
                     <Ionicons name="lock-closed" size={13} color="#fde047" />
-                    <Text style={{ color: '#fde047', fontSize: 12, fontWeight: '700' }}>
+                    <Text style={{ color: '#fde047', fontSize: 12, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                       Retake Test 
                     </Text>
                   </TouchableOpacity>
@@ -527,12 +528,12 @@ export default function AssessmentLandingScreen() {
                   }}
                 >
                   <Ionicons name="lock-closed" size={12} color="#fca5a5" />
-                  <Text style={{ color: '#fca5a5', fontSize: 11, fontWeight: '800' }}>
+                  <Text style={{ color: '#fca5a5', fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                     Assessment Locked
                   </Text>
                 </View>
 
-                <Text style={{ color: '#ffffff', fontSize: 17, fontWeight: '800', marginTop: 6 }}>
+                <Text style={{ color: '#ffffff', fontSize: 17, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', marginTop: 6 }}>
                   Assessment Plan Required
                 </Text>
                 <Text style={{ color: '#ffe4e6', fontSize: 12, marginTop: 4, lineHeight: 17 }}>
@@ -556,7 +557,7 @@ export default function AssessmentLandingScreen() {
                     marginTop: 14,
                   }}
                 >
-                  <Text style={{ color: '#1e293b', fontSize: 14, fontWeight: '900' }}>
+                  <Text style={{ color: '#1e293b', fontSize: 14, fontFamily: 'Poppins_900Black', fontWeight: '900' }}>
                     🔒 Unlock Assessment (View Plans)
                   </Text>
                 </TouchableOpacity>
@@ -578,7 +579,7 @@ export default function AssessmentLandingScreen() {
                   }}
                 >
                   <Ionicons name="lock-open" size={12} color="#34d399" />
-                  <Text style={{ color: '#a7f3d0', fontSize: 11, fontWeight: '800' }}>
+                  <Text style={{ color: '#a7f3d0', fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                     {accessStatus?.planTitle || 'Assessment Unlocked'}
                   </Text>
                 </View>
@@ -586,7 +587,7 @@ export default function AssessmentLandingScreen() {
                   style={{
                     color: '#ffffff',
                     fontSize: 16,
-                    fontWeight: '800',
+                    fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
                     marginTop: 6,
                     textAlign: 'center',
                   }}
@@ -621,7 +622,7 @@ export default function AssessmentLandingScreen() {
                   {starting ? (
                     <ActivityIndicator color="#1e293b" size="small" />
                   ) : (
-                    <Text style={{ color: '#1e293b', fontSize: 14, fontWeight: '900' }}>
+                    <Text style={{ color: '#1e293b', fontSize: 14, fontFamily: 'Poppins_900Black', fontWeight: '900' }}>
                       🚀 Start Assessment Now
                     </Text>
                   )}
@@ -638,18 +639,18 @@ export default function AssessmentLandingScreen() {
               style={{
                 color: '#9a2119',
                 fontSize: 11,
-                fontWeight: '800',
+                fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
                 letterSpacing: 1,
                 textTransform: 'uppercase',
               }}
             >
               STRUCTURED CURRICULUM
             </Text>
-            <Text style={{ color: textColor, fontSize: 19, fontWeight: '900', marginTop: 2 }}>
+            <Text style={{ color: textColor, fontSize: 19, fontFamily: 'Poppins_900Black', fontWeight: '900', marginTop: 2 }}>
               The 6 Dimensions of Career Compass
             </Text>
             <Text style={{ color: subtextColor, fontSize: 12, marginTop: 2 }}>
-              Total: <Text style={{ fontWeight: '700', color: textColor }}>163 Questions</Text> across 6 Sections
+              Total: <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: textColor }}>163 Questions</Text> across 6 Sections
             </Text>
           </View>
 
@@ -680,13 +681,13 @@ export default function AssessmentLandingScreen() {
                       borderRadius: 8,
                     }}
                   >
-                    <Text style={{ color: darkMode ? '#cbd5e1' : '#475569', fontSize: 10, fontWeight: '800' }}>
+                    <Text style={{ color: darkMode ? '#cbd5e1' : '#475569', fontSize: 10, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                       Section {index + 1} / 6
                     </Text>
                   </View>
                 </View>
 
-                <Text style={{ color: textColor, fontSize: 16, fontWeight: '800', marginTop: 10 }}>
+                <Text style={{ color: textColor, fontSize: 16, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', marginTop: 10 }}>
                   {domain.title}
                 </Text>
               
@@ -705,13 +706,13 @@ export default function AssessmentLandingScreen() {
                     paddingTop: 10,
                   }}
                 >
-                  <Text style={{ color: textColor, fontSize: 11, fontWeight: '700' }}>
+                  <Text style={{ color: textColor, fontSize: 11, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                     {domain.questionCount} Questions
                   </Text>
-                  <Text style={{ color: subtextColor, fontSize: 11, fontWeight: '600' }}>
+                  <Text style={{ color: subtextColor, fontSize: 11, fontFamily: 'Poppins_600SemiBold', fontWeight: '600' }}>
                     {domain.type === 'mcq' ? 'MCQ (Aptitude)' : '1-5 Likert Scale'}
                   </Text>
-                  <Text style={{ color: textColor, fontSize: 11, fontWeight: '700' }}>
+                  <Text style={{ color: textColor, fontSize: 11, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                     ~{domain.estimatedMinutes} mins
                   </Text>
                 </View>
@@ -731,7 +732,7 @@ export default function AssessmentLandingScreen() {
             marginBottom: 24,
           }}
         >
-          <Text style={{ color: textColor, fontSize: 15, fontWeight: '800' }}>
+          <Text style={{ color: textColor, fontSize: 15, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
             💡 Important Guidelines for Best Results
           </Text>
 
@@ -745,7 +746,7 @@ export default function AssessmentLandingScreen() {
                 borderColor,
               }}
             >
-              <Text style={{ color: textColor, fontSize: 13, fontWeight: '800' }}>
+              <Text style={{ color: textColor, fontSize: 13, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                 1. Answer Honestly
               </Text>
               <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 3 }}>
@@ -762,7 +763,7 @@ export default function AssessmentLandingScreen() {
                 borderColor,
               }}
             >
-              <Text style={{ color: textColor, fontSize: 13, fontWeight: '800' }}>
+              <Text style={{ color: textColor, fontSize: 13, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                 2. Auto-Saved Progress
               </Text>
               <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 3 }}>
@@ -779,7 +780,7 @@ export default function AssessmentLandingScreen() {
                 borderColor,
               }}
             >
-              <Text style={{ color: textColor, fontSize: 13, fontWeight: '800' }}>
+              <Text style={{ color: textColor, fontSize: 13, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                 3. Aptitude Reasoning
               </Text>
               <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 3 }}>
@@ -796,7 +797,7 @@ export default function AssessmentLandingScreen() {
                 borderColor,
               }}
             >
-              <Text style={{ color: textColor, fontSize: 13, fontWeight: '800' }}>
+              <Text style={{ color: textColor, fontSize: 13, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                 4. Comprehensive Report
               </Text>
               <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 3 }}>
@@ -838,7 +839,7 @@ export default function AssessmentLandingScreen() {
                 <Ionicons name="time" size={18} color="#9a2119" />
               </View>
               <View>
-                <Text style={{ color: textColor, fontSize: 15, fontWeight: '800' }}>
+                <Text style={{ color: textColor, fontSize: 15, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                   My Assessment History
                 </Text>
                 <Text style={{ color: subtextColor, fontSize: 11 }}>
@@ -868,7 +869,7 @@ export default function AssessmentLandingScreen() {
                   style={{
                     color: isAllowed ? '#ffffff' : '#d97706',
                     fontSize: 11,
-                    fontWeight: '800',
+                    fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
                   }}
                 >
                   {isAllowed ? '+ New Test' : 'Retake Test'}
@@ -891,7 +892,7 @@ export default function AssessmentLandingScreen() {
                 style={{
                   color: textColor,
                   fontSize: 14,
-                  fontWeight: '700',
+                  fontFamily: 'Poppins_700Bold', fontWeight: '700',
                   marginTop: 8,
                   textAlign: 'center',
                 }}
@@ -930,7 +931,7 @@ export default function AssessmentLandingScreen() {
                   marginTop: 14,
                 }}
               >
-                <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '800' }}>
+                <Text style={{ color: '#ffffff', fontSize: 12, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                   {isNoActivePlan ? '🔒 Unlock Assessment Plan' : '🚀 Start Your First Assessment'}
                 </Text>
               </TouchableOpacity>
@@ -969,7 +970,7 @@ export default function AssessmentLandingScreen() {
                     }}
                   >
                     <View>
-                      <Text style={{ color: textColor, fontSize: 13, fontWeight: '700' }}>
+                      <Text style={{ color: textColor, fontSize: 13, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                         {formattedDate}
                       </Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
@@ -982,7 +983,7 @@ export default function AssessmentLandingScreen() {
                           style={{
                             color: isDone ? '#10b981' : '#f59e0b',
                             fontSize: 11,
-                            fontWeight: '700',
+                            fontFamily: 'Poppins_700Bold', fontWeight: '700',
                           }}
                         >
                           {isDone ? 'Completed' : 'In Progress'}
@@ -1018,7 +1019,7 @@ export default function AssessmentLandingScreen() {
                         style={{
                           color: isDone ? '#ffffff' : '#f59e0b',
                           fontSize: 12,
-                          fontWeight: '800',
+                          fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
                         }}
                       >
                         {isDone ? 'View Report' : 'Resume'}
@@ -1078,7 +1079,7 @@ export default function AssessmentLandingScreen() {
               >
                 <Ionicons name="lock-closed" size={22} color="#8C1814" />
               </View>
-              <Text style={{ color: textColor, fontSize: 18, fontWeight: '800', flex: 1 }}>
+              <Text style={{ color: textColor, fontSize: 18, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', flex: 1 }}>
                 Assessment Plan Required
               </Text>
             </View>
@@ -1089,7 +1090,7 @@ export default function AssessmentLandingScreen() {
                 'You have already completed your Psychometric Assessment and generated your 31-page Career Compass Report under your current plan. To retake the assessment and track your new score, please subscribe to an assessment plan.'}
             </Text>
 
-            <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 10, fontWeight: '500' }}>
+            <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 10, fontFamily: 'Poppins_500Medium', fontWeight: '500' }}>
               Each subscription plan unlocks a fresh comprehensive evaluation and an updated Career Compass Report.
             </Text>
 
@@ -1111,7 +1112,7 @@ export default function AssessmentLandingScreen() {
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '800' }}>
+                <Text style={{ color: '#ffffff', fontSize: 14, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                   View Plans & Pricing
                 </Text>
               </TouchableOpacity>
@@ -1126,7 +1127,7 @@ export default function AssessmentLandingScreen() {
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ color: subtextColor, fontSize: 13, fontWeight: '700' }}>
+                <Text style={{ color: subtextColor, fontSize: 13, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                   Cancel
                 </Text>
               </TouchableOpacity>
@@ -1157,7 +1158,7 @@ export default function AssessmentLandingScreen() {
               borderColor,
             }}
           >
-            <Text style={{ color: textColor, fontSize: 17, fontWeight: '800' }}>
+            <Text style={{ color: textColor, fontSize: 17, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
               Start a New Assessment Attempt?
             </Text>
             <Text style={{ color: subtextColor, fontSize: 13, lineHeight: 18, marginTop: 8 }}>
@@ -1169,7 +1170,7 @@ export default function AssessmentLandingScreen() {
                 onPress={() => setShowRetakeModal(false)}
                 style={{ paddingVertical: 8, paddingHorizontal: 14 }}
               >
-                <Text style={{ color: subtextColor, fontWeight: '700' }}>Cancel</Text>
+                <Text style={{ color: subtextColor, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
@@ -1183,7 +1184,7 @@ export default function AssessmentLandingScreen() {
                   paddingHorizontal: 14,
                 }}
               >
-                <Text style={{ color: '#ffffff', fontWeight: '800' }}>Yes, Start Fresh</Text>
+                <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>Yes, Start Fresh</Text>
               </TouchableOpacity>
             </View>
           </View>
