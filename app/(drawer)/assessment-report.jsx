@@ -24,6 +24,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../../src/store/auth-store';
 import { getAttemptResult } from '../../src/api/psychometricAssessmentApi';
 import { CLUSTERS, pct } from '../../src/features/assessment/data/careerCompassData';
+import { SAMPLE_PROFILING_REPORT } from '../../src/features/assessment/data/assessmentConstants';
+import YourProfilingReport from '../../src/features/assessment/components/YourProfilingReport';
 
 // Image Assets
 const Logo = require('../../assets/images/logo_white.png');
@@ -72,39 +74,40 @@ const COLORS = {
   pageBg: '#EAEFF4',
 };
 
-// 31 Pages List for Jump Navigation
+// 32 Pages List for Jump Navigation (Page 3 is Your Profiling)
 const REPORT_PAGES = [
   { id: 1, label: 'Page 1: Cover Page' },
   { id: 2, label: 'Page 2: Declaration' },
-  { id: 3, label: 'Page 3: Introduction' },
-  { id: 4, label: 'Page 4: Interest Overview' },
-  { id: 5, label: 'Page 5: Interest Details (01-03)' },
-  { id: 6, label: 'Page 6: Interest Details (04-06)' },
-  { id: 7, label: 'Page 7: Interest Scores' },
-  { id: 8, label: 'Page 8: Personality Overview' },
-  { id: 9, label: 'Page 9: Personality Suggestions' },
-  { id: 10, label: 'Page 10: Personality Scores' },
-  { id: 11, label: 'Page 11: Learning Styles' },
-  { id: 12, label: 'Page 12: Learning Details (01-02)' },
-  { id: 13, label: 'Page 13: Learning Details (03-04)' },
-  { id: 14, label: 'Page 14: Learning Style Scores' },
-  { id: 15, label: 'Page 15: Work Values' },
-  { id: 16, label: 'Page 16: Work Values Suggestions' },
-  { id: 17, label: 'Page 17: Work Values Scores' },
-  { id: 18, label: 'Page 18: Goal Orientation (Short)' },
-  { id: 19, label: 'Page 19: Goal Orientation (Long)' },
-  { id: 20, label: 'Page 20: Aptitude Overview' },
-  { id: 21, label: 'Page 21: Aptitude (Numerical)' },
-  { id: 22, label: 'Page 22: Aptitude (Logical/Verbal)' },
-  { id: 23, label: 'Page 23: Aptitude (Voc/Mech)' },
-  { id: 24, label: 'Page 24: Aptitude (Spatial)' },
-  { id: 25, label: 'Page 25: Aptitude Scores' },
-  { id: 26, label: 'Page 26: Top Cluster #1' },
-  { id: 27, label: 'Page 27: Clusters #2 & #3' },
-  { id: 28, label: 'Page 28: Clusters #4 & #5' },
-  { id: 29, label: 'Page 29: Study & Pathway Advice' },
-  { id: 30, label: 'Page 30: Complete Career Map' },
-  { id: 31, label: 'Page 31: About Career Map' },
+  { id: 3, label: 'Page 3: Your Profiling' },
+  { id: 4, label: 'Page 4: Introduction' },
+  { id: 5, label: 'Page 5: Interest Overview' },
+  { id: 6, label: 'Page 6: Interest Details (01-03)' },
+  { id: 7, label: 'Page 7: Interest Details (04-06)' },
+  { id: 8, label: 'Page 8: Interest Scores' },
+  { id: 9, label: 'Page 9: Personality Overview' },
+  { id: 10, label: 'Page 10: Personality Suggestions' },
+  { id: 11, label: 'Page 11: Personality Scores' },
+  { id: 12, label: 'Page 12: Learning Styles' },
+  { id: 13, label: 'Page 13: Learning Details (01-02)' },
+  { id: 14, label: 'Page 14: Learning Details (03-04)' },
+  { id: 15, label: 'Page 15: Learning Style Scores' },
+  { id: 16, label: 'Page 16: Work Values' },
+  { id: 17, label: 'Page 17: Work Values Suggestions' },
+  { id: 18, label: 'Page 18: Work Values Scores' },
+  { id: 19, label: 'Page 19: Goal Orientation (Short)' },
+  { id: 20, label: 'Page 20: Goal Orientation (Long)' },
+  { id: 21, label: 'Page 21: Aptitude Overview' },
+  { id: 22, label: 'Page 22: Aptitude (Numerical)' },
+  { id: 23, label: 'Page 23: Aptitude (Logical/Verbal)' },
+  { id: 24, label: 'Page 24: Aptitude (Voc/Mech)' },
+  { id: 25, label: 'Page 25: Aptitude (Spatial)' },
+  { id: 26, label: 'Page 26: Aptitude Scores' },
+  { id: 27, label: 'Page 27: Top Cluster #1' },
+  { id: 28, label: 'Page 28: Clusters #2 & #3' },
+  { id: 29, label: 'Page 29: Clusters #4 & #5' },
+  { id: 30, label: 'Page 30: Study & Pathway Advice' },
+  { id: 31, label: 'Page 31: Complete Career Map' },
+  { id: 32, label: 'Page 32: About Career Map' },
 ];
 
 // Common Header for Pages 2 to 31
@@ -653,6 +656,7 @@ function generateReportHtml(data) {
     studentEmail,
     studentPhone,
     formattedDate,
+    yourProfiling,
     hollandCode,
     top5Clusters,
     interestScoreMap,
@@ -748,7 +752,44 @@ function generateReportHtml(data) {
     <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 2</div></div>
   </div>
 
-  <!-- PAGE 3: RIASEC -->
+  <!-- PAGE 3: YOUR PROFILING -->
+  <div class="pdf-page">
+    <div class="header"><div class="header-name">${studentFirstName}</div><div class="header-logo">CAREERMAP</div></div>
+    <div class="pill-title">YOUR PROFILING</div>
+    <p>Personal profiling is the first step in career planning. It helps you understand where you are right now on your career journey and gives you a clear path forward.</p>
+    <div style="background: #FAF2F0; border: 1.5px solid #F0DDD8; border-radius: 8px; padding: 14px; margin: 15px 0;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; padding-bottom: 8px; margin-bottom: 12px;">
+        <div style="font-weight: 800; color: #8C1814; font-size: 13px;">CURRENT STAGE OF PLANNING</div>
+        <div style="display: flex; gap: 8px;">
+          <span style="background: #10B98120; border: 1px solid #10B981; color: #065F46; padding: 2px 8px; border-radius: 99px; font-weight: 700; font-size: 11px;">Risk level: ${yourProfiling?.riskBadge?.label || 'Low to Medium'}</span>
+          <span style="background: #1E232A; color: #fff; padding: 2px 8px; border-radius: 99px; font-weight: 700; font-size: 11px;">CRI: ${yourProfiling?.careerReadinessScore?.cri || 70}/100</span>
+        </div>
+      </div>
+      <div style="font-size: 13px; font-weight: 600; color: #1E232A;">Current Status: <strong style="color: #8C1814;">${yourProfiling?.stageTrack?.currentStageName || 'Clarity'}</strong></div>
+      <div style="font-size: 12px; color: #4B5563; margin-top: 6px;">${yourProfiling?.whatItMeans || 'You know what you want to do. Now you need a clear path: which subjects, which exams, and which skills.'}</div>
+    </div>
+    <div class="pill-title green" style="margin-top: 15px;">YOUR 5 AREAS OF PROFILING</div>
+    <div style="margin-top: 10px;">
+      ${(yourProfiling?.your5Areas || [
+        { domainStudentFacingName: 'About Me', score: 83, stage: 'Future-Ready', stageNo: 5, meaning: 'You know yourself very well and can use this to choose your career.' },
+        { domainStudentFacingName: 'Knowing About Careers', score: 58, stage: 'Exploring', stageNo: 3, meaning: 'You are finding out about different careers.' },
+        { domainStudentFacingName: 'Making a Choice', score: 83, stage: 'Future-Ready', stageNo: 5, meaning: 'You are sure about your choice and it stays steady.' },
+        { domainStudentFacingName: 'Knowing the Path', score: 50, stage: 'Exploring', stageNo: 3, meaning: 'You know some of the steps for the field you like.' },
+        { domainStudentFacingName: 'Feeling Sure', score: 75, stage: 'Clarity', stageNo: 4, meaning: 'You feel confident about choosing your career.' },
+      ]).map((area) => `
+        <div style="background: #ffffff; border: 1px solid #E5E7EB; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="color: #1E232A; font-size: 12px;">${area.domainStudentFacingName || area.label}</strong>
+            <span style="background: #F3F4F6; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px;">Stage ${area.stageNo || 3}/5 (${area.stage || 'Exploring'})</span>
+          </div>
+          <div style="font-size: 11px; color: #4B5563; margin-top: 4px;">${area.meaning}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 3</div></div>
+  </div>
+
+  <!-- PAGE 4: RIASEC -->
   <div class="pdf-page">
     <div class="header"><div class="header-name">${studentFirstName}</div><div class="header-logo">CAREERMAP</div></div>
     <div class="pill-title">INTEREST SCORES (RIASEC)</div>
@@ -762,10 +803,10 @@ function generateReportHtml(data) {
       <div class="bar-row"><div class="bar-label">Investigative</div><div class="bar-track"><div class="bar-fill" style="width: ${interestScoreMap.I}%;"></div></div><div class="bar-val">${interestScoreMap.I}%</div></div>
       <div class="bar-row"><div class="bar-label">Artistic</div><div class="bar-track"><div class="bar-fill" style="width: ${interestScoreMap.A}%;"></div></div><div class="bar-val">${interestScoreMap.A}%</div></div>
     </div>
-    <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 3</div></div>
+    <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 4</div></div>
   </div>
 
-  <!-- PAGE 4: PERSONALITY (OCEAN) -->
+  <!-- PAGE 5: PERSONALITY (OCEAN) -->
   <div class="pdf-page">
     <div class="header"><div class="header-name">${studentFirstName}</div><div class="header-logo">CAREERMAP</div></div>
     <div class="pill-title green">PERSONALITY PROFILE (BIG FIVE)</div>
@@ -777,10 +818,10 @@ function generateReportHtml(data) {
       <div class="bar-row"><div class="bar-label">Extraversion</div><div class="bar-track"><div class="bar-fill green" style="width: ${personScoreMap.Ex}%;"></div></div><div class="bar-val">${personScoreMap.Ex}%</div></div>
       <div class="bar-row"><div class="bar-label">Agreeableness</div><div class="bar-track"><div class="bar-fill green" style="width: ${personScoreMap.Ag}%;"></div></div><div class="bar-val">${personScoreMap.Ag}%</div></div>
     </div>
-    <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 4</div></div>
+    <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 5</div></div>
   </div>
 
-  <!-- PAGE 5: LEARNING STYLES & VALUES -->
+  <!-- PAGE 6: LEARNING STYLES & VALUES -->
   <div class="pdf-page">
     <div class="header"><div class="header-name">${studentFirstName}</div><div class="header-logo">CAREERMAP</div></div>
     <div class="pill-title lavender">LEARNING STYLES (VARK)</div>
@@ -804,10 +845,10 @@ function generateReportHtml(data) {
       <div class="metric-card"><strong>Short Term:</strong> ${shortPct}%</div>
       <div class="metric-card"><strong>Long Term:</strong> ${longPct}%</div>
     </div>
-    <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 5</div></div>
+    <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 6</div></div>
   </div>
 
-  <!-- PAGE 6: APTITUDES & TOP CAREER CLUSTERS -->
+  <!-- PAGE 7: APTITUDES & TOP CAREER CLUSTERS -->
   <div class="pdf-page">
     <div class="header"><div class="header-name">${studentFirstName}</div><div class="header-logo">CAREERMAP</div></div>
     <div class="pill-title">6 CORE APTITUDES</div>
@@ -948,6 +989,7 @@ export default function AssessmentReportScreen() {
   const studentFirstName = studentName.split(' ')[0] || 'Aryaman';
   const studentClass = student.class || rawData.className || user?.selectedClass || '10th';
   const studentSchool = student.school || rawData.school || user?.school || 'DAV, Pokhariput, BBSR';
+  const yourProfiling = report.yourProfiling || rawData.yourProfiling || rawData.report?.yourProfiling || SAMPLE_PROFILING_REPORT;
   const studentEmail = student.email || rawData.email || user?.email || 'aryaman1012@gmail.com';
   const studentPhone = student.phone || rawData.phone || user?.mobile || '+91-88958 12485';
   const completedDate = student.completedAt || rawData.completedAt || '2025-11-26T10:00:00.000Z';
@@ -1761,12 +1803,27 @@ return;
         </View>
 
         {/* ============================================================
-            PAGE 3: INTRODUCTION
+            PAGE 3: YOUR PROFILING (PERSONAL PROFILING)
+        ============================================================ */}
+        <YourProfilingReport
+          profilingData={yourProfiling}
+          studentFirstName={studentFirstName}
+          PageHeader={PageHeader}
+          PageFooter={PageFooter}
+          TitlePill={TitlePill}
+          cardStyle={cardStyle}
+          pageNum={3}
+          recordPageLayout={recordPageLayout}
+          pageRefs={pageRefs}
+        />
+
+        {/* ============================================================
+            PAGE 4: INTRODUCTION
         ============================================================ */}
         <View
-           ref={(el) => { pageRefs.current[3] = el; }}
+           ref={(el) => { pageRefs.current[4] = el; }}
           style={cardStyle}
-          onLayout={(e) => recordPageLayout(3, e)}
+          onLayout={(e) => recordPageLayout(4, e)}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="INTRODUCTION" />
@@ -1787,16 +1844,16 @@ return;
             />
           </View>
 
-          <PageFooter pageNum={3} />
+          <PageFooter pageNum={4} />
         </View>
 
         {/* ============================================================
-            PAGE 4: INTEREST OVERVIEW (RIASEC)
+            PAGE 5: INTEREST OVERVIEW (RIASEC)
         ============================================================ */}
         <View
-          ref={(el) => { pageRefs.current[4] = el; }}
+          ref={(el) => { pageRefs.current[5] = el; }}
           style={cardStyle}
-          onLayout={(e) => recordPageLayout(4, e)}
+          onLayout={(e) => recordPageLayout(5, e)}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="INTEREST" />
@@ -1822,17 +1879,17 @@ return;
             />
           </View>
 
-          <PageFooter pageNum={4} />
+          <PageFooter pageNum={5} />
         </View>
 
         {/* ============================================================
-            PAGE 5: INTEREST DETAILS (01 - 03)
+            PAGE 6: INTEREST DETAILS (01 - 03)
         ============================================================ */}
         <View
-         ref={(el) => { pageRefs.current[5] = el; }}
+         ref={(el) => { pageRefs.current[6] = el; }}
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[5] = e.nativeEvent.layout.y;
+            pageOffsets.current[6] = e.nativeEvent.layout.y;
           }}
         >
           <PageHeader studentFirstName={studentFirstName} />
@@ -1867,17 +1924,17 @@ return;
             environments="Collaborative, service-oriented, people-focused."
           />
 
-          <PageFooter pageNum={5} />
+          <PageFooter pageNum={6} />
         </View>
 
         {/* ============================================================
-            PAGE 6: INTEREST DETAILS (04 - 06)
+            PAGE 7: INTEREST DETAILS (04 - 06)
         ============================================================ */}
         <View
-          ref={(el) => { pageRefs.current[6] = el; }}
+          ref={(el) => { pageRefs.current[7] = el; }}
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[6] = e.nativeEvent.layout.y;
+            pageOffsets.current[7] = e.nativeEvent.layout.y;
           }}
         >
           <PageHeader studentFirstName={studentFirstName} />
@@ -1912,17 +1969,17 @@ return;
             environments="Creative, flexible, open-minded, innovative, self-directed."
           />
 
-          <PageFooter pageNum={6} />
+          <PageFooter pageNum={7} />
         </View>
 
         {/* ============================================================
-            PAGE 7: VISUAL REPRESENTATION (INTERESTS)
+            PAGE 8: VISUAL REPRESENTATION (INTERESTS)
         ============================================================ */}
         <View
           style={cardStyle}
-          ref={(el) => { pageRefs.current[7] = el; }}
+          ref={(el) => { pageRefs.current[8] = el; }}
           onLayout={(e) => {
-            pageOffsets.current[7] = e.nativeEvent.layout.y;
+            pageOffsets.current[8] = e.nativeEvent.layout.y;
           }}
         >
           <PageHeader studentFirstName={studentFirstName} />
@@ -2002,17 +2059,17 @@ return;
             </View>
           </View>
 
-          <PageFooter pageNum={7} />
+          <PageFooter pageNum={8} />
         </View>
 
         {/* ============================================================
-            PAGE 8: PERSONALITY OVERVIEW
+            PAGE 9: PERSONALITY OVERVIEW
         ============================================================ */}
         <View
-          ref={(el) => { pageRefs.current[8] = el; }}
+          ref={(el) => { pageRefs.current[9] = el; }}
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[8] = e.nativeEvent.layout.y;
+            pageOffsets.current[9] = e.nativeEvent.layout.y;
           }}
         >
           <PageHeader studentFirstName={studentFirstName} />
@@ -2041,17 +2098,17 @@ return;
             />
           </View>
 
-          <PageFooter pageNum={8} />
+          <PageFooter pageNum={9} />
         </View>
 
         {/* ============================================================
-            PAGE 9: PERSONALITY SUGGESTIONS
+            PAGE 10: PERSONALITY SUGGESTIONS
         ============================================================ */}
         <View
-          ref={(el) => { pageRefs.current[9] = el; }}
+          ref={(el) => { pageRefs.current[10] = el; }}
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[9] = e.nativeEvent.layout.y;
+            pageOffsets.current[10] = e.nativeEvent.layout.y;
           }}
         >
           <PageHeader studentFirstName={studentFirstName} />
@@ -2071,18 +2128,18 @@ return;
   );
 })}
 
-          <PageFooter pageNum={9} />
+          <PageFooter pageNum={10} />
         </View>
 
         {/* ============================================================
-            PAGE 10: VISUAL REPRESENTATION (PERSONALITY)
+            PAGE 11: VISUAL REPRESENTATION (PERSONALITY)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[10] = e.nativeEvent.layout.y;
+            pageOffsets.current[11] = e.nativeEvent.layout.y;
           }}
-          ref={(el) => { pageRefs.current[10] = el; }}
+          ref={(el) => { pageRefs.current[11] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="green" />
@@ -2150,17 +2207,17 @@ return;
 </Text>
           </View>
 
-          <PageFooter pageNum={10} />
+          <PageFooter pageNum={11} />
         </View>
 
         {/* ============================================================
-            PAGE 11: LEARNING STYLES OVERVIEW
+            PAGE 12: LEARNING STYLES OVERVIEW
         ============================================================ */}
         <View
-          ref={(el) => { pageRefs.current[11] = el; }}
+          ref={(el) => { pageRefs.current[12] = el; }}
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[11] = e.nativeEvent.layout.y;
+            pageOffsets.current[12] = e.nativeEvent.layout.y;
           }}
         >
           <PageHeader studentFirstName={studentFirstName} />
@@ -2191,18 +2248,18 @@ return;
             />
           </View>
 
-          <PageFooter pageNum={11} />
+          <PageFooter pageNum={12} />
         </View>
 
         {/* ============================================================
-            PAGE 12: LEARNING STYLE DETAILS (01 - 02)
+            PAGE 13: LEARNING STYLE DETAILS (01 - 02)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[12] = e.nativeEvent.layout.y;
+            pageOffsets.current[13] = e.nativeEvent.layout.y;
           }}
-          ref={(el) => { pageRefs.current[12] = el; }}
+          ref={(el) => { pageRefs.current[13] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2226,18 +2283,18 @@ return;
             environments="Interactive classrooms, seminars, or workplaces that encourage open conversation, brainstorming, and verbal feedback."
           />
 
-          <PageFooter pageNum={12} />
+          <PageFooter pageNum={13} />
         </View>
 
         {/* ============================================================
-            PAGE 13: LEARNING STYLE DETAILS (03 - 04)
+            PAGE 14: LEARNING STYLE DETAILS (03 - 04)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[13] = e.nativeEvent.layout.y;
+            pageOffsets.current[14] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[13] = el; }}
+           ref={(el) => { pageRefs.current[14] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2261,18 +2318,18 @@ return;
             environments="Interactive, activity-based settings workshops, labs, studios, or outdoor spaces - where theory connects directly with practice."
           />
 
-          <PageFooter pageNum={13} />
+          <PageFooter pageNum={14} />
         </View>
 
         {/* ============================================================
-            PAGE 14: VISUAL REPRESENTATION (LEARNING STYLES)
+            PAGE 15: VISUAL REPRESENTATION (LEARNING STYLES)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[14] = e.nativeEvent.layout.y;
+            pageOffsets.current[15] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[14] = el; }}
+           ref={(el) => { pageRefs.current[15] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="lavender" />
@@ -2344,18 +2401,18 @@ return;
   </View>
 </View>
 
-          <PageFooter pageNum={14} />
+          <PageFooter pageNum={15} />
         </View>
 
         {/* ============================================================
-            PAGE 15: WORK VALUES OVERVIEW
+            PAGE 16: WORK VALUES OVERVIEW
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[15] = e.nativeEvent.layout.y;
+            pageOffsets.current[16] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[15] = el; }}
+           ref={(el) => { pageRefs.current[16] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="WORK VALUES" colorClass="green" />
@@ -2386,18 +2443,18 @@ return;
             creative or innovative environments.
           </Text>
 
-          <PageFooter pageNum={15} />
+          <PageFooter pageNum={16} />
         </View>
 
         {/* ============================================================
-            PAGE 16: WORK VALUES SUGGESTIONS
+            PAGE 17: WORK VALUES SUGGESTIONS
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[16] = e.nativeEvent.layout.y;
+            pageOffsets.current[17] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[16] = el; }}
+           ref={(el) => { pageRefs.current[17] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="HERE ARE THE SUGGESTIONS AS PER VALUES" colorClass="dark-green" />
@@ -2417,18 +2474,18 @@ return;
   );
 })}
 
-          <PageFooter pageNum={16} />
+          <PageFooter pageNum={17} />
         </View>
 
         {/* ============================================================
-            PAGE 17: VISUAL REPRESENTATION (WORK VALUES)
+            PAGE 18: VISUAL REPRESENTATION (WORK VALUES)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[17] = e.nativeEvent.layout.y;
+            pageOffsets.current[18] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[17] = el; }}
+           ref={(el) => { pageRefs.current[18] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="green" />
@@ -2523,18 +2580,18 @@ return;
   </View>
 </View>
 
-          <PageFooter pageNum={17} />
+          <PageFooter pageNum={18} />
         </View>
 
         {/* ============================================================
-            PAGE 18: GOAL ORIENTATION (OVERVIEW & SHORT TERM)
+            PAGE 19: GOAL ORIENTATION (OVERVIEW & SHORT TERM)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[18] = e.nativeEvent.layout.y;
+            pageOffsets.current[19] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[18] = el; }}
+           ref={(el) => { pageRefs.current[19] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="GOAL ORIENTATION" colorClass="gold" />
@@ -2561,18 +2618,18 @@ return;
             environments="Fast-paced workplaces with clear, measurable short-cycle goals and regular performance check-ins."
           />
 
-          <PageFooter pageNum={18} />
+          <PageFooter pageNum={19} />
         </View>
 
         {/* ============================================================
-            PAGE 19: GOAL ORIENTATION (LONG TERM & VISUAL)
+            PAGE 20: GOAL ORIENTATION (LONG TERM & VISUAL)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[19] = e.nativeEvent.layout.y;
+            pageOffsets.current[20] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[19] = el; }}
+           ref={(el) => { pageRefs.current[20] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2673,18 +2730,18 @@ return;
             </View>
           </View>
 
-          <PageFooter pageNum={19} />
+          <PageFooter pageNum={20} />
         </View>
 
         {/* ============================================================
-            PAGE 20: APTITUDE (OVERVIEW)
+            PAGE 21: APTITUDE (OVERVIEW)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[20] = e.nativeEvent.layout.y;
+            pageOffsets.current[21] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[20] = el; }}
+           ref={(el) => { pageRefs.current[21] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="APTITUDE" colorClass="red" />
@@ -2747,18 +2804,18 @@ return;
             ))}
           </View>
 
-          <PageFooter pageNum={20} />
+          <PageFooter pageNum={21} />
         </View>
 
         {/* ============================================================
-            PAGE 21: APTITUDE (NUMERICAL & SPATIAL)
+            PAGE 22: APTITUDE (NUMERICAL & SPATIAL)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[21] = e.nativeEvent.layout.y;
+            pageOffsets.current[22] = e.nativeEvent.layout.y;
           }}
-          ref={(el) => { pageRefs.current[21] = el; }}
+          ref={(el) => { pageRefs.current[22] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2814,18 +2871,18 @@ return;
             environments="Finance, data analysis, research, science, engineering, or technology-driven spaces that rely on precision and logic."
           />
 
-          <PageFooter pageNum={21} />
+          <PageFooter pageNum={22} />
         </View>
 
         {/* ============================================================
-            PAGE 22: APTITUDE DETAILS (LOGICAL & VERBAL)
+            PAGE 23: APTITUDE DETAILS (LOGICAL & VERBAL)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[22] = e.nativeEvent.layout.y;
+            pageOffsets.current[23] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[22] = el; }}
+           ref={(el) => { pageRefs.current[23] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2849,18 +2906,18 @@ return;
             environments="Communication-focused fields such as media, journalism, education, law, marketing, public relations, and roles that involve presenting, writing, or explaining ideas."
           />
 
-          <PageFooter pageNum={22} />
+          <PageFooter pageNum={23} />
         </View>
 
         {/* ============================================================
-            PAGE 23: APTITUDE DETAILS (VOCABULARY & MECHANICAL)
+            PAGE 24: APTITUDE DETAILS (VOCABULARY & MECHANICAL)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[23] = e.nativeEvent.layout.y;
+            pageOffsets.current[24] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[23] = el; }}
+           ref={(el) => { pageRefs.current[24] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2884,18 +2941,18 @@ return;
             environments="Engineering workshops, manufacturing, technical industries, robotics, automotive environments, or hands-on technical fields that involve machinery and systems."
           />
 
-          <PageFooter pageNum={23} />
+          <PageFooter pageNum={24} />
         </View>
 
         {/* ============================================================
-            PAGE 24: APTITUDE DETAILS (SPATIAL)
+            PAGE 25: APTITUDE DETAILS (SPATIAL)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[24] = e.nativeEvent.layout.y;
+            pageOffsets.current[25] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[24] = el; }}
+           ref={(el) => { pageRefs.current[25] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -2909,18 +2966,18 @@ return;
             environments="Design, architecture, engineering, animation, product design, construction planning, and fields that require visual thinking and spatial planning."
           />
 
-          <PageFooter pageNum={24} />
+          <PageFooter pageNum={25} />
         </View>
 
         {/* ============================================================
-            PAGE 25: VISUAL REPRESENTATION (APTITUDE COLUMN CHART)
+            PAGE 26: VISUAL REPRESENTATION (APTITUDE COLUMN CHART)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[25] = e.nativeEvent.layout.y;
+            pageOffsets.current[26] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[25] = el; }}
+           ref={(el) => { pageRefs.current[26] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <ScoreRepBanner title="VISUAL REPRESENTATION OF YOUR SCORE" color="red" />
@@ -3017,18 +3074,18 @@ return;
             </View>
           </View>
 
-          <PageFooter pageNum={25} />
+          <PageFooter pageNum={26} />
         </View>
 
         {/* ============================================================
-            PAGE 26: INTEGRATED ANALYSIS & CLUSTER #1
+            PAGE 27: INTEGRATED ANALYSIS & CLUSTER #1
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[26] = e.nativeEvent.layout.y;
+            pageOffsets.current[27] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[26] = el; }}
+           ref={(el) => { pageRefs.current[27] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="INTEGRATED ANALYSIS" colorClass="gold" />
@@ -3044,29 +3101,11 @@ return;
 
           <ClusterMatchCard cluster={top5Clusters[0]} colorTheme="red" showWhyFit={true} />
 
-          <PageFooter pageNum={26} />
-        </View>
-
-        {/* ============================================================
-            PAGE 27: CLUSTERS #2 & #3
-        ============================================================ */}
-        <View
-          style={cardStyle}
-          onLayout={(e) => {
-            pageOffsets.current[27] = e.nativeEvent.layout.y;
-          }}
-           ref={(el) => { pageRefs.current[27] = el; }}
-        >
-          <PageHeader studentFirstName={studentFirstName} />
-
-          <ClusterMatchCard cluster={top5Clusters[1]} colorTheme="salmon" showWhyFit={false} />
-          <ClusterMatchCard cluster={top5Clusters[2]} colorTheme="blue" showWhyFit={false} />
-
           <PageFooter pageNum={27} />
         </View>
 
         {/* ============================================================
-            PAGE 28: CLUSTERS #4 & #5
+            PAGE 28: CLUSTERS #2 & #3
         ============================================================ */}
         <View
           style={cardStyle}
@@ -3077,14 +3116,14 @@ return;
         >
           <PageHeader studentFirstName={studentFirstName} />
 
-          <ClusterMatchCard cluster={top5Clusters[3]} colorTheme="green" showWhyFit={false} />
-          <ClusterMatchCard cluster={top5Clusters[4]} colorTheme="gold" showWhyFit={false} />
+          <ClusterMatchCard cluster={top5Clusters[1]} colorTheme="salmon" showWhyFit={false} />
+          <ClusterMatchCard cluster={top5Clusters[2]} colorTheme="blue" showWhyFit={false} />
 
           <PageFooter pageNum={28} />
         </View>
 
         {/* ============================================================
-            PAGE 29: STUDY & PATHWAY ADVICE
+            PAGE 29: CLUSTERS #4 & #5
         ============================================================ */}
         <View
           style={cardStyle}
@@ -3092,6 +3131,24 @@ return;
             pageOffsets.current[29] = e.nativeEvent.layout.y;
           }}
            ref={(el) => { pageRefs.current[29] = el; }}
+        >
+          <PageHeader studentFirstName={studentFirstName} />
+
+          <ClusterMatchCard cluster={top5Clusters[3]} colorTheme="green" showWhyFit={false} />
+          <ClusterMatchCard cluster={top5Clusters[4]} colorTheme="gold" showWhyFit={false} />
+
+          <PageFooter pageNum={29} />
+        </View>
+
+        {/* ============================================================
+            PAGE 30: STUDY & PATHWAY ADVICE
+        ============================================================ */}
+        <View
+          style={cardStyle}
+          onLayout={(e) => {
+            pageOffsets.current[30] = e.nativeEvent.layout.y;
+          }}
+           ref={(el) => { pageRefs.current[30] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -3155,18 +3212,18 @@ return;
             </Text>
           </View>
 
-          <PageFooter pageNum={29} />
+          <PageFooter pageNum={30} />
         </View>
 
         {/* ============================================================
-            PAGE 30: YOUR COMPLETE CAREER MAP
+            PAGE 31: YOUR COMPLETE CAREER MAP
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[30] = e.nativeEvent.layout.y;
+            pageOffsets.current[31] = e.nativeEvent.layout.y;
           }}
-           ref={(el) => { pageRefs.current[30] = el; }}
+           ref={(el) => { pageRefs.current[31] = el; }}
         >
           <PageHeader studentFirstName={studentFirstName} />
 
@@ -3224,18 +3281,18 @@ return;
             only that other clusters fit your current profile more naturally.
           </Text>
 
-          <PageFooter pageNum={30} />
+          <PageFooter pageNum={31} />
         </View>
 
         {/* ============================================================
-            PAGE 31: ABOUT CAREER MAP (BACK COVER)
+            PAGE 32: ABOUT CAREER MAP (BACK COVER)
         ============================================================ */}
         <View
           style={cardStyle}
           onLayout={(e) => {
-            pageOffsets.current[31] = e.nativeEvent.layout.y;
+            pageOffsets.current[32] = e.nativeEvent.layout.y;
           }}
-          ref={(el) => { pageRefs.current[31] = el; }}
+          ref={(el) => { pageRefs.current[32] = el; }}
         >
           {/* Header */}
           <View style={{ alignItems: 'flex-end', paddingTop: 2, paddingRight: 2, marginBottom: 6 }}>
@@ -3395,7 +3452,7 @@ return;
             </Text>
           </View>
 
-          <PageFooter pageNum={31} />
+          <PageFooter pageNum={32} />
         </View>
         </View>
       </ScrollView>

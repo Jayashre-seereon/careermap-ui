@@ -108,7 +108,7 @@ export default function AssessmentLandingScreen() {
   function triggerPlanRequiredModal(customMessage) {
     const msg =
       customMessage ||
-      'You have already completed your Psychometric Assessment and generated your 31-page Career Compass Report under your current plan. To retake the assessment and track your new score, please subscribe to an assessment plan.';
+      'You have already completed your Psychometric Assessment and generated your 32-page Career Compass Report under your current plan. To retake the assessment and track your new score, please subscribe to an assessment plan.';
     setPlanRequiredMessage(msg);
     setShowPlanRequiredModal(true);
   }
@@ -190,7 +190,7 @@ export default function AssessmentLandingScreen() {
     if (accessStatus && accessStatus.allowed === false) {
       triggerPlanRequiredModal(
         accessStatus.reason === 'ALREADY_COMPLETED'
-          ? 'You have already completed your Psychometric Assessment and generated your 31-page Career Compass Report. To retake the assessment and track your new score, please subscribe to an assessment plan.'
+          ? 'You have already completed your Psychometric Assessment and generated your 32-page Career Compass Report. To retake the assessment and track your new score, please subscribe to an assessment plan.'
           : (accessStatus.message || 'Please purchase a plan to retake the assessment.')
       );
       return;
@@ -296,7 +296,7 @@ export default function AssessmentLandingScreen() {
           >
             <Ionicons name="shield-checkmark" size={14} color="#fde047" />
             <Text style={{ color: '#fef08a', fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', letterSpacing: 0.5 }}>
-              6-DOMAIN EVALUATION • 1-PLAN = 1-ATTEMPT
+              7-DOMAIN EVALUATION • 1-PLAN = 1-ATTEMPT
             </Text>
           </View>
 
@@ -305,7 +305,7 @@ export default function AssessmentLandingScreen() {
           </Text>
 
           <Text style={{ color: '#ffe4e6', fontSize: 13, lineHeight: 19, marginTop: 8 }}>
-            Discover your interests, personality strengths, learning style, work values, and cognitive aptitudes to unlock your top 5 best-fit career pathways in a 31-page Career Compass Report.
+            Discover your career readiness profiling, interests, personality strengths, learning style, work values, and cognitive aptitudes in a comprehensive 32-page Career Compass Report.
           </Text>
 
           {/* Badges */}
@@ -538,7 +538,7 @@ export default function AssessmentLandingScreen() {
                 </Text>
                 <Text style={{ color: '#ffe4e6', fontSize: 12, marginTop: 4, lineHeight: 17 }}>
                   {accessStatus?.message ||
-                    'Subscribe to an assessment plan to unlock your evaluation and 31-page report.'}
+                    'Subscribe to an assessment plan to unlock your evaluation and 32-page report.'}
                 </Text>
 
                 <TouchableOpacity
@@ -647,10 +647,10 @@ export default function AssessmentLandingScreen() {
               STRUCTURED CURRICULUM
             </Text>
             <Text style={{ color: textColor, fontSize: 19, fontFamily: 'Poppins_900Black', fontWeight: '900', marginTop: 2 }}>
-              The 6 Dimensions of Career Compass
+              The 7 Dimensions of Career Compass
             </Text>
             <Text style={{ color: subtextColor, fontSize: 12, marginTop: 2 }}>
-              Total: <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: textColor }}>163 Questions</Text> across 6 Sections
+              Total: <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: textColor }}>{TOTAL_ASSESSMENT_QUESTIONS} Questions</Text> across 7 Sections
             </Text>
           </View>
 
@@ -784,7 +784,7 @@ export default function AssessmentLandingScreen() {
                 3. Aptitude Reasoning
               </Text>
               <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 3 }}>
-                Section 6 features 39 multiple choice questions. Keep a scrap paper handy for quick calculations.
+                Section 7 features 39 multiple choice questions with a 15-minute time limit. Keep scrap paper handy for quick calculations.
               </Text>
             </View>
 
@@ -1087,7 +1087,7 @@ export default function AssessmentLandingScreen() {
             {/* Modal Content */}
             <Text style={{ color: textColor, fontSize: 13, lineHeight: 20, marginTop: 4 }}>
               {planRequiredMessage ||
-                'You have already completed your Psychometric Assessment and generated your 31-page Career Compass Report under your current plan. To retake the assessment and track your new score, please subscribe to an assessment plan.'}
+                'You have already completed your Psychometric Assessment and generated your 32-page Career Compass Report under your current plan. To retake the assessment and track your new score, please subscribe to an assessment plan.'}
             </Text>
 
             <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 10, fontFamily: 'Poppins_500Medium', fontWeight: '500' }}>
