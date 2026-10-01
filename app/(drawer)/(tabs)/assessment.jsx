@@ -689,18 +689,7 @@ export default function AssessmentLandingScreen() {
                 <Text style={{ color: textColor, fontSize: 16, fontWeight: '800', marginTop: 10 }}>
                   {domain.title}
                 </Text>
-                <Text
-                  style={{
-                    color: domain.color,
-                    fontSize: 11,
-                    fontWeight: '800',
-                    letterSpacing: 0.5,
-                    textTransform: 'uppercase',
-                    marginTop: 2,
-                  }}
-                >
-                  {domain.subtitle}
-                </Text>
+              
 
                 <Text style={{ color: subtextColor, fontSize: 12, lineHeight: 18, marginTop: 8 }}>
                   {domain.description}
