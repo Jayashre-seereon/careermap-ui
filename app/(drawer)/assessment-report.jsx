@@ -1406,25 +1406,35 @@ useEffect(() => {
       clone.style.width = 'auto';
       clone.style.display = 'block';
 
-      Array.from(clone.children).forEach((pageEl, i) => {
-        const orig = src.children[i];
-        if (!orig) return;
-        const rect = orig.getBoundingClientRect();
-        const w = rect.width || A4_W;
-        const h = rect.height || A4_H;
-        const zoom = Math.min(A4_W / w, A4_H / h);
+    Array.from(clone.children).forEach((pageEl, i) => {
+  const orig = src.children[i];
+  if (!orig) return;
+  const rect = orig.getBoundingClientRect();
+  const w = rect.width || A4_W;
+  const h = rect.height || A4_H;
 
-        pageEl.style.width = `${w}px`;
-        pageEl.style.height = `${h}px`;
-        pageEl.style.zoom = String(zoom);
-        pageEl.style.margin = '0 auto';
-        pageEl.style.boxShadow = 'none';
-        pageEl.style.borderRadius = '0';
-        pageEl.style.breakAfter = 'page';
-        pageEl.style.pageBreakAfter = 'always';
-        pageEl.style.breakInside = 'avoid';
-        pageEl.style.overflow = 'hidden';
-      });
+  // scale so the whole page fits inside A4
+  const zoom = Math.min(A4_W / w, A4_H / h);
+
+  // make the page itself fill the full A4 sheet after zoom
+  pageEl.style.width = `${A4_W / zoom}px`;
+  pageEl.style.height = `${A4_H / zoom}px`;
+  pageEl.style.minHeight = `${A4_H / zoom}px`;
+  pageEl.style.zoom = String(zoom);
+
+  pageEl.style.margin = '0';
+  pageEl.style.boxShadow = 'none';
+  pageEl.style.borderRadius = '0';
+  pageEl.style.breakAfter = 'page';
+  pageEl.style.pageBreakAfter = 'always';
+  pageEl.style.breakInside = 'avoid';
+  pageEl.style.overflow = 'hidden';
+  pageEl.style.boxSizing = 'border-box';
+
+  // side padding (in page units, scaled by zoom)
+  pageEl.style.setProperty('padding-left', '30px', 'important');
+  pageEl.style.setProperty('padding-right', '30px', 'important');
+});
       if (clone.lastElementChild) {
         clone.lastElementChild.style.breakAfter = 'auto';
         clone.lastElementChild.style.pageBreakAfter = 'auto';
@@ -1773,47 +1783,63 @@ useEffect(() => {
           </View>
 
           {/* Bottom Right Decorative Shapes */}
-          {/* <View
-            style={{
-              position: 'absolute',
-              bottom: -20,
-              right: -20,
-              width: 100,
-              height: 100,
-               backgroundColor: COLORS.red,
-            
-              borderRadius: 40,
-              transform: [{ rotate: '45deg' }],
-            }}
-          /> */}
-         
-          <View
-            style={{
-              position: 'absolute',
-              bottom: -5,
-              right: 50,
-              width: 70,
-              height: 70,
-              borderWidth: 3,
-              borderColor: '#EDA757',
-              borderRadius: 18,
-              transform: [{ rotate: '45deg' }],
-              zIndex: 10,
-            }}
-          />
-          <View
-            style={{
-              position: 'absolute',
-              bottom: -35,
-              right: -25,
-              width: 95,
-              height: 95,
-              backgroundColor: '#B88884',
-              borderRadius: 24,
-              transform: [{ rotate: '45deg' }],
-              zIndex: 10,
-            }}
-          />
+      <View
+  style={{
+    position: 'absolute',
+    bottom: -65,
+    right: -65,
+    width: 180,
+    height: 180,
+    backgroundColor: '#FAF0EB',
+    borderRadius: 50,
+    transform: [{ rotate: '45deg' }],
+    pointerEvents: 'none',
+    zIndex: 0,
+  }}
+/>
+
+
+
+<View
+  style={{
+    position: 'absolute',
+    bottom: -10,
+    right: 95,
+    width: 72,
+    height: 72,
+    borderWidth: 3,
+    borderColor: '#EDA757',
+    borderRadius: 20,
+    transform: [{ rotate: '45deg' }],
+    pointerEvents: 'none',
+    zIndex: 10,
+  }}
+/>
+
+<View
+  style={{
+    position: 'absolute',
+    bottom: -40,
+    right: -25,
+    width: 100,
+    height: 100,
+    backgroundColor: '#8C1814',
+    borderRadius: 28,
+    transform: [{ rotate: '45deg' }],
+    pointerEvents: 'none',
+    zIndex: 10,
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  }}
+/>
+          
         </View>
 
         {/* ============================================================
