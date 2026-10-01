@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Modal,
   SafeAreaView,
@@ -22,9 +23,47 @@ import {
 import {
   ASSESSMENT_DOMAINS,
   LIKERT_OPTIONS,
+  PROFILING_LIKERT_OPTIONS,
+  PROFILING_SP_OPTIONS,
   TOTAL_ASSESSMENT_QUESTIONS,
+  getDomainMeta,
 } from '../../src/features/assessment/data/assessmentConstants';
 import { FALLBACK_SECTIONS } from '../../src/features/assessment/data/fallbackQuestions';
+
+const APTITUDE_TIME_LIMIT_SECONDS = 15 * 60; // 15 minutes = 900 seconds
+
+const timerMemoryStore = {};
+function getTimerStartedAt(key) {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const val = window.localStorage.getItem(key);
+      if (val) return Number(val);
+    }
+  } catch (_e) {}
+  return timerMemoryStore[key] || null;
+}
+
+function setTimerStartedAt(key, val) {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(key, String(val));
+    }
+  } catch (_e) {}
+  timerMemoryStore[key] = val;
+}
+
+function isAptitudeSection(section, index) {
+  const key = String(
+    section?.code ||
+    section?.domainKey ||
+    section?.id ||
+    section?.title ||
+    section?.key ||
+    section?.domain ||
+    ''
+  ).toLowerCase();
+  return key.includes('apt') || key.includes('cognit') || getDomainMeta(section, index)?.id === 'aptitude';
+}
 
 export default function AssessmentAttemptScreen() {
   const { attemptId } = useLocalSearchParams();
@@ -35,7 +74,7 @@ export default function AssessmentAttemptScreen() {
   const [sections, setSections] = useState([]);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
-  // Map of answers: { [questionId]: { likertValue?: number, selectedOptionId?: string } }
+  // Map of answers: { [questionId]: { likertValue?: number, selectedOptionId?: string, optionKey?: string } }
   const [answers, setAnswers] = useState({});
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saving' | 'saved'
 
@@ -49,9 +88,16 @@ export default function AssessmentAttemptScreen() {
     message: '',
   });
 
+  // Aptitude 15-min timer states
+  const [aptitudeTimeLeft, setAptitudeTimeLeft] = useState(APTITUDE_TIME_LIMIT_SECONDS);
+  const [aptitudeExpired, setAptitudeExpired] = useState(false);
+  const [aptitudeStarted, setAptitudeStarted] = useState(false);
+  const [showAptitudeExpiredModal, setShowAptitudeExpiredModal] = useState(false);
+
   const pendingSavesRef = useRef({});
   const saveTimeoutRef = useRef(null);
   const scrollViewRef = useRef(null);
+  const aptitudeTimerKey = `assessment:${attemptId}:aptitude-started-at`;
 
   const loadTestQuestions = useCallback(async () => {
     setLoading(true);
@@ -77,12 +123,13 @@ export default function AssessmentAttemptScreen() {
               initialAnswers[q.id] = {
                 likertValue: q.userAnswer.likertValue ?? q.userAnswer.value ?? null,
                 selectedOptionId: q.userAnswer.selectedOptionId ?? q.userAnswer.optionId ?? null,
+                optionKey: q.userAnswer.optionKey ?? q.userAnswer.key ?? null,
               };
             } else if (q.answer !== undefined && q.answer !== null) {
               if (typeof q.answer === 'number') {
                 initialAnswers[q.id] = { likertValue: q.answer };
               } else if (typeof q.answer === 'string') {
-                initialAnswers[q.id] = { selectedOptionId: q.answer };
+                initialAnswers[q.id] = { selectedOptionId: q.answer, optionKey: q.answer };
               }
             }
           });
@@ -119,6 +166,33 @@ export default function AssessmentAttemptScreen() {
     loadTestQuestions();
   }, [loadTestQuestions]);
 
+  // Aptitude 15-Minute Timer countdown
+  useEffect(() => {
+    if (loading || !sections.some((sec, idx) => isAptitudeSection(sec, idx))) return;
+
+    let startedAt = getTimerStartedAt(aptitudeTimerKey);
+    if (!startedAt) {
+      startedAt = Date.now();
+      setTimerStartedAt(aptitudeTimerKey, startedAt);
+    }
+    setAptitudeStarted(true);
+
+    const updateTime = () => {
+      const remaining = Math.max(0, APTITUDE_TIME_LIMIT_SECONDS - Math.floor((Date.now() - startedAt) / 1000));
+      setAptitudeTimeLeft(remaining);
+      if (remaining === 0) {
+        setAptitudeExpired((prev) => {
+          if (!prev) setShowAptitudeExpiredModal(true);
+          return true;
+        });
+      }
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, [sections, aptitudeTimerKey, loading]);
+
   // Active section
   const activeSection = useMemo(() => {
     if (!sections || sections.length === 0) return null;
@@ -126,8 +200,8 @@ export default function AssessmentAttemptScreen() {
   }, [sections, currentSectionIndex]);
 
   const activeDomainMeta = useMemo(() => {
-    return ASSESSMENT_DOMAINS[currentSectionIndex] || ASSESSMENT_DOMAINS[0];
-  }, [currentSectionIndex]);
+    return getDomainMeta(activeSection, currentSectionIndex);
+  }, [activeSection, currentSectionIndex]);
 
   // Overall statistics
   const totalQuestionsCount = useMemo(() => {
@@ -144,7 +218,8 @@ export default function AssessmentAttemptScreen() {
     return Object.values(answers).filter(
       (a) =>
         (a && a.likertValue !== undefined && a.likertValue !== null) ||
-        (a && a.selectedOptionId !== undefined && a.selectedOptionId !== null)
+        (a && a.selectedOptionId !== undefined && a.selectedOptionId !== null) ||
+        (a && a.optionKey !== undefined && a.optionKey !== null)
     ).length;
   }, [answers]);
 
@@ -161,7 +236,8 @@ export default function AssessmentAttemptScreen() {
       const answeredInSec = qList.filter(
         (q) =>
           (answers[q.id]?.likertValue !== undefined && answers[q.id]?.likertValue !== null) ||
-          (answers[q.id]?.selectedOptionId !== undefined && answers[q.id]?.selectedOptionId !== null)
+          (answers[q.id]?.selectedOptionId !== undefined && answers[q.id]?.selectedOptionId !== null) ||
+          (answers[q.id]?.optionKey !== undefined && answers[q.id]?.optionKey !== null)
       ).length;
       const isComplete = totalInSec > 0 && answeredInSec === totalInSec;
       return {
@@ -175,7 +251,11 @@ export default function AssessmentAttemptScreen() {
   }, [sections, answers]);
 
   // Answer selection with debounced auto-save
-  function handleSelectAnswer(questionId, { likertValue, selectedOptionId }) {
+  function handleSelectAnswer(questionId, { likertValue, selectedOptionId, optionKey }) {
+    if (isAptitudeSection(activeSection, currentSectionIndex) && aptitudeExpired) {
+      return;
+    }
+
     setSaveStatus('saving');
 
     const updatedAnswers = {
@@ -183,6 +263,7 @@ export default function AssessmentAttemptScreen() {
       [questionId]: {
         ...(likertValue !== undefined ? { likertValue } : {}),
         ...(selectedOptionId !== undefined ? { selectedOptionId } : {}),
+        ...(optionKey !== undefined ? { optionKey } : {}),
       },
     };
     setAnswers(updatedAnswers);
@@ -191,6 +272,7 @@ export default function AssessmentAttemptScreen() {
       questionId,
       likertValue,
       selectedOptionId,
+      optionKey,
     };
 
     if (saveTimeoutRef.current) {
@@ -203,6 +285,7 @@ export default function AssessmentAttemptScreen() {
           questionId,
           likertValue,
           selectedOptionId,
+          optionKey,
         });
         setSaveStatus('saved');
       } catch (_e) {
@@ -217,8 +300,9 @@ export default function AssessmentAttemptScreen() {
 
     const batchList = Object.entries(answers).map(([qId, ans]) => ({
       questionId: qId,
-      likertValue: ans.likertValue,
-      selectedOptionId: ans.selectedOptionId,
+      ...(ans.likertValue !== undefined && ans.likertValue !== null ? { likertValue: ans.likertValue } : {}),
+      ...(ans.selectedOptionId !== undefined && ans.selectedOptionId !== null ? { selectedOptionId: ans.selectedOptionId } : {}),
+      ...(ans.optionKey !== undefined && ans.optionKey !== null ? { optionKey: ans.optionKey } : {}),
     }));
 
     if (batchList.length > 0) {
@@ -237,7 +321,8 @@ export default function AssessmentAttemptScreen() {
       qList.forEach((q, qIdx) => {
         const isAnswered =
           (answers[q.id]?.likertValue !== undefined && answers[q.id]?.likertValue !== null) ||
-          (answers[q.id]?.selectedOptionId !== undefined && answers[q.id]?.selectedOptionId !== null);
+          (answers[q.id]?.selectedOptionId !== undefined && answers[q.id]?.selectedOptionId !== null) ||
+          (answers[q.id]?.optionKey !== undefined && answers[q.id]?.optionKey !== null);
         if (!isAnswered) {
           list.push({
             sectionIndex: sIdx,
@@ -261,15 +346,19 @@ export default function AssessmentAttemptScreen() {
       setSubmitStepText('Saving all responses...');
       const batchList = Object.entries(answers).map(([qId, ans]) => ({
         questionId: qId,
-        likertValue: ans.likertValue,
-        selectedOptionId: ans.selectedOptionId,
+        ...(ans.likertValue !== undefined && ans.likertValue !== null ? { likertValue: ans.likertValue } : {}),
+        ...(ans.selectedOptionId !== undefined && ans.selectedOptionId !== null ? { selectedOptionId: ans.selectedOptionId } : {}),
+        ...(ans.optionKey !== undefined && ans.optionKey !== null ? { optionKey: ans.optionKey } : {}),
       }));
       await saveBatchAttemptAnswers(attemptId, batchList).catch(() => {});
 
-      setSubmitStepText('Evaluating 21 facets & psychometric dimensions...');
-      await new Promise((r) => setTimeout(r, 600));
+      setSubmitStepText('Evaluating Personal Profiling & Career Planning Track...');
+      await new Promise((r) => setTimeout(r, 500));
 
-      setSubmitStepText('Calculating 18 Career Clusters match percentages...');
+      setSubmitStepText('Evaluating RIASEC, OCEAN, VARK & Cognitive Reasoning...');
+      await new Promise((r) => setTimeout(r, 500));
+
+      setSubmitStepText('Calculating Career Clusters & Readiness Score...');
       await submitAssessmentAttempt(attemptId).catch(() => {});
 
       setSubmitStepText('Generating your Career Compass Report...');
@@ -294,8 +383,9 @@ export default function AssessmentAttemptScreen() {
     try {
       const batchList = Object.entries(answers).map(([qId, ans]) => ({
         questionId: qId,
-        likertValue: ans.likertValue,
-        selectedOptionId: ans.selectedOptionId,
+        ...(ans.likertValue !== undefined && ans.likertValue !== null ? { likertValue: ans.likertValue } : {}),
+        ...(ans.selectedOptionId !== undefined && ans.selectedOptionId !== null ? { selectedOptionId: ans.selectedOptionId } : {}),
+        ...(ans.optionKey !== undefined && ans.optionKey !== null ? { optionKey: ans.optionKey } : {}),
       }));
       if (batchList.length > 0) {
         saveBatchAttemptAnswers(attemptId, batchList).catch(() => {});
@@ -318,7 +408,7 @@ export default function AssessmentAttemptScreen() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#070709' : '#faf6f3', justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#9a2119" />
-        <Text style={{ color: textColor, fontSize: 16, fontWeight: '800', marginTop: 14 }}>
+        <Text style={{ color: textColor, fontSize: 16, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', marginTop: 14 }}>
           Loading Assessment Engine...
         </Text>
         <Text style={{ color: subtextColor, fontSize: 12, marginTop: 4 }}>
@@ -360,7 +450,7 @@ export default function AssessmentAttemptScreen() {
             >
               <Ionicons name="lock-closed" size={24} color="#8C1814" />
             </View>
-            <Text style={{ color: textColor, fontSize: 18, fontWeight: '800', flex: 1 }}>
+            <Text style={{ color: textColor, fontSize: 18, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', flex: 1 }}>
               Assessment Plan Required
             </Text>
           </View>
@@ -370,7 +460,7 @@ export default function AssessmentAttemptScreen() {
               'You have already completed your assessment under your current plan or need a subscription.'}
           </Text>
 
-          <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 10, fontWeight: '500' }}>
+          <Text style={{ color: subtextColor, fontSize: 11, lineHeight: 16, marginTop: 10, fontFamily: 'Poppins_500Medium', fontWeight: '500' }}>
             Each subscription plan unlocks a fresh comprehensive evaluation and an updated Career Compass Report.
           </Text>
 
@@ -397,7 +487,7 @@ export default function AssessmentAttemptScreen() {
                 alignItems: 'center',
               }}
             >
-              <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '800' }}>
+              <Text style={{ color: '#ffffff', fontSize: 14, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                 {accessBlockedInfo.reason === 'ALREADY_COMPLETED' ? 'View Report' : 'View Plans'}
               </Text>
             </TouchableOpacity>
@@ -412,7 +502,7 @@ export default function AssessmentAttemptScreen() {
                 alignItems: 'center',
               }}
             >
-              <Text style={{ color: subtextColor, fontSize: 13, fontWeight: '700' }}>
+              <Text style={{ color: subtextColor, fontSize: 13, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                 Back to Assessment
               </Text>
             </TouchableOpacity>
@@ -439,7 +529,7 @@ export default function AssessmentAttemptScreen() {
           }}
         >
           <ActivityIndicator size="large" color="#facc15" />
-          <Text style={{ color: '#ffffff', fontSize: 20, fontWeight: '900', marginTop: 16 }}>
+          <Text style={{ color: '#ffffff', fontSize: 20, fontFamily: 'Poppins_900Black', fontWeight: '900', marginTop: 16 }}>
             Scoring Assessment
           </Text>
           <Text style={{ color: '#ffe4e6', fontSize: 13, marginTop: 8, textAlign: 'center' }}>
@@ -455,7 +545,7 @@ export default function AssessmentAttemptScreen() {
             }}
           >
             <Text style={{ color: '#fecdd3', fontSize: 11, textAlign: 'center', lineHeight: 16 }}>
-              Evaluating Holland RIASEC, Big Five Traits, VARK Modalities, and Cognitive Reasoning...
+              Evaluating Career Planning Track (CRI), Holland RIASEC, Big Five Traits, VARK Modalities, and Cognitive Aptitudes...
             </Text>
           </View>
         </View>
@@ -465,9 +555,11 @@ export default function AssessmentAttemptScreen() {
 
   const isLastSection = currentSectionIndex === sections.length - 1;
   const currentSectionQuestions = activeSection?.questions || [];
+  const isAptitudeActive = isAptitudeSection(activeSection, currentSectionIndex);
+  const aptitudeTimerLabel = `${String(Math.floor(aptitudeTimeLeft / 60)).padStart(2, '0')}:${String(aptitudeTimeLeft % 60).padStart(2, '0')}`;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#070709' : '#faf6f3' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#070709' : '#faf6f3', fontFamily: 'Poppins_400Regular' }}>
       {/* Top Header */}
       <View
         style={{
@@ -495,21 +587,54 @@ export default function AssessmentAttemptScreen() {
             }}
           >
             <Ionicons name="arrow-back" size={15} color={textColor} />
-            <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>Exit</Text>
+            <Text style={{ color: textColor, fontSize: 12, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>Exit</Text>
           </TouchableOpacity>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {/* Aptitude 15-Minute Countdown Timer Pill */}
+            {isAptitudeActive && aptitudeStarted && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 4,
+                  backgroundColor: aptitudeExpired || aptitudeTimeLeft <= 300 ? '#fee2e2' : '#ecfeff',
+                  borderWidth: 1,
+                  borderColor: aptitudeExpired || aptitudeTimeLeft <= 300 ? '#fca5a5' : '#a5f3fc',
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 8,
+                }}
+              >
+                <Ionicons
+                  name="time-outline"
+                  size={13}
+                  color={aptitudeExpired || aptitudeTimeLeft <= 300 ? '#b91c1c' : '#0891b2'}
+                />
+                <Text
+                  style={{
+                    color: aptitudeExpired || aptitudeTimeLeft <= 300 ? '#b91c1c' : '#0891b2',
+                    fontSize: 11,
+                    fontFamily: 'Poppins_800ExtraBold',
+                    fontWeight: '800',
+                  }}
+                >
+                  {aptitudeExpired ? 'Time expired' : aptitudeTimerLabel}
+                </Text>
+              </View>
+            )}
+
             {/* Auto-save Status */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               {saveStatus === 'saving' ? (
                 <>
                   <ActivityIndicator size="small" color="#f59e0b" />
-                  <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: '700' }}>Saving...</Text>
+                  <Text style={{ color: '#f59e0b', fontSize: 10, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>Saving...</Text>
                 </>
               ) : (
                 <>
                   <Ionicons name="checkmark-circle" size={13} color="#10b981" />
-                  <Text style={{ color: '#10b981', fontSize: 10, fontWeight: '700' }}>Saved</Text>
+                  <Text style={{ color: '#10b981', fontSize: 10, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>Saved</Text>
                 </>
               )}
             </View>
@@ -525,14 +650,14 @@ export default function AssessmentAttemptScreen() {
                 borderColor,
               }}
             >
-              <Text style={{ color: textColor, fontSize: 11, fontWeight: '800' }}>
+              <Text style={{ color: textColor, fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                 {totalAnsweredCount}/{totalQuestionsCount} ({overallPercent}%)
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Section Switcher Pills */}
+        {/* Section Switcher Pills: includes 🎯 PROFILING 0/16 */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -541,6 +666,7 @@ export default function AssessmentAttemptScreen() {
           {sections.map((sec, idx) => {
             const stat = sectionStats[idx] || { answered: 0, total: 0, isComplete: false };
             const isCurrent = idx === currentSectionIndex;
+            const domainMeta = getDomainMeta(sec, idx);
 
             return (
               <TouchableOpacity
@@ -561,7 +687,7 @@ export default function AssessmentAttemptScreen() {
                   gap: 5,
                 }}
               >
-                <Text style={{ fontSize: 12 }}>{ASSESSMENT_DOMAINS[idx]?.icon || '📝'}</Text>
+                <Text style={{ fontSize: 12 }}>{domainMeta?.icon || '📝'}</Text>
                 <Text
                   style={{
                     color: isCurrent
@@ -570,10 +696,11 @@ export default function AssessmentAttemptScreen() {
                       ? (darkMode ? '#a7f3d0' : '#047857')
                       : subtextColor,
                     fontSize: 11,
+                    fontFamily: 'Poppins_800ExtraBold',
                     fontWeight: '800',
                   }}
                 >
-                  {ASSESSMENT_DOMAINS[idx]?.shortCode || `Sec ${idx + 1}`}
+                  {domainMeta?.shortCode || `Sec ${idx + 1}`}
                 </Text>
                 <View
                   style={{
@@ -591,12 +718,47 @@ export default function AssessmentAttemptScreen() {
                     style={{
                       color: isCurrent ? '#ffffff' : stat.isComplete ? '#047857' : subtextColor,
                       fontSize: 9,
+                      fontFamily: 'Poppins_800ExtraBold',
                       fontWeight: '800',
                     }}
                   >
                     {stat.answered}/{stat.total}
                   </Text>
                 </View>
+
+                {isAptitudeSection(sec, idx) && (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: isCurrent
+                        ? 'rgba(255,255,255,0.3)'
+                        : (darkMode ? '#083344' : '#cffafe'),
+                      paddingHorizontal: 5,
+                      paddingVertical: 1,
+                      borderRadius: 6,
+                      gap: 2,
+                    }}
+                  >
+                    <Ionicons
+                      name="time-outline"
+                      size={9}
+                      color={isCurrent ? '#ffffff' : (darkMode ? '#67e8f9' : '#0891b2')}
+                    />
+                    <Text
+                      style={{
+                        color: isCurrent ? '#ffffff' : (darkMode ? '#67e8f9' : '#0891b2'),
+                        fontSize: 8.5,
+                        fontFamily: 'Poppins_800ExtraBold',
+                        fontWeight: '800',
+                      }}
+                    >
+                      {isCurrent && aptitudeStarted
+                        ? (aptitudeExpired ? 'Expired' : aptitudeTimerLabel)
+                        : '15m'}
+                    </Text>
+                  </View>
+                )}
               </TouchableOpacity>
             );
           })}
@@ -625,6 +787,7 @@ export default function AssessmentAttemptScreen() {
 
       {/* Questions ScrollView */}
       <ScrollView
+        style={{ flex: 1, fontFamily: 'Poppins_400Regular' }}
         ref={scrollViewRef}
         contentContainerStyle={{ padding: 14, paddingBottom: 110 }}
       >
@@ -643,11 +806,11 @@ export default function AssessmentAttemptScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, flex: 1 }}>
               <Text style={{ fontSize: 28, marginTop: 2 }}>{activeDomainMeta.icon}</Text>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#9a2119', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                <Text style={{ color: '#9a2119', fontSize: 10, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                   {activeDomainMeta.subtitle}
                 </Text>
-                <Text style={{ color: textColor, fontSize: 16, fontWeight: '900' }}>
-                  {activeSection.title || activeDomainMeta.title}
+                <Text style={{ color: textColor, fontSize: 16, fontFamily: 'Poppins_900Black', fontWeight: '900' }}>
+                  {activeSection?.title || activeDomainMeta.title}
                 </Text>
               </View>
             </View>
@@ -662,26 +825,166 @@ export default function AssessmentAttemptScreen() {
                 flexShrink: 0,
               }}
             >
-              <Text style={{ color: '#9a2119', fontSize: 10, fontWeight: '800' }}>
+              <Text style={{ color: '#9a2119', fontSize: 10, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                 {currentSectionQuestions.length} Questions
               </Text>
             </View>
           </View>
 
           <Text style={{ color: subtextColor, fontSize: 12, lineHeight: 18, marginTop: 8 }}>
-            {activeSection.description || activeDomainMeta.description}
+            {activeSection?.description || activeDomainMeta.description}
           </Text>
         </View>
+
+        {/* Dedicated Aptitude 15-Minute Countdown Banner */}
+        {isAptitudeActive && aptitudeStarted && (
+          <View
+            style={{
+              backgroundColor: aptitudeExpired || aptitudeTimeLeft <= 300
+                ? (darkMode ? '#3b1212' : '#fef2f2')
+                : (darkMode ? '#082f38' : '#ecfeff'),
+              borderRadius: 16,
+              padding: 14,
+              borderWidth: 1.5,
+              borderColor: aptitudeExpired || aptitudeTimeLeft <= 300 ? '#fca5a5' : '#67e8f9',
+              marginBottom: 14,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+              <View
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  backgroundColor: aptitudeExpired || aptitudeTimeLeft <= 300 ? '#fee2e2' : '#cffafe',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons
+                  name={aptitudeExpired ? 'alert-circle' : 'stopwatch-outline'}
+                  size={22}
+                  color={aptitudeExpired || aptitudeTimeLeft <= 300 ? '#b91c1c' : '#0891b2'}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    color: aptitudeExpired || aptitudeTimeLeft <= 300 ? '#b91c1c' : '#0e7490',
+                    fontSize: 12.5,
+                    fontFamily: 'Poppins_800ExtraBold',
+                    fontWeight: '800',
+                  }}
+                >
+                  {aptitudeExpired
+                    ? 'Aptitude Time Expired'
+                    : aptitudeTimeLeft <= 300
+                    ? 'Warning: < 5 Minutes Left'
+                    : '15-Minute Timed Section'}
+                </Text>
+                <Text
+                  style={{
+                    color: subtextColor,
+                    fontSize: 10.5,
+                    fontFamily: 'Poppins_500Medium',
+                    lineHeight: 15,
+                    marginTop: 2,
+                  }}
+                >
+                  {aptitudeExpired
+                    ? 'The 15-minute time limit for this section has ended. Responses are locked and auto-saved.'
+                    : 'This section has a strict 15-minute time limit. Solve as many questions as you can.'}
+                </Text>
+              </View>
+            </View>
+
+            <View
+              style={{
+                backgroundColor: aptitudeExpired || aptitudeTimeLeft <= 300 ? '#b91c1c' : '#0891b2',
+                paddingHorizontal: 12,
+                paddingVertical: 7,
+                borderRadius: 10,
+                alignItems: 'center',
+                minWidth: 70,
+              }}
+            >
+              <Text
+                style={{
+                  color: '#ffffff',
+                  fontSize: 14,
+                  fontFamily: 'Poppins_900Black',
+                  fontWeight: '900',
+                  letterSpacing: 0.5,
+                }}
+              >
+                {aptitudeExpired ? '00:00' : aptitudeTimerLabel}
+              </Text>
+              <Text
+                style={{
+                  color: '#ffffff',
+                  fontSize: 8.5,
+                  fontFamily: 'Poppins_700Bold',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  opacity: 0.9,
+                }}
+              >
+                {aptitudeExpired ? 'Expired' : 'Remaining'}
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Questions */}
         <View style={{ gap: 14 }}>
           {currentSectionQuestions.map((question, qIdx) => {
             const questionNumber = qIdx + 1;
             const currentAnswer = answers[question.id] || {};
-            const isLikert = activeDomainMeta.type === 'likert';
-            const isAnswered = isLikert
-              ? currentAnswer.likertValue !== undefined && currentAnswer.likertValue !== null
-              : Boolean(currentAnswer.selectedOptionId);
+
+            // Determine if question belongs specifically to Section 1 (Personal Profiling / CRI)
+            const isProfilingQuestion =
+              activeSection?.code === 'profiling' ||
+              activeSection?.id === 'profiling' ||
+              activeSection?.key === 'profiling' ||
+              activeDomainMeta?.id === 'profiling' ||
+              ['SA', 'CE', 'DC', 'PP', 'CO', 'SP'].includes(question.facet) ||
+              (typeof question.code === 'string' && /^(SA|CE|DC|PP|CO|SP)\d*/i.test(question.code));
+
+            // Section 1 Question 16 is single choice SP
+            const isSP =
+              question.code === 'SP' ||
+              question.facet === 'SP' ||
+              (isProfilingQuestion && (questionNumber === 16 || question.type === 'single_choice'));
+
+            const isSingleChoice =
+              isSP ||
+              question.type === 'single_choice' ||
+              question.type === 'mcq' ||
+              (Array.isArray(question.options) &&
+                question.options.length > 0 &&
+                question.type !== 'likert' &&
+                question.type !== 'likert5');
+
+            // ONLY Section 1 Likert items use "Not true at all" -> "Very true"
+            // Sections 2 to 6 (RIASEC, OCEAN, VARK, Values, Goals) use "Strongly Disagree" -> "Strongly Agree"
+            const isProfilingLikert = !isSingleChoice && isProfilingQuestion;
+            const currentLikertOptions = isProfilingLikert ? PROFILING_LIKERT_OPTIONS : LIKERT_OPTIONS;
+
+            const questionOptions =
+              Array.isArray(question.options) && question.options.length > 0
+                ? question.options
+                : isSP
+                ? PROFILING_SP_OPTIONS
+                : [];
+
+            const isAnswered =
+              (currentAnswer.likertValue !== undefined && currentAnswer.likertValue !== null) ||
+              (currentAnswer.selectedOptionId !== undefined && currentAnswer.selectedOptionId !== null) ||
+              (currentAnswer.optionKey !== undefined && currentAnswer.optionKey !== null);
 
             return (
               <View
@@ -715,6 +1018,7 @@ export default function AssessmentAttemptScreen() {
                       style={{
                         color: isAnswered ? '#ffffff' : subtextColor,
                         fontSize: 11,
+                        fontFamily: 'Poppins_800ExtraBold',
                         fontWeight: '800',
                       }}
                     >
@@ -727,11 +1031,12 @@ export default function AssessmentAttemptScreen() {
                       flex: 1,
                       color: textColor,
                       fontSize: 14,
+                      fontFamily: 'Poppins_700Bold',
                       fontWeight: '700',
                       lineHeight: 20,
                     }}
                   >
-                    {question.text || question.question || question.statement}
+                    {question.text || question.question || question.statement || question.title}
                   </Text>
                 </View>
 
@@ -757,16 +1062,17 @@ export default function AssessmentAttemptScreen() {
 
                 {/* Option Selector */}
                 <View style={{ marginTop: 14 }}>
-                  {isLikert ? (
+                  {!isSingleChoice ? (
                     // 5-point Likert Scale
                     <View style={{ gap: 8 }}>
-                      {LIKERT_OPTIONS.map((opt) => {
+                      {currentLikertOptions.map((opt) => {
                         const isSelected = currentAnswer.likertValue === opt.value;
 
                         return (
                           <TouchableOpacity
                             key={opt.value}
                             activeOpacity={0.8}
+                            disabled={isAptitudeActive && aptitudeExpired}
                             onPress={() =>
                               handleSelectAnswer(question.id, { likertValue: opt.value })
                             }
@@ -782,6 +1088,7 @@ export default function AssessmentAttemptScreen() {
                               borderWidth: 1,
                               borderColor: isSelected ? opt.color : borderColor,
                               gap: 10,
+                              opacity: isAptitudeActive && aptitudeExpired ? 0.6 : 1,
                             }}
                           >
                             <View
@@ -797,7 +1104,7 @@ export default function AssessmentAttemptScreen() {
                               {isSelected ? (
                                 <Ionicons name="checkmark" size={13} color="#ffffff" />
                               ) : (
-                                <Text style={{ color: subtextColor, fontSize: 10, fontWeight: '700' }}>
+                                <Text style={{ color: subtextColor, fontSize: 10, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                                   {opt.value}
                                 </Text>
                               )}
@@ -807,6 +1114,7 @@ export default function AssessmentAttemptScreen() {
                               style={{
                                 color: isSelected ? (darkMode ? '#ffffff' : opt.color) : textColor,
                                 fontSize: 13,
+                                fontFamily: isSelected ? 'Poppins_800ExtraBold' : 'Poppins_600SemiBold',
                                 fontWeight: isSelected ? '800' : '600',
                               }}
                             >
@@ -816,12 +1124,91 @@ export default function AssessmentAttemptScreen() {
                         );
                       })}
                     </View>
-                  ) : (
-                    // MCQ 4 Options
+                  ) : isSP ? (
+                    // Section 1 Question 16 (SP) Single Choice - Vertical Cards
                     <View style={{ gap: 8 }}>
-                      {(question.options || []).map((opt, optIndex) => {
+                      {questionOptions.map((opt, optIndex) => {
+                        const optionLetter =
+                          opt.optionKey || opt.key || String.fromCharCode(65 + optIndex);
+                        const isSelected =
+                          currentAnswer.selectedOptionId === opt.id ||
+                          currentAnswer.selectedOptionId === opt.key ||
+                          currentAnswer.selectedOptionId === optionLetter ||
+                          currentAnswer.optionKey === optionLetter;
+
+                        return (
+                          <TouchableOpacity
+                            key={opt.id || opt.key || optIndex}
+                            activeOpacity={0.8}
+                            disabled={isAptitudeActive && aptitudeExpired}
+                            onPress={() =>
+                              handleSelectAnswer(question.id, {
+                                selectedOptionId: opt.id || optionLetter,
+                                optionKey: optionLetter,
+                              })
+                            }
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              backgroundColor: isSelected
+                                ? (darkMode ? '#0f766e25' : '#f0fdfa')
+                                : (darkMode ? '#18181c' : '#f8fafc'),
+                              borderRadius: 12,
+                              paddingVertical: 12,
+                              paddingHorizontal: 12,
+                              borderWidth: 1.5,
+                              borderColor: isSelected ? '#0d9488' : borderColor,
+                              gap: 10,
+                              opacity: isAptitudeActive && aptitudeExpired ? 0.6 : 1,
+                            }}
+                          >
+                            <View
+                              style={{
+                                width: 26,
+                                height: 26,
+                                borderRadius: 8,
+                                backgroundColor: isSelected ? '#0d9488' : (darkMode ? '#2a2a30' : '#e2e8f0'),
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  color: isSelected ? '#ffffff' : subtextColor,
+                                  fontSize: 12,
+                                  fontFamily: 'Poppins_800ExtraBold',
+                                  fontWeight: '800',
+                                }}
+                              >
+                                {optionLetter}
+                              </Text>
+                            </View>
+
+                            <Text
+                              style={{
+                                flex: 1,
+                                color: isSelected ? '#0f766e' : textColor,
+                                fontSize: 13,
+                                fontFamily: isSelected ? 'Poppins_800ExtraBold' : 'Poppins_600SemiBold',
+                                fontWeight: isSelected ? '800' : '600',
+                                lineHeight: 18,
+                              }}
+                            >
+                              {opt.text || opt.optionText || opt.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  ) : (
+                    // MCQ Options (Aptitude & general MCQs)
+                    <View style={{ gap: 8 }}>
+                      {questionOptions.map((opt, optIndex) => {
                         const optionLetter = String.fromCharCode(65 + optIndex);
-                        const isSelected = currentAnswer.selectedOptionId === opt.id;
+                        const isSelected =
+                          currentAnswer.selectedOptionId === opt.id ||
+                          currentAnswer.selectedOptionId === opt.key ||
+                          currentAnswer.optionKey === optionLetter;
                         const optionImage =
                           opt.image ||
                           (typeof opt.optionText === 'string' &&
@@ -833,9 +1220,11 @@ export default function AssessmentAttemptScreen() {
                           <TouchableOpacity
                             key={opt.id || optIndex}
                             activeOpacity={0.8}
+                            disabled={isAptitudeActive && aptitudeExpired}
                             onPress={() =>
                               handleSelectAnswer(question.id, {
-                                selectedOptionId: opt.id,
+                                selectedOptionId: opt.id || optionLetter,
+                                optionKey: optionLetter,
                               })
                             }
                             style={{
@@ -850,6 +1239,7 @@ export default function AssessmentAttemptScreen() {
                               borderWidth: 1,
                               borderColor: isSelected ? '#0891b2' : borderColor,
                               gap: 10,
+                              opacity: isAptitudeActive && aptitudeExpired ? 0.6 : 1,
                             }}
                           >
                             <View
@@ -866,6 +1256,7 @@ export default function AssessmentAttemptScreen() {
                                 style={{
                                   color: isSelected ? '#ffffff' : subtextColor,
                                   fontSize: 11,
+                                  fontFamily: 'Poppins_800ExtraBold',
                                   fontWeight: '800',
                                 }}
                               >
@@ -938,13 +1329,13 @@ export default function AssessmentAttemptScreen() {
             opacity: currentSectionIndex === 0 ? 0.4 : 1,
           }}
         >
-          <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>
+          <Text style={{ color: textColor, fontSize: 12, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
             ← Prev
           </Text>
         </TouchableOpacity>
 
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ color: subtextColor, fontSize: 11, fontWeight: '600' }}>
+          <Text style={{ color: subtextColor, fontSize: 11, fontFamily: 'Poppins_600SemiBold', fontWeight: '600' }}>
             {sectionStats[currentSectionIndex]?.answered} of {sectionStats[currentSectionIndex]?.total} answered
           </Text>
         </View>
@@ -960,7 +1351,7 @@ export default function AssessmentAttemptScreen() {
               borderRadius: 12,
             }}
           >
-            <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '800' }}>
+            <Text style={{ color: '#ffffff', fontSize: 12, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
               Submit 🎉
             </Text>
           </TouchableOpacity>
@@ -975,12 +1366,46 @@ export default function AssessmentAttemptScreen() {
               borderRadius: 12,
             }}
           >
-            <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '800' }}>
+            <Text style={{ color: '#ffffff', fontSize: 12, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
               Next Section →
             </Text>
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Aptitude Time Expired Modal */}
+      <Modal visible={showAptitudeExpiredModal} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: cardBg, borderRadius: 20, padding: 22, maxWidth: 360, width: '100%', borderWidth: 1, borderColor }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <View style={{ backgroundColor: '#fee2e2', width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="time" size={22} color="#dc2626" />
+              </View>
+              <Text style={{ color: textColor, fontSize: 16, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', flex: 1 }}>
+                Aptitude Time Expired
+              </Text>
+            </View>
+            <Text style={{ color: subtextColor, fontSize: 13, lineHeight: 19 }}>
+              The 15-minute time limit for the Aptitude & Cognitive Reasoning section has ended. Your answered questions have been saved automatically.
+            </Text>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setShowAptitudeExpiredModal(false)}
+              style={{
+                backgroundColor: '#9a2119',
+                borderRadius: 12,
+                paddingVertical: 12,
+                alignItems: 'center',
+                marginTop: 18,
+              }}
+            >
+              <Text style={{ color: '#ffffff', fontSize: 13, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
+                Understood
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Pre-submission Verification Modal */}
       <Modal visible={isSubmitModalVisible} transparent animationType="slide">
@@ -1003,7 +1428,7 @@ export default function AssessmentAttemptScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ color: textColor, fontSize: 17, fontWeight: '900' }}>
+              <Text style={{ color: textColor, fontSize: 17, fontFamily: 'Poppins_900Black', fontWeight: '900' }}>
                 {unansweredQuestions.length > 0
                   ? '⚠️ Unanswered Questions Detected'
                   : '🎉 Ready for Submission'}
@@ -1017,7 +1442,7 @@ export default function AssessmentAttemptScreen() {
               <View>
                 <Text style={{ color: subtextColor, fontSize: 13, lineHeight: 18 }}>
                   You have{' '}
-                  <Text style={{ color: '#f59e0b', fontWeight: '800' }}>
+                  <Text style={{ color: '#f59e0b', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                     {unansweredQuestions.length} unanswered questions
                   </Text>{' '}
                   out of {totalQuestionsCount}. Answering all questions ensures highest accuracy.
@@ -1039,7 +1464,7 @@ export default function AssessmentAttemptScreen() {
                           borderColor,
                         }}
                       >
-                        <Text style={{ color: textColor, fontSize: 12, fontWeight: '600', flex: 1 }}>
+                        <Text style={{ color: textColor, fontSize: 12, fontFamily: 'Poppins_600SemiBold', fontWeight: '600', flex: 1 }}>
                           {u.sectionTitle} — Q{u.questionNumber}
                         </Text>
                         <TouchableOpacity
@@ -1049,7 +1474,7 @@ export default function AssessmentAttemptScreen() {
                           }}
                           style={{ paddingLeft: 10 }}
                         >
-                          <Text style={{ color: '#9a2119', fontSize: 11, fontWeight: '800' }}>
+                          <Text style={{ color: '#9a2119', fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                             Jump →
                           </Text>
                         </TouchableOpacity>
@@ -1065,25 +1490,26 @@ export default function AssessmentAttemptScreen() {
 
                 <View style={{ gap: 8, marginTop: 6 }}>
                  <TouchableOpacity
-  disabled={unansweredQuestions.length > 0}
+  onPress={handleSubmitTest}
+  activeOpacity={0.85}
   style={{
-    backgroundColor: unansweredQuestions.length > 0 ? '#d1d5db' : '#9a2119',
+    backgroundColor: '#9a2119',
     borderRadius: 14,
     paddingVertical: 12,
     alignItems: 'center',
-    opacity: unansweredQuestions.length > 0 ? 0.6 : 1,
   }}
 >
-  <Text
-    style={{
-      color: unansweredQuestions.length > 0 ? '#6b7280' : '#ffffff',
-      fontSize: 13,
-      fontWeight: '800',
-    }}
-  >
-    Submit
-  </Text>
-</TouchableOpacity>
+                  <Text
+  style={{
+    color: '#ffffff',
+    fontSize: 13,
+    fontFamily: 'Poppins_800ExtraBold',
+    fontWeight: '800',
+  }}
+>
+  Submit
+</Text>
+                  </TouchableOpacity>
 
                   <TouchableOpacity
                     onPress={() => setIsSubmitModalVisible(false)}
@@ -1094,16 +1520,17 @@ export default function AssessmentAttemptScreen() {
                       alignItems: 'center',
                     }}
                   >
-                    <Text style={{ color: textColor, fontSize: 12, fontWeight: '700' }}>
-Review                    </Text>
+                    <Text style={{ color: textColor, fontSize: 12, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
+                      Review
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
             ) : (
               <View style={{ alignItems: 'center', paddingVertical: 10 }}>
                 <Text style={{ fontSize: 36 }}>🌟</Text>
-                <Text style={{ color: textColor, fontSize: 16, fontWeight: '800', marginTop: 8 }}>
-                  All 163 Questions Answered!
+                <Text style={{ color: textColor, fontSize: 16, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', marginTop: 8 }}>
+                  All {totalQuestionsCount} Questions Answered!
                 </Text>
                 <Text style={{ color: subtextColor, fontSize: 12, textAlign: 'center', marginTop: 4 }}>
                   Your responses are complete. Click confirm to calculate your Career Compass profile.
@@ -1120,7 +1547,7 @@ Review                    </Text>
                     marginTop: 16,
                   }}
                 >
-                  <Text style={{ color: '#ffffff', fontSize: 14, fontWeight: '800' }}>
+                  <Text style={{ color: '#ffffff', fontSize: 14, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
                     Confirm & View Career Report
                   </Text>
                 </TouchableOpacity>
