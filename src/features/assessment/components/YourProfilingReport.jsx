@@ -192,6 +192,9 @@ export default function YourProfilingReport({
           pageRefs.current[pageNum] = el;
         }
       }}
+      nativeID={`page-${pageNum}`}
+      dataSet={{ reportPage: 'true' }}
+      className="pdf-page report-page-a4"
       style={cardStyle}
       onLayout={(e) => {
         if (typeof recordPageLayout === 'function') {

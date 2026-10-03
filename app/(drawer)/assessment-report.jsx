@@ -666,7 +666,51 @@ function generateReportHtml(data) {
     aptList,
     shortPct,
     longPct,
+    topInterests = [],
+    topLearningStyles = [],
+    topWorkValues = [],
+    topAptitudes = [],
+    topPersonalityTrait,
+    goalOrientationSummary,
   } = data;
+
+  const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+  const safe = (value) => escapeHtml(value);
+  const page = (number, title, body) => `<section class="pdf-page"><header><strong>${safe(studentFirstName)}</strong><b>CAREERMAP</b></header><h1>${safe(title)}</h1>${body}<footer>CareerMap • +91 94372 08179 • careermap2016@gmail.com <span>Page No ${number}</span></footer></section>`;
+  const scoresPage = (number, title, entries, tone = '') => page(number, title, entries.map(([label, value]) => `<div class="score"><strong>${safe(label)}</strong><div class="track"><i class="${tone}" style="width:${Math.max(0, Math.min(100, Number(value) || 0))}%"></i></div><b>${safe(value)}%</b></div>`).join(''));
+  const detailsPage = (number, title, items) => page(number, title, items.map((item, index) => `<article class="card"><strong>${String(index + 1).padStart(2, '0')} · ${safe(item.label)}</strong><p>Score: ${safe(item.score)}%${item.band ? ` · ${safe(item.band)}` : ''}</p><p>${safe(item.description || item.note || '')}</p></article>`).join(''));
+  const featureItems = (items, fallback) => items?.length ? items : fallback;
+  const interestItems = featureItems(topInterests, Object.entries(interestScoreMap).map(([facet, score]) => ({ label: facet, score })));
+  const learningItems = featureItems(topLearningStyles, Object.entries(varkScoreMap).map(([facet, score]) => ({ label: facet, score })));
+  const valueItems = featureItems(topWorkValues, Object.entries(valScoreMap).map(([facet, score]) => ({ label: facet, score })));
+  const aptitudeItems = featureItems(topAptitudes, aptList.map(({ label, val }) => ({ label, score: val })));
+
+  const extraPages = [
+    scoresPage(8, 'Interest Scores', Object.entries(interestScoreMap).map(([key, value]) => [key, value])),
+    page(9, 'Personality Overview', `<p>Your strongest personality trait is <strong>${safe(topPersonalityTrait?.label || 'your leading trait')}</strong>. Personality traits describe common ways of thinking, feeling and working.</p>${scoresPage(9, 'Personality Scores', Object.entries(personScoreMap).map(([key, value]) => [key, value]), 'green').replace(/^.*?<h1>.*?<\/h1>/s, '').replace(/<footer>.*?<\/footer>/s, '')}`),
+    detailsPage(10, 'Personality Suggestions', [topPersonalityTrait || { label: 'Personality strengths', score: 0, description: 'Use your strongest traits as a guide when exploring study and work environments.' }]),
+    scoresPage(11, 'Personality Scores', Object.entries(personScoreMap).map(([key, value]) => [key, value]), 'green'),
+    page(12, 'Learning Styles', `<p>Your leading learning preference: <strong>${safe(learningItems[0]?.label || 'Balanced')}</strong></p>${learningItems.map((item) => `<article class="card"><strong>${safe(item.label)}</strong><p>${safe(item.score)}% preference</p><div class="track"><i class="green" style="width:${Math.max(0, Math.min(100, Number(item.score) || 0))}%"></i></div></article>`).join('')}`),
+    detailsPage(13, 'Learning Style Details (01–02)', learningItems.slice(0, 2)),
+    detailsPage(14, 'Learning Style Details (03–04)', learningItems.slice(2, 4)),
+    scoresPage(15, 'Learning Style Scores', Object.entries(varkScoreMap).map(([key, value]) => [key, value]), 'green'),
+    scoresPage(16, 'Work Values', Object.entries(valScoreMap).map(([key, value]) => [key, value]), 'green'),
+    detailsPage(17, 'Work Values Suggestions', valueItems),
+    scoresPage(18, 'Work Values Scores', Object.entries(valScoreMap).map(([key, value]) => [key, value]), 'green'),
+    page(19, 'Goal Orientation · Short Term', `<p>Short-term orientation score: <strong>${safe(shortPct)}%</strong></p><p>Focus on clear next steps, regular milestones and feedback as you work toward near-term goals.</p>`),
+    page(20, 'Goal Orientation · Long Term', `<p>Long-term orientation score: <strong>${safe(longPct)}%</strong></p><p>Your current profile suggests: <strong>${safe(goalOrientationSummary || 'Balanced goal orientation')}</strong></p>`),
+    page(21, 'Aptitude Overview', `<p>Your aptitude results show relative strengths across six core areas. Scores are shown below.</p>${aptList.map((a) => `<article class="card"><strong>${safe(a.label)} aptitude · ${safe(a.val)}%</strong><div class="track"><i style="width:${Math.min(100, Number(a.val) || 0)}%"></i></div></article>`).join('')}`),
+    detailsPage(22, 'Aptitude · Numerical', aptitudeItems.filter((item) => /numerical/i.test(item.label))),
+    detailsPage(23, 'Aptitude · Logical and Verbal', aptitudeItems.filter((item) => /logical|verbal/i.test(item.label))),
+    detailsPage(24, 'Aptitude · Vocabulary and Mechanical', aptitudeItems.filter((item) => /vocabulary|mechanical/i.test(item.label))),
+    detailsPage(25, 'Aptitude · Spatial', aptitudeItems.filter((item) => /spatial/i.test(item.label))),
+    scoresPage(26, 'Aptitude Scores', aptList.map(({ label, val }) => [label, val])),
+    page(27, 'Integrated Analysis · Top Cluster', `<p>Holland profile code: <strong>${safe(hollandCode)}</strong></p>${top5Clusters.slice(0, 1).map((c) => `<article class="card"><h2>${safe(c.name)} · ${safe(c.matchPercentage)}% match</h2><p>${safe(c.description)}</p><p><strong>Why it may fit:</strong> ${safe(c.why_fit)}</p><p><strong>Pathway:</strong> ${safe(c.streams_and_pathways_india)}</p><p><strong>Careers:</strong> ${safe((c.careers || []).join(', '))}</p></article>`).join('')}`),
+    ...[top5Clusters.slice(1, 3), top5Clusters.slice(3, 5)].map((clusters, index) => page(28 + index, `Career Clusters ${index ? '#4 and #5' : '#2 and #3'}`, clusters.map((c) => `<article class="card"><h2>${safe(c.rank)}. ${safe(c.name)} · ${safe(c.matchPercentage)}%</h2><p>${safe(c.description)}</p><p><strong>Pathway:</strong> ${safe(c.streams_and_pathways_india)}</p><p><strong>Careers:</strong> ${safe((c.careers || []).join(', '))}</p></article>`).join(''))),
+    page(30, 'Study and Pathway Advice', `<p>Learning style: <strong>${safe(learningItems[0]?.label || 'Balanced')}</strong></p><p>Goal orientation: <strong>${safe(goalOrientationSummary || '')}</strong></p><article class="card"><h2>Suggested next steps</h2><p>Explore the subject and entrance requirements for your leading career clusters. Discuss options with a teacher, counsellor or parent, then set practical study milestones.</p></article>`),
+    page(31, 'Your Complete Career Map', `<h2>${safe(studentName)}</h2><div class="grid-2">${[['Holland Code', hollandCode], ['Top Cluster', top5Clusters[0]?.name], ['Top Work Value', valueItems[0]?.label], ['Top Trait', topPersonalityTrait?.label], ['Learning Style', learningItems[0]?.label], ['Goal Orientation', goalOrientationSummary]].map(([label, value]) => `<article class="metric-card"><strong>${safe(label)}</strong><p>${safe(value || '—')}</p></article>`).join('')}</div><p>This summary brings together your interests, personality, values, aptitudes and learning preferences to support further career exploration.</p>`),
+    page(32, 'About CareerMap', `<p>Career Map (A Unit of Identity Group) has supported career counselling and mentorship since 2016.</p><article class="card"><strong>Your Future Deserves More Than a Guess.</strong><p>Schedule a counselling session: www.thecareermap.in · careermap2016@gmail.com · +91 94372 08179</p></article>`),
+  ].join('');
 
   return `
 <!DOCTYPE html>
@@ -675,12 +719,25 @@ function generateReportHtml(data) {
   <meta charset="utf-8">
   <title>CareerMap Assessment Report - ${studentName}</title>
   <style>
-    @page { size: A4; margin: 15mm 12mm 15mm 12mm; }
+    @page { size: A4; margin: 0; }
     * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    body { font-family: 'Poppins', sans-serif; color: #374151; margin: 0; padding: 0; font-size: 13px; line-height: 1.5; background: #ffffff; }
-    .pdf-page { page-break-after: always; break-after: page; padding: 10px 0; min-height: 1000px; position: relative; display: flex; flex-direction: column; }
+    body { font-family: Arial, sans-serif; color: #374151; margin: 0; padding: 0; font-size: 11px; line-height: 1.45; background: #ffffff; }
+    .pdf-page { page-break-after: always; break-after: page; padding: 13mm 14mm 12mm; height: 297mm; min-height: 297mm; position: relative; display: flex; flex-direction: column; overflow: hidden; }
     .pdf-page:last-child { page-break-after: auto; break-after: auto; }
-    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #8C1814; padding-bottom: 6px; margin-bottom: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #8C1814; padding-bottom: 6px; margin-bottom: 12px; color: #1E232A; }
+    header b { color: #8C1814; }
+    h1 { font-size: 15px; color: #8C1814; margin: 3px 0 12px; text-transform: uppercase; }
+    h2 { font-size: 13px; margin: 8px 0; color: #1E232A; }
+    p { margin: 5px 0; }
+    footer { margin-top: auto; padding-top: 8px; border-top: 1px solid #E5E7EB; color: #6B7280; display: flex; justify-content: space-between; font-size: 9px; }
+    footer span { color: #1E232A; font-weight: 700; }
+    .score { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+    .score strong { width: 155px; color: #1E232A; }
+    .score b { width: 34px; text-align: right; }
+    .track { flex: 1; height: 12px; border-radius: 4px; background: #E5E7EB; overflow: hidden; }
+    .track i { display: block; height: 100%; background: #8C1814; }
+    .track i.green { background: #4D6D47; }
+    .card { border: 1px solid #E5E7EB; border-radius: 6px; padding: 9px 11px; margin-bottom: 8px; background: #FAFAFA; break-inside: avoid; }
     .header-name { font-weight: 700; font-size: 15px; color: #1E232A; }
     .header-logo { font-weight: 900; font-size: 17px; color: #8C1814; letter-spacing: 1px; }
     .footer { margin-top: auto; border-top: 1px solid #E5E7EB; padding-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #6B7280; }
@@ -705,7 +762,8 @@ function generateReportHtml(data) {
     .grid-2 { display: flex; gap: 14px; }
     .grid-2 > div { flex: 1; }
     .metric-card { padding: 10px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; }
-  </style>
+    @media print { .pdf-page { break-inside: avoid; } }
+      </style>
 </head>
 <body>
   <!-- PAGE 1: COVER -->
@@ -889,6 +947,7 @@ function generateReportHtml(data) {
     </div>
     <div class="footer"><div>📞 +91 94372 08179 | ✉️ careermap2016@gmail.com</div><div>Page No 6</div></div>
   </div>
+  ${extraPages}
 </body>
 </html>
   `;
@@ -979,7 +1038,7 @@ export default function AssessmentReportScreen() {
     scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 60), animated: true });
   };
 
-  const [downloading, setDownloading] = useState(false);
+  const [printing, setPrinting] = useState(false);
 
   // Normalize API data with rich defaults matching User Portal
   const rawData = reportData || {};
@@ -1296,134 +1355,140 @@ const bandLabelFor = (arr, facet, fallback = 'Moderate') => {
           };
         });
 
-  const handleDownload = async () => {
-    setDownloading(true);
-    const cleanFilename = `CareerMap_Report_${(studentName || 'Student').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-
-    try {
-      if (Platform.OS === 'web') {
-        await loadScriptOnce(
-          'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-          () => !!window.html2canvas
-        );
-        await loadScriptOnce(
-          'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-          () => !!(window.jspdf && window.jspdf.jsPDF)
-        );
-
-        const html2canvasFn = window.html2canvas;
-        const JsPdfCtor = window.jspdf.jsPDF;
-
-      
-
-       const pdf = new JsPdfCtor({ unit: 'pt', format: 'a4' });
-const pdfWidth = pdf.internal.pageSize.getWidth();
-const pdfHeight = pdf.internal.pageSize.getHeight();
-
-let pdfPageIndex = 0;
-
-for (const p of REPORT_PAGES) {
-  const node = pageRefs.current[p.id];
-  if (!node) continue;
-
-  const pageCanvas = await html2canvasFn(node, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: '#ffffff',
-  });
-
-  if (pdfPageIndex > 0) pdf.addPage();
-  pdf.addImage(
-    pageCanvas.toDataURL('image/png', 1.0),
-    'PNG',
-    0,
-    0,
-    pdfWidth,
-    pdfHeight
-  );
-  pdfPageIndex += 1;
-}
-
-pdf.save(cleanFilename);
-return;
+  // Injects print CSS for Web to guarantee pixel-perfect A4 printing matching User Portal
+useEffect(() => {
+  if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+  const styleId = 'careermap-a4-print-styles';
+  let styleTag = document.getElementById(styleId);
+  if (!styleTag) {
+    styleTag = document.createElement('style');
+    styleTag.id = styleId;
+    document.head.appendChild(styleTag);
+  }
+  styleTag.innerHTML = `
+    #careermap-print-root { display: none; }
+    @media print {
+      @page { size: A4 portrait; margin: 0; }
+      html, body {
+        margin: 0 !important; padding: 0 !important;
+        background: #fff !important;
+        height: auto !important; overflow: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
-
-      const fullUri = await captureRef(contentRef, {
-        format: 'png',
-        quality: 1,
-        result: 'tmpfile',
-      });
-
-      const ratio = PixelRatio.get();
-      const pageNums = REPORT_PAGES.map((p) => p.id);
-      const htmlPages = [];
-      const cropWidth = Math.round(cardWidth * ratio);
-
-      for (let i = 0; i < pageNums.length; i++) {
-        const pageNum = pageNums[i];
-        const startY = pageOffsets.current[pageNum] ?? (i * (cardHeight + 24));
-        const pHeight = pageHeights.current[pageNum] ?? cardHeight;
-        const cropStart = Math.max(0, Math.floor(startY * ratio));
-        const cropH = Math.round(pHeight * ratio);
-
-        if (cropH <= 0) continue;
-
-        const cropped = await ImageManipulator.manipulateAsync(
-          fullUri,
-          [{
-            crop: {
-              originX: 0,
-              originY: cropStart,
-              width: cropWidth,
-              height: cropH,
-            },
-          }],
-          { compress: 1, format: ImageManipulator.SaveFormat.PNG, base64: true }
-        );
-
-        htmlPages.push(`
-          <div style="page-break-after: always; break-after: page; width: 100vw; height: 100vh; margin: 0; padding: 0; overflow: hidden;">
-            <img src="data:image/png;base64,${cropped.base64}" style="width: 100%; height: 100%; object-fit: fill; display: block;" />
-          </div>
-        `);
+      body > *:not(#careermap-print-root) { display: none !important; }
+      #careermap-print-root { display: block !important; }
+      #careermap-print-root * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
       }
-
-      if (htmlPages.length) {
-        htmlPages[htmlPages.length - 1] = htmlPages[htmlPages.length - 1]
-          .replace('page-break-after: always; break-after: page;', 'page-break-after: auto; break-after: auto;');
-      }
-
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8" />
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
-          @page { size: A4 portrait; margin: 0; }
-          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #ffffff; font-family: 'Poppins', sans-serif; }
-        </style>
-      </head><body>${htmlPages.join('')}</body></html>`;
-
-      const { uri: pdfUri } = await Print.printToFileAsync({ html, base64: false });
-
-      const savedPdf = new File(Paths.document, cleanFilename);
-      if (savedPdf.exists) savedPdf.delete();
-      new File(pdfUri).copy(savedPdf);
-
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(savedPdf.uri, {
-          mimeType: 'application/pdf',
-          dialogTitle: 'Save Assessment Report PDF',
-          UTI: 'com.adobe.pdf',
-        });
-      } else {
-        Alert.alert('Download Complete', `PDF report saved to:\n${savedPdf.uri}`);
-      }
-    } catch (err) {
-      console.warn('PDF download error:', err);
-      Alert.alert('Download Error', 'Could not generate report PDF. Please try again.');
-    } finally {
-      setDownloading(false);
     }
-  };
+  `;
+}, []);
+
+ const handlePrint = async () => {
+  setPrinting(true);
+  const cleanFilename = `CareerMap_Report_${(studentName || 'Student').replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+  try {
+    // ---------- WEB: print exactly what is on screen ----------
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const src = document.getElementById('assessment-report-page-content');
+      if (!src) throw new Error('Report content not found');
+
+      const A4_W = 793; // px at 96dpi (210mm)
+      const A4_H = 1115; // px (297mm, slightly reduced to avoid blank pages)
+
+      const root = document.createElement('div');
+      root.id = 'careermap-print-root';
+      const clone = src.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.style.width = 'auto';
+      clone.style.display = 'block';
+
+    Array.from(clone.children).forEach((pageEl, i) => {
+  const orig = src.children[i];
+  if (!orig) return;
+  const rect = orig.getBoundingClientRect();
+  const w = rect.width || A4_W;
+  const h = rect.height || A4_H;
+
+  // scale so the whole page fits inside A4
+  const zoom = Math.min(A4_W / w, A4_H / h);
+
+  // make the page itself fill the full A4 sheet after zoom
+  pageEl.style.width = `${A4_W / zoom}px`;
+  pageEl.style.height = `${A4_H / zoom}px`;
+  pageEl.style.minHeight = `${A4_H / zoom}px`;
+  pageEl.style.zoom = String(zoom);
+
+  pageEl.style.margin = '0';
+  pageEl.style.boxShadow = 'none';
+  pageEl.style.borderRadius = '0';
+  pageEl.style.breakAfter = 'page';
+  pageEl.style.pageBreakAfter = 'always';
+  pageEl.style.breakInside = 'avoid';
+  pageEl.style.overflow = 'hidden';
+  pageEl.style.boxSizing = 'border-box';
+
+  // side padding (in page units, scaled by zoom)
+  pageEl.style.setProperty('padding-left', '30px', 'important');
+  pageEl.style.setProperty('padding-right', '30px', 'important');
+});
+      if (clone.lastElementChild) {
+        clone.lastElementChild.style.breakAfter = 'auto';
+        clone.lastElementChild.style.pageBreakAfter = 'auto';
+      }
+
+      root.appendChild(clone);
+      document.body.appendChild(root);
+
+      const originalTitle = document.title;
+      document.title = cleanFilename;
+
+      const cleanup = () => {
+        document.title = originalTitle;
+        root.remove();
+        setPrinting(false);
+        window.removeEventListener('afterprint', cleanup);
+      };
+      window.addEventListener('afterprint', cleanup);
+
+      // let the browser lay out the clone (images are already cached)
+      setTimeout(() => window.print(), 300);
+      return;
+    }
+
+    // ---------- NATIVE: snapshot every on-screen page, print the images ----------
+    const images = [];
+    for (let i = 1; i <= 32; i++) {
+      const ref = pageRefs.current[i];
+      if (!ref) continue;
+      const b64 = await captureRef(ref, { format: 'jpg', quality: 0.92, result: 'base64' });
+      images.push(b64);
+    }
+
+    const html = `
+      <html><head><meta charset="utf-8" />
+      <style>
+        @page { size: A4; margin: 0; }
+        html, body { margin: 0; padding: 0; }
+        .p { width: 210mm; height: 297mm; display: flex; align-items: center;
+             justify-content: center; page-break-after: always; overflow: hidden; }
+        .p:last-child { page-break-after: auto; }
+        img { max-width: 100%; max-height: 100%; }
+      </style></head><body>
+      ${images.map((b) => `<div class="p"><img src="data:image/jpeg;base64,${b}" /></div>`).join('')}
+      </body></html>`;
+
+    await Print.printAsync({ html });
+  } catch (err) {
+    console.warn('Print error:', err);
+    Alert.alert('Print Error', 'Could not open print dialog. Please try again.');
+  } finally {
+    if (Platform.OS !== 'web') setPrinting(false);
+  }
+};
 
   const cardStyle = {
     width: cardWidth,
@@ -1455,7 +1520,7 @@ return;
           Generating Career Compass Report...
         </Text>
         <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>
-          Synthesizing 31 pages of RIASEC, OCEAN, Schwartz Values, Aptitudes, and Pathways
+          Synthesizing 32 pages of RIASEC, OCEAN, Schwartz Values, Aptitudes, and Pathways
         </Text>
       </SafeAreaView>
     );
@@ -1463,8 +1528,11 @@ return;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.pageBg, fontFamily: 'Poppins_400Regular' }}>
-      {/* Sticky Action Bar */}
+      {/* Sticky Action Bar (Hidden on Print) */}
       <View
+        nativeID="report-action-bar"
+        className="no-print report-action-bar"
+        dataSet={{ noPrint: 'true' }}
         style={{
           backgroundColor: '#ffffff',
           borderBottomWidth: 1,
@@ -1511,37 +1579,37 @@ return;
           }}
         >
           <Text style={{ fontSize: 11, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>
-            Page {currentPage} of 31
+            Page {currentPage} of 32
           </Text>
           <Ionicons name="chevron-down" size={13} color={COLORS.muted} />
         </TouchableOpacity>
 
         <TouchableOpacity
           activeOpacity={0.8}
-          onPress={handleDownload}
-          disabled={downloading}
+          onPress={handlePrint}
+          disabled={printing}
           style={{
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: COLORS.red,
-            paddingHorizontal: 12,
+            paddingHorizontal: 14,
             paddingVertical: 7,
             borderRadius: 20,
-            gap: 5,
+            gap: 6,
           }}
         >
-          {downloading ? (
+          {printing ? (
             <ActivityIndicator size="small" color="#ffffff" style={{ transform: [{ scale: 0.8 }] }} />
           ) : (
-            <Ionicons name="download-outline" size={14} color="#ffffff" />
+            <Ionicons name="print-outline" size={15} color="#ffffff" />
           )}
-          <Text style={{ color: '#ffffff', fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
-            {downloading ? 'Downloading...' : 'Download'}
+          <Text style={{ color: '#ffffff', fontSize: 11.5, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
+            {printing ? 'Printing...' : 'Print'}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Main Document: Exactly 31 Pages matching User Portal */}
+      {/* Main Document: Exactly 32 Pages matching User Portal */}
       <ScrollView
         style={{ fontFamily: 'Poppins_400Regular' }}
         ref={scrollViewRef}
@@ -1715,47 +1783,63 @@ return;
           </View>
 
           {/* Bottom Right Decorative Shapes */}
-          {/* <View
-            style={{
-              position: 'absolute',
-              bottom: -20,
-              right: -20,
-              width: 100,
-              height: 100,
-               backgroundColor: COLORS.red,
-            
-              borderRadius: 40,
-              transform: [{ rotate: '45deg' }],
-            }}
-          /> */}
-         
-          <View
-            style={{
-              position: 'absolute',
-              bottom: -5,
-              right: 50,
-              width: 70,
-              height: 70,
-              borderWidth: 3,
-              borderColor: '#EDA757',
-              borderRadius: 18,
-              transform: [{ rotate: '45deg' }],
-              zIndex: 10,
-            }}
-          />
-          <View
-            style={{
-              position: 'absolute',
-              bottom: -35,
-              right: -25,
-              width: 95,
-              height: 95,
-              backgroundColor: '#B88884',
-              borderRadius: 24,
-              transform: [{ rotate: '45deg' }],
-              zIndex: 10,
-            }}
-          />
+      <View
+  style={{
+    position: 'absolute',
+    bottom: -65,
+    right: -65,
+    width: 180,
+    height: 180,
+    backgroundColor: '#FAF0EB',
+    borderRadius: 50,
+    transform: [{ rotate: '45deg' }],
+    pointerEvents: 'none',
+    zIndex: 0,
+  }}
+/>
+
+
+
+<View
+  style={{
+    position: 'absolute',
+    bottom: -10,
+    right: 95,
+    width: 72,
+    height: 72,
+    borderWidth: 3,
+    borderColor: '#EDA757',
+    borderRadius: 20,
+    transform: [{ rotate: '45deg' }],
+    pointerEvents: 'none',
+    zIndex: 10,
+  }}
+/>
+
+<View
+  style={{
+    position: 'absolute',
+    bottom: -40,
+    right: -25,
+    width: 100,
+    height: 100,
+    backgroundColor: '#8C1814',
+    borderRadius: 28,
+    transform: [{ rotate: '45deg' }],
+    pointerEvents: 'none',
+    zIndex: 10,
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  }}
+/>
+          
         </View>
 
         {/* ============================================================
