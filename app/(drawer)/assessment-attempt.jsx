@@ -30,7 +30,8 @@ import {
 } from '../../src/features/assessment/data/assessmentConstants';
 import { FALLBACK_SECTIONS } from '../../src/features/assessment/data/fallbackQuestions';
 
-const APTITUDE_TIME_LIMIT_SECONDS = 15 * 60; // 15 minutes = 900 seconds
+/*
+const APTITUDE_TIME_LIMIT_SECONDS = 15 * 60;
 
 const timerMemoryStore = {};
 function getTimerStartedAt(key) {
@@ -64,6 +65,7 @@ function isAptitudeSection(section, index) {
   ).toLowerCase();
   return key.includes('apt') || key.includes('cognit') || getDomainMeta(section, index)?.id === 'aptitude';
 }
+*/
 
 export default function AssessmentAttemptScreen() {
   const { attemptId } = useLocalSearchParams();
@@ -88,16 +90,17 @@ export default function AssessmentAttemptScreen() {
     message: '',
   });
 
-  // Aptitude 15-min timer states
+  /* Aptitude 15-min timer states
   const [aptitudeTimeLeft, setAptitudeTimeLeft] = useState(APTITUDE_TIME_LIMIT_SECONDS);
   const [aptitudeExpired, setAptitudeExpired] = useState(false);
   const [aptitudeStarted, setAptitudeStarted] = useState(false);
   const [showAptitudeExpiredModal, setShowAptitudeExpiredModal] = useState(false);
+  */
 
   const pendingSavesRef = useRef({});
   const saveTimeoutRef = useRef(null);
   const scrollViewRef = useRef(null);
-  const aptitudeTimerKey = `assessment:${attemptId}:aptitude-started-at`;
+  // const aptitudeTimerKey = `assessment:${attemptId}:aptitude-started-at`;
 
   const loadTestQuestions = useCallback(async () => {
     setLoading(true);
@@ -166,7 +169,7 @@ export default function AssessmentAttemptScreen() {
     loadTestQuestions();
   }, [loadTestQuestions]);
 
-  // Aptitude 15-Minute Timer countdown
+  /* Aptitude 15-Minute Timer countdown
   useEffect(() => {
     if (loading || !sections.some((sec, idx) => isAptitudeSection(sec, idx))) return;
 
@@ -192,6 +195,7 @@ export default function AssessmentAttemptScreen() {
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, [sections, aptitudeTimerKey, loading]);
+  */
 
   // Active section
   const activeSection = useMemo(() => {
@@ -252,9 +256,7 @@ export default function AssessmentAttemptScreen() {
 
   // Answer selection with debounced auto-save
   function handleSelectAnswer(questionId, { likertValue, selectedOptionId, optionKey }) {
-    if (isAptitudeSection(activeSection, currentSectionIndex) && aptitudeExpired) {
-      return;
-    }
+    // if (isAptitudeSection(activeSection, currentSectionIndex) && aptitudeExpired) return;
 
     setSaveStatus('saving');
 
@@ -555,8 +557,8 @@ export default function AssessmentAttemptScreen() {
 
   const isLastSection = currentSectionIndex === sections.length - 1;
   const currentSectionQuestions = activeSection?.questions || [];
-  const isAptitudeActive = isAptitudeSection(activeSection, currentSectionIndex);
-  const aptitudeTimerLabel = `${String(Math.floor(aptitudeTimeLeft / 60)).padStart(2, '0')}:${String(aptitudeTimeLeft % 60).padStart(2, '0')}`;
+  // const isAptitudeActive = isAptitudeSection(activeSection, currentSectionIndex);
+  // const aptitudeTimerLabel = `${String(Math.floor(aptitudeTimeLeft / 60)).padStart(2, '0')}:${String(aptitudeTimeLeft % 60).padStart(2, '0')}`;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: darkMode ? '#070709' : '#faf6f3', fontFamily: 'Poppins_400Regular' }}>
@@ -591,7 +593,7 @@ export default function AssessmentAttemptScreen() {
           </TouchableOpacity>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            {/* Aptitude 15-Minute Countdown Timer Pill */}
+            {/* Aptitude 15-Minute Countdown Timer Pill
             {isAptitudeActive && aptitudeStarted && (
               <View
                 style={{
@@ -622,7 +624,7 @@ export default function AssessmentAttemptScreen() {
                   {aptitudeExpired ? 'Time expired' : aptitudeTimerLabel}
                 </Text>
               </View>
-            )}
+            )} */}
 
             {/* Auto-save Status */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -726,6 +728,7 @@ export default function AssessmentAttemptScreen() {
                   </Text>
                 </View>
 
+                {/* Aptitude timer badge
                 {isAptitudeSection(sec, idx) && (
                   <View
                     style={{
@@ -753,12 +756,10 @@ export default function AssessmentAttemptScreen() {
                         fontWeight: '800',
                       }}
                     >
-                      {isCurrent && aptitudeStarted
-                        ? (aptitudeExpired ? 'Expired' : aptitudeTimerLabel)
-                        : '15m'}
+                    {isCurrent ? '' : '15m'}
                     </Text>
                   </View>
-                )}
+                )} */}
               </TouchableOpacity>
             );
           })}
@@ -836,7 +837,7 @@ export default function AssessmentAttemptScreen() {
           </Text>
         </View>
 
-        {/* Dedicated Aptitude 15-Minute Countdown Banner */}
+        {/* Dedicated Aptitude 15-Minute Countdown Banner
         {isAptitudeActive && aptitudeStarted && (
           <View
             style={{
@@ -937,7 +938,7 @@ export default function AssessmentAttemptScreen() {
               </Text>
             </View>
           </View>
-        )}
+        )} */}
 
         {/* Questions */}
         <View style={{ gap: 14 }}>
@@ -1072,7 +1073,6 @@ export default function AssessmentAttemptScreen() {
                           <TouchableOpacity
                             key={opt.value}
                             activeOpacity={0.8}
-                            disabled={isAptitudeActive && aptitudeExpired}
                             onPress={() =>
                               handleSelectAnswer(question.id, { likertValue: opt.value })
                             }
@@ -1088,7 +1088,7 @@ export default function AssessmentAttemptScreen() {
                               borderWidth: 1,
                               borderColor: isSelected ? opt.color : borderColor,
                               gap: 10,
-                              opacity: isAptitudeActive && aptitudeExpired ? 0.6 : 1,
+                              // opacity: isAptitudeActive && aptitudeExpired ? 0.6 : 1,
                             }}
                           >
                             <View
@@ -1140,7 +1140,6 @@ export default function AssessmentAttemptScreen() {
                           <TouchableOpacity
                             key={opt.id || opt.key || optIndex}
                             activeOpacity={0.8}
-                            disabled={isAptitudeActive && aptitudeExpired}
                             onPress={() =>
                               handleSelectAnswer(question.id, {
                                 selectedOptionId: opt.id || optionLetter,
@@ -1159,7 +1158,7 @@ export default function AssessmentAttemptScreen() {
                               borderWidth: 1.5,
                               borderColor: isSelected ? '#0d9488' : borderColor,
                               gap: 10,
-                              opacity: isAptitudeActive && aptitudeExpired ? 0.6 : 1,
+                              // opacity: isAptitudeActive && aptitudeExpired ? 0.6 : 1,
                             }}
                           >
                             <View
@@ -1220,7 +1219,6 @@ export default function AssessmentAttemptScreen() {
                           <TouchableOpacity
                             key={opt.id || optIndex}
                             activeOpacity={0.8}
-                            disabled={isAptitudeActive && aptitudeExpired}
                             onPress={() =>
                               handleSelectAnswer(question.id, {
                                 selectedOptionId: opt.id || optionLetter,
@@ -1239,7 +1237,7 @@ export default function AssessmentAttemptScreen() {
                               borderWidth: 1,
                               borderColor: isSelected ? '#0891b2' : borderColor,
                               gap: 10,
-                              opacity: isAptitudeActive && aptitudeExpired ? 0.6 : 1,
+                              // opacity: isAptitudeActive && aptitudeExpired ? 0.6 : 1,
                             }}
                           >
                             <View
@@ -1373,7 +1371,7 @@ export default function AssessmentAttemptScreen() {
         )}
       </View>
 
-      {/* Aptitude Time Expired Modal */}
+      {/* Aptitude Time Expired Modal
       <Modal visible={showAptitudeExpiredModal} transparent animationType="fade">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <View style={{ backgroundColor: cardBg, borderRadius: 20, padding: 22, maxWidth: 360, width: '100%', borderWidth: 1, borderColor }}>
@@ -1405,7 +1403,7 @@ export default function AssessmentAttemptScreen() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </Modal> */}
 
       {/* Pre-submission Verification Modal */}
       <Modal visible={isSubmitModalVisible} transparent animationType="slide">
