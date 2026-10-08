@@ -1789,60 +1789,68 @@ useEffect(() => {
           </View>
 
           {/* Bottom Right Decorative Shapes */}
-      <View
+    {/* Dark red base */}
+<View
   style={{
     position: 'absolute',
-    bottom: -65,
-    right: -65,
-    width: 180,
-    height: 180,
-    backgroundColor: '#FAF0EB',
-    borderRadius: 50,
+    bottom: 0,
+    right: -31,
+    width: 102,
+    height: 102,
+    backgroundColor: '#8C1814',
+    borderRadius: 29,
     transform: [{ rotate: '45deg' }],
     pointerEvents: 'none',
     zIndex: 0,
   }}
 />
 
-
-
+{/* Translucent pink */}
 <View
   style={{
     position: 'absolute',
-    bottom: -10,
-    right: 95,
-    width: 72,
-    height: 72,
-    borderWidth: 3,
-    borderColor: '#EDA757',
-    borderRadius: 20,
+    bottom: 34,
+    right: -2,
+    width: 105,
+    height: 105,
+    backgroundColor: 'rgba(233, 176, 174, 0.68)',
+    borderRadius: 30,
     transform: [{ rotate: '45deg' }],
     pointerEvents: 'none',
-    zIndex: 10,
+    zIndex: 1,
   }}
 />
 
+{/* Gray diamond (moved closer: right 125 → 104) */}
 <View
   style={{
     position: 'absolute',
-    bottom: -40,
-    right: -25,
-    width: 100,
-    height: 100,
-    backgroundColor: '#8C1814',
-    borderRadius: 28,
+    bottom: 42,
+    right: 104,
+    width: 72,
+    height: 72,
+    backgroundColor: '#D7DADD',
+    borderRadius: 18,
+    transform: [{ rotate: '45deg' }],
+    pointerEvents: 'none',
+    zIndex: 1,
+  }}
+/>
+
+{/* Orange outline diamond (moved closer: bottom 155 → 138, right 48 → 36) */}
+<View
+  style={{
+    position: 'absolute',
+    bottom: 138,
+    right: 36,
+    width: 84,
+    height: 84,
+    borderWidth: 3,
+    borderColor: '#EDA757',
+    borderRadius: 23,
     transform: [{ rotate: '45deg' }],
     pointerEvents: 'none',
     zIndex: 10,
-
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   }}
 />
           
