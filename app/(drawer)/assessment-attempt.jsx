@@ -30,7 +30,7 @@ import {
 } from '../../src/features/assessment/data/assessmentConstants';
 import { FALLBACK_SECTIONS } from '../../src/features/assessment/data/fallbackQuestions';
 
-const APTITUDE_TIME_LIMIT_SECONDS = 39 * 60;
+const APTITUDE_TIME_LIMIT_SECONDS = 30 * 60;
 
 const timerMemoryStore = {};
 function getTimerStartedAt(key) {
@@ -587,7 +587,7 @@ export default function AssessmentAttemptScreen() {
           </TouchableOpacity>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            {/* Aptitude 39-Minute Countdown Timer Pill */}
+            {/* Aptitude 30-Minute Countdown Timer Pill */}
             {isAptitudeActive && aptitudeStarted && (
               <View
                 style={{
@@ -750,7 +750,7 @@ export default function AssessmentAttemptScreen() {
                         fontWeight: '800',
                       }}
                     >
-                    {isCurrent ? '' : '39m'}
+                    {isCurrent ? '' : '30m'}
                     </Text>
                   </View>
                 )}
@@ -831,7 +831,7 @@ export default function AssessmentAttemptScreen() {
           </Text>
         </View>
 
-        {/* Dedicated Aptitude 39-Minute Countdown Banner */}
+        {/* Dedicated Aptitude 30-Minute Countdown Banner */}
         {isAptitudeActive && aptitudeStarted && (
           <View
             style={{
@@ -879,7 +879,7 @@ export default function AssessmentAttemptScreen() {
                     ? 'Aptitude Time Expired'
                     : aptitudeTimeLeft <= 300
                     ? 'Warning: < 5 Minutes Left'
-                    : '39-Minute Timed Section'}
+                    : '30-Minute Timed Section'}
                 </Text>
                 <Text
                   style={{
@@ -891,8 +891,8 @@ export default function AssessmentAttemptScreen() {
                   }}
                 >
                   {aptitudeExpired
-                    ? 'The 39-minute time limit for this section has ended. Responses are locked and auto-saved.'
-                    : 'This section has a strict 39-minute time limit. Solve as many questions as you can.'}
+                    ? 'The 30-minute time limit for this section has ended. Responses are locked and auto-saved.'
+                    : 'This section has a strict 30-minute time limit. Solve as many questions as you can.'}
                 </Text>
               </View>
             </View>
@@ -1381,7 +1381,7 @@ export default function AssessmentAttemptScreen() {
               </Text>
             </View>
             <Text style={{ color: subtextColor, fontSize: 13, lineHeight: 19 }}>
-              The 39-minute time limit for the Aptitude & Cognitive Reasoning section has ended. Your answered questions have been saved automatically.
+              The 30-minute time limit for the Aptitude & Cognitive Reasoning section has ended. Your answered questions have been saved automatically.
             </Text>
             <TouchableOpacity
               activeOpacity={0.85}

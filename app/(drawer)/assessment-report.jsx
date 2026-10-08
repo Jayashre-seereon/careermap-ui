@@ -721,7 +721,8 @@ function generateReportHtml(data) {
   <style>
     @page { size: A4; margin: 0; }
     * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    body { font-family: Arial, sans-serif; color: #374151; margin: 0; padding: 0; font-size: 11px; line-height: 1.45; background: #ffffff; }
+    body { font-family: Arial, sans-serif; color: #374151; margin: 0; padding: 0; font-size: 13px; line-height: 1.55; background: #ffffff; }
+    .pdf-page p, .pdf-page .cluster-body, .pdf-page article p { text-align: justify; }
     .pdf-page { page-break-after: always; break-after: page; padding: 13mm 14mm 12mm; height: 297mm; min-height: 297mm; position: relative; display: flex; flex-direction: column; overflow: hidden; }
     .pdf-page:last-child { page-break-after: auto; break-after: auto; }
     header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #8C1814; padding-bottom: 6px; margin-bottom: 12px; color: #1E232A; }
@@ -1382,6 +1383,11 @@ useEffect(() => {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
+      #careermap-print-root [data-report-page] { font-size: 13px !important; }
+      #careermap-print-root [data-report-page] p,
+      #careermap-print-root [data-report-page] [data-report-body] {
+        text-align: justify !important;
+      }
     }
   `;
 }, []);
@@ -1625,7 +1631,7 @@ useEffect(() => {
         ============================================================ */}
         <View
            ref={(el) => { pageRefs.current[1] = el; }}
-          style={[cardStyle, { position: 'relative', overflow: 'hidden', paddingHorizontal: cardWidth > 600 ? 36 : 18, paddingVertical: cardWidth > 600 ? 30 : 18 }]}
+          style={[cardStyle, { position: 'relative', overflow: 'hidden', paddingHorizontal: cardWidth > 600 ? 36 : 18, paddingVertical: cardWidth > 600 ? 30 : 18, fontSize: 12 }]}
           onLayout={(e) => recordPageLayout(1, e)}
         >
           {/* Top Left Geometric Graphics */}
@@ -1730,7 +1736,7 @@ useEffect(() => {
             }}
           >
             <Text style={{ fontSize: 13, color: '#2B2D33', textAlign: 'center', lineHeight: 18 }}>
-              Discover Your True Strengths{'\n'}and Potential.
+              Discover Your True Strengths and Potential
             </Text>
           </View>
 

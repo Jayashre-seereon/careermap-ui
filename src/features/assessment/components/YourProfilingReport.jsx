@@ -195,7 +195,7 @@ export default function YourProfilingReport({
       nativeID={`page-${pageNum}`}
       dataSet={{ reportPage: 'true' }}
       className="pdf-page report-page-a4"
-      style={cardStyle}
+      style={[cardStyle, { fontSize: 13 }]}
       onLayout={(e) => {
         if (typeof recordPageLayout === 'function') {
           recordPageLayout(pageNum, e);
@@ -375,19 +375,7 @@ export default function YourProfilingReport({
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
                     <Text style={{ fontSize: 13 }}>{cfg.icon}</Text>
                     <Text style={styles.areaName} numberOfLines={1}>{domainName}</Text>
-                    <View
-                      style={[
-                        styles.areaStageBadge,
-                        {
-                          backgroundColor: `${cfg.color}15`,
-                          borderColor: `${cfg.color}40`,
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.areaStageBadgeText, { color: cfg.color }]}>
-                        {stageLabel}
-                      </Text>
-                    </View>
+                   
                   </View>
 
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -411,11 +399,7 @@ export default function YourProfilingReport({
                     </View>
                     <Text style={styles.miniBarLabel}>{stageNum}/5</Text>
 
-                    {scoreVal !== null && (
-                      <View style={styles.scoreBadge}>
-                        <Text style={styles.scoreBadgeText}>{scoreVal}%</Text>
-                      </View>
-                    )}
+                  
                   </View>
                 </View>
 
@@ -473,12 +457,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   introParagraph: {
-    fontSize: 11,
+    fontSize: 13,
     color: '#374151',
-    lineHeight: 16,
+    lineHeight: 19,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
     marginBottom: 10,
+    textAlign: 'justify',
   },
   stageTrackCard: {
     backgroundColor: '#fafbfc',
@@ -657,10 +642,11 @@ const styles = StyleSheet.create({
   },
   whatItMeansBody: {
     color: '#334155',
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 13,
+    lineHeight: 19,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
+    textAlign: 'justify',
   },
   whatItMeansFooter: {
     flexDirection: 'row',
@@ -761,13 +747,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   areaMeaningText: {
-    fontSize: 10,
+    fontSize: 12,
     color: '#475569',
-    lineHeight: 13,
+    lineHeight: 16,
     marginTop: 3,
     paddingLeft: 22,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
+    textAlign: 'justify',
   },
   notesCard: {
     backgroundColor: '#fffbeb',
@@ -806,10 +793,11 @@ const styles = StyleSheet.create({
   },
   noteText: {
     color: '#78350f',
-    fontSize: 10,
-    lineHeight: 14,
+    fontSize: 12,
+    lineHeight: 18,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
     flex: 1,
+    textAlign: 'justify',
   },
 });
