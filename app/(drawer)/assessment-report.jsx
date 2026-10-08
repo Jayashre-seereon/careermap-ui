@@ -1730,7 +1730,7 @@ useEffect(() => {
             }}
           >
             <Text style={{ fontSize: 13, color: '#2B2D33', textAlign: 'center', lineHeight: 18 }}>
-              Discover Your True Strengths{'\n'}and Potential.
+              Discover Your True Strengths and Potential
             </Text>
           </View>
 

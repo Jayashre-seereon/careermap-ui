@@ -375,19 +375,7 @@ export default function YourProfilingReport({
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
                     <Text style={{ fontSize: 13 }}>{cfg.icon}</Text>
                     <Text style={styles.areaName} numberOfLines={1}>{domainName}</Text>
-                    <View
-                      style={[
-                        styles.areaStageBadge,
-                        {
-                          backgroundColor: `${cfg.color}15`,
-                          borderColor: `${cfg.color}40`,
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.areaStageBadgeText, { color: cfg.color }]}>
-                        {stageLabel}
-                      </Text>
-                    </View>
+                   
                   </View>
 
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -411,11 +399,7 @@ export default function YourProfilingReport({
                     </View>
                     <Text style={styles.miniBarLabel}>{stageNum}/5</Text>
 
-                    {scoreVal !== null && (
-                      <View style={styles.scoreBadge}>
-                        <Text style={styles.scoreBadgeText}>{scoreVal}%</Text>
-                      </View>
-                    )}
+                  
                   </View>
                 </View>
 
