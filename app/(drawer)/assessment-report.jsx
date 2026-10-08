@@ -74,6 +74,14 @@ const COLORS = {
   pageBg: '#EAEFF4',
 };
 
+// Scale report typography up slightly while keeping headings' existing hierarchy.
+const REPORT_TEXT_SCALE = 1.15;
+const reportText = (style) => ({
+  ...style,
+  fontSize: style.fontSize * REPORT_TEXT_SCALE,
+  ...(style.lineHeight ? { lineHeight: style.lineHeight * REPORT_TEXT_SCALE } : {}),
+});
+
 // 32 Pages List for Jump Navigation (Page 3 is Your Profiling)
 const REPORT_PAGES = [
   { id: 1, label: 'Page 1: Cover Page' },
@@ -115,7 +123,7 @@ function PageHeader({ studentFirstName }) {
   return (
     <View style={{ marginBottom: 14 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 6 }}>
-        <Text style={{ fontSize: 15, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>
+        <Text style={reportText({ fontSize: 17.2, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark })}>
           {studentFirstName || 'Aryaman'}
         </Text>
         <Image
@@ -138,18 +146,18 @@ function PageFooter({ pageNum }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: COLORS.redLight, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 9 }}>📞</Text>
+            <Text style={reportText({ fontSize: 10.4 })}>📞</Text>
             </View>
-            <Text style={{ fontSize: 9.5, color: COLORS.muted, fontFamily: 'Poppins_500Medium', fontWeight: '500' }}>+91 94372 08179</Text>
+            <Text style={reportText({ fontSize: 10.9, color: COLORS.muted, fontFamily: 'Poppins_500Medium', fontWeight: '500' })}>+91 94372 08179</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
             <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: COLORS.redLight, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 9 }}>✉️</Text>
+            <Text style={reportText({ fontSize: 10.4 })}>✉️</Text>
             </View>
-            <Text style={{ fontSize: 9.5, color: COLORS.muted, fontFamily: 'Poppins_500Medium', fontWeight: '500' }}>careermap2016@gmail.com</Text>
+            <Text style={reportText({ fontSize: 10.9, color: COLORS.muted, fontFamily: 'Poppins_500Medium', fontWeight: '500' })}>careermap2016@gmail.com</Text>
           </View>
         </View>
-        <Text style={{ fontSize: 10, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>Page No {pageNum}</Text>
+        <Text style={reportText({ fontSize: 11.5, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark })}>Page No {pageNum}</Text>
       </View>
     </View>
   );
@@ -222,7 +230,7 @@ function TitlePill({ title, colorClass = 'red' }) {
         style={{
           color: borderColor,
           fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
-          fontSize: 11.5,
+          fontSize: 13.2,
           letterSpacing: 0.5,
           textTransform: 'uppercase',
         }}
@@ -272,13 +280,13 @@ function DetailCardRow({ num, title, color = 'red', desc, traits, enjoys, enviro
             marginBottom: 4,
           }}
         >
-          <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 12 }}>{num}</Text>
+          <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 13.8 }}>{num}</Text>
         </View>
         <Text
           style={{
             color: '#ffffff',
             fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
-            fontSize: 9.5,
+            fontSize: 10.9,
             textAlign: 'center',
             letterSpacing: 0.4,
             textTransform: 'uppercase',
@@ -289,24 +297,24 @@ function DetailCardRow({ num, title, color = 'red', desc, traits, enjoys, enviro
       </View>
       <View style={{ flex: 1, padding: 10, backgroundColor: bodyBg }}>
         {desc ? (
-          <Text style={{ fontSize: 11, color: COLORS.dark, fontFamily: 'Poppins_500Medium', fontWeight: '500', lineHeight: 16, marginBottom: 4 }}>
+          <Text style={{ fontSize: 12.6, color: COLORS.dark, fontFamily: 'Poppins_500Medium', fontWeight: '500', lineHeight: 18.4, marginBottom: 4 }}>
             {desc}
           </Text>
         ) : null}
         {traits ? (
-          <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15, marginTop: 2 }}>
+          <Text style={{ fontSize: 12.1, color: COLORS.body, lineHeight: 17.2, marginTop: 2 }}>
             <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>Key Traits: </Text>
             {traits}
           </Text>
         ) : null}
         {enjoys ? (
-          <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15, marginTop: 2 }}>
+          <Text style={{ fontSize: 12.1, color: COLORS.body, lineHeight: 17.2, marginTop: 2 }}>
             <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>Enjoys: </Text>
             {enjoys}
           </Text>
         ) : null}
         {environments ? (
-          <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15, marginTop: 2 }}>
+          <Text style={{ fontSize: 12.1, color: COLORS.body, lineHeight: 17.2, marginTop: 2 }}>
             <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>Ideal Environments: </Text>
             {environments}
           </Text>
@@ -353,13 +361,13 @@ function TraitCardRow({ num, name, band, text, color = 'green' }) {
               justifyContent: 'center',
             }}
           >
-            <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 10 }}>{num}</Text>
+            <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 11.5 }}>{num}</Text>
           </View>
           <Text
             style={{
               color: '#ffffff',
               fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
-              fontSize: 9,
+              fontSize: 10.4,
               textTransform: 'uppercase',
               letterSpacing: 0.3,
             }}
@@ -377,7 +385,7 @@ function TraitCardRow({ num, name, band, text, color = 'green' }) {
         >
           <Text
             style={{
-              fontSize: 8.5,
+              fontSize: 9.8,
               fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
               color: isHigh ? badgeBg : '#ffffff',
               letterSpacing: 0.4,
@@ -388,7 +396,7 @@ function TraitCardRow({ num, name, band, text, color = 'green' }) {
         </View>
       </View>
       <View style={{ flex: 1, padding: 10, backgroundColor: bodyBg, justifyContent: 'center' }}>
-        <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>{text}</Text>
+        <Text style={{ fontSize: 12.1, color: COLORS.body, lineHeight: 17.2 }}>{text}</Text>
       </View>
     </View>
   );
@@ -426,7 +434,7 @@ function ScoreRepBanner({ title, color = 'red' }) {
         style={{
           color: '#ffffff',
           fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
-          fontSize: 10.5,
+          fontSize: 12.1,
           letterSpacing: 0.5,
           textTransform: 'uppercase',
         }}
@@ -466,7 +474,7 @@ function DonutGauge({ percent, color, trackColor, size = 90, strokeWidth = 8, te
         />
       </Svg>
       <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 16, fontFamily: 'Poppins_900Black', fontWeight: '900', color: textColor }}>{percent}%</Text>
+        <Text style={{ fontSize: 18.4, fontFamily: 'Poppins_900Black', fontWeight: '900', color: textColor }}>{percent}%</Text>
       </View>
     </View>
   );
@@ -512,7 +520,7 @@ function ClusterMatchCard({ cluster, colorTheme = 'red', showWhyFit = true }) {
           style={{
             color: '#ffffff',
             fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
-            fontSize: 11.5,
+            fontSize: 13.2,
             textTransform: 'uppercase',
             flex: 1,
             marginRight: 6,
@@ -521,24 +529,24 @@ function ClusterMatchCard({ cluster, colorTheme = 'red', showWhyFit = true }) {
         >
           {cluster.rank} {cluster.name}
         </Text>
-        <Text style={{ color: '#ffffff', fontFamily: 'Poppins_900Black', fontWeight: '900', fontSize: 14 }}>
+        <Text style={{ color: '#ffffff', fontFamily: 'Poppins_900Black', fontWeight: '900', fontSize: 16.1 }}>
           {cluster.matchPercentage}%
         </Text>
       </View>
 
       <View style={{ padding: 10, backgroundColor: '#FFF9F8' }}>
         {cluster.description ? (
-          <Text style={{ fontSize: 10.5, color: '#1E293B', fontFamily: 'Poppins_600SemiBold', fontWeight: '600', lineHeight: 15, marginBottom: 4 }}>
+          <Text style={{ fontSize: 12.1, color: '#1E293B', fontFamily: 'Poppins_600SemiBold', fontWeight: '600', lineHeight: 17.2, marginBottom: 4 }}>
             {cluster.description}
           </Text>
         ) : null}
         {showWhyFit && cluster.why_fit ? (
-          <Text style={{ fontSize: 10, color: '#475569', lineHeight: 14, marginBottom: 4 }}>
+          <Text style={{ fontSize: 11.5, color: '#475569', lineHeight: 16.1, marginBottom: 4 }}>
             {cluster.why_fit}
           </Text>
         ) : null}
         {cluster.streams_and_pathways_india ? (
-          <Text style={{ fontSize: 10, color: '#334155', lineHeight: 14, marginBottom: 6 }}>
+          <Text style={{ fontSize: 11.5, color: '#334155', lineHeight: 16.1, marginBottom: 6 }}>
             <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>Pathway in India: </Text>
             {cluster.streams_and_pathways_india}
           </Text>
@@ -561,7 +569,7 @@ function ClusterMatchCard({ cluster, colorTheme = 'red', showWhyFit = true }) {
               }}
             >
               <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: dotColor }} />
-              <Text style={{ fontSize: 9.5, fontFamily: 'Poppins_600SemiBold', fontWeight: '600', color: COLORS.dark }}>{c}</Text>
+              <Text style={{ fontSize: 10.9, fontFamily: 'Poppins_600SemiBold', fontWeight: '600', color: COLORS.dark }}>{c}</Text>
             </View>
           ))}
         </View>
@@ -629,15 +637,15 @@ function TopClustersMap({ clusters }) {
                   marginRight: 5,
                 }}
               >
-                <Text style={{ color: '#FFFFFF', fontSize: 9, fontFamily: 'Poppins_900Black', fontWeight: '900' }}>{index + 1}</Text>
+                <Text style={{ color: '#FFFFFF', fontSize: 10.4, fontFamily: 'Poppins_900Black', fontWeight: '900' }}>{index + 1}</Text>
               </View>
               <Text
-                style={{ flex: 1, color: '#102A54', fontSize: 8.5, lineHeight: 10.5, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}
+                style={{ flex: 1, color: '#102A54', fontSize: 9.8, lineHeight: 12.1, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}
                 numberOfLines={2}
               >
                 {cluster.name}
               </Text>
-              <Text style={{ color, fontSize: 10, fontFamily: 'Poppins_900Black', fontWeight: '900', marginLeft: 4 }}>
+              <Text style={{ color, fontSize: 11.5, fontFamily: 'Poppins_900Black', fontWeight: '900', marginLeft: 4 }}>
                 {cluster.matchPercentage}%
               </Text>
             </View>
@@ -1383,6 +1391,44 @@ useEffect(() => {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
+      /* Keep the cover's desktop-sized on-screen content compact on A4. */
+      #careermap-print-root [data-report-page="1"] {
+        padding: 12px 18px !important;
+      }
+      #careermap-print-root [data-report-page="1"] > div:nth-of-type(5) {
+        margin-top: 6px !important;
+      }
+      #careermap-print-root [data-report-page="1"] > div:nth-of-type(6) {
+        margin-top: 8px !important;
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+      }
+      #careermap-print-root [data-report-page="1"] > div:nth-of-type(7) {
+        margin-top: 4px !important;
+        margin-bottom: 4px !important;
+      }
+      #careermap-print-root [data-report-page="1"] > div:nth-of-type(7) img {
+        width: 250px !important;
+        height: 190px !important;
+      }
+      #careermap-print-root [data-report-page="1"] > div:nth-of-type(8) {
+        font-size: 10px !important;
+        padding-bottom: 0 !important;
+      }
+      #careermap-print-root [data-report-page="1"] > div:nth-of-type(8) > div:first-child {
+        margin-bottom: 4px !important;
+        padding: 3px 8px !important;
+      }
+      #careermap-print-root [data-report-page="1"] > div:nth-of-type(8) > div:first-child > div {
+        margin-bottom: 0 !important;
+        font-size: 9px !important;
+      }
+      #careermap-print-root [data-report-page="1"] > div:nth-of-type(8) > div:last-child {
+        gap: 1px !important;
+      }
+      #careermap-print-root [data-report-page="1"] > div:nth-of-type(8) > div:last-child > div {
+        font-size: 9px !important;
+      }
       #careermap-print-root [data-report-page] { font-size: 13px !important; }
       #careermap-print-root [data-report-page] p,
       #careermap-print-root [data-report-page] [data-report-body] {
@@ -1403,7 +1449,7 @@ useEffect(() => {
       if (!src) throw new Error('Report content not found');
 
       const A4_W = 793; // px at 96dpi (210mm)
-      const A4_H = 1115; // px (297mm, slightly reduced to avoid blank pages)
+      const A4_H = 1122; // px at 96dpi (297mm)
 
       const root = document.createElement('div');
       root.id = 'careermap-print-root';
@@ -1419,14 +1465,14 @@ useEffect(() => {
   const w = rect.width || A4_W;
   const h = rect.height || A4_H;
 
-  // scale so the whole page fits inside A4
-  const zoom = Math.min(A4_W / w, A4_H / h);
-
-  // make the page itself fill the full A4 sheet after zoom
-  pageEl.style.width = `${A4_W / zoom}px`;
-  pageEl.style.height = `${A4_H / zoom}px`;
-  pageEl.style.minHeight = `${A4_H / zoom}px`;
+  // Print each report page at A4 size. Scaling short pages up made the
+  // exported cover look tiny compared with the intended compact layout.
+  const zoom = Math.min(A4_W / w, A4_H / h, 1);
+  pageEl.style.width = `${A4_W}px`;
+  pageEl.style.height = `${A4_H}px`;
+  pageEl.style.minHeight = `${A4_H}px`;
   pageEl.style.zoom = String(zoom);
+  pageEl.setAttribute('data-report-page', String(i + 1));
 
   pageEl.style.margin = '0';
   pageEl.style.boxShadow = 'none';
@@ -1522,10 +1568,10 @@ useEffect(() => {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.pageBg, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={COLORS.red} />
-        <Text style={{ color: COLORS.dark, fontSize: 17, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', marginTop: 14 }}>
+        <Text style={{ color: COLORS.dark, fontSize: 19.5, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', marginTop: 14 }}>
           Generating Career Compass Report...
         </Text>
-        <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>
+        <Text style={{ color: COLORS.muted, fontSize: 13.8, marginTop: 4 }}>
           Synthesizing 32 pages of RIASEC, OCEAN, Schwartz Values, Aptitudes, and Pathways
         </Text>
       </SafeAreaView>
@@ -1566,7 +1612,7 @@ useEffect(() => {
           }}
         >
           <Ionicons name="arrow-back" size={14} color={COLORS.dark} />
-          <Text style={{ color: COLORS.dark, fontSize: 11.5, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>Assessments</Text>
+          <Text style={{ color: COLORS.dark, fontSize: 13.2, fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>Assessments</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -1584,7 +1630,7 @@ useEffect(() => {
             gap: 4,
           }}
         >
-          <Text style={{ fontSize: 11, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>
+          <Text style={{ fontSize: 12.6, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>
             Page {currentPage} of 32
           </Text>
           <Ionicons name="chevron-down" size={13} color={COLORS.muted} />
@@ -1609,7 +1655,7 @@ useEffect(() => {
           ) : (
             <Ionicons name="print-outline" size={15} color="#ffffff" />
           )}
-          <Text style={{ color: '#ffffff', fontSize: 11.5, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
+          <Text style={{ color: '#ffffff', fontSize: 13.2, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
             {printing ? 'Printing...' : 'Print'}
           </Text>
         </TouchableOpacity>
@@ -1629,11 +1675,18 @@ useEffect(() => {
         {/* ============================================================
             PAGE 1: COVER PAGE
         ============================================================ */}
-        <View
-           ref={(el) => { pageRefs.current[1] = el; }}
-          style={[cardStyle, { position: 'relative', overflow: 'hidden', paddingHorizontal: cardWidth > 600 ? 36 : 18, paddingVertical: cardWidth > 600 ? 30 : 18, fontSize: 12 }]}
-          onLayout={(e) => recordPageLayout(1, e)}
-        >
+      <View
+  ref={(el) => { pageRefs.current[1] = el; }}
+  style={[cardStyle, {
+    position: 'relative',
+    overflow: 'hidden',
+    minHeight: cardHeight,   // <-- add this
+    paddingHorizontal: cardWidth > 600 ? 36 : 18,
+    paddingVertical: cardWidth > 600 ? 30 : 18,
+    fontSize: 13.8,
+  }]}
+  onLayout={(e) => recordPageLayout(1, e)}
+>
           {/* Top Left Geometric Graphics */}
           <View
             style={{
@@ -1699,12 +1752,12 @@ useEffect(() => {
           <View style={{ marginTop: 20, alignItems: 'center', zIndex: 10 }}>
             <Text
               style={{
-                fontSize: 28,
+                fontSize: 32.2,
                 fontFamily: 'Poppins_900Black', fontWeight: '900',
                 color: COLORS.red,
                 textAlign: 'center',
                 letterSpacing: -0.5,
-                lineHeight: 32,
+                lineHeight: 36.8,
                 textTransform: 'uppercase',
               }}
             >
@@ -1712,7 +1765,7 @@ useEffect(() => {
             </Text>
             <Text
               style={{
-                fontSize: 13,
+                fontSize: 15,
                 fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
                 color: COLORS.red,
                 letterSpacing: 2.5,
@@ -1735,19 +1788,20 @@ useEffect(() => {
               zIndex: 10,
             }}
           >
-            <Text style={{ fontSize: 13, color: '#2B2D33', textAlign: 'center', lineHeight: 18 }}>
+            <Text style={{ fontSize: 15, color: '#2B2D33', textAlign: 'center', lineHeight: 20.7 }}>
               Discover Your True Strengths and Potential
             </Text>
           </View>
 
           {/* Center Graphic: 3D Brain Illustration */}
-          <View style={{ alignItems: 'center', justifyContent: 'center', marginVertical: cardWidth > 600 ? 18 : 10, zIndex: 10 }}>
-            <Image
-              source={ReportImg9}
-              style={{ width: cardWidth > 600 ? 340 : 250, height: cardWidth > 600 ? 280 : 190 }}
-              resizeMode="contain"
-            />
-          </View>
+         {/* Center Graphic: 3D Brain Illustration */}
+<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+  <Image
+    source={ReportImg9}
+    style={{ width: cardWidth > 600 ? 340 : 250, height: cardWidth > 600 ? 280 : 190 }}
+    resizeMode="contain"
+  />
+</View>
 
           {/* Bottom Left Student Info */}
           <View style={{ zIndex: 10, paddingBottom: 10 }}>
@@ -1761,27 +1815,27 @@ useEffect(() => {
                 marginBottom: 8,
               }}
             >
-              <Text style={{ fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 11, color: COLORS.dark ,marginBottom: 10 ,marginTop: 0 }}>Student Information</Text>
+              <Text style={{ fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 12.6, color: COLORS.dark ,marginBottom: 10 ,marginTop: 0 }}>Student Information</Text>
             </View>
             <View style={{ gap: 3 }}>
-              <Text style={{ fontSize: 12, color: COLORS.body }}>
+              <Text style={{ fontSize: 13.8, color: COLORS.body }}>
                 <Text style={{ color: '#4B5563' }}>Name: </Text>
                 <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>{studentName}</Text>
               </Text>
-              <Text style={{ fontSize: 12, color: COLORS.body }}>
+              <Text style={{ fontSize: 13.8, color: COLORS.body }}>
                 <Text style={{ color: '#4B5563' }}>Class: </Text>
                 <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>{studentClass}</Text>
               </Text>
              
-              <Text style={{ fontSize: 12, color: COLORS.body }}>
+              <Text style={{ fontSize: 13.8, color: COLORS.body }}>
                 <Text style={{ color: '#4B5563' }}>Date: </Text>
                 <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>{formattedDate}</Text>
               </Text>
-              <Text style={{ fontSize: 12, color: COLORS.body }}>
+              <Text style={{ fontSize: 13.8, color: COLORS.body }}>
                 <Text style={{ color: '#4B5563' }}>Email Id: </Text>
                 <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>{studentEmail}</Text>
               </Text>
-              <Text style={{ fontSize: 12, color: COLORS.body }}>
+              <Text style={{ fontSize: 13.8, color: COLORS.body }}>
                 <Text style={{ color: '#4B5563' }}>Phone No: </Text>
                 <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>{studentPhone}</Text>
               </Text>
@@ -1789,60 +1843,68 @@ useEffect(() => {
           </View>
 
           {/* Bottom Right Decorative Shapes */}
-      <View
+    {/* Dark red base */}
+<View
   style={{
     position: 'absolute',
-    bottom: -65,
-    right: -65,
-    width: 180,
-    height: 180,
-    backgroundColor: '#FAF0EB',
-    borderRadius: 50,
+    bottom: 0,
+    right: -31,
+    width: 102,
+    height: 102,
+    backgroundColor: '#8C1814',
+    borderRadius: 29,
     transform: [{ rotate: '45deg' }],
     pointerEvents: 'none',
     zIndex: 0,
   }}
 />
 
-
-
+{/* Translucent pink */}
 <View
   style={{
     position: 'absolute',
-    bottom: -10,
-    right: 95,
-    width: 72,
-    height: 72,
-    borderWidth: 3,
-    borderColor: '#EDA757',
-    borderRadius: 20,
+    bottom: 34,
+    right: -2,
+    width: 105,
+    height: 105,
+    backgroundColor: 'rgba(233, 176, 174, 0.68)',
+    borderRadius: 30,
     transform: [{ rotate: '45deg' }],
     pointerEvents: 'none',
-    zIndex: 10,
+    zIndex: 1,
   }}
 />
 
+{/* Gray diamond (moved closer: right 125 → 104) */}
 <View
   style={{
     position: 'absolute',
-    bottom: -40,
-    right: -25,
-    width: 100,
-    height: 100,
-    backgroundColor: '#8C1814',
-    borderRadius: 28,
+    bottom: 42,
+    right: 104,
+    width: 72,
+    height: 72,
+    backgroundColor: '#D7DADD',
+    borderRadius: 18,
+    transform: [{ rotate: '45deg' }],
+    pointerEvents: 'none',
+    zIndex: 1,
+  }}
+/>
+
+{/* Orange outline diamond (moved closer: bottom 155 → 138, right 48 → 36) */}
+<View
+  style={{
+    position: 'absolute',
+    bottom: 138,
+    right: 36,
+    width: 84,
+    height: 84,
+    borderWidth: 3,
+    borderColor: '#EDA757',
+    borderRadius: 23,
     transform: [{ rotate: '45deg' }],
     pointerEvents: 'none',
     zIndex: 10,
-
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   }}
 />
           
@@ -1859,34 +1921,34 @@ useEffect(() => {
   <PageHeader studentFirstName={studentFirstName} />
   <TitlePill  title="DECLARATION" />
 
-          <Text style={{ fontSize: 13.5, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark, marginBottom: 10 }}>
+          <Text style={{ fontSize: 15.5, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark, marginBottom: 10 }}>
             Dear {studentFirstName},
           </Text>
 
           <View style={{ gap: 10 }}>
-            <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 18 }}>
+            <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 20.7 }}>
               Thank you for choosing CareerMap for your Career Psychometric Assessment.
             </Text>
-            <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 18 }}>
+            <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 20.7 }}>
               We appreciate your trust in our assessment process and recognize the importance of making informed educational and career decisions. This report has been prepared based on your responses to scientifically designed psychometric assessments and is intended to provide meaningful insights into your{' '}
               <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>
                 aptitude, personality, interests and career preferences
               </Text>.
             </Text>
-            <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 18 }}>
+            <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 20.7 }}>
               The recommendations and observations presented in this report are designed to help you better understand your strengths, explore suitable career pathways, and make well-informed academic and professional choices. While every effort has been made to ensure the reliability and accuracy of the assessment, this report should be considered a decision-support tool and not the sole basis for any educational or career decision.
             </Text>
-            <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 18 }}>
+            <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 20.7 }}>
               CareerMap is committed to providing evidence-based career guidance that empowers individuals to achieve their goals with confidence. We encourage you to use this report as a foundation for self-discovery and future planning. For the best outcomes, we recommend discussing the report with a certified career counsellor who can help interpret the results in the context of your aspirations, abilities, and opportunities.
             </Text>
-            <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 18 }}>
+            <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 20.7 }}>
               We sincerely thank you for placing your trust in CareerMap and wish you every success in your educational and professional journey.
             </Text>
           </View>
 
           <View style={{ marginTop: 18 }}>
-            <Text style={{ fontSize: 11.5, fontFamily: 'Poppins_600SemiBold', fontWeight: '600', color: '#4B5563' }}>Best Wishes,</Text>
-            <Text style={{ fontSize: 13, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark }}>Team CareerMap</Text>
+            <Text style={{ fontSize: 13.2, fontFamily: 'Poppins_600SemiBold', fontWeight: '600', color: '#4B5563' }}>Best Wishes,</Text>
+            <Text style={{ fontSize: 15, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark }}>Team CareerMap</Text>
           </View>
 
           <PageFooter pageNum={2} />
@@ -1918,7 +1980,7 @@ useEffect(() => {
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="INTRODUCTION" />
 
-          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 14 }}>
+          <Text style={{ fontSize: 14, color: COLORS.body, lineHeight: 22, marginBottom: 14 }}>
             The report presented by Career Map outlines key observations about{' '}
             <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>{studentName}</Text>’s personality profile, career
             interests, work preferences, cognitive strengths, and future career orientation. These outcomes are
@@ -1948,7 +2010,7 @@ useEffect(() => {
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="INTEREST" />
 
-          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 10 }}>
+          <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 19.5, marginBottom: 10 }}>
             Your interests are the areas and activities that naturally capture your attention, curiosity, and motivation.
             They go beyond hobbies and point to the type of work where you will feel engaged and satisfied. The RIASEC
             model outlines six interest areas—Realistic, Investigative, Artistic, Social, Enterprising, and
@@ -1957,7 +2019,7 @@ useEffect(() => {
             work more enjoyable, learning more natural, and success more fulfilling.
           </Text>
 
-          <Text style={{ textAlign: 'center', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 13, color: COLORS.dark, marginBottom: 6 }}>
+          <Text style={{ textAlign: 'center', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 15, color: COLORS.dark, marginBottom: 6 }}>
             RIASEC Model
           </Text>
 
@@ -2086,7 +2148,7 @@ useEffect(() => {
               { label: 'Artistic', val: interestScoreMap.A },
             ].map((item) => (
               <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                <Text style={{ width: 95, fontSize: 11, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }} numberOfLines={1}>
+                <Text style={{ width: 95, fontSize: 12.6, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }} numberOfLines={1}>
                   {item.label}
                 </Text>
                 <View
@@ -2108,7 +2170,7 @@ useEffect(() => {
                     }}
                   />
                 </View>
-                <Text style={{ width: 38, fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textAlign: 'right' }}>
+                <Text style={{ width: 38, fontSize: 12.6, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textAlign: 'right' }}>
                   {item.val}%
                 </Text>
               </View>
@@ -2117,7 +2179,7 @@ useEffect(() => {
             {/* Bottom X-Axis Numbers */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingLeft: 103, paddingRight: 46, marginTop: 4 }}>
               {[0, 20, 40, 60, 80, 100].map((pt) => (
-                <Text key={pt} style={{ fontSize: 9, color: COLORS.muted, fontFamily: 'Poppins_600SemiBold', fontWeight: '600' }}>
+                <Text key={pt} style={{ fontSize: 10.4, color: COLORS.muted, fontFamily: 'Poppins_600SemiBold', fontWeight: '600' }}>
                   {pt}
                 </Text>
               ))}
@@ -2141,7 +2203,7 @@ useEffect(() => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>
+                  <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 12.6, letterSpacing: 0.5 }}>
                     {pill.label}
                   </Text>
                 </View>
@@ -2165,7 +2227,7 @@ useEffect(() => {
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="PERSONALITY" colorClass="green" />
 
-          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 8 }}>
+          <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 19.5, marginBottom: 8 }}>
             Your personality is the blend of traits that shape how you think, feel, and behave. It influences how you solve
             problems, build relationships, manage stress, and respond to opportunities. The Big Five model describes
             personality through five dimensions: Openness (curiosity and creativity), Conscientiousness (discipline and
@@ -2173,7 +2235,7 @@ useEffect(() => {
             Emotional Stability (resilience under pressure). Each trait offers strengths, and different careers may suit
             different combinations.
           </Text>
-          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 12 }}>
+          <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 19.5, marginBottom: 12 }}>
             For example, conscientious individuals may excel in structured roles, while those high in openness may
             thrive in creative or innovative environments. Understanding your personality helps you choose careers that
             align with your natural style and identify areas for growth, making it easier to collaborate effectively and
@@ -2244,7 +2306,7 @@ useEffect(() => {
               { label: 'AGREEABLENESS', val: personScoreMap.Ag },
             ].map((item) => (
               <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ width: 110, fontSize: 9.5, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }} numberOfLines={1}>
+                <Text style={{ width: 110, fontSize: 10.9, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }} numberOfLines={1}>
                   {item.label}
                 </Text>
                 <View
@@ -2266,7 +2328,7 @@ useEffect(() => {
                     }}
                   />
                 </View>
-                <Text style={{ width: 36, fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textAlign: 'right' }}>
+                <Text style={{ width: 36, fontSize: 12.6, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textAlign: 'right' }}>
                   {item.val}%
                 </Text>
               </View>
@@ -2274,7 +2336,7 @@ useEffect(() => {
 
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingLeft: 118, paddingRight: 44, marginTop: 4 }}>
               {[0, 20, 40, 60, 80].map((pt) => (
-                <Text key={pt} style={{ fontSize: 9, color: COLORS.muted, fontFamily: 'Poppins_600SemiBold', fontWeight: '600' }}>
+                <Text key={pt} style={{ fontSize: 10.4, color: COLORS.muted, fontFamily: 'Poppins_600SemiBold', fontWeight: '600' }}>
                   {pt}
                 </Text>
               ))}
@@ -2292,7 +2354,7 @@ useEffect(() => {
               borderRadius: 10,
             }}
           >
-           <Text style={{ fontSize: 11.5, lineHeight: 17, color: COLORS.dark, fontFamily: 'Poppins_500Medium', fontWeight: '500' }}>
+           <Text style={{ fontSize: 13.2, lineHeight: 19.5, color: COLORS.dark, fontFamily: 'Poppins_500Medium', fontWeight: '500' }}>
   {personalityNotes[topPersonalityTrait?.facet]}
 </Text>
           </View>
@@ -2313,19 +2375,19 @@ useEffect(() => {
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="LEARNING STYLE" colorClass="lavender" />
 
-          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 8 }}>
+          <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 19.5, marginBottom: 8 }}>
             Everyone has a preferred way of learning, and knowing your style can make studying, training, and working
             much more effective. The VARK model highlights four main preferences: Visual learners understand best
             through charts, diagrams, and images; Auditory learners grasp information by listening, discussing, and
             explaining; Reading/Writing learners prefer text, lists, and notes; and Kinesthetic learners learn by doing,
             experiencing, and applying knowledge practically.
           </Text>
-          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 8 }}>
+          <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 19.5, marginBottom: 8 }}>
             While everyone can learn in all ways, most people have one or two stronger preferences. Recognizing your
             learning style helps you study smarter, prepare better for exams, and even choose careers that align with how
             you absorb and process information.
           </Text>
-          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 12 }}>
+          <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 19.5, marginBottom: 12 }}>
             Knowing your learning style empowers you to adapt your strategies in school and at work, making learning
             feel more natural and less stressful.
           </Text>
@@ -2435,7 +2497,7 @@ useEffect(() => {
   ].map((item) => (
     <View key={item.key} style={{ alignItems: 'center' }}>
       <DonutGauge percent={item.val} color={item.color} trackColor={item.track} textColor={item.text} />
-      <Text style={{ marginTop: 6, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 11, color: COLORS.dark }}>{item.label}</Text>
+      <Text style={{ marginTop: 6, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 12.6, color: COLORS.dark }}>{item.label}</Text>
     </View>
   ))}
 </View>
@@ -2475,10 +2537,10 @@ useEffect(() => {
           style={{
             color: '#ffffff',
             fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
-            fontSize: 9.5,
+            fontSize: 10.9,
             letterSpacing: 0.2,
             textAlign: 'center',
-            lineHeight: 11,
+            lineHeight: 12.6,
           }}
           numberOfLines={2}
           adjustsFontSizeToFit
@@ -2507,13 +2569,13 @@ useEffect(() => {
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="WORK VALUES" colorClass="green" />
 
-          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 8 }}>
+          <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 19.5, marginBottom: 8 }}>
             Work values are the core principles and priorities that define what matters most to you in a professional
             environment. They reflect what you seek from your career — whether that is achievement, recognition,
             security, autonomy, relationships, or making a meaningful impact. Unlike interests (what you enjoy) or
             personality (how you behave), work values reveal why certain careers feel more fulfilling than others.
           </Text>
-          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 10 }}>
+          <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 19.5, marginBottom: 10 }}>
             Understanding your work values helps you evaluate job opportunities beyond salary and title. When your work
             aligns with your values, you feel more motivated, satisfied, and committed. Identifying your core values
             early helps you make career choices that bring long-term fulfilment.
@@ -2527,7 +2589,7 @@ useEffect(() => {
             />
           </View>
 
-          <Text style={{ fontSize: 10.5, color: '#4A5568', lineHeight: 15, marginTop: 4 }}>
+          <Text style={{ fontSize: 12.1, color: '#4A5568', lineHeight: 17.2, marginTop: 4 }}>
             Each trait brings strengths, and different careers suit different combinations. For example, highly
             conscientious individuals may excel in structured roles, while those high in openness may thrive in
             creative or innovative environments.
@@ -2589,7 +2651,7 @@ useEffect(() => {
               { label: 'CONSERVATION', val: valScoreMap.CO, fillColor: '#9E7B1D', trackColor: '#F5E9CC' },
             ].map((item) => (
               <View key={item.label}>
-                <Text style={{ fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 11, color: COLORS.dark, marginBottom: 4 }}>
+                <Text style={{ fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 12.6, color: COLORS.dark, marginBottom: 4 }}>
                   {item.label}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -2611,7 +2673,7 @@ useEffect(() => {
                       }}
                     />
                   </View>
-                  <Text style={{ width: 44, fontSize: 13, fontFamily: 'Poppins_900Black', fontWeight: '900', color: COLORS.dark, textAlign: 'right' }}>
+                  <Text style={{ width: 44, fontSize: 15, fontFamily: 'Poppins_900Black', fontWeight: '900', color: COLORS.dark, textAlign: 'right' }}>
                     {item.val}%
                   </Text>
                 </View>
@@ -2654,10 +2716,10 @@ useEffect(() => {
           style={{
             color: '#ffffff',
             fontFamily: 'Poppins_800ExtraBold', fontWeight: '800',
-            fontSize: 9,
+            fontSize: 10.4,
             letterSpacing: 0.15,
             textAlign: 'center',
-            lineHeight: 11,
+            lineHeight: 12.6,
           }}
           numberOfLines={2}
           adjustsFontSizeToFit
@@ -2686,14 +2748,14 @@ useEffect(() => {
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="GOAL ORIENTATION" colorClass="gold" />
 
-          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 8 }}>
+          <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 19.5, marginBottom: 8 }}>
             Goals guide your direction in studies, work, and personal growth. Your goal orientation reflects how you view
             success and what motivates you to achieve it. Some people focus on short-term goals—completing tasks, gaining
             quick skills, or achieving immediate results—while others are driven by long-term goals, such as building
             expertise, reaching leadership roles, or creating lasting impact. Both are important: short-term goals keep
             you motivated daily, while long-term goals provide vision and persistence.
           </Text>
-          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 12 }}>
+          <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 19.5, marginBottom: 12 }}>
             Understanding your orientation helps you balance present actions with future ambitions. Knowing your goal
             orientation helps you use your energy effectively and stay aligned with your personal and career goals.
           </Text>
@@ -2755,9 +2817,9 @@ useEffect(() => {
                   marginBottom: 4,
                 }}
               >
-                <Text style={{ fontSize: 9.5, fontFamily: 'Poppins_900Black', fontWeight: '900', color: '#4D370A' }}>SHORT TERM</Text>
+                <Text style={{ fontSize: 10.9, fontFamily: 'Poppins_900Black', fontWeight: '900', color: '#4D370A' }}>SHORT TERM</Text>
               </View>
-              <Text style={{ fontSize: 10, color: '#78540B', lineHeight: 14 }}>
+              <Text style={{ fontSize: 11.5, color: '#78540B', lineHeight: 16.1 }}>
                 Aim for short milestones and rewards. Match with roles needing daily targets.
               </Text>
             </View>
@@ -2782,9 +2844,9 @@ useEffect(() => {
                   marginBottom: 4,
                 }}
               >
-                <Text style={{ fontSize: 9.5, fontFamily: 'Poppins_900Black', fontWeight: '900', color: '#4D370A' }}>LONG TERM</Text>
+                <Text style={{ fontSize: 10.9, fontFamily: 'Poppins_900Black', fontWeight: '900', color: '#4D370A' }}>LONG TERM</Text>
               </View>
-              <Text style={{ fontSize: 10, color: '#78540B', lineHeight: 14 }}>
+              <Text style={{ fontSize: 11.5, color: '#78540B', lineHeight: 16.1 }}>
                 Use Vision boards, planning tools, long-term mentorship. Ideal for research, entrepreneurship, civil
                 services.
               </Text>
@@ -2797,11 +2859,11 @@ useEffect(() => {
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 32, marginVertical: 10 }}>
               <View style={{ alignItems: 'center' }}>
                 <DonutGauge percent={shortPct} color="#94751E" trackColor="#F3EDE0" textColor="#5C450A" />
-                <Text style={{ marginTop: 4, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 10.5, color: '#5C450A' }}>SHORT TERM</Text>
+                <Text style={{ marginTop: 4, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 12.1, color: '#5C450A' }}>SHORT TERM</Text>
               </View>
               <View style={{ alignItems: 'center' }}>
                 <DonutGauge percent={longPct} color="#94751E" trackColor="#F3EDE0" textColor="#5C450A" />
-                <Text style={{ marginTop: 4, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 10.5, color: '#5C450A' }}>LONG TERM</Text>
+                <Text style={{ marginTop: 4, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 12.1, color: '#5C450A' }}>LONG TERM</Text>
               </View>
             </View>
 
@@ -2814,7 +2876,7 @@ useEffect(() => {
                 alignItems: 'center',
               }}
             >
-              <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 11.5, letterSpacing: 0.5 }}>
+              <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 13.2, letterSpacing: 0.5 }}>
   Most Inclined towards : {goalOrientationLabel}
 </Text>
             </View>
@@ -2836,13 +2898,13 @@ useEffect(() => {
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="APTITUDE" colorClass="red" />
 
-          <Text style={{ fontSize: 11.5, color: COLORS.body, lineHeight: 17, marginBottom: 6 }}>
+          <Text style={{ fontSize: 13.2, color: COLORS.body, lineHeight: 19.5, marginBottom: 6 }}>
             Your aptitude reflects your natural ability to learn, understand, and apply different skills. While
             interests show what you enjoy, aptitudes indicate what you can do well with practice. They are not fixed and
             can improve with training, but knowing your strongest aptitudes helps you identify areas where success may
             come more easily.
           </Text>
-          <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', fontSize: 11.5, color: COLORS.dark, marginBottom: 8 }}>
+          <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', fontSize: 13.2, color: COLORS.dark, marginBottom: 8 }}>
             In this test, we assess six types of aptitudes:
           </Text>
 
@@ -2885,11 +2947,11 @@ useEffect(() => {
                 }}
               >
                 <View style={{ backgroundColor: COLORS.red, paddingVertical: 4, alignItems: 'center' }}>
-                  <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 10, letterSpacing: 0.4 }}>
+                  <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 11.5, letterSpacing: 0.4 }}>
                     {card.title}
                   </Text>
                 </View>
-                <Text style={{ padding: 8, fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>{card.desc}</Text>
+                <Text style={{ padding: 8, fontSize: 12.1, color: COLORS.body, lineHeight: 17.2 }}>{card.desc}</Text>
               </View>
             ))}
           </View>
@@ -2920,11 +2982,11 @@ useEffect(() => {
               }}
             >
               <View style={{ backgroundColor: COLORS.red, paddingVertical: 4, alignItems: 'center' }}>
-                <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 10, letterSpacing: 0.4 }}>
+                <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 11.5, letterSpacing: 0.4 }}>
                   NUMERICAL APTITUDE
                 </Text>
               </View>
-              <Text style={{ padding: 8, fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>
+              <Text style={{ padding: 8, fontSize: 12.1, color: COLORS.body, lineHeight: 17.2 }}>
                 This measures comfort with numbers, calculations, and quantitative reasoning. It is crucial in careers
                 related to finance, data science, economics, and technology.
               </Text>
@@ -2940,11 +3002,11 @@ useEffect(() => {
               }}
             >
               <View style={{ backgroundColor: COLORS.red, paddingVertical: 4, alignItems: 'center' }}>
-                <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 10, letterSpacing: 0.4 }}>
+                <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 11.5, letterSpacing: 0.4 }}>
                   SPATIAL APTITUDE
                 </Text>
               </View>
-              <Text style={{ padding: 8, fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>
+              <Text style={{ padding: 8, fontSize: 12.1, color: COLORS.body, lineHeight: 17.2 }}>
                 This reflects your ability to imagine shapes, designs, and objects in space. Strong spatial skills are
                 important for architecture, design, surgery, engineering, and visual arts.
               </Text>
@@ -3079,7 +3141,7 @@ useEffect(() => {
               <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'space-between' }}>
                 {aptYAxisPoints.map((pt, i) => (
                   <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={{ width: 24, textAlign: 'right', paddingRight: 4, fontSize: 9, color: '#64748B', fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
+                    <Text style={{ width: 24, textAlign: 'right', paddingRight: 4, fontSize: 10.4, color: '#64748B', fontFamily: 'Poppins_700Bold', fontWeight: '700' }}>
                       {pt}
                     </Text>
                     <View style={{ flex: 1, height: 1, backgroundColor: pt === 0 ? '#94A3B8' : '#E2E8F0' }} />
@@ -3102,7 +3164,7 @@ useEffect(() => {
               >
                 {aptList.map((item) => (
                   <View key={item.key} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
-                    <Text style={{ fontSize: 9.5, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: '#1E293B', marginBottom: 2 }}>
+                    <Text style={{ fontSize: 10.9, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: '#1E293B', marginBottom: 2 }}>
                       {item.val}%
                     </Text>
                     <View
@@ -3128,7 +3190,7 @@ useEffect(() => {
                   style={{
                     flex: 1,
                     textAlign: 'center',
-                    fontSize: 8.5,
+                    fontSize: 9.8,
                     fontFamily: 'Poppins_700Bold', fontWeight: '700',
                     color: '#334155',
                   }}
@@ -3156,7 +3218,7 @@ useEffect(() => {
                     alignItems: 'center',
                   }}
                 >
-                  <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 11, letterSpacing: 0.5 }}>
+                  <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 12.6, letterSpacing: 0.5 }}>
                     {aptitude.label}
                   </Text>
                 </View>
@@ -3180,10 +3242,10 @@ useEffect(() => {
           <PageHeader studentFirstName={studentFirstName} />
           <TitlePill title="INTEGRATED ANALYSIS" colorClass="gold" />
 
-          <Text style={{ fontSize: 14, fontFamily: 'Poppins_900Black', fontWeight: '900', color: COLORS.dark, textTransform: 'uppercase' }}>
+          <Text style={{ fontSize: 16.1, fontFamily: 'Poppins_900Black', fontWeight: '900', color: COLORS.dark, textTransform: 'uppercase' }}>
             YOUR TOP CLUSTERS
           </Text>
-          <Text style={{ fontSize: 10.5, color: COLORS.muted, marginBottom: 8 }}>
+          <Text style={{ fontSize: 12.1, color: COLORS.muted, marginBottom: 8 }}>
             Each card shows what the field involves, why it suits you, how to get there, and list of careers
           </Text>
 
@@ -3243,27 +3305,27 @@ useEffect(() => {
           <PageHeader studentFirstName={studentFirstName} />
 
           <View style={{ backgroundColor: '#F3ECE2', borderRadius: 10, padding: 10, marginBottom: 10 }}>
-            <Text style={{ fontSize: 12.5, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', textTransform: 'uppercase', color: COLORS.dark }}>
+            <Text style={{ fontSize: 14.4, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', textTransform: 'uppercase', color: COLORS.dark }}>
               YOUR DIRECTION: STUDY & PATHWAY ADVICE
             </Text>
-            <Text style={{ fontSize: 10.5, color: '#475569', marginTop: 2 }}>
+            <Text style={{ fontSize: 12.1, color: '#475569', marginTop: 2 }}>
               Turning your learning style and goal orientation into concrete next steps.
             </Text>
           </View>
 
-         <Text style={{ fontSize: 11, color: '#334155' }}>
+         <Text style={{ fontSize: 12.6, color: '#334155' }}>
   Learning style: <Text style={{ fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark }}>{topLearningStyles[0]?.label}</Text>
 </Text>
-<Text style={{ fontSize: 11, color: '#334155' }}>
+<Text style={{ fontSize: 12.6, color: '#334155' }}>
   Goal orientation: <Text style={{ fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark }}>{goalOrientationSummary}</Text>
 </Text>
 
           <View style={{ gap: 8 }}>
             <View>
-              <Text style={{ fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase', marginBottom: 3 }}>
+              <Text style={{ fontSize: 12.6, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase', marginBottom: 3 }}>
                 HOW TO STUDY, BASED ON HOW YOU LEARN
               </Text>
-              <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>
+              <Text style={{ fontSize: 12.1, color: COLORS.body, lineHeight: 17.2 }}>
                 • Convert chapters into mind-maps, flowcharts and labelled diagrams.{'\n'}
                 • Use colour-coding for formulas, dates and key terms.{'\n'}
                 • Watch good video explanations, then redraw the idea from memory.{'\n'}
@@ -3272,10 +3334,10 @@ useEffect(() => {
             </View>
 
             <View>
-              <Text style={{ fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase', marginBottom: 3 }}>
+              <Text style={{ fontSize: 12.6, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase', marginBottom: 3 }}>
                 YOUR PATHWAY APPROACH
               </Text>
-              <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>
+              <Text style={{ fontSize: 12.1, color: COLORS.body, lineHeight: 17.2 }}>
                 • You&apos;re balanced between studying further and starting work early.{'\n'}
                 • A smart path: choose degree courses that include internships, apprenticeships or placement years — you
                 earn experience while keeping the door open to higher studies.
@@ -3283,7 +3345,7 @@ useEffect(() => {
             </View>
           </View>
 
-          <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', fontSize: 11.5, color: COLORS.dark, marginTop: 10, marginBottom: 6 }}>
+          <Text style={{ fontFamily: 'Poppins_700Bold', fontWeight: '700', fontSize: 13.2, color: COLORS.dark, marginTop: 10, marginBottom: 6 }}>
             A general route from where you are now
           </Text>
 
@@ -3296,7 +3358,7 @@ useEffect(() => {
           </View>
 
           <View style={{ padding: 8, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, marginTop: 6 }}>
-            <Text style={{ fontSize: 9.5, color: '#64748B', lineHeight: 14 }}>
+            <Text style={{ fontSize: 10.9, color: '#64748B', lineHeight: 16.1 }}>
               Highlighted stops are where your current goal orientation matters most — this is a general route, not a
               fixed plan. Talk it through with a teacher, counsellor or parent before locking in big decisions.
             </Text>
@@ -3317,14 +3379,14 @@ useEffect(() => {
         >
           <PageHeader studentFirstName={studentFirstName} />
 
-          <Text style={{ fontSize: 14, fontFamily: 'Poppins_900Black', fontWeight: '900', color: COLORS.dark, textTransform: 'uppercase' }}>
+          <Text style={{ fontSize: 16.1, fontFamily: 'Poppins_900Black', fontWeight: '900', color: COLORS.dark, textTransform: 'uppercase' }}>
             YOUR COMPLETE CAREER MAP
           </Text>
-          <Text style={{ fontSize: 10.5, color: COLORS.muted, marginBottom: 4 }}>
+          <Text style={{ fontSize: 12.1, color: COLORS.muted, marginBottom: 4 }}>
             Everything above, brought together into one summary
           </Text>
 
-          <Text style={{ fontSize: 17, fontFamily: 'Poppins_900Black', fontWeight: '900', color: COLORS.red, textTransform: 'uppercase', marginBottom: 12 }}>
+          <Text style={{ fontSize: 19.5, fontFamily: 'Poppins_900Black', fontWeight: '900', color: COLORS.red, textTransform: 'uppercase', marginBottom: 12 }}>
             {studentName}
           </Text>
 
@@ -3339,13 +3401,13 @@ useEffect(() => {
   { label: 'GOAL ORIENTATION', val: goalOrientationSummary },
 ].map((m) => (
   <View key={m.label} style={{ width: '48%', padding: 8, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8 }}>
-    <Text style={{ fontSize: 8.5, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>{m.label}</Text>
-    <Text style={{ fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, marginTop: 2 }} numberOfLines={2}>{m.val}</Text>
+    <Text style={{ fontSize: 9.8, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: '#64748B', textTransform: 'uppercase' }}>{m.label}</Text>
+    <Text style={{ fontSize: 12.6, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, marginTop: 2 }} numberOfLines={2}>{m.val}</Text>
   </View>
 ))}
           </View>
 
-        <Text style={{ fontSize: 11, color: COLORS.body, lineHeight: 16, marginBottom: 10 }}>
+        <Text style={{ fontSize: 12.6, color: COLORS.body, lineHeight: 18.4, marginBottom: 10 }}>
   {studentName} shows an {hollandCode} interest pattern, which combined with {topPersonalityTrait?.label?.toLowerCase()} and a strong
   pull toward {topWorkValues[0]?.label?.toLowerCase()} points most clearly toward {top5Clusters[0]?.name} ({top5Clusters[0]?.matchPercentage}% match).
   Aptitude-wise, {studentName}&apos;s strongest results are in {topAptitudes.slice(0, 2).map((a) => a.label).join(' and ')}, which support
@@ -3355,10 +3417,10 @@ useEffect(() => {
 
           {/* What to do next */}
           <View style={{ padding: 10, backgroundColor: '#E6EFF6', borderWidth: 1, borderColor: '#D2DFEB', borderRadius: 10, gap: 4, marginBottom: 8 }}>
-            <Text style={{ fontSize: 11, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase' }}>
+            <Text style={{ fontSize: 12.6, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase' }}>
               WHAT TO DO NEXT
             </Text>
-            <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>
+            <Text style={{ fontSize: 12.1, color: COLORS.body, lineHeight: 17.2 }}>
               • Read through your top 5 clusters in Section 1 with a parent, teacher or counsellor.{'\n'}
               • Shortlist 2–3 clusters and look up their stream/subject requirements for your class.{'\n'}
               • Use the study tips in Section 3 for the next exam cycle.{'\n'}
@@ -3366,7 +3428,7 @@ useEffect(() => {
             </Text>
           </View>
 
-          <Text style={{ fontSize: 9.5, color: COLORS.muted, lineHeight: 14 }}>
+          <Text style={{ fontSize: 10.9, color: COLORS.muted, lineHeight: 16.1 }}>
             Match percentages compare clusters with each other — a lower score doesn&apos;t mean you can&apos;t succeed there,
             only that other clusters fit your current profile more naturally.
           </Text>
@@ -3396,7 +3458,7 @@ useEffect(() => {
 
           {/* Hero Banner with SVG Airplane trajectory */}
           <View style={{ position: 'relative', marginBottom: 12 }}>
-            <Text style={{ fontSize: 20, fontFamily: 'Poppins_900Black', fontWeight: '900', textTransform: 'uppercase', lineHeight: 24 }}>
+            <Text style={{ fontSize: 23, fontFamily: 'Poppins_900Black', fontWeight: '900', textTransform: 'uppercase', lineHeight: 27.6 }}>
               <Text style={{ color: COLORS.dark }}>DISCOVER YOUR </Text>
               <Text style={{ color: COLORS.red }}>DIRECTION.{'\n'}</Text>
               <Text style={{ color: COLORS.dark }}>DESIGN YOUR </Text>
@@ -3422,12 +3484,12 @@ useEffect(() => {
                 marginBottom: 6,
               }}
             >
-              <Text style={{ color: '#ffffff', fontSize: 10, fontFamily: 'Poppins_900Black', fontWeight: '900', textTransform: 'uppercase' }}>
+              <Text style={{ color: '#ffffff', fontSize: 11.5, fontFamily: 'Poppins_900Black', fontWeight: '900', textTransform: 'uppercase' }}>
                 ABOUT CAREER MAP
               </Text>
             </View>
             <View style={{ padding: 10, backgroundColor: '#FAF2F0', borderWidth: 1, borderColor: '#F0DDD8', borderRadius: 8 }}>
-              <Text style={{ fontSize: 10.5, color: COLORS.body, lineHeight: 15 }}>
+              <Text style={{ fontSize: 12.1, color: COLORS.body, lineHeight: 17.2 }}>
                 Career Map (A Unit of Identity Group) — Odisha&apos;s pioneering career counselling platform since 2016,
                 guiding school students, graduates, and working professionals through Career Selection, Career Planning,
                 and Career Mentorship.
@@ -3437,7 +3499,7 @@ useEffect(() => {
 
           {/* Why Career Map */}
           <View style={{ marginBottom: 12 }}>
-            <Text style={{ fontSize: 12, fontFamily: 'Poppins_900Black', fontWeight: '900', color: COLORS.red, textTransform: 'uppercase', marginBottom: 8 }}>
+            <Text style={{ fontSize: 13.8, fontFamily: 'Poppins_900Black', fontWeight: '900', color: COLORS.red, textTransform: 'uppercase', marginBottom: 8 }}>
               WHY CAREER MAP?
             </Text>
 
@@ -3464,7 +3526,7 @@ useEffect(() => {
                     }}
                   >
                     <Image source={f.img} style={{ width: 44, height: 32, borderRadius: 4 }} resizeMode="cover" />
-                    <Text style={{ flex: 1, fontSize: 8.5, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase', lineHeight: 11 }}>
+                    <Text style={{ flex: 1, fontSize: 9.8, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase', lineHeight: 12.6 }}>
                       {f.label}
                     </Text>
                   </View>
@@ -3497,7 +3559,7 @@ useEffect(() => {
                     }}
                   >
                     <Image source={f.img} style={{ width: 44, height: 32, borderRadius: 4 }} resizeMode="cover" />
-                    <Text style={{ flex: 1, fontSize: 8.5, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase', lineHeight: 11 }}>
+                    <Text style={{ flex: 1, fontSize: 9.8, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark, textTransform: 'uppercase', lineHeight: 12.6 }}>
                       {f.label}
                     </Text>
                   </View>
@@ -3508,7 +3570,7 @@ useEffect(() => {
 
           {/* Partnerships badge */}
           <View style={{ padding: 8, backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginBottom: 12 }}>
-            <Text style={{ fontSize: 9.5, color: '#4B5563', lineHeight: 14 }}>
+            <Text style={{ fontSize: 10.9, color: '#4B5563', lineHeight: 16.1 }}>
               Career Guidance Partner to the Government of Odisha, in association with UNICEF, OSEPA & DHSE. Present
               across 10,000+ students in CBSE, ICSE & residential schools.
             </Text>
@@ -3526,18 +3588,18 @@ useEffect(() => {
                 marginBottom: 6,
               }}
             >
-              <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 12, letterSpacing: 0.4 }}>
+              <Text style={{ color: '#ffffff', fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', fontSize: 13.8, letterSpacing: 0.4 }}>
                 Your Future Deserves More Than a Guess.
               </Text>
             </View>
-            <Text style={{ fontSize: 10.5, fontFamily: 'Poppins_600SemiBold', fontWeight: '600', color: '#4B5563', marginBottom: 6 }}>
+            <Text style={{ fontSize: 12.1, fontFamily: 'Poppins_600SemiBold', fontWeight: '600', color: '#4B5563', marginBottom: 6 }}>
               Schedule your counselling session today.
             </Text>
             <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 14, marginBottom: 4 }}>
-              <Text style={{ fontSize: 10, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>🌐 www.thecareermap.in</Text>
-              <Text style={{ fontSize: 10, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>✉️ careermap2016@gmail.com</Text>
+              <Text style={{ fontSize: 11.5, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>🌐 www.thecareermap.in</Text>
+              <Text style={{ fontSize: 11.5, fontFamily: 'Poppins_700Bold', fontWeight: '700', color: COLORS.dark }}>✉️ careermap2016@gmail.com</Text>
             </View>
-            <Text style={{ fontSize: 10, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark }}>
+            <Text style={{ fontSize: 11.5, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark }}>
               📞 +91 94372 08179, +91 97768 08179
             </Text>
           </View>
@@ -3566,7 +3628,7 @@ useEffect(() => {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 18, marginBottom: 12 }}>
-              <Text style={{ fontSize: 16, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark }}>Jump to Page</Text>
+              <Text style={{ fontSize: 18.4, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800', color: COLORS.dark }}>Jump to Page</Text>
               <TouchableOpacity onPress={() => setPageModalVisible(false)}>
                 <Ionicons name="close-circle" size={24} color={COLORS.muted} />
               </TouchableOpacity>
@@ -3593,7 +3655,7 @@ useEffect(() => {
                   >
                     <Text
                       style={{
-                        fontSize: 12.5,
+                        fontSize: 14.4,
                         fontWeight: isSelected ? '800' : '600',
                         color: isSelected ? COLORS.red : COLORS.dark,
                       }}
