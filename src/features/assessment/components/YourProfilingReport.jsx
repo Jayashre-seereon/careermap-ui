@@ -195,7 +195,7 @@ export default function YourProfilingReport({
       nativeID={`page-${pageNum}`}
       dataSet={{ reportPage: 'true' }}
       className="pdf-page report-page-a4"
-      style={[cardStyle, { fontSize: 13 }]}
+      style={[cardStyle, { fontSize: 15 }]}
       onLayout={(e) => {
         if (typeof recordPageLayout === 'function') {
           recordPageLayout(pageNum, e);
@@ -335,7 +335,7 @@ export default function YourProfilingReport({
       {/* BLOCK 4: WHAT IT MEANS */}
       <View style={styles.whatItMeansCard}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-          <Text style={{ fontSize: 13 }}>💡</Text>
+          <Text style={{ fontSize: 15 }}>💡</Text>
           <Text style={styles.whatItMeansTitle}>What it means</Text>
         </View>
         <Text style={styles.whatItMeansBody}>{whatItMeans}</Text>
@@ -353,7 +353,7 @@ export default function YourProfilingReport({
       <View style={{ marginTop: 10 }}>
         <View style={styles.fiveAreasHeaderRow}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-            <Text style={{ fontSize: 13 }}>📊</Text>
+            <Text style={{ fontSize: 15 }}>📊</Text>
             <Text style={styles.fiveAreasTitle}>Your 5 Areas of Personal Profiling</Text>
           </View>
           <Text style={styles.fiveAreasLegend}>Stages: 1 to 5</Text>
@@ -373,7 +373,7 @@ export default function YourProfilingReport({
                 {/* Top Row: Icon + Name + Stage Badge + 5-Mini-Bar + Score */}
                 <View style={styles.areaTopRow}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}>
-                    <Text style={{ fontSize: 13 }}>{cfg.icon}</Text>
+                    <Text style={{ fontSize: 15 }}>{cfg.icon}</Text>
                     <Text style={styles.areaName} numberOfLines={1}>{domainName}</Text>
                    
                   </View>
@@ -451,15 +451,15 @@ const styles = StyleSheet.create({
   },
   titlePillText: {
     color: '#8C1814',
-    fontSize: 12,
+    fontSize: 13.8,
     fontFamily: 'Poppins_800ExtraBold',
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   introParagraph: {
-    fontSize: 13,
+    fontSize: 15,
     color: '#374151',
-    lineHeight: 19,
+    lineHeight: 21.8,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
     marginBottom: 10,
@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stageTrackTitle: {
-    fontSize: 11,
+    fontSize: 12.6,
     fontFamily: 'Poppins_800ExtraBold',
     fontWeight: '800',
     color: '#1e293b',
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   riskText: {
-    fontSize: 9.5,
+    fontSize: 10.9,
     fontFamily: 'Poppins_700Bold',
     fontWeight: '700',
   },
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
   },
   criBadgeText: {
     color: '#ffffff',
-    fontSize: 9.5,
+    fontSize: 10.9,
     fontFamily: 'Poppins_700Bold',
     fontWeight: '700',
   },
@@ -585,15 +585,15 @@ const styles = StyleSheet.create({
     borderColor: '#cbd5e1',
   },
   stageCircleText: {
-    fontSize: 10,
+    fontSize: 11.5,
     fontFamily: 'Poppins_800ExtraBold',
     fontWeight: '800',
   },
   stageNodeName: {
-    fontSize: 9,
+    fontSize: 10.4,
     marginTop: 4,
     textAlign: 'center',
-    lineHeight: 11,
+    lineHeight: 12.6,
   },
   stageNodeNameCurrent: {
     color: '#8C1814',
@@ -619,7 +619,7 @@ const styles = StyleSheet.create({
   },
   youAreHereText: {
     color: '#ffffff',
-    fontSize: 7.5,
+    fontSize: 8.6,
     fontFamily: 'Poppins_800ExtraBold',
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
   },
   whatItMeansTitle: {
     color: '#8C1814',
-    fontSize: 10.5,
+    fontSize: 12.1,
     fontFamily: 'Poppins_800ExtraBold',
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -642,8 +642,8 @@ const styles = StyleSheet.create({
   },
   whatItMeansBody: {
     color: '#334155',
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 15,
+    lineHeight: 21.8,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
     textAlign: 'justify',
@@ -658,7 +658,7 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   whatItMeansFooterText: {
-    fontSize: 9.5,
+    fontSize: 10.9,
     color: '#64748b',
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
@@ -671,7 +671,7 @@ const styles = StyleSheet.create({
   },
   fiveAreasTitle: {
     color: '#1e293b',
-    fontSize: 11,
+    fontSize: 12.6,
     fontFamily: 'Poppins_800ExtraBold',
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
   },
   fiveAreasLegend: {
     color: '#64748b',
-    fontSize: 9.5,
+    fontSize: 10.9,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
   },
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   areaName: {
-    fontSize: 11,
+    fontSize: 12.6,
     fontFamily: 'Poppins_700Bold',
     fontWeight: '700',
     color: '#1e293b',
@@ -710,7 +710,7 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
   },
   areaStageBadgeText: {
-    fontSize: 8.5,
+    fontSize: 9.8,
     fontFamily: 'Poppins_800ExtraBold',
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -727,7 +727,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   miniBarLabel: {
-    fontSize: 9,
+    fontSize: 10.4,
     color: '#64748b',
     fontFamily: 'Poppins_700Bold',
     fontWeight: '700',
@@ -741,15 +741,15 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
   },
   scoreBadgeText: {
-    fontSize: 9,
+    fontSize: 10.4,
     color: '#334155',
     fontFamily: 'Poppins_800ExtraBold',
     fontWeight: '800',
   },
   areaMeaningText: {
-    fontSize: 12,
+    fontSize: 13.8,
     color: '#475569',
-    lineHeight: 16,
+    lineHeight: 18.4,
     marginTop: 3,
     paddingLeft: 22,
     fontFamily: 'Poppins_500Medium',
@@ -766,7 +766,7 @@ const styles = StyleSheet.create({
   },
   notesTitle: {
     color: '#92400e',
-    fontSize: 10.5,
+    fontSize: 12.1,
     fontFamily: 'Poppins_800ExtraBold',
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -786,15 +786,15 @@ const styles = StyleSheet.create({
   },
   flagNameBadgeText: {
     color: '#b45309',
-    fontSize: 8.5,
+    fontSize: 9.8,
     fontFamily: 'Poppins_800ExtraBold',
     fontWeight: '800',
     textTransform: 'uppercase',
   },
   noteText: {
     color: '#78350f',
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 13.8,
+    lineHeight: 20.7,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
     flex: 1,
