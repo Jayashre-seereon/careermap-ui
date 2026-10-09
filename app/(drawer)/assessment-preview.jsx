@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
 import { ActivityIndicator, Platform, SafeAreaView, Text, View } from 'react-native';
-import { Asset } from 'expo-asset';
 import { router } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import { useAppState } from '../../src/app-state';
@@ -10,10 +9,7 @@ import { palette } from '../../src/careermap-data';
 export default function AssessmentPreviewScreen() {
   const { preferences } = useAppState();
   const assessmentApiBaseUrl = API_BASE_URL || 'http://localhost:5000/api';
-  const htmlAsset = useMemo(
-    () => Asset.fromModule(require('../../assets/assessment/phycometrichalftest.html')),
-    []
-  );
+  const htmlContent = useMemo(() => require('../../assets/assessment/phycometrichalftest.html'), []);
 
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -48,7 +44,7 @@ export default function AssessmentPreviewScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: preferences.darkMode ? '#050505' : palette.background }}>
       <WebView
         originWhitelist={['*']}
-        source={{ uri: htmlAsset.uri }}
+        source={{ html: htmlContent, baseUrl: 'https://careermap.local/' }}
         injectedJavaScriptBeforeContentLoaded={`
           (function () {
             try {
