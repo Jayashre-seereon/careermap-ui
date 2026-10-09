@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "CareerMap",
-    "slug": "CareerMap",
+    "slug": "careermap",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.global.careermap"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +21,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.CareerMap"
+      "package": "com.global.careermap",
+      "versionCode": 1
     },
     "web": {
       "output": "static",
@@ -45,6 +47,12 @@
     ],
     "experiments": {
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c27fd7cb-668e-4fc1-b71a-9e0b4f8215cd"
+      }
     }
   }
 }
