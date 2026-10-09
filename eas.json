@@ -9,12 +9,13 @@
       "developmentClient": true,
       "distribution": "internal"
     },
-    "preview": {
-      "distribution": "internal",
-      "android": {
-        "buildType": "apk"
-      }
-    },
+   "preview": {
+"distribution": "internal",
+"environment": "preview",
+"android": {
+"buildType": "apk"
+    }},
+
     "production": {
       "autoIncrement": true,
       "android": {
