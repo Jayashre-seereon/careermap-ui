@@ -167,7 +167,16 @@ export default function HomeScreen() {
   });
   const { isUnlocked, onboarding, unreadNotificationsCount, userProfile } = useAppState();
   const { width } = useWindowDimensions();
-  const moduleCardWidth = width < 390 ? '48%' : '31%';
+  const isLargeScreen = width >= 768;
+  const moduleCardWidth = useMemo(() => {
+    if (isLargeScreen) {
+      return '31%';
+    }
+    const numColumns = width < 340 ? 2 : 3;
+    const cardGap = 10;
+    const availableWidth = width - 40 - (numColumns - 1) * cardGap;
+    return Math.floor(availableWidth / numColumns);
+  }, [width, isLargeScreen]);
   const featureByTitle = {
     'Career Archive': 'career-archive',
     'Career & Personality Videos': 'master-class',
@@ -767,7 +776,7 @@ export default function HomeScreen() {
     </View>
 
     <SectionHeader title="Explore Modules" />
-    <View className="flex-row flex-wrap gap-3 mt-4 mb-2">
+    <View className="flex-row flex-wrap mt-4 mb-2" style={{ gap: isLargeScreen ? 12 : 10 }}>
       {dashboardModules.map((card) => {
         const statusIcon = card.accessStatus === 'locked'
           ? 'lock-closed'
@@ -782,13 +791,35 @@ export default function HomeScreen() {
             ? palette.orange
             : palette.green;
         return (<AnimatedPressable key={card.id || card.title} style={{ width: moduleCardWidth }} onPress={() => handleModulePress(card)}>
-          <View className={`relative aspect-square items-center justify-center gap-2 rounded-[22px] border p-[14px] ${preferences.darkMode ? 'bg-[#080808]' : 'bg-card'}`} style={{ borderColor: preferences.darkMode ? '#1a1a1a' : `${card.tone}30` }}>
-            {statusIcon ? (<Ionicons name={statusIcon} size={14} color={statusColor} className="absolute right-2 top-2" />) : null}
-            <View className="h-[42px] w-[42px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${card.tone}14` }}>
-              <Ionicons name={card.icon} size={21} color={card.tone} />
+          <View
+            className={`relative items-center justify-center rounded-[20px] border pt-3 pb-2.5 px-1.5 ${preferences.darkMode ? 'bg-[#080808]' : 'bg-card'}`}
+            style={{
+              borderColor: preferences.darkMode ? '#1a1a1a' : `${card.tone}30`,
+              minHeight: isLargeScreen ? undefined : 118,
+              aspectRatio: isLargeScreen ? 1 : undefined,
+            }}
+          >
+            {statusIcon ? (
+              <View style={{ position: 'absolute', top: 7, right: 7 }}>
+                <Ionicons name={statusIcon} size={13} color={statusColor} />
+              </View>
+            ) : null}
+            <View className="h-[38px] w-[38px] items-center justify-center rounded-[13px]" style={{ backgroundColor: `${card.tone}14` }}>
+              <Ionicons name={card.icon} size={20} color={card.tone} />
             </View>
-            <View className="min-h-[34px] w-full items-center justify-center">
-              <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={2} className={`w-full text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{card.title}</Text>
+            <View className="h-[36px] w-full items-center justify-center mt-1">
+              <Text
+                numberOfLines={2}
+                ellipsizeMode="tail"
+                style={{
+                  fontSize: 12.5,
+                  lineHeight: 16,
+                  textAlign: 'center',
+                }}
+                className={`w-full font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}
+              >
+                {card.title}
+              </Text>
             </View>
           </View>
         </AnimatedPressable>);

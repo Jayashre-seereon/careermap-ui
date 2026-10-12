@@ -186,15 +186,17 @@ export default function HomeScreen() {
       </View>
 
       <SectionHeader title="Explore Modules"/>
-      <View className="flex-row flex-wrap gap-3">
+      <View className="flex-row flex-wrap gap-2.5">
         {moduleCards.map((card) => (<Pressable key={card.title} style={{ width: '31%' }} onPress={() => router.push(card.route)}>
- <View className="aspect-square items-center justify-center gap-2 rounded-[22px] border bg-card p-[14px]" style={{ borderColor: `${card.tone}30` }}>
-              <View className="h-[42px] w-[42px] items-center justify-center rounded-[14px]" style={{ backgroundColor: `${card.tone}14` }}>
-                <Ionicons name={card.icon} size={21} color={card.tone}/>
-              </View>
-              <Text className="text-center text-[14px] font-extrabold text-ink">{card.title}</Text>
+          <View className="min-h-[116px] items-center justify-center rounded-[20px] border bg-card pt-3 pb-2.5 px-1.5" style={{ borderColor: `${card.tone}30` }}>
+            <View className="h-[38px] w-[38px] items-center justify-center rounded-[13px]" style={{ backgroundColor: `${card.tone}14` }}>
+              <Ionicons name={card.icon} size={20} color={card.tone}/>
             </View>
-          </Pressable>))}
+            <View className="h-[36px] w-full items-center justify-center mt-1">
+              <Text numberOfLines={2} ellipsizeMode="tail" style={{ fontSize: 12.5, lineHeight: 16, textAlign: 'center' }} className="w-full font-extrabold text-ink">{card.title}</Text>
+            </View>
+          </View>
+        </Pressable>))}
       </View>
 
       <SectionHeader title="Explore Your Mentors" action={<Pressable onPress={() => router.push('/(drawer)/book-mentor')}><Text className="text-[12px] font-extrabold text-brand">See all</Text></Pressable>}/>
