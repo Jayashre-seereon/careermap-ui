@@ -12,10 +12,14 @@
     "scheme": "careermap",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.global.careermap"
-    },
+  "supportsTablet": true,
+  "bundleIdentifier": "com.global.careermap",
+  "infoPlist": {
+    "ITSAppUsesNonExemptEncryption": false
+  }
+},
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",

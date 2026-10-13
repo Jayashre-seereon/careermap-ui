@@ -6,12 +6,14 @@ import { Ionicons } from '@expo/vector-icons';
  * 5 Standard Planning Stages definition
  */
 const DEFAULT_STAGES = [
-  { stageNo: 1, stageCode: 'UNAWARE', stageName: 'Unaware' },
-  { stageNo: 2, stageCode: 'CONFUSED', stageName: 'Confused' },
-  { stageNo: 3, stageCode: 'EXPLORING', stageName: 'Exploring' },
-  { stageNo: 4, stageCode: 'CLARITY', stageName: 'Clarity' },
-  { stageNo: 5, stageCode: 'FUTURE_READY', stageName: 'Future-Ready' },
+  { stageNo: 1, stageCode: 'LOW_AWARENESS', stageName: 'Low awareness', description: 'Limited awareness about career possibilities, personal strengths, or the factors that influence career choices.' },
+  { stageNo: 2, stageCode: 'UNCERTAIN', stageName: 'Uncertain', description: 'Aware of the need to make a career decision but uncertain about available options, suitability, or the right direction.' },
+  { stageNo: 3, stageCode: 'DISCOVERING', stageName: 'Discovering', description: 'Actively researching and evaluating different career pathways, courses, opportunities, and areas of interest.' },
+  { stageNo: 4, stageCode: 'DECISIVE', stageName: 'Decisive', description: 'Developing a clear understanding of career preferences, suitable pathways, and the steps required to achieve the desired goal.' },
+  { stageNo: 5, stageCode: 'CAREER_READINESS', stageName: 'Career Readiness', description: 'Well-prepared with a defined career direction, realistic goals, and a strategic action plan to confidently move forward.' },
 ];
+
+const DEFAULT_INTRO = 'The Current Career stage analysis is the foundation of effective career planning. It provides a clear understanding of where you currently stand in your career decision-making journey and helps identify the direction you need to take. Through this, we assess your present level of career preparedness, identify the challenges or risks that may influence your career decisions, and determine the appropriate steps for your growth and development.\n\nThe objective is to establish a clear career goal and create a structured roadmap that gradually moves you from your current stage of career planning towards an optimized, informed, and future-ready stage.';
 
 /**
  * Domain icons & accent colors for the 5 Areas
@@ -94,18 +96,13 @@ export default function YourProfilingReport({
 
   // 1. Header block
   const heading = pData.heading || 'YOUR PROFILING';
-  const introParagraph =
-    pData.introParagraph ||
-    'Personal profiling is the first step in career planning. It helps you understand where you are right now on your career journey and gives you a clear path forward.';
+  const introParagraph = DEFAULT_INTRO;
 
   // 2. Stage Track
   const stageTrack = pData.stageTrack || {};
-  const currentStageNo = Number(stageTrack.currentStageNo || 4);
-  const currentStageName = stageTrack.currentStageName || 'Clarity';
-  const stages =
-    Array.isArray(stageTrack.stages) && stageTrack.stages.length > 0
-      ? stageTrack.stages
-      : DEFAULT_STAGES;
+  const currentStageNo = Number(stageTrack.currentStageNo || 3);
+  const stages = DEFAULT_STAGES;
+  const currentStageName = stages[currentStageNo - 1]?.stageName || 'Discovering';
 
   // 3. Risk Badge
   const riskBadge = pData.riskBadge || {
@@ -195,7 +192,7 @@ export default function YourProfilingReport({
       nativeID={`page-${pageNum}`}
       dataSet={{ reportPage: 'true' }}
       className="pdf-page report-page-a4"
-      style={[cardStyle, { fontSize: 15 }]}
+      style={[cardStyle, { fontSize: 14 }]}
       onLayout={(e) => {
         if (typeof recordPageLayout === 'function') {
           recordPageLayout(pageNum, e);
@@ -330,6 +327,15 @@ export default function YourProfilingReport({
             );
           })}
         </View>
+
+        <View style={styles.stageDescriptions}>
+          {stages.map((stage) => (
+            <View key={`${stage.stageNo}-description`} style={styles.stageDescriptionItem}>
+              <Text style={styles.stageDescriptionTitle}>{stage.stageNo}. {stage.stageName}</Text>
+              <Text style={styles.stageDescriptionText}>{stage.description}</Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {/* BLOCK 4: WHAT IT MEANS */}
@@ -359,7 +365,7 @@ export default function YourProfilingReport({
           <Text style={styles.fiveAreasLegend}>Stages: 1 to 5</Text>
         </View>
 
-        <View style={{ gap: 6 }}>
+        <View style={{ gap: 4 }}>
           {your5Areas.map((area, idx) => {
             const code = area.domainCode || Object.keys(DOMAIN_CONFIG)[idx] || 'SA';
             const cfg = DOMAIN_CONFIG[code] || DOMAIN_CONFIG.SA;
@@ -447,7 +453,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     paddingHorizontal: 12,
     alignSelf: 'flex-start',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   titlePillText: {
     color: '#8C1814',
@@ -457,12 +463,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   introParagraph: {
-    fontSize: 15,
+    fontSize: 13.2,
     color: '#374151',
-    lineHeight: 21.8,
+    lineHeight: 18,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
-    marginBottom: 10,
+    marginBottom: 6,
     textAlign: 'justify',
   },
   stageTrackCard: {
@@ -470,8 +476,8 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
     borderWidth: 1,
     borderRadius: 14,
-    padding: 10,
-    marginBottom: 8,
+    padding: 8,
+    marginBottom: 6,
   },
   stageTrackTopRow: {
     flexDirection: 'row',
@@ -539,6 +545,32 @@ const styles = StyleSheet.create({
     position: 'relative',
     paddingTop: 12,
     paddingBottom: 4,
+  },
+  stageDescriptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    marginTop: 7,
+    paddingTop: 6,
+    rowGap: 5,
+  },
+  stageDescriptionItem: {
+    width: '48.5%',
+  },
+  stageDescriptionTitle: {
+    color: '#1e232a',
+    fontSize: 8.5,
+    lineHeight: 10,
+    fontFamily: 'Poppins_700Bold',
+    fontWeight: '700',
+  },
+  stageDescriptionText: {
+    color: '#64748b',
+    fontSize: 7.2,
+    lineHeight: 8.6,
+    fontFamily: 'Poppins_400Regular',
   },
   trackLineBg: {
     position: 'absolute',
@@ -629,8 +661,8 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
     borderWidth: 1,
     borderRadius: 12,
-    padding: 10,
-    marginBottom: 8,
+    padding: 8,
+    marginBottom: 5,
   },
   whatItMeansTitle: {
     color: '#8C1814',
@@ -642,8 +674,8 @@ const styles = StyleSheet.create({
   },
   whatItMeansBody: {
     color: '#334155',
-    fontSize: 15,
-    lineHeight: 21.8,
+    fontSize: 12.5,
+    lineHeight: 17,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
     textAlign: 'justify',
@@ -688,8 +720,8 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
     borderWidth: 1,
     borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
   },
   areaTopRow: {
     flexDirection: 'row',
@@ -698,7 +730,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   areaName: {
-    fontSize: 12.6,
+    fontSize: 11.2,
     fontFamily: 'Poppins_700Bold',
     fontWeight: '700',
     color: '#1e293b',
@@ -747,9 +779,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   areaMeaningText: {
-    fontSize: 13.8,
+    fontSize: 12,
     color: '#475569',
-    lineHeight: 18.4,
+    lineHeight: 16,
     marginTop: 3,
     paddingLeft: 22,
     fontFamily: 'Poppins_500Medium',
@@ -761,8 +793,8 @@ const styles = StyleSheet.create({
     borderColor: '#fde68a',
     borderWidth: 1,
     borderRadius: 12,
-    padding: 9,
-    marginTop: 8,
+    padding: 7,
+    marginTop: 5,
   },
   notesTitle: {
     color: '#92400e',
@@ -793,8 +825,8 @@ const styles = StyleSheet.create({
   },
   noteText: {
     color: '#78350f',
-    fontSize: 13.8,
-    lineHeight: 20.7,
+    fontSize: 11.8,
+    lineHeight: 16,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
     flex: 1,
