@@ -1124,8 +1124,8 @@ export default function CareerLibraryScreen() {
             </View>)}
         </View>
         <View className="flex-1">
-          <View className="flex-row items-center gap-2">
-            <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
+          <View className="flex-row flex-wrap items-center gap-2">
+            <Text className={`shrink text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
             {institution?.type ? (<View className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${palette.primary}12` }}>
                 <Text className="text-[10px] font-bold" style={{ color: palette.primary }}>{institution.type}</Text>
               </View>) : null}
@@ -1148,8 +1148,8 @@ export default function CareerLibraryScreen() {
             </View>)}
         </View>
         <View className="flex-1">
-          <View className="flex-row items-center gap-2">
-            <Text className={`text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
+          <View className="flex-row flex-wrap items-center gap-2">
+            <Text className={`shrink text-[14px] font-semibold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{institution?.name || 'Institution'}</Text>
             {institution?.type ? (<View className="rounded-full px-2 py-0.5" style={{ backgroundColor: `${palette.primary}12` }}>
                 <Text className="text-[10px] font-bold" style={{ color: palette.primary }}>{institution.type}</Text>
               </View>) : null}

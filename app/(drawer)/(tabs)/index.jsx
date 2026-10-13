@@ -831,12 +831,12 @@ export default function HomeScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
         {dashboardMentors.map((mentor) => {
           const mentorUnlocked = sectionAccess.mentors.status === 'full' || sectionAccess.mentors.status === 'preview';
-          return (<AnimatedPressable key={mentor.id || mentor.name} className={`relative h-[168px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => handleSectionPress('mentors')}>
+          return (<AnimatedPressable key={mentor.id || mentor.name} className={`relative min-h-[168px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => handleSectionPress('mentors')}>
           <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px] " style={{ backgroundColor: `${mentor.accent}15` }}>
             {renderMentorAvatar(mentor)}
           </View>
-          <View className="h-[34px] justify-center">
-            <Text numberOfLines={2} ellipsizeMode="tail" className={`text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
+          <View className="min-h-[38px] w-full justify-center">
+            <Text numberOfLines={2} ellipsizeMode="tail" className={`w-full text-center text-[13px] leading-[18px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{mentor.name}</Text>
           </View>
           <Text numberOfLines={1} ellipsizeMode="tail" className="w-full text-center text-[11px] font-bold text-brand">{mentor.specialty}</Text>
           <View className="w-full flex-row items-center justify-center gap-1">
@@ -881,7 +881,7 @@ export default function HomeScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pr-2">
         {dashboardEntranceExams.map((exam) => {
           const entranceExamUnlocked = sectionAccess.entranceExam.status === 'full' || sectionAccess.entranceExam.status === 'preview';
-          return (<AnimatedPressable key={exam.id || exam.name} className={`relative h-[168px] w-[164px] items-center gap-1.5 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => handleSectionPress('entranceExam')}>
+          return (<AnimatedPressable key={exam.id || exam.name} className={`relative min-h-[168px] w-[164px] items-center gap-2 rounded-[22px] border p-4 mb-4 mt-4 ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={() => handleSectionPress('entranceExam')}>
           <View className="h-[52px] w-[52px] overflow-hidden rounded-[18px]" style={{ backgroundColor: `${exam.accent}15` }}>
             {exam.image ? (
               <Image source={{ uri: exam.image }} resizeMode="cover" style={{ width: 52, height: 52, borderRadius: 18 }} />
@@ -893,8 +893,8 @@ export default function HomeScreen() {
               </View>
             )}
           </View>
-          <View className="h-[34px] justify-center">
-            <Text numberOfLines={2} ellipsizeMode="tail" className={`text-center text-[13px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam.name}</Text>
+          <View className="w-full flex-1 justify-start">
+            <Text numberOfLines={3} ellipsizeMode="tail" className={`w-full text-center text-[13px] leading-[18px] font-extrabold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{exam.name}</Text>
           </View>
         
           </AnimatedPressable>);
