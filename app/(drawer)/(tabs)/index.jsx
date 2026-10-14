@@ -666,7 +666,7 @@ export default function HomeScreen() {
         <AnimatedPressable className={`h-[38px] w-[38px] items-center justify-center rounded-[12px] border ${preferences.darkMode ? 'border-[#1a1a1a] bg-[#080808]' : 'border-line bg-card'}`} onPress={resetPersonality}>
           <Ionicons name="chevron-back" size={18} color={preferences.darkMode ? '#ffffff' : palette.text} />
         </AnimatedPressable>
-        <Text className={`text-[18px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>Know Your Personality</Text>
+        <Text className={`text-[18px] font-black ${preferences.darkMode ? 'text-white' : 'text-ink'}`}> Personality</Text>
       </View>
 
       <View className="flex-row items-center gap-3">
@@ -763,7 +763,7 @@ export default function HomeScreen() {
           <Ionicons name="sparkles" size={14} color="#f6ce63" />
           <Text className="text-[11px] font-extrabold uppercase tracking-[1px] text-[#f6ce63]">Recommended</Text>
         </View>
-        <Text className="text-[28px] font-black text-white">Know Your Personality</Text>
+        <Text className="text-[28px] font-black text-white"> Personality</Text>
         <Text className="max-w-[80%] text-[13px] leading-5 text-white/80">
           {isUnlocked('psychometric-test')
             ? 'Take the comprehensive psychometric test to get detailed career insights and recommendations.'
