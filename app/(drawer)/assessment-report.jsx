@@ -5,7 +5,6 @@ import {
   Image,
   Modal,
   Platform,
-  SafeAreaView,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -13,6 +12,7 @@ import {
   PixelRatio,
   useWindowDimensions,
 } from 'react-native'; 
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Print from 'expo-print';
@@ -1000,6 +1000,7 @@ export default function AssessmentReportScreen() {
   const contentRef = useRef(null);
   const contentSize = useRef({ width: 0, height: 0 });
   const pageRefs = useRef({});
+  const [printing, setPrinting] = useState(false);
   const { width: windowWidth } = useWindowDimensions();
   // Standard A4 aspect ratio 210mm x 297mm (1.4142). Max width 794 matching User Portal desktop A4 specs.
   const cardWidth = Math.min(Math.max(windowWidth - 24, 320), 794);
@@ -1046,8 +1047,6 @@ export default function AssessmentReportScreen() {
     const targetY = pageOffsets.current[pageNumber] ?? 0;
     scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 60), animated: true });
   };
-
-  const [printing, setPrinting] = useState(false);
 
   // Normalize API data with rich defaults matching User Portal
   const rawData = reportData || {};
@@ -1512,33 +1511,80 @@ useEffect(() => {
     }
 
     // ---------- NATIVE: snapshot every on-screen page, print the images ----------
+    // Scroll to top so that no view is clipped by scroll offsets on Android
+    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     const images = [];
     for (let i = 1; i <= 32; i++) {
       const ref = pageRefs.current[i];
       if (!ref) continue;
-      const b64 = await captureRef(ref, { format: 'jpg', quality: 0.92, result: 'base64' });
+      const b64 = await captureRef(ref, {
+        format: 'jpg',
+        quality: 0.95,
+        result: 'base64',
+      });
       images.push(b64);
     }
 
-    const html = `
-      <html><head><meta charset="utf-8" />
-      <style>
-        @page { size: A4; margin: 0; }
-        html, body { margin: 0; padding: 0; }
-        .p { width: 210mm; height: 297mm; display: flex; align-items: center;
-             justify-content: center; page-break-after: always; overflow: hidden; }
-        .p:last-child { page-break-after: auto; }
-        img { max-width: 100%; max-height: 100%; }
-      </style></head><body>
-      ${images.map((b) => `<div class="p"><img src="data:image/jpeg;base64,${b}" /></div>`).join('')}
-      </body></html>`;
+    const html = `<!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8" />
+        <style>
+          @page {
+            size: A4 portrait;
+            margin: 8mm 10mm;
+          }
+          * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          html, body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            width: 100%;
+            height: 100%;
+          }
+          .p {
+            width: 100%;
+            height: 100vh;
+            max-height: 100vh;
+            page-break-after: always;
+            page-break-inside: avoid;
+            break-after: page;
+            break-inside: avoid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-sizing: border-box;
+          }
+          .p:last-child {
+            page-break-after: auto;
+            break-after: auto;
+          }
+          .p img {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            display: block;
+          }
+        </style>
+      </head>
+      <body>
+        ${images.map((b) => `<div class="p"><img src="data:image/jpeg;base64,${b}" /></div>`).join('')}
+      </body>
+      </html>`;
 
     await Print.printAsync({ html });
   } catch (err) {
     console.warn('Print error:', err);
     Alert.alert('Print Error', 'Could not open print dialog. Please try again.');
   } finally {
-    if (Platform.OS !== 'web') setPrinting(false);
+    setPrinting(false);
   }
 };
 
@@ -1547,20 +1593,19 @@ useEffect(() => {
     minHeight: 700,
     alignSelf: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 6,
+    borderRadius: printing ? 0 : 6,
     marginHorizontal: 'auto',
-    marginBottom: 24,
+    marginBottom: printing ? 0 : 24,
     paddingHorizontal: cardWidth > 600 ? 40 : 16,
     paddingVertical: cardWidth > 600 ? 32 : 18,
     shadowColor: '#1E232A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOpacity: printing ? 0 : 0.08,
+    shadowRadius: printing ? 0 : 10,
+    elevation: printing ? 0 : 3,
     display: 'flex',
     flexDirection: 'column',
     fontFamily: 'Poppins_400Regular',
-    
   };
 
 
@@ -3670,6 +3715,48 @@ useEffect(() => {
           </View>
         </View>
       </Modal>
+
+      {printing && Platform.OS !== 'web' && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            zIndex: 99999,
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 24,
+          }}
+        >
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text
+            style={{
+              color: '#ffffff',
+              fontSize: 17,
+              fontFamily: 'Poppins_700Bold',
+              fontWeight: '700',
+              marginTop: 16,
+              textAlign: 'center',
+            }}
+          >
+            Preparing 32-Page Report for Print...
+          </Text>
+          <Text
+            style={{
+              color: '#cbd5e1',
+              fontSize: 13,
+              fontFamily: 'Poppins_400Regular',
+              marginTop: 6,
+              textAlign: 'center',
+            }}
+          >
+            Formatting all 32 pages with uniform margins and alignment
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

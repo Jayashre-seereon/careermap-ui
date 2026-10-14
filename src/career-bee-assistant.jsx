@@ -178,7 +178,7 @@ export function CareerBeeAssistant({ hidden = false }) {
                 pointerEvents: 'box-none',
                 position: 'absolute',
                 right: compactLauncher ? 10 : 18,
-                bottom: compactLauncher ? Math.max(insets.bottom + 4, 30) : Math.max(insets.bottom + 22, 55),
+                bottom: compactLauncher ? Math.max(insets.bottom + 28, 54) : Math.max(insets.bottom + 34, 67),
                 transform: [{ scale: bubbleScale }],
                 zIndex: 9999,
                 elevation: 9999,
@@ -189,7 +189,7 @@ export function CareerBeeAssistant({ hidden = false }) {
             style: {
                 position: 'absolute',
                 right: compactLauncher ? 10 : 18,
-                bottom: compactLauncher ? Math.max(insets.bottom + 4, 30) : Math.max(insets.bottom + 22, 55),
+                bottom: compactLauncher ? Math.max(insets.bottom + 28, 54) : Math.max(insets.bottom + 34, 67),
                 transform: [{ scale: bubbleScale }],
                 zIndex: 9999,
                 elevation: 9999,
