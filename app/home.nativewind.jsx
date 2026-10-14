@@ -173,7 +173,7 @@ export default function HomeScreen() {
             <Ionicons name="sparkles" size={14} color="#f6ce63"/>
             <Text className="text-[11px] font-extrabold uppercase tracking-[1px] text-[#f6ce63]">Recommended</Text>
           </View>
-          <Text className="text-[28px] font-black text-white"> Personality</Text>
+          <Text className="text-[28px] font-black text-white">Know Your Personality</Text>
           <Text className="max-w-[80%] text-[13px] leading-5 text-white/80">
             {isUnlocked('psychometric-test')
             ? 'Take the comprehensive psychometric test to get detailed career insights and recommendations.'
