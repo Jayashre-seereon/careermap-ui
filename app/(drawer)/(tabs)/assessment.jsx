@@ -301,7 +301,7 @@ export default function AssessmentLandingScreen() {
           </View>
 
           <Text style={{ color: '#ffffff', fontSize: 24, fontFamily: 'Poppins_900Black', fontWeight: '900', lineHeight: 30 }}>
-            Psychometric Career Assessment
+            Assessment
           </Text>
 
           <Text style={{ color: '#ffe4e6', fontSize: 13, lineHeight: 19, marginTop: 8 }}>
