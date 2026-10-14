@@ -69,7 +69,8 @@ const AUTH_REFRESH_ENDPOINT = (() => {
 
 const api = createAxios({
   baseURL: API_BASE_URL,
-  timeout: 20000,
+  // Hosted APIs may need extra time to wake before responding to native clients.
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -77,7 +78,7 @@ const api = createAxios({
 
 const refreshClient = createAxios({
   baseURL: API_BASE_URL,
-  timeout: 20000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
