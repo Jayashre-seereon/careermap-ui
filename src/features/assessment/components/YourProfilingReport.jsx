@@ -70,17 +70,7 @@ function getRiskBadgeStyle(riskBadge = {}) {
   }
 }
 
-/**
- * YourProfilingReport Component for React Native
- * Renders the 7 blocks of Section 1 (Personal Profiling / CRI):
- * 1. Header Block (Title & Intro)
- * 2. Stage Track (Visual 5-step horizontal track)
- * 3. Risk Level Badge
- * 4. "What it means" & Current Status / CRI
- * 5. "Your 5 Areas" (5 domain cards with 5-step mini-progress bar)
- * 6. Career Readiness Score (CRI)
- * 7. "Notes for you" (Flags / Personalized guidance)
- */
+
 export default function YourProfilingReport({
   profilingData = {},
   studentFirstName = 'Student',
@@ -192,7 +182,7 @@ export default function YourProfilingReport({
       nativeID={`page-${pageNum}`}
       dataSet={{ reportPage: 'true' }}
       className="pdf-page report-page-a4"
-      style={[cardStyle, { fontSize: 14 }]}
+    style={[cardStyle, { fontSize: 14, paddingVertical: 20 }]}
       onLayout={(e) => {
         if (typeof recordPageLayout === 'function') {
           recordPageLayout(pageNum, e);
@@ -210,8 +200,9 @@ export default function YourProfilingReport({
         </View>
       )}
 
-      <Text style={styles.introParagraph}>{introParagraph}</Text>
-
+     {introParagraph.split('\n\n').map((p, i) => (
+  <Text key={i} style={styles.introParagraph}>{p}</Text>
+))}
       {/* BLOCK 2 & 3 & 6: STAGE TRACK + RISK BADGE + CRI SCORE */}
       <View style={styles.stageTrackCard}>
         {/* Top summary row: stage track title, risk badge, CRI */}
@@ -365,7 +356,7 @@ export default function YourProfilingReport({
           <Text style={styles.fiveAreasLegend}>Stages: 1 to 5</Text>
         </View>
 
-        <View style={{ gap: 4 }}>
+        <View style={{ gap: 3 }}>
           {your5Areas.map((area, idx) => {
             const code = area.domainCode || Object.keys(DOMAIN_CONFIG)[idx] || 'SA';
             const cfg = DOMAIN_CONFIG[code] || DOMAIN_CONFIG.SA;
@@ -427,7 +418,7 @@ export default function YourProfilingReport({
           <View style={{ gap: 4 }}>
             {notesList.map((n, i) => (
               <View key={n.flagId || i} style={styles.noteItem}>
-                {n.flagName && (
+           {!!n.flagName && (
                   <View style={styles.flagNameBadge}>
                     <Text style={styles.flagNameBadgeText}>{n.flagName}</Text>
                   </View>
@@ -463,12 +454,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   introParagraph: {
-    fontSize: 13.2,
+    fontSize: 12,  
     color: '#374151',
-    lineHeight: 18,
+    lineHeight: 15.5,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
-    marginBottom: 6,
+    marginBottom: 4,
     textAlign: 'justify',
   },
   stageTrackCard: {
@@ -674,8 +665,8 @@ const styles = StyleSheet.create({
   },
   whatItMeansBody: {
     color: '#334155',
-    fontSize: 12.5,
-    lineHeight: 17,
+    fontSize: 11.5,
+    lineHeight: 15,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
     textAlign: 'justify',
@@ -721,7 +712,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 8,
-    paddingVertical: 5,
+    paddingVertical: 4,
   },
   areaTopRow: {
     flexDirection: 'row',
@@ -779,10 +770,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   areaMeaningText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#475569',
-    lineHeight: 16,
-    marginTop: 3,
+    lineHeight: 14,
+    marginTop: 2,
     paddingLeft: 22,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
@@ -825,8 +816,8 @@ const styles = StyleSheet.create({
   },
   noteText: {
     color: '#78350f',
-    fontSize: 11.8,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 14.5,
     fontFamily: 'Poppins_500Medium',
     fontWeight: '500',
     flex: 1,
