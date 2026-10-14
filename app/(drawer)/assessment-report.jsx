@@ -17,7 +17,7 @@ import { captureRef } from 'react-native-view-shot';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { File, Paths } from 'expo-file-system';
+import { File, Directory, Paths } from 'expo-file-system';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -1515,38 +1515,54 @@ useEffect(() => {
     }
 
     // ---------- NATIVE: snapshot every on-screen page, print the images ----------
-   const images = [];
-for (let i = 1; i <= 32; i++) {
-  const ref = pageRefs.current[i];
-  if (!ref) continue;
-  const b64 = await captureRef(ref, {
-    format: 'jpg',
-    quality: 0.85,
-    result: 'base64',
-    width: 1191,   // A4 ratio (1191 x 1684), same for every page
-    height: 1684,
-  });
-  images.push(b64);
-}
+      // ---------- NATIVE: capture pages, build PDF, save it ----------
+    const images = [];
+    for (let i = 1; i <= 32; i++) {
+      const ref = pageRefs.current[i];
+      if (!ref) continue;
+      const b64 = await captureRef(ref, {
+        format: 'jpg',
+        quality: 0.7,
+        result: 'base64',
+        width: 827,
+        height: 1170,
+      });
+      images.push(b64);
+    }
 
-   const html = `
-  <html><head><meta charset="utf-8" />
-  <style>
-    @page { size: 210mm 297mm; margin: 0; }
-    html, body { margin: 0; padding: 0; }
-    .p { width: 210mm; height: 297mm; overflow: hidden;
-         page-break-after: always; break-after: page; }
-    .p:last-child { page-break-after: auto; break-after: auto; }
-    .p img { display: block; width: 100%; height: 100%; }
-  </style></head><body>
-  ${images.map((b) => `<div class="p"><img src="data:image/jpeg;base64,${b}" /></div>`).join('')}
-  </body></html>`;
+    const html = `
+      <html><head><meta charset="utf-8" />
+      <style>
+        @page { size: 210mm 297mm; margin: 0; }
+        html, body { margin: 0; padding: 0; }
+        .p { width: 210mm; height: 297mm; overflow: hidden;
+             page-break-after: always; break-after: page; }
+        .p:last-child { page-break-after: auto; break-after: auto; }
+        .p img { display: block; width: 100%; height: 100%; }
+      </style></head><body>
+      ${images.map((b) => `<div class="p"><img src="data:image/jpeg;base64,${b}" /></div>`).join('')}
+      </body></html>`;
 
- const { uri } = await Print.printToFileAsync({ html, width: 595, height: 842 });
-    await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
+    // Build the A4 PDF
+    const { uri } = await Print.printToFileAsync({ html, width: 595, height: 842 });
+    const fileName = `${cleanFilename}.pdf`;
 
-   
-await Print.printAsync({ html });
+    try {
+      if (Platform.OS === 'android') {
+        // Ask where to save (e.g. Downloads), then write the file there
+        const dir = await Directory.pickDirectoryAsync();
+        const dest = dir.createFile(fileName, 'application/pdf');
+        const bytes = await new File(uri).bytes();
+        dest.write(bytes);
+        Alert.alert('Saved', `${fileName} was saved to the folder you selected.`);
+      } else {
+        await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
+      }
+    } catch (saveErr) {
+      console.warn('Save error:', saveErr);
+      Alert.alert('Not saved', 'The PDF was not saved. Please try again and choose a folder.');
+    }
+    return;
   } catch (err) {
     console.warn('Print error:', err);
     Alert.alert('Print Error', 'Could not open print dialog. Please try again.');
@@ -1662,7 +1678,7 @@ await Print.printAsync({ html });
             <Ionicons name="print-outline" size={15} color="#ffffff" />
           )}
           <Text style={{ color: '#ffffff', fontSize: 13.2, fontFamily: 'Poppins_800ExtraBold', fontWeight: '800' }}>
-            {printing ? 'Printing...' : 'Print'}
+           {printing ? 'Saving...' : 'Save PDF'}
           </Text>
         </TouchableOpacity>
       </View>
