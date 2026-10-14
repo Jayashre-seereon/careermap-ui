@@ -1545,7 +1545,8 @@ for (let i = 1; i <= 32; i++) {
  const { uri } = await Print.printToFileAsync({ html, width: 595, height: 842 });
     await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' });
 
-    await Print.printAsync({ html });
+   
+await Print.printAsync({ html });
   } catch (err) {
     console.warn('Print error:', err);
     Alert.alert('Print Error', 'Could not open print dialog. Please try again.');
@@ -1687,7 +1688,8 @@ for (let i = 1; i <= 32; i++) {
     transform: [{ scale: viewScale }],
     transformOrigin: 'top left',
   }}
->  {/* ============================================================
+>  
+{/* ============================================================
             PAGE 1: COVER PAGE
         ============================================================ */}
       <View
