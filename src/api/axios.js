@@ -3,8 +3,11 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { useAuthStore } from '../store/auth-store';
 
-const ENV_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
-const WEB_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL_WEB;
+// Keep production/preview APKs functional when the EAS environment does not
+// define these public URL variables. Expo Go still uses the local .env values.
+const DEFAULT_API_BASE_URL = 'https://careermap-backend-ca6s.onrender.com/api';
+const ENV_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || DEFAULT_API_BASE_URL;
+const WEB_API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL_WEB || DEFAULT_API_BASE_URL;
 const ENV_AUTH_REFRESH_ENDPOINT = process.env.EXPO_PUBLIC_AUTH_REFRESH_ENDPOINT;
 
 function getExpoHost() {
