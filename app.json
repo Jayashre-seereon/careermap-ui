@@ -4,22 +4,23 @@
     "slug": "careermap",
     "version": "1.0.0",
     "updates": {
-      "enabled": false,
-      "checkAutomatically": "NEVER"
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/c27fd7cb-668e-4fc1-b71a-9e0b4f8215cd"
     },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "careermap",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    
     "ios": {
-  "supportsTablet": true,
-  "bundleIdentifier": "com.global.careermap",
-  "infoPlist": {
-    "ITSAppUsesNonExemptEncryption": false
-  }
-},
+      "supportsTablet": true,
+      "bundleIdentifier": "com.global.careermap",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -61,6 +62,9 @@
       "eas": {
         "projectId": "c27fd7cb-668e-4fc1-b71a-9e0b4f8215cd"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }
