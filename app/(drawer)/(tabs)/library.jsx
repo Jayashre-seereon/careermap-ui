@@ -885,21 +885,19 @@ export default function CareerLibraryScreen() {
              <Text className={`text-[14px] font-bold ${preferences.darkMode ? 'text-white' : 'text-ink'}`}>{section?.title || 'About'}</Text>
           </View>
           {section?.description ? (
-            <ScrollView
-                horizontal
-                nestedScrollEnabled
-                showsHorizontalScrollIndicator={true}
-                style={{ maxHeight: 420 }}
-            >
-                <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={true} style={{ maxHeight: 420 }}>
-                    <RenderHTML
-                        contentWidth={screenWidth - 64}
-                        source={{ html: section.description }}
-                        baseStyle={{ color: preferences.darkMode ? '#d1d5db' : '#111827', fontSize: 13, lineHeight: 20 }}
-                        tagsStyles={htmlTagStyles}
-                    />
-                </ScrollView>
-            </ScrollView>
+        
+<RenderHTML
+    contentWidth={screenWidth - 64}
+    source={{ html: section.description }}
+    baseStyle={{
+        color: preferences.darkMode ? '#d1d5db' : '#111827',
+        fontSize: 13,
+        lineHeight: 20,
+        textAlign: 'justify',
+    }}
+    tagsStyles={htmlTagStyles}
+/>
+
           ) : null}
         </View>
       ))}
@@ -1226,7 +1224,8 @@ export default function CareerLibraryScreen() {
           {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
          
           {details.length > 0 ? details.map((detail, index) => renderDetailItem(detail, index)) : !loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-gray-300' : 'text-gray-900'}`}>No details available for this selection.</Text>) : null}
-        </ScrollView>) : (<ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
+        </ScrollView>) : (
+            <ScrollView className="flex-1" contentContainerClassName="gap-3 px-5 pb-2" contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 72, 88) }} showsVerticalScrollIndicator={false} {...mobileAssistantScrollProps}>
           {loading ? (<Text className={`mt-4 text-[13px] ${preferences.darkMode ? 'text-[#b7aeb9]' : 'text-muted'}`}>Loading...</Text>) : null}
           {error ? (<Text className="mt-4 text-[13px] font-semibold text-red-500">{error}</Text>) : null}
           {currentLevel === 'secondcategory' && renderStepList(secondCategories, 'second')}
